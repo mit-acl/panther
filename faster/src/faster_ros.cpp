@@ -268,7 +268,7 @@ FasterRos::FasterRos(ros::NodeHandle nh, ros::NodeHandle nh_replan_CB, ros::Node
   pub_traj_whole_colored_ = nh_.advertise<visualization_msgs::MarkerArray>("traj_whole_colored", 1);
   pub_traj_safe_colored_ = nh_.advertise<visualization_msgs::MarkerArray>("traj_safe_colored", 1);
   pub_cloud_jps_ = nh_.advertise<sensor_msgs::PointCloud2>("cloud_jps", 1);
-  pub_traj_ = nh_.advertise<faster_msgs::DynTraj>("/trajs", 1, true);  // The last parameter is latched or not
+  pub_traj_ = nh_.advertise<faster_msgs::PieceWisePolTraj>("/trajs", 1, true);  // The last parameter is latched or not
   pub_text_ = nh_.advertise<jsk_rviz_plugins::OverlayText>("text", 1);
 
   pub_fov_ = nh_.advertise<visualization_msgs::Marker>("fov", 1);
@@ -435,14 +435,16 @@ void FasterRos::publishFOV()
   return;
 }
 
-void FasterRos::trajCB(const faster_msgs::DynTraj& msg)
+void FasterRos::trajCB(const faster_msgs::PieceWisePolTraj& pwp_msg)
 {
-  if (msg.id == id_)
+  if (pwp_msg.id == id_)
   {  // This is my own trajectory
     return;
   }
 
-  Eigen::Vector3d W_pos(msg.pos.x, msg.pos.y, msg.pos.z);  // position in world frame
+  PieceWisePolWithInfo pwp_with_info = pwpMsg2PwpWithInfo(pwp_msg);
+
+  Eigen::Vector3d W_pos = pwp_with_info.pwp.eval(ros::Time::now().toSec());  // position in world frame
   double dist = (state_.pos - W_pos).norm();
 
   bool can_use_its_info;
@@ -452,8 +454,7 @@ void FasterRos::trajCB(const faster_msgs::DynTraj& msg)
     can_use_its_info = dist <= par_.R_local_map;
   }
   else
-  {  // impose_fov==true
-
+  {                                                    // impose_fov==true
     Eigen::Vector3d B_pos = W_T_B_.inverse() * W_pos;  // position of the obstacle in body frame
     // check if it's inside the field of view.
     can_use_its_info =
@@ -463,39 +464,30 @@ void FasterRos::trajCB(const faster_msgs::DynTraj& msg)
 
     // std::cout << "inFOV= " << can_use_its_info << std::endl;
   }
-  // std::cout << "B_pos.x() < par_.fov_depth= " << (B_pos.x() < par_.fov_depth) << std::endl;
-  // std::cout << "Second= " << (fabs(atan2(B_pos.y(), B_pos.x())) < ((par_.fov_horiz_deg * M_PI / 180.0) / 2.0))
-  //           << std::endl;
-  // std::cout << "Third= " << (fabs(atan2(B_pos.z(), B_pos.x())) < ((par_.fov_vert_deg * M_PI / 180.0) / 2.0))
-  //           << std::endl;
-
-  // std::cout << "Second1= " << fabs(atan2(B_pos.y(), B_pos.x())) << std::endl;
-  // std::cout << "Second2 " << ((par_.fov_horiz_deg * M_PI / 180.0) / 2.0) << std::endl;
-
-  // std::cout << "Third1= " << (fabs(atan2(B_pos.z(), B_pos.x()))) << std::endl;
-  // std::cout << "Third2 " << ((par_.fov_vert_deg * M_PI / 180.0) / 2.0) << std::endl;
-
-  // std::cout << "isInFOV= " << isInFOV << std::endl;
 
   if (can_use_its_info == false)
   {
     return;
   }
 
-  dynTraj tmp;
-  tmp.function.push_back(msg.function[0]);
-  tmp.function.push_back(msg.function[1]);
-  tmp.function.push_back(msg.function[2]);
+  // PieceWisePolStamped pwp_stamped;
+  // pwp_stamped.pwp = pwp;
+  // pwp_stamped.time_received = ros::Time::now().toSec();
 
-  tmp.bbox << msg.bbox[0], msg.bbox[1], msg.bbox[2];
+  // dynTraj tmp;
+  // tmp.function.push_back(msg.function[0]);
+  // tmp.function.push_back(msg.function[1]);
+  // tmp.function.push_back(msg.function[2]);
 
-  tmp.id = msg.id;
+  // tmp.bbox << msg.bbox[0], msg.bbox[1], msg.bbox[2];
 
-  tmp.is_agent = msg.is_agent;
+  // tmp.id = msg.id;
 
-  tmp.time_received = ros::Time::now().toSec();
+  // tmp.is_agent = msg.is_agent;
 
-  faster_ptr_->updateTrajObstacles(tmp);
+  // tmp.time_received = ros::Time::now().toSec();
+
+  faster_ptr_->updateTrajs(pwp_with_info);
 }
 
 // This trajectory is published when the agent arrives at A

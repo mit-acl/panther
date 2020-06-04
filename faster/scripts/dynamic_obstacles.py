@@ -46,12 +46,12 @@ class MovingCircle:
 
 class MovingCorridor:
     def __init__(self):
-        self.num_of_dyn_objects=50;
-        self.num_of_stat_objects=50;
-        self.x_min= 1.0
-        self.x_max= 50.0
-        # self.x_min= -2.0
-        # self.x_max= 2.0
+        self.num_of_dyn_objects=1;
+        self.num_of_stat_objects=0;
+        # self.x_min= 1.0
+        # self.x_max= 50.0
+        self.x_min= 0.0
+        self.x_max= 0.0
         self.y_min= -2.0 
         self.y_max= +2.0
         self.z_min= 1.0 
@@ -69,7 +69,7 @@ class FakeSim:
     def __init__(self):
         self.state=State()
 
-        self.timer = rospy.Timer(rospy.Duration(0.01), self.pubTF)
+        self.timer = rospy.Timer(rospy.Duration(1), self.pubTF) #0.01
         name = rospy.get_namespace()
         self.name = name[1:-1]
 
@@ -105,7 +105,7 @@ class FakeSim:
             self.slower.append(random.uniform(self.world.slower_min, self.world.slower_max));
             self.type.append("static")
 
-        self.pubTraj = rospy.Publisher('/trajs', DynTraj, queue_size=1, latch=True)
+        self.pubTraj = rospy.Publisher('/trajs_obstacles', DynTraj, queue_size=1, latch=True)
         self.pubShapes_static = rospy.Publisher('/shapes_static', Marker, queue_size=1, latch=True)
         self.pubShapes_dynamic = rospy.Publisher('/shapes_dynamic', Marker, queue_size=1, latch=True)
         self.timer = rospy.Timer(rospy.Duration(0.001), self.pubTF)

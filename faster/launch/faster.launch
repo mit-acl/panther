@@ -10,22 +10,26 @@
 
         <!-- Subscriptions -->
 		<remap from="~state" to="state"/>
-		<remap from="~term_goal" to="term_goal" /> <!--/move_base_simple/goal -->
-		<remap from="~occup_grid" to="global_mapper_ros/occupancy_grid"/> <!--PointCloud of the occupancy grid-->
-		<remap from="~unknown_grid" to="global_mapper_ros/unknown_grid"/> <!--PointCloud of the unknown map-->
-		<remap from="~pcloud" to="camera/cloud"/> <!--HARDWARE:    camera/depth/color/points, SIMULATION:  camera/cloud -->
-		<!-- <remap from="~odom" to="odometry/local_filtered"/> -->
+		<remap from="~term_goal" to="term_goal" />
 
 		<!-- Publications -->
 		<remap from="~traj" to="traj"/>
 		<remap from="~goal" to="$(arg goal_topic)" />
 		<remap from="~setpoint" to="setpoint" />
-        <remap from="~log_topic" to="log_topic" />
+    <remap from="~log_topic" to="log_topic" />
 
-		<!-- <remap from="~goal_jackal" to="jackal_velocity_controller/cmd_vel" /> -->
-		<!-- <remap from="~goal_jackal" to="autonomous_cmd_vel" /> -->		
+
 
 	</node>
+
+	<node ns="$(arg quad)" name="predictor" pkg="faster" type="predictor_node" output="screen" clear_params="true" > 
+		<rosparam file="$(find faster)/param/faster.yaml" command="load" ns="faster"/>
+
+		<remap from="~state" to="state"/>
+
+
+	</node>
+
 
 	 <node ns="$(arg quad)" pkg="jsk_rviz_plugins"
         type="rosconsole_overlay_text.py"

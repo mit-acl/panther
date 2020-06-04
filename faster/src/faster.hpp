@@ -71,7 +71,7 @@ public:
   void resetInitialization();
 
   bool IsTranslating();
-  void updateTrajObstacles(dynTraj traj);
+  void updateTrajs(PieceWisePolWithInfo& pwp_with_info);
 
 private:
   state M_;
@@ -87,22 +87,24 @@ private:
   JPS_Manager jps_manager_;      // Manager of JPS
   JPS_Manager jps_manager_dyn_;  // Manager of JPS
 
+  Eigen::Matrix<double, 3, 4> getVgivenP(const Eigen::Matrix<double, 3, 4> P);
+
   void dynTraj2dynTrajCompiled(dynTraj& traj, dynTrajCompiled& traj_compiled);
 
   bool initializedStateAndTermGoal();
 
   bool safetyCheckAfterOpt(PieceWisePol pwp_optimized);
 
-  bool trajsAndPwpAreInCollision(dynTrajCompiled traj, PieceWisePol pwp_optimized, double t_init, double t_end);
+  bool twoPwpAreInCollision(PieceWisePol& pwp1, PieceWisePol& pwp2, double t_init, double t_end);
 
   void removeTrajsThatWillNotAffectMe(const state& A, double t_start, double t_end);
 
   /*  vec_E<Polyhedron<3>> vectorGCALPol2vectorJPSPol(ConvexHullsOfCurves& convex_hulls_of_curves);
     ConvexHullsOfCurves_Std vectorGCALPol2vectorStdEigen(ConvexHullsOfCurves& convexHulls);*/
   ConvexHullsOfCurves convexHullsOfCurves(double t_start, double t_end);
-  ConvexHullsOfCurve convexHullsOfCurve(dynTrajCompiled& traj, double t_start, double t_end);
+  ConvexHullsOfCurve convexHullsOfCurve(PieceWisePolWithInfo& traj, double t_start, double t_end);
 
-  CGAL_Polyhedron_3 convexHullOfInterval(dynTrajCompiled& traj, double t_start, double t_end);
+  CGAL_Polyhedron_3 convexHullOfInterval(PieceWisePolWithInfo& traj, double t_start, double t_end);
 
   void yaw(double diff, state& next_goal);
 
@@ -118,7 +120,7 @@ private:
 
   void updateInitialCond(int i);
 
-  void createObstacleMapFromTrajs(double t_min, double t_max);
+  // void createObstacleMapFromTrajs(double t_min, double t_max);
 
   void changeDroneStatus(int new_status);
 
@@ -149,7 +151,7 @@ private:
   double t_;  // variable where the expressions of the trajs of the dyn obs are evaluated
 
   std::mutex mtx_trajs_;
-  std::vector<dynTrajCompiled> trajs_;
+  std::vector<PieceWisePolWithInfo> trajs_;
 
   // SeedDecomp3D seed_decomp_util_;
 
@@ -259,6 +261,8 @@ private:
   double time_init_opt_;
 
   double av_improvement_nlopt_ = 0.0;
+
+  Eigen::Matrix<double, 4, 4> A_;
 };
 
 #endif

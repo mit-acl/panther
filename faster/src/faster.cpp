@@ -100,6 +100,39 @@ Faster::Faster(parameters par) : par_(par)
     std::cout << "==============================================" << std::endl;
   }
 
+  //////////////////////////////
+  // P=V*A  Note that here A is in the interval [0,1]
+  if (par_.basis == "MINVO")
+  {
+    A_ << -3.4416, 6.9895, -4.4623, 0.9144,  /////////////////
+        6.6793, -11.8460, 5.2524, 0,         /////////////////
+        -6.6793, 8.1918, -1.5982, 0.0856,    /////////////////
+        3.4416, -3.3353, 0.8081, -0.0000;    /////////////////
+  }
+  else if (par_.basis == "BEZIER")
+  {
+    A_ << -1, 3, -3, 1,  /////////////////
+        3, -6, 3, 0,     /////////////////
+        -3, 3, 0, 0,     /////////////////
+        1, 0, 0, 0;      /////////////////
+  }
+  else if (par_.basis == "B_SPLINE")
+  {
+    A_ << -1, 3, -3, 1,  /////////////////
+        3, -6, 0, 4,     /////////////////
+        -3, 3, 3, 1,     /////////////////
+        1, 0, 0, 0;      /////////////////
+
+    A_ = A_ * (1 / 6.0);
+  }
+  else
+  {
+    std::cout << red << bold << "Basis not implemented" << std::endl;
+    std::cout << "=============================" << std::endl;
+    abort();
+  }
+  //////////////////////////////
+
   changeDroneStatus(DroneStatus::GOAL_REACHED);
   resetInitialization();
 }
@@ -134,34 +167,31 @@ void Faster::dynTraj2dynTrajCompiled(dynTraj& traj, dynTrajCompiled& traj_compil
       (traj.function[2].find("t") == std::string::npos);    // there is no dependence on t in the coordinate z
 }
 // Note that we need to compile the trajectories inside faster.cpp because t_ is in faster.hpp
-void Faster::updateTrajObstacles(dynTraj traj)
+void Faster::updateTrajs(PieceWisePolWithInfo& pwp_with_info)
 {
   MyTimer tmp_t(true);
 
-  if (started_check_ == true && traj.is_agent == true)
+  if (started_check_ == true && pwp_with_info.is_agent == true)
   {
     have_received_trajectories_while_checking_ = true;
   }
 
   mtx_trajs_.lock();
 
-  std::vector<dynTrajCompiled>::iterator obs_ptr = std::find_if(
-      trajs_.begin(), trajs_.end(), [=](const dynTrajCompiled& traj_compiled) { return traj_compiled.id == traj.id; });
+  std::vector<PieceWisePolWithInfo>::iterator obs_ptr = std::find_if(
+      trajs_.begin(), trajs_.end(), [=](const PieceWisePolWithInfo& tmp) { return tmp.id == pwp_with_info.id; });
 
   bool exists_in_local_map = (obs_ptr != std::end(trajs_));
-
-  dynTrajCompiled traj_compiled;
-  dynTraj2dynTrajCompiled(traj, traj_compiled);
 
   if (exists_in_local_map)
   {  // if that object already exists, substitute its trajectory
     // std::cout << red << "Updating " << traj_compiled.id << " at t=" << std::setprecision(12) << traj.time_received
     //           << reset << std::endl;
-    *obs_ptr = traj_compiled;
+    *obs_ptr = pwp_with_info;
   }
   else
   {  // if it doesn't exist, add it to the local map
-    trajs_.push_back(traj_compiled);
+    trajs_.push_back(pwp_with_info);
     // ROS_WARN_STREAM("Adding " << traj_compiled.id);
     // std::cout << red << "Adding " << traj_compiled.id << " at t=" << std::setprecision(12) << traj.time_received
     //           << reset << std::endl;
@@ -177,10 +207,7 @@ void Faster::updateTrajObstacles(dynTraj traj)
 
     t_ = ros::Time::now().toSec();
 
-    Eigen::Vector3d center_obs;
-    center_obs << trajs_[index_traj].function[0].value(),  ////////////////////
-        trajs_[index_traj].function[1].value(),            ////////////////
-        trajs_[index_traj].function[2].value();            /////////////////
+    Eigen::Vector3d center_obs = pwp_with_info.pwp.eval(t_);
 
     if ((center_obs - state_.pos).norm() > par_.R_local_map)
     {
@@ -194,37 +221,9 @@ void Faster::updateTrajObstacles(dynTraj traj)
     // ROS_WARN_STREAM("Removing " << id);
 
     trajs_.erase(
-        std::remove_if(trajs_.begin(), trajs_.end(), [&](dynTrajCompiled const& traj) { return traj.id == id; }),
+        std::remove_if(trajs_.begin(), trajs_.end(), [&](PieceWisePolWithInfo const& tmp) { return tmp.id == id; }),
         trajs_.end());
   }
-
-  // First let's check if the object is near me:
-  // if (near_me)
-  // {
-  // }
-  // else  // not near me
-  // {
-  //   int distance =
-
-  //       if (exists_in_local_map && ((par_.impose_fov == true && in_local_map == false) || (par_.impose_fov ==
-  //       false)))
-  //   {  // remove
-  //     trajs_.erase(obs_ptr);
-  //     std::cout << red << "Erasing " << (*obs_ptr).id << " at t=" << std::setprecision(12) << traj.time_received
-  //               << reset << std::endl;
-  //   }
-  //   else
-  //   {
-  //     // if it doesn't exist, don't do anything
-  //     // don't erase from trajs (but it hasn't been updated \implies it is local map)
-  //   }
-
-  //   // if (exists)  // remove if from the list if it exists
-  //   // {
-  //   //   trajs_.erase(obs_ptr);
-  //   //   std::cout << red << "Erasing " << (*obs_ptr).id << " at t=" << std::setprecision(12) << traj.time_received
-  //   //             << reset << std::endl;
-  //   // }
 
   /// Debugging
   /*  std::cout << "[FA] Ids que tengo:" << std::endl;
@@ -239,75 +238,184 @@ void Faster::updateTrajObstacles(dynTraj traj)
   // std::cout << bold << blue << "updateTrajObstacles took " << tmp_t << reset << std::endl;
 }
 
-// See https://doc.cgal.org/Manual/3.7/examples/Convex_hull_3/quickhull_3.cpp
-CGAL_Polyhedron_3 Faster::convexHullOfInterval(dynTrajCompiled& traj, double t_start, double t_end)
+Eigen::Matrix<double, 3, 4> Faster::getVgivenP(const Eigen::Matrix<double, 3, 4> P)
 {
-  int samples_per_interval = std::max(par_.samples_per_interval, 4);  // at least 4 samples per interval
-  double inc = (t_end - t_start) / (1.0 * (samples_per_interval - 1));
+  return P * (A_.inverse());  // TODO store A_.inverse() in the constructor, to avoid repeating this
+}
 
+// See https://doc.cgal.org/Manual/3.7/examples/Convex_hull_3/quickhull_3.cpp
+CGAL_Polyhedron_3 Faster::convexHullOfInterval(PieceWisePolWithInfo& traj, double t_start, double t_end)
+{
   std::vector<Point_3> points;
+
+  ////////////////////////////
+  Eigen::Vector3d traj_bbox_with_uncertainty;
+
+  if (traj.is_agent)
+  {
+    traj_bbox_with_uncertainty = traj.bbox;
+  }
+  else
+  {
+    if (traj.is_static)
+    {  // static obstacle
+      traj_bbox_with_uncertainty = par_.beta * traj.bbox;
+    }
+    else
+    {  // dynamic obstacle
+      traj_bbox_with_uncertainty =
+          par_.beta * traj.bbox + par_.gamma * (t_end - time_init_opt_) *
+                                      Eigen::Vector3d::Ones();  // note that by using t_end, we are taking the
+                                                                // highest uncertainty within that interval
+    }
+  }
 
   double side_box_drone = (2 * par_.drone_radius);
 
-  // Will always have a sample at the beginning of the interval, and another at the end.
-  for (int i = 0; i < samples_per_interval; i++)
+  ////////////////////////////
+
+  Eigen::Matrix<double, 3, 4> V;
+
+  for (int i = 0; i < (traj.pwp.times.size() - 1); i++)
   {
-    // Trefoil knot, https://en.wikipedia.org/wiki/Trefoil_knot
-    t_ = t_start + i * inc;
-    // std::cout << "calling value(), traj_compiled.function.size()= " << traj.function.size() << std::endl;
+    double ti = traj.pwp.times[i];
+    double tiP1 = traj.pwp.times[i + 1];
+    double delta = tiP1 - ti;
 
-    double x = traj.function[0].value();  //    sin(t) + 2 * sin(2 * t);
-    double y = traj.function[1].value();  // cos(t) - 2 * cos(2 * t);
-    double z = traj.function[2].value();  //-sin(3 * t);
-
-    Eigen::Vector3d traj_bbox_with_uncertainty;
-
-    if (traj.is_agent)
+    if (ti >= t_start)
     {
-      traj_bbox_with_uncertainty = traj.bbox;
+      continue;
+    }
+    else if (ti >= t_end)
+    {
+      break;
     }
     else
     {
-      if (traj.is_static)
-      {  // static obstacle
-        traj_bbox_with_uncertainty = par_.beta * traj.bbox;
-      }
-      else
-      {  // dynamic obstacle
-        traj_bbox_with_uncertainty =
-            par_.beta * traj.bbox + par_.gamma * (t_end - time_init_opt_) *
-                                        Eigen::Vector3d::Ones();  // note that by using t_end, we are taking the
-                                                                  // highest uncertainty within that interval
-      }
+      Eigen::Matrix<double, 4, 1> coeff_old_x = traj.pwp.coeff_x[i];
+      Eigen::Matrix<double, 4, 1> coeff_old_y = traj.pwp.coeff_y[i];
+      Eigen::Matrix<double, 4, 1> coeff_old_z = traj.pwp.coeff_z[i];
+
+      Eigen::Matrix<double, 4, 1> coeff_new_x, coeff_new_y, coeff_new_z;
+
+      double t0 = (std::max(t_start, ti) - ti) / delta;  // \in [0,1]
+      double tf = (std::min(t_end, tiP1) - ti) / delta;  // \in [0,1]
+
+      // rescale the coefficients (to split the interval). Will only have effect if t0>0 and/or tf<1
+      rescaleCoeffPol(coeff_old_x, coeff_new_x, t0, tf);
+      rescaleCoeffPol(coeff_old_y, coeff_new_y, t0, tf);
+      rescaleCoeffPol(coeff_old_z, coeff_new_z, t0, tf);
+
+      Eigen::Matrix<double, 3, 4> P;
+      P << coeff_new_x.transpose(), coeff_new_y.transpose(), coeff_new_z.transpose();
+
+      V = getVgivenP(P);
     }
 
-    double delta_x = (traj_bbox_with_uncertainty(0) / 2.0) + (side_box_drone / 2.0);
-    double delta_y = (traj_bbox_with_uncertainty(1) / 2.0) + (side_box_drone / 2.0);
-    double delta_z = (traj_bbox_with_uncertainty(2) / 2.0) + (side_box_drone / 2.0);
+    // Each column of V is a control point
 
-    //"Minkowski sum along the trajectory: box centered on the trajectory"
+    // For every control point, we put a box to inflate the obstacle
+    for (int j = 0; j < V.cols(); j++)
+    {
+      Eigen::Vector3d control_point = V.col(j);
 
-    Point_3 p0(x + delta_x, y + delta_y, z + delta_z);
-    Point_3 p1(x + delta_x, y - delta_y, z - delta_z);
-    Point_3 p2(x + delta_x, y + delta_y, z - delta_z);
-    Point_3 p3(x + delta_x, y - delta_y, z + delta_z);
+      double x = control_point.x();
+      double y = control_point.y();
+      double z = control_point.z();
 
-    Point_3 p4(x - delta_x, y - delta_y, z - delta_z);
-    Point_3 p5(x - delta_x, y + delta_y, z + delta_z);
-    Point_3 p6(x - delta_x, y + delta_y, z - delta_z);
-    Point_3 p7(x - delta_x, y - delta_y, z + delta_z);
+      double delta_x = (traj_bbox_with_uncertainty(0) / 2.0) + (side_box_drone / 2.0);
+      double delta_y = (traj_bbox_with_uncertainty(1) / 2.0) + (side_box_drone / 2.0);
+      double delta_z = (traj_bbox_with_uncertainty(2) / 2.0) + (side_box_drone / 2.0);
 
-    points.push_back(p0);
-    points.push_back(p1);
-    points.push_back(p2);
-    points.push_back(p3);
-    points.push_back(p4);
-    points.push_back(p5);
-    points.push_back(p6);
-    points.push_back(p7);
+      //"Minkowski sum along the trajectory: box centered on the trajectory"
+
+      Point_3 p0(x + delta_x, y + delta_y, z + delta_z);
+      Point_3 p1(x + delta_x, y - delta_y, z - delta_z);
+      Point_3 p2(x + delta_x, y + delta_y, z - delta_z);
+      Point_3 p3(x + delta_x, y - delta_y, z + delta_z);
+
+      Point_3 p4(x - delta_x, y - delta_y, z - delta_z);
+      Point_3 p5(x - delta_x, y + delta_y, z + delta_z);
+      Point_3 p6(x - delta_x, y + delta_y, z - delta_z);
+      Point_3 p7(x - delta_x, y - delta_y, z + delta_z);
+
+      points.push_back(p0);
+      points.push_back(p1);
+      points.push_back(p2);
+      points.push_back(p3);
+      points.push_back(p4);
+      points.push_back(p5);
+      points.push_back(p6);
+      points.push_back(p7);
+    }
   }
 
   CGAL_Polyhedron_3 poly = convexHullOfPoints(points);
+
+  // int samples_per_interval = std::max(par_.samples_per_interval, 4);  // at least 4 samples per interval
+  // double inc = (t_end - t_start) / (1.0 * (samples_per_interval - 1));
+
+  // double side_box_drone = (2 * par_.drone_radius);
+
+  // // Will always have a sample at the beginning of the interval, and another at the end.
+  // for (int i = 0; i < samples_per_interval; i++)
+  // {
+  //   // Trefoil knot, https://en.wikipedia.org/wiki/Trefoil_knot
+  //   t_ = t_start + i * inc;
+  //   // std::cout << "calling value(), traj_compiled.function.size()= " << traj.function.size() << std::endl;
+
+  //   double x = traj.function[0].value();  //    sin(t) + 2 * sin(2 * t);
+  //   double y = traj.function[1].value();  // cos(t) - 2 * cos(2 * t);
+  //   double z = traj.function[2].value();  //-sin(3 * t);
+
+  //   Eigen::Vector3d traj_bbox_with_uncertainty;
+
+  //   if (traj.is_agent)
+  //   {
+  //     traj_bbox_with_uncertainty = traj.bbox;
+  //   }
+  //   else
+  //   {
+  //     if (traj.is_static)
+  //     {  // static obstacle
+  //       traj_bbox_with_uncertainty = par_.beta * traj.bbox;
+  //     }
+  //     else
+  //     {  // dynamic obstacle
+  //       traj_bbox_with_uncertainty =
+  //           par_.beta * traj.bbox + par_.gamma * (t_end - time_init_opt_) *
+  //                                       Eigen::Vector3d::Ones();  // note that by using t_end, we are taking the
+  //                                                                 // highest uncertainty within that interval
+  //     }
+  //   }
+
+  //   double delta_x = (traj_bbox_with_uncertainty(0) / 2.0) + (side_box_drone / 2.0);
+  //   double delta_y = (traj_bbox_with_uncertainty(1) / 2.0) + (side_box_drone / 2.0);
+  //   double delta_z = (traj_bbox_with_uncertainty(2) / 2.0) + (side_box_drone / 2.0);
+
+  //   //"Minkowski sum along the trajectory: box centered on the trajectory"
+
+  //   Point_3 p0(x + delta_x, y + delta_y, z + delta_z);
+  //   Point_3 p1(x + delta_x, y - delta_y, z - delta_z);
+  //   Point_3 p2(x + delta_x, y + delta_y, z - delta_z);
+  //   Point_3 p3(x + delta_x, y - delta_y, z + delta_z);
+
+  //   Point_3 p4(x - delta_x, y - delta_y, z - delta_z);
+  //   Point_3 p5(x - delta_x, y + delta_y, z + delta_z);
+  //   Point_3 p6(x - delta_x, y + delta_y, z - delta_z);
+  //   Point_3 p7(x - delta_x, y - delta_y, z + delta_z);
+
+  //   points.push_back(p0);
+  //   points.push_back(p1);
+  //   points.push_back(p2);
+  //   points.push_back(p3);
+  //   points.push_back(p4);
+  //   points.push_back(p5);
+  //   points.push_back(p6);
+  //   points.push_back(p7);
+  // }
+
+  // CGAL_Polyhedron_3 poly = convexHullOfPoints(points);
 
   return poly;
 }
@@ -327,10 +435,7 @@ void Faster::removeTrajsThatWillNotAffectMe(const state& A, double t_start, doub
     {
       t_ = t_start + i * inc;
 
-      Eigen::Vector3d center_obs;
-      center_obs << trajs_[index_traj].function[0].value(),  ////////////////////
-          trajs_[index_traj].function[1].value(),            ////////////////
-          trajs_[index_traj].function[2].value();            /////////////////
+      Eigen::Vector3d center_obs = trajs_[index_traj].pwp.eval(t_);
 
       Eigen::Vector3d positive_half_diagonal;
       positive_half_diagonal << trajs_[index_traj].bbox[0] / 2.0,  //////////////////
@@ -365,7 +470,7 @@ void Faster::removeTrajsThatWillNotAffectMe(const state& A, double t_start, doub
   {
     // ROS_INFO_STREAM("traj " << id << " doesn't affect me");
     trajs_.erase(
-        std::remove_if(trajs_.begin(), trajs_.end(), [&](dynTrajCompiled const& traj) { return traj.id == id; }),
+        std::remove_if(trajs_.begin(), trajs_.end(), [&](PieceWisePolWithInfo const& tmp) { return tmp.id == id; }),
         trajs_.end());
   }
 
@@ -382,7 +487,7 @@ bool Faster::IsTranslating()
   return (drone_status_ == DroneStatus::GOAL_SEEN || drone_status_ == DroneStatus::TRAVELING);
 }
 
-ConvexHullsOfCurve Faster::convexHullsOfCurve(dynTrajCompiled& traj, double t_start, double t_end)
+ConvexHullsOfCurve Faster::convexHullsOfCurve(PieceWisePolWithInfo& traj, double t_start, double t_end)
 {
   ConvexHullsOfCurve convexHulls;
 
@@ -860,52 +965,58 @@ bool Faster::initialized()
 }
 
 // check wheter a dynTrajCompiled and a pwp_optimized are in collision in the interval [t_init, t_end]
-bool Faster::trajsAndPwpAreInCollision(dynTrajCompiled traj, PieceWisePol pwp_optimized, double t_init, double t_end)
-{
-  int samples_per_traj = 10;
-  double inc = (t_end - t_init) / samples_per_traj;
-  for (int i = 0; i < samples_per_traj; i++)
-  {
-    t_ = t_init + i * inc;
 
-    Eigen::Vector3d pos_1;
-    pos_1 << traj.function[0].value(),  ////////////////////
-        traj.function[1].value(),       ////////////////
-        traj.function[2].value();       /////////////////
+//////////////////////// TODO
 
-    Eigen::Vector3d pos_2 = pwp_optimized.eval(t_);
+// bool Faster::twoPwpAreInCollision(PieceWisePol& pwp1, PieceWisePol& pwp2, double t_init, double t_end)
+// {
+//   int samples_per_traj = 10;
+//   double inc = (t_end - t_init) / samples_per_traj;
+//   for (int i = 0; i < samples_per_traj; i++)
+//   {
+//     t_ = t_init + i * inc;
 
-    double side_box_drone = (2 * par_.drone_radius);
+//     Eigen::Vector3d pos_1;
+//     pos_1 << traj.function[0].value(),  ////////////////////
+//         traj.function[1].value(),       ////////////////
+//         traj.function[2].value();       /////////////////
 
-    Eigen::Vector3d positive_half_diagonal1;
-    positive_half_diagonal1 << traj.bbox[0] / 2.0, traj.bbox[1] / 2.0, traj.bbox[2] / 2.0;
-    Eigen::Vector3d min1 = pos_1 - positive_half_diagonal1;
-    Eigen::Vector3d max1 = pos_1 + positive_half_diagonal1;
+//     Eigen::Vector3d pos_2 = pwp_optimized.eval(t_);
 
-    Eigen::Vector3d positive_half_diagonal2;
-    positive_half_diagonal2 << side_box_drone / 2.0, side_box_drone / 2.0, side_box_drone / 2.0;
-    Eigen::Vector3d min2 = pos_2 - positive_half_diagonal2;
-    Eigen::Vector3d max2 = pos_2 + positive_half_diagonal2;
+//     double side_box_drone = (2 * par_.drone_radius);
 
-    // Now check if the two bounding boxes overlap
-    // https://stackoverflow.com/questions/20925818/algorithm-to-check-if-two-boxes-overlap
-    if (min1.x() <= max2.x() && min2.x() <= max1.x() &&  /////////////////////
-        min1.y() <= max2.y() && min2.y() <= max1.y() &&  /////////////////////
-        min1.z() <= max2.z() && min2.z() <= max1.z())
-    {
-      // std::cout << bold << blue << "These two bounding boxes overlap" << reset << std::endl;
-      // std::cout << "1 pos and diagonal:" << std::endl;
-      // std::cout << bold << blue << pos_1.transpose() << reset << std::endl;
-      // std::cout << bold << blue << positive_half_diagonal1.transpose() << reset << std::endl;
-      // std::cout << "2 pos and diagonal:" << std::endl;
-      // std::cout << bold << blue << pos_2.transpose() << reset << std::endl;
-      // std::cout << bold << blue << positive_half_diagonal2.transpose() << reset << std::endl;
-      return true;  // the two bounding boxes overlap
-    }
-  }
+//     Eigen::Vector3d positive_half_diagonal1;
+//     positive_half_diagonal1 << traj.bbox[0] / 2.0, traj.bbox[1] / 2.0, traj.bbox[2] / 2.0;
+//     Eigen::Vector3d min1 = pos_1 - positive_half_diagonal1;
+//     Eigen::Vector3d max1 = pos_1 + positive_half_diagonal1;
 
-  return false;
-}
+//     Eigen::Vector3d positive_half_diagonal2;
+//     positive_half_diagonal2 << side_box_drone / 2.0, side_box_drone / 2.0, side_box_drone / 2.0;
+//     Eigen::Vector3d min2 = pos_2 - positive_half_diagonal2;
+//     Eigen::Vector3d max2 = pos_2 + positive_half_diagonal2;
+
+//     // Now check if the two bounding boxes overlap
+//     // https://stackoverflow.com/questions/20925818/algorithm-to-check-if-two-boxes-overlap
+//     if (min1.x() <= max2.x() && min2.x() <= max1.x() &&  /////////////////////
+//         min1.y() <= max2.y() && min2.y() <= max1.y() &&  /////////////////////
+//         min1.z() <= max2.z() && min2.z() <= max1.z())
+//     {
+//       // std::cout << bold << blue << "These two bounding boxes overlap" << reset << std::endl;
+//       // std::cout << "1 pos and diagonal:" << std::endl;
+//       // std::cout << bold << blue << pos_1.transpose() << reset << std::endl;
+//       // std::cout << bold << blue << positive_half_diagonal1.transpose() << reset << std::endl;
+//       // std::cout << "2 pos and diagonal:" << std::endl;
+//       // std::cout << bold << blue << pos_2.transpose() << reset << std::endl;
+//       // std::cout << bold << blue << positive_half_diagonal2.transpose() << reset << std::endl;
+//       return true;  // the two bounding boxes overlap
+//     }
+//   }
+
+//   return false;
+// }
+
+////////////////////////
+
 // Checks that I have not received new trajectories that affect me while doing the optimization
 bool Faster::safetyCheckAfterOpt(PieceWisePol pwp_optimized)
 {
@@ -917,15 +1028,16 @@ bool Faster::safetyCheckAfterOpt(PieceWisePol pwp_optimized)
   {
     if (traj.time_received > time_init_opt_ && traj.is_agent == true)
     {
-      if (trajsAndPwpAreInCollision(traj, pwp_optimized, pwp_optimized.times.front(), pwp_optimized.times.back()))
-      {
-        ROS_ERROR_STREAM("Traj collides with " << traj.id);
+      //////////////////////////////////////////TODO!!! (2 June 2020)
+      // if (twoPwpAreInCollision(traj, pwp_optimized, pwp_optimized.times.front(), pwp_optimized.times.back()))
+      // {
+      //   ROS_ERROR_STREAM("Traj collides with " << traj.id);
 
-        std::cout << "My traj collides with traj of " << traj.id << ", received at " << std::setprecision(12)
-                  << traj.time_received << ", opt at " << time_init_opt_ << reset << std::endl;
-        result = false;  // will have to redo the optimization
-        break;
-      }
+      //   std::cout << "My traj collides with traj of " << traj.id << ", received at " << std::setprecision(12)
+      //             << traj.time_received << ", opt at " << time_init_opt_ << reset << std::endl;
+      //   result = false;  // will have to redo the optimization
+      //   break;
+      // }
     }
   }
 
@@ -1442,8 +1554,6 @@ bool Faster::replan(vec_Vecf<3>& JPS_safe_out, vec_Vecf<3>& JPS_whole_out, faste
 
   // std::cout << "Below of loop\n";
 
-  /////// END OF DEBUGGING
-
   std::vector<state> dummy_vector;
   dummy_vector.push_back(A);
   // sg_whole_.X_temp_ = dummy_vector;
@@ -1576,31 +1686,31 @@ inline T eval_x(PieceWisePol piecewisepol, double t)
   return x;
 }*/
 
-void Faster::createObstacleMapFromTrajs(double t_min, double t_max)
-{
-  jps_manager_dyn_.createNewMap(state_.pos);
+// void Faster::createObstacleMapFromTrajs(double t_min, double t_max)
+// {
+//   jps_manager_dyn_.createNewMap(state_.pos);
 
-  int number_of_samples = 10;
+//   int number_of_samples = 10;
 
-  for (auto traj : trajs_)
-  {
-    pcl::PointCloud<pcl::PointXYZ>::Ptr tmp(new pcl::PointCloud<pcl::PointXYZ>);
-    tmp->width = number_of_samples;  // number of samples
-    tmp->height = 1;
-    tmp->points.resize(tmp->width * tmp->height);
+//   for (auto traj : trajs_)
+//   {
+//     pcl::PointCloud<pcl::PointXYZ>::Ptr tmp(new pcl::PointCloud<pcl::PointXYZ>);
+//     tmp->width = number_of_samples;  // number of samples
+//     tmp->height = 1;
+//     tmp->points.resize(tmp->width * tmp->height);
 
-    for (int j = 0; j < number_of_samples; j++)
-    {
-      t_ = t_min + j * (t_max - t_min) / (1.0 * number_of_samples);
+//     for (int j = 0; j < number_of_samples; j++)
+//     {
+//       t_ = t_min + j * (t_max - t_min) / (1.0 * number_of_samples);
 
-      tmp->points[j].x = traj.function[0].value();
-      tmp->points[j].y = traj.function[1].value();
-      tmp->points[j].z = traj.function[2].value();
-    }
+//       tmp->points[j].x = traj.function[0].value();
+//       tmp->points[j].y = traj.function[1].value();
+//       tmp->points[j].z = traj.function[2].value();
+//     }
 
-    jps_manager_dyn_.addToMap(tmp, traj.bbox[0] / 2.0 + 0, traj.bbox[1] / 2.0 + 0, traj.bbox[2] / 2.0 + 0);
-  }
-}
+//     jps_manager_dyn_.addToMap(tmp, traj.bbox[0] / 2.0 + 0, traj.bbox[1] / 2.0 + 0, traj.bbox[2] / 2.0 + 0);
+//   }
+// }
 
 void Faster::resetInitialization()
 {

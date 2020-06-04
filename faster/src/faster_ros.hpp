@@ -31,6 +31,9 @@
 #include "faster.hpp"
 #include "faster_types.hpp"
 
+#include <faster_msgs/PieceWisePolTraj.h>
+#include <faster_msgs/CoeffPoly3.h>
+
 #define WHOLE 1  // Whole trajectory (part of which is planned on unkonwn space)
 #define SAFE 2   // Safe path
 #define COMMITTED_COLORED 3
@@ -43,17 +46,6 @@
 #define JPS_SAFE 4
 
 namespace rvt = rviz_visual_tools;
-
-template <typename T>
-inline bool safeGetParam(ros::NodeHandle& nh, std::string const& param_name, T& param_value)
-{
-  if (!nh.getParam(param_name, param_value))
-  {
-    ROS_ERROR("Failed to find parameter: %s", nh.resolveName(param_name, true).c_str());
-    exit(1);
-  }
-  return true;
-}
 
 //####Class CVX
 class FasterRos
@@ -78,7 +70,7 @@ private:
   void modeCB(const faster_msgs::Mode& msg);
   void pubCB(const ros::TimerEvent& e);
   void replanCB(const ros::TimerEvent& e);
-  void trajCB(const faster_msgs::DynTraj& msg);
+  void trajCB(const faster_msgs::PieceWisePolTraj& msg);
 
   visualization_msgs::Marker createMarkerLineStrip(Eigen::MatrixXd X);
   // void clearMarkerSetOfArrows();
