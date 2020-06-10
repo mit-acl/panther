@@ -420,14 +420,14 @@ bool SplineAStar::computeUpperAndLowerConstraints(const int i, const Eigen::Vect
   // Vbs_firstblock.block(0, 1, 3, 1) = viM1;
   // Eigen::Matrix<double, 3, 3> tmp = Vbs_firstblock * M_interv.block(0, 0, 2, 3);
 
-  // std::cout << bold << "***************************" << reset << std::endl;
-
-  // std::cout << "viM2= " << viM2.transpose() << std::endl;
-  // std::cout << "viM1= " << viM1.transpose() << std::endl;
-  // std::cout << "Vbs_firstblock= " << Vbs_firstblock << std::endl;
-  // std::cout << "M_interv.block(0, 0, 2, 3)= \n" << M_interv.block(0, 0, 2, 3) << std::endl;
-  // std::cout << " tmp is " << std::endl;
-  // std::cout << tmp << std::endl;
+  // // std::cout << bold << "***************************" << reset << std::endl;
+  // //
+  // // std::cout << "viM2= " << viM2.transpose() << std::endl;
+  // // std::cout << "viM1= " << viM1.transpose() << std::endl;
+  // // std::cout << "Vbs_firstblock= " << Vbs_firstblock << std::endl;
+  // // std::cout << "M_interv.block(0, 0, 2, 3)= \n" << M_interv.block(0, 0, 2, 3) << std::endl;
+  // // std::cout << " tmp is " << std::endl;
+  // // std::cout << tmp << std::endl;
 
   // double vi_x_lower_bound = -std::numeric_limits<double>::max();
   // double vi_x_upper_bound = std::numeric_limits<double>::max();
@@ -441,21 +441,21 @@ bool SplineAStar::computeUpperAndLowerConstraints(const int i, const Eigen::Vect
   // // For x
   // for (int j = 0; j < 3; j++)  // For the three velocity control points
   // {
-  //   std::cout << "_________" << std::endl;
+  //   // std::cout << "_________" << std::endl;
   //   double vi_bound1 = (v_max_.x() - tmp(0, j)) / M_interv(2, j);
   //   double vi_bound2 = (-v_max_.x() - tmp(0, j)) / M_interv(2, j);
-  //   std::cout << "v_max_.x()= " << v_max_.x() << std::endl;
-  //   std::cout << "tmp(0, j)= " << tmp(0, j) << std::endl;
-  //   std::cout << "Mvel_bs2basis_(2, j)= " << M_interv(2, j) << std::endl;
-  //   std::cout << "vi_bound1= " << vi_bound1 << std::endl;
-  //   std::cout << "vi_bound2= " << vi_bound2 << std::endl;
+  //   // std::cout << "v_max_.x()= " << v_max_.x() << std::endl;
+  //   // std::cout << "tmp(0, j)= " << tmp(0, j) << std::endl;
+  //   // std::cout << "Mvel_bs2basis_(2, j)= " << M_interv(2, j) << std::endl;
+  //   // std::cout << "vi_bound1= " << vi_bound1 << std::endl;
+  //   // std::cout << "vi_bound2= " << vi_bound2 << std::endl;
   //   vi_x_lower_bound = std::max(std::min(vi_bound1, vi_bound2), vi_x_lower_bound);
   //   vi_x_upper_bound = std::min(std::max(vi_bound1, vi_bound2), vi_x_upper_bound);
-  //   std::cout << "vi_x_lower_bound= " << vi_x_lower_bound << std::endl;
-  //   std::cout << "vi_x_upper_bound= " << vi_x_upper_bound << std::endl;
+  //   // std::cout << "vi_x_lower_bound= " << vi_x_lower_bound << std::endl;
+  //   // std::cout << "vi_x_upper_bound= " << vi_x_upper_bound << std::endl;
   // }
 
-  // std::cout << "vi_x_lower_bound= " << vi_x_lower_bound << ", vi_x_upper_bound" << vi_x_upper_bound << std::endl;
+  // // std::cout << "vi_x_lower_bound= " << vi_x_lower_bound << ", vi_x_upper_bound" << vi_x_upper_bound << std::endl;
 
   // // For y
   // for (int j = 0; j < 3; j++)  // For the three velocity control points
@@ -466,8 +466,8 @@ bool SplineAStar::computeUpperAndLowerConstraints(const int i, const Eigen::Vect
   //   vi_y_upper_bound = std::min(std::max(vi_bound1, vi_bound2), vi_x_upper_bound);
   // }
 
-  // std::cout << "vi_y_lower_bound= " << vi_y_lower_bound << std::endl;
-  // std::cout << "vi_y_upper_bound= " << vi_y_upper_bound << std::endl;
+  // // std::cout << "vi_y_lower_bound= " << vi_y_lower_bound << std::endl;
+  // // std::cout << "vi_y_upper_bound= " << vi_y_upper_bound << std::endl;
 
   // // For z
   // for (int j = 0; j < 3; j++)  // For the three velocity control points

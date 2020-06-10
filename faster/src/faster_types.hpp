@@ -1,4 +1,6 @@
 #pragma once
+#ifndef FASTER_TYPES_HPP
+#define FASTER_TYPES_HPP
 
 #include <iostream>
 #include <iomanip>  // std::setprecision
@@ -31,6 +33,9 @@ struct basisConverter
 
   Eigen::Matrix<double, 3, 3> M_vel_bs2mv_seg0, M_vel_bs2mv_rest, M_vel_bs2mv_seg_last;
   Eigen::Matrix<double, 3, 3> M_vel_bs2be_seg0, M_vel_bs2be_rest, M_vel_bs2be_seg_last;
+
+  std::vector<Eigen::Matrix<double, 4, 4>> permutations_pos;
+  std::vector<Eigen::Matrix<double, 3, 3>> permutations_vel;
 
   basisConverter()
   {
@@ -189,8 +194,59 @@ struct basisConverter
                  0,         0,    1.0000;
 
     // clang-format on
+
+    //// PERMUTATION MATRICES FOR POSITION
+    Eigen::Matrix<double, 4, 4> permutation_pos_i;  // will have
+    //
+    permutation_pos_i = Eigen::Matrix<double, 4, 4>::Identity();
+    permutations_pos.push_back(permutation_pos_i);
+    //
+    permutation_pos_i << 0.0, 1.0, 0.0, 0.0,
+        /*            */ 0.0, 0.0, 1.0, 0.0,  ////////////////////
+        /*            */ 0.0, 0.0, 0.0, 1.0,  ////////////////////
+        /*            */ 1.0, 0.0, 0.0, 0.0;  ////////////////////
+    // permutation_pos_i = Eigen::Matrix<double, 4, 4>::Identity();
+
+    permutations_pos.push_back(permutation_pos_i);
+
+    permutation_pos_i << 0.0, 0.0, 1.0, 0.0,  ////////////////////
+        /*            */ 0.0, 0.0, 0.0, 1.0,  ////////////////////
+        /*            */ 1.0, 0.0, 0.0, 0.0,  ////////////////////
+        /*            */ 0.0, 1.0, 0.0, 0.0;  ////////////////////
+    // permutation_pos_i = Eigen::Matrix<double, 4, 4>::Identity();
+
+    permutations_pos.push_back(permutation_pos_i);
+
+    permutation_pos_i << 0.0, 0.0, 0.0, 1.0,  ////////////////////
+        /*            */ 1.0, 0.0, 0.0, 0.0,  ////////////////////
+        /*            */ 0.0, 1.0, 0.0, 0.0,  ////////////////////
+        /*            */ 0.0, 0.0, 1.0, 0.0;  ////////////////////
+    // permutation_pos_i = Eigen::Matrix<double, 4, 4>::Identity();
+
+    permutations_pos.push_back(permutation_pos_i);
+
+    //// PERMUTATION MATRICES FOR VELOCITY
+    Eigen::Matrix<double, 3, 3> permutation_vel_i;
+    //
+    permutation_vel_i = Eigen::Matrix<double, 3, 3>::Identity();
+    permutations_vel.push_back(permutation_vel_i);
+    //
+    permutation_vel_i << 0.0, 1.0, 0.0,
+        /*            */ 0.0, 0.0, 1.0,  ////////////////////
+        /*            */ 1.0, 0.0, 0.0;
+    // permutation_vel_i = Eigen::Matrix<double, 3, 3>::Identity();
+
+    permutations_vel.push_back(permutation_vel_i);
+
+    permutation_vel_i << 0.0, 0.0, 1.0,
+        /*            */ 1.0, 0.0, 0.0,  ////////////////////
+        /*            */ 0.0, 1.0, 0.0;
+    // permutation_vel_i = Eigen::Matrix<double, 3, 3>::Identity();
+
+    permutations_vel.push_back(permutation_vel_i);
   }
 
+  //
   //////MATRICES A FOR BSPLINE POSITION/////////
   std::vector<Eigen::Matrix<double, 4, 4>> getABSpline(int num_pol)
   {
@@ -210,14 +266,18 @@ struct basisConverter
   std::vector<Eigen::Matrix<double, 4, 4>> getMinvoPosConverters(int num_pol)
   {
     std::vector<Eigen::Matrix<double, 4, 4>> M_pos_bs2mv;  // will have as many elements as num_pol
-    M_pos_bs2mv.push_back(M_pos_bs2mv_seg0);
-    M_pos_bs2mv.push_back(M_pos_bs2mv_seg1);
-    for (int i = 0; i < (num_pol - 4); i++)
+    int i = 0;
+    M_pos_bs2mv.push_back(permutations_pos[i % 3] * M_pos_bs2mv_seg0);
+    i = i + 1;
+    M_pos_bs2mv.push_back(permutations_pos[i % 3] * M_pos_bs2mv_seg1);
+    i = i + 1;
+    for (; i < (num_pol - 2); i++)
     {
-      M_pos_bs2mv.push_back(M_pos_bs2mv_rest);
+      M_pos_bs2mv.push_back(permutations_pos[i % 3] * M_pos_bs2mv_rest);
     }
-    M_pos_bs2mv.push_back(M_pos_bs2mv_seg_last2);
-    M_pos_bs2mv.push_back(M_pos_bs2mv_seg_last);
+    M_pos_bs2mv.push_back(permutations_pos[i % 3] * M_pos_bs2mv_seg_last2);
+    i = i + 1;
+    M_pos_bs2mv.push_back(permutations_pos[i % 3] * M_pos_bs2mv_seg_last);
     return M_pos_bs2mv;
   }
 
@@ -225,14 +285,28 @@ struct basisConverter
   std::vector<Eigen::Matrix<double, 4, 4>> getBezierPosConverters(int num_pol)
   {
     std::vector<Eigen::Matrix<double, 4, 4>> M_pos_bs2be;  // will have as many elements as num_pol
-    M_pos_bs2be.push_back(M_pos_bs2be_seg0);
-    M_pos_bs2be.push_back(M_pos_bs2be_seg1);
-    for (int i = 0; i < (num_pol - 4); i++)
+    int i = 0;
+    M_pos_bs2be.push_back(permutations_pos[i % 3] * M_pos_bs2be_seg0);
+    i = i + 1;
+    M_pos_bs2be.push_back(permutations_pos[i % 3] * M_pos_bs2be_seg1);
+    i = i + 1;
+    for (; i < (num_pol - 2); i++)
     {
-      M_pos_bs2be.push_back(M_pos_bs2be_rest);
+      M_pos_bs2be.push_back(permutations_pos[i % 3] * M_pos_bs2be_rest);
     }
-    M_pos_bs2be.push_back(M_pos_bs2be_seg_last2);
-    M_pos_bs2be.push_back(M_pos_bs2be_seg_last);
+    M_pos_bs2be.push_back(permutations_pos[i % 3] * M_pos_bs2be_seg_last2);
+    i = i + 1;
+    M_pos_bs2be.push_back(permutations_pos[i % 3] * M_pos_bs2be_seg_last);
+
+    std::cout << "********************M_pos_bs2be.size()= " << M_pos_bs2be.size() << std::endl;
+    std::cout << "********************num_pol= " << num_pol << std::endl;
+
+    for (auto tmp : M_pos_bs2be)
+    {
+      std::cout << tmp << std::endl;
+      std::cout << std::endl;
+    }
+
     return M_pos_bs2be;
   }
 
@@ -251,12 +325,14 @@ struct basisConverter
   std::vector<Eigen::Matrix<double, 3, 3>> getMinvoVelConverters(int num_pol)
   {
     std::vector<Eigen::Matrix<double, 3, 3>> M_vel_bs2mv;  // will have as many elements as num_pol
-    M_vel_bs2mv.push_back(M_vel_bs2mv_seg0);
-    for (int i = 0; i < (num_pol - 2 - 1); i++)
+    int i = 0;
+    M_vel_bs2mv.push_back(permutations_vel[i % 2] * M_vel_bs2mv_seg0);
+    i = i + 1;
+    for (; i < (num_pol - 1); i++)
     {
-      M_vel_bs2mv.push_back(M_vel_bs2mv_rest);
+      M_vel_bs2mv.push_back(permutations_vel[i % 2] * M_vel_bs2mv_rest);
     }
-    M_vel_bs2mv.push_back(M_vel_bs2mv_seg_last);
+    M_vel_bs2mv.push_back(permutations_vel[i % 2] * M_vel_bs2mv_seg_last);
     return M_vel_bs2mv;
   }
 
@@ -264,12 +340,24 @@ struct basisConverter
   std::vector<Eigen::Matrix<double, 3, 3>> getBezierVelConverters(int num_pol)
   {
     std::vector<Eigen::Matrix<double, 3, 3>> M_vel_bs2be;  // will have as many elements as segments
-    M_vel_bs2be.push_back(M_vel_bs2be_seg0);
-    for (int i = 0; i < (num_pol - 2 - 1); i++)
+    int i = 0;
+    M_vel_bs2be.push_back(permutations_vel[i % 2] * M_vel_bs2be_seg0);
+    i = i + 1;
+    for (; i < (num_pol - 1); i++)
     {
-      M_vel_bs2be.push_back(M_vel_bs2be_rest);
+      M_vel_bs2be.push_back(permutations_vel[i % 2] * M_vel_bs2be_rest);
     }
-    M_vel_bs2be.push_back(M_vel_bs2be_seg_last);
+    M_vel_bs2be.push_back(permutations_vel[i % 2] * M_vel_bs2be_seg_last);
+
+    std::cout << "********************M_vel_bs2be.size()= " << M_vel_bs2be.size() << std::endl;
+    std::cout << "********************num_pol= " << num_pol << std::endl;
+
+    for (auto tmp : M_vel_bs2be)
+    {
+      std::cout << tmp << std::endl;
+      std::cout << std::endl;
+    }
+
     return M_vel_bs2be;
   }
 
@@ -638,3 +726,5 @@ struct committedTrajectory
     return my_vector;
   }
 };
+
+#endif
