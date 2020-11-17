@@ -1,0 +1,6 @@
+Murtaza Khan, "Cubic Bezier Curve and Surface",  Aug. 2012.
+------------------------------------------------------------
+LaTeX
+
+\bibitem{KhanAug2012}
+Murtaza Khan, \emph{Cubic Bezier Curve and Surface}, August 2012.
