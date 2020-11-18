@@ -1,39 +1,10 @@
-%% Using the Hopf fibration approach
-clear; clc; close all;
-set(0,'DefaultFigureWindowStyle','docked') %'normal' 'docked'
-addpath(genpath('./utils'));
-
-t=sym('t','real');
-ax=sym('ax','real');
-ay=sym('ay','real');
-az=sym('az','real');
-a=sym('a','real');
-b=sym('b','real');
-c=sym('c','real');
-% psi=sym('psi','real');
-
-T2=[t*t t 1]';
-T3=[t*t*t t*t t 1]';
-h=sym('h',[1,3],'real'); %coeff of psi
-psi=h*T2;
-
-P=sym('P%d%d',[3,4],'real');
-Pt=P*T3;
-
-g=sym('g','real'); %g is 9.81
-
-qabc=qabcFromAccel([ax ay az],g);
-qpsi=[cos(psi/2), 0, 0, sin(psi/2)]; %Note that qpsi has norm=1
-q=multquat(qabc,qpsi); %Note that q is guaranteed to have norm=1
-w_R_b=toRotMat(q);
-w_fe=[1 1 1 1]';   %feature in world frame
-w_T_b=[w_R_b Pt; zeros(1,3) 1];
-k=invPose(w_T_b)*w_fe;
-s=k(1:2)/k(3);
-disp("simplifying...")
-f=simplify(s'*s)
-%%
 close all; clc;clear;
+set(0,'DefaultFigureWindowStyle','docked') %'normal' 'docked'
+set(0,'defaulttextInterpreter','latex');
+set(groot, 'defaultAxesTickLabelInterpreter','latex'); set(groot, 'defaultLegendInterpreter','latex');
+%Let us change now the usual grey background of the matlab figures to white
+set(0,'defaultfigurecolor',[1 1 1])
+
 import casadi.*
 
 NoI=4; %number of intervals
@@ -45,6 +16,18 @@ opti = casadi.Opti();
 %Start and end of each interval
 t0=0.0;
 tf=1.0;
+
+syms t
+T=[t*t*t t*t t 1]';
+T0=double(subs(T,t,t0));
+Tf=double(subs(T,t,tf));
+
+init_pos=[0;0;0];
+init_vel=[0;0;0];
+init_accel=[0;0;0];
+final_pos=[2;0;0];
+final_vel=[0;0;0];
+final_accel=[0;0;0];
 
 for n=1:NoI
 
@@ -68,22 +51,9 @@ J{n}=[
 
 Psi{n} = [0 opti.variable(1,3)]; %0t^3 + at^2 + bt + c 
 
-VPsi{n}=[0    0     2*Psi{n}(1,2) V{n}(1,3)];
+VPsi{n}=[0    0     2*Psi{n}(1,2) Psi{n}(1,3)];
 
 APsi{n}=[0    0    0   2*Psi{n}(1,2);];
-
-syms t
-T=[t*t*t t*t t 1]';
-T0=double(subs(T,t,t0));
-Tf=double(subs(T,t,tf));
-
-init_pos=[0;0;0];
-init_vel=[0;0;0];
-init_accel=[0;0;0];
-final_pos=[2;0;0];
-final_vel=[0;0;0];
-final_accel=[0;0;0];
-
 
 jerk=J{n}(:,end);
 apsi=APsi{n}(:,end);
@@ -91,10 +61,7 @@ apsi=APsi{n}(:,end);
 psi_cost=psi_cost+apsi*apsi; %apsi is a scalar
 jerk_cost = jerk_cost + jerk'*jerk;
 
-
 end
-
-opti.minimize(  jerk_cost +0*psi_cost );
 
 %Initial and final constraints
 opti.subject_to( P{1}*T0==init_pos );
@@ -105,8 +72,7 @@ opti.subject_to( V{NoI}*Tf==final_vel );
 opti.subject_to( A{NoI}*Tf==final_accel );
 
 opti.subject_to( Psi{1}*T0==0 );
-% opti.subject_to( Psi{NoI}*Tf==2*pi );%Be careful with this
-%     (wrapping psi)
+% opti.subject_to( sin(Psi{NoI}*Tf)==sin(0) );%  (wrapping psi)
 
 %Continuity constraints
 for n=1:(NoI-1)
@@ -114,26 +80,20 @@ for n=1:(NoI-1)
     opti.subject_to( V{n+1}*T0==V{n}*Tf );
     opti.subject_to( A{n+1}*T0==A{n}*Tf );
 
-     opti.subject_to( Psi{n+1}*T0==Psi{n}*Tf ); %Be careful with this
-%     (wrapping psi)
-     opti.subject_to( VPsi{n+1}*T0==VPsi{n}*Tf );
-
+    opti.subject_to( sin(Psi{n+1}*T0)==sin(Psi{n}*Tf) ); %   (wrapping psi)
+    opti.subject_to( cos(Psi{n+1}*T0)==cos(Psi{n}*Tf) ); %   (wrapping psi)
+      
+    opti.subject_to( VPsi{n+1}*T0==VPsi{n}*Tf );
 end
 
-opti.solver('ipopt');
-sol = opti.solve();
-
-for n=1:(NoI-1)
-    P_guess{n}=sol.value(P{n});
-end
 
 g=9.81;
 %Compute perception cost
 perception_cost=0;
 
-for n=1:(NoI-1)
+for n=1:(NoI)
 
-    deltat=0.1;
+    deltat=0.25;
     t_constrained=0.0:deltat:1.0;
     j=1;
 
@@ -155,27 +115,45 @@ for n=1:(NoI-1)
 
     k=invPose(w_T_b)*w_fe; %inv(b_T_c)*
     s=k(1:2)/k(3);
-    f=s'*s; %I wanna minimize the integral of this funcion. Approx. using symp. Rule
+    
+    
+    beta=10;
+    sigmoid=1/(1+exp(beta*k(3))); %smooth approx  of {1 if k(3)>0   0 if k(3)<0 )
+    
+    f{n}=(s'*s); %I wanna minimize the integral of this funcion. Approx. using symp. Rule
 
     perception_cost_interval=0;
     for t_i=t_constrained
-        perception_cost_interval=perception_cost_interval+getSimpsonCoeff(j,numel(t_constrained))*substitute(f,t,t_i);
+        perception_cost_interval=perception_cost_interval+getSimpsonCoeff(j,numel(t_constrained))*substitute(f{n},t,t_i);
+        
+%          opti.subject_to(substitute(k(3),t,t_i)>=0 );
+        
         j=j+1;
     end
 
     perception_cost_interval=(deltat/3.0)*perception_cost_interval; %Only for completeness (Simpson's rule), doesn't affect optimization
     
    perception_cost=perception_cost+perception_cost_interval;
-end
-
-opti.minimize(0.005*jerk_cost + 0*psi_cost + perception_cost );
-
-for n=1:(NoI-1)
-    opti.set_initial(P{n}, P_guess{n})
+   
+   
 end
 
 jit_compilation=false;
+
+%Solve first without perception cost (to get an initial guess)
+opti.minimize(jerk_cost + 33333*psi_cost );
 opti.solver('ipopt',struct('jit',jit_compilation));
+sol = opti.solve();
+
+for n=1:NoI
+    P_guess{n}=sol.value(P{n});
+end
+
+%Use the initial guess to solve with all costs
+for n=1:NoI
+    opti.set_initial(P{n}, P_guess{n})
+end
+opti.minimize(0.5*jerk_cost +0.0*psi_cost+ perception_cost );
 sol = opti.solve();
 
 
@@ -188,20 +166,20 @@ for n=1:NoI
     fplot3(position(1),position(2),position(3),[t0,tf]); 
 end
 
-plotSphere(init_pos,0.02,'r'); plotSphere(final_pos,0.02,'b'); plotSphere(w_fe(1:3),0.02,'g');
+plotSphere(init_pos,0.05,'r'); plotSphere(final_pos,0.05,'b'); plotSphere(w_fe(1:3),0.05,'g');
 % plotSphere(double(subs(position,t,0.5)),0.02,'r');
 
 view([45,45]); axis equal
-
+% 
 disp("Plotting")
 for n=1:NoI
-    for ti=t0:0.03:tf  %t_constrained
+    for tau_i=t0:0.05:tf  %t_constrained
 
-        T=[ti^3 ti^2 ti 1]';
+        Tau_i=[tau_i^3 tau_i^2 tau_i 1]';
 
-        w_t_b = sol.value(P{n})*T;
-        accel = sol.value(A{n})*T;
-        psiT=sol.value(Psi{n})*T;
+        w_t_b = sol.value(P{n})*Tau_i;
+        accel = sol.value(A{n})*Tau_i;
+        psiT=sol.value(Psi{n})*Tau_i;
 
         qabc=qabcFromAccel(accel, g);
 
@@ -215,7 +193,84 @@ for n=1:NoI
     end
     disp(['Done plotting interval ', num2str(n)])
 end
-%% 
+
+grid on; xlabel('x'); ylabel('y'); zlabel('z'); 
+camlight
+lightangle(gca,45,0)
+
+
+figure; 
+subplot(3,1,1);hold on; title('yaw')
+subplot(3,1,2); hold on; title('vyaw')
+subplot(3,1,3); hold on; title('ayaw')
+for n=1:NoI
+    init_interval=t0+(n-1)*(tf-t0);
+    interval=[init_interval, tf+(n-1)*(tf-t0)];
+    tau=t-init_interval;
+    
+    Tau=[tau^3 tau^2 tau 1]';
+    
+    subplot(3,1,1);
+    fplot(sol.value(Psi{n})*Tau, interval)
+    subplot(3,1,2);
+    fplot(sol.value(VPsi{n})*Tau, interval)
+    subplot(3,1,3);
+    fplot(sol.value(APsi{n})*Tau, interval)
+end
+
+
+% for n=1:NoI
+%     init_interval=t0+(n-1)*(tf-t0);
+%     interval=[init_interval, tf+(n-1)*(tf-t0)]
+%     tau=t-init_interval;
+%     
+%     Tau=[tau^3 tau^2 tau 1]';
+%     
+%     f_tau=substitute(f{n},t,tau);
+%     
+%     
+%     plot(f{n}
+% end
+
+
+
+
+%% Using the Hopf fibration approach
+% clear; clc; close all;
+% set(0,'DefaultFigureWindowStyle','docked') %'normal' 'docked'
+% addpath(genpath('./utils'));
+% 
+% t=sym('t','real');
+% ax=sym('ax','real');
+% ay=sym('ay','real');
+% az=sym('az','real');
+% a=sym('a','real');
+% b=sym('b','real');
+% c=sym('c','real');
+% % psi=sym('psi','real');
+% 
+% T2=[t*t t 1]';
+% T3=[t*t*t t*t t 1]';
+% h=sym('h',[1,3],'real'); %coeff of psi
+% psi=h*T2;
+% 
+% P=sym('P%d%d',[3,4],'real');
+% Pt=P*T3;
+% 
+% g=sym('g','real'); %g is 9.81
+% 
+% qabc=qabcFromAccel([ax ay az],g);
+% qpsi=[cos(psi/2), 0, 0, sin(psi/2)]; %Note that qpsi has norm=1
+% q=multquat(qabc,qpsi); %Note that q is guaranteed to have norm=1
+% w_R_b=toRotMat(q);
+% w_fe=[1 1 1 1]';   %feature in world frame
+% w_T_b=[w_R_b Pt; zeros(1,3) 1];
+% k=invPose(w_T_b)*w_fe;
+% s=k(1:2)/k(3);
+% disp("simplifying...")
+% f=simplify(s'*s)
+
+%%
 %Using the Mellinger approach (Rot. matrix)
 % for t=0.5;%0.1:0.5:1.0
 % 

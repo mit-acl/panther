@@ -24,7 +24,7 @@ w_F=w_T_b*b_F;
 
 
 
-% arrow3dWithColor(w_t_b',w_D(1:3)',20,'cylinder',[0.2,0.1],'r');
-% arrow3dWithColor(w_t_b',w_E(1:3)',20,'cylinder',[0.2,0.1],'g');
+arrow3dWithColor(w_t_b',w_D(1:3)',20,'cylinder',[0.2,0.1],'r');
+arrow3dWithColor(w_t_b',w_E(1:3)',20,'cylinder',[0.2,0.1],'g');
 arrow3dWithColor(w_t_b',w_F(1:3)',20,'cylinder',[0.2,0.1],'b');
 end
