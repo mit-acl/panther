@@ -34,29 +34,39 @@ for n=1:NoI
 
 P{n} = opti.variable(3,4);
 
-V{n}=[0 3*P{n}(1,1) 2*P{n}(1,2) P{n}(1,3);
-   0 3*P{n}(2,1) 2*P{n}(2,2) P{n}(2,3);
-   0 3*P{n}(3,1) 2*P{n}(3,2) P{n}(3,3);
-];
+% V{n}=[0 3*P{n}(1,1) 2*P{n}(1,2) P{n}(1,3);
+%    0 3*P{n}(2,1) 2*P{n}(2,2) P{n}(2,3);
+%    0 3*P{n}(3,1) 2*P{n}(3,2) P{n}(3,3);
+% ];
+% 
+% A{n}=[0    0     6*V{n}(1,2) 2*V{n}(1,3);
+%    0    0     6*V{n}(2,2) 2*V{n}(2,3);
+%    0    0     6*V{n}(3,2) 2*V{n}(3,3);
+% ];
+% 
+% J{n}=[
+%    0    0    0   6*V{n}(1,2);
+%    0    0    0   6*V{n}(2,2);
+%    0    0    0   6*V{n}(3,2);
+% ];
+% 
 
-A{n}=[0    0     6*V{n}(1,2) 2*V{n}(1,3);
-   0    0     6*V{n}(2,2) 2*V{n}(2,3);
-   0    0     6*V{n}(3,2) 2*V{n}(3,3);
-];
+tt=opti.variable(1,1);
 
-J{n}=[
-   0    0    0   6*V{n}(1,2);
-   0    0    0   6*V{n}(2,2);
-   0    0    0   6*V{n}(3,2);
-];
+PT{n}=P{n}*[tt^3;tt^2;tt;1];
+VT{n}=jacobian(PT{n}, tt);
+AT{n}=jacobian(VT{n}, tt);
+JT{n}=jacobian(AT{n}, tt);
+
 
 Psi{n} = [0 opti.variable(1,3)]; %0t^3 + at^2 + bt + c 
-
 VPsi{n}=[0    0     2*Psi{n}(1,2) Psi{n}(1,3)];
-
 APsi{n}=[0    0    0   2*Psi{n}(1,2);];
 
-jerk=J{n}(:,end);
+% jerk=J{n}(:,end);
+
+jerk=JT{n};
+
 apsi=APsi{n}(:,end);
 
 psi_cost=psi_cost+apsi*apsi; %apsi is a scalar
@@ -65,21 +75,21 @@ jerk_cost = jerk_cost + jerk'*jerk;
 end
 
 %Initial and final constraints
-opti.subject_to( P{1}*T0==init_pos );
-opti.subject_to( V{1}*T0==init_vel );
-opti.subject_to( A{1}*T0==init_accel );
-opti.subject_to( P{NoI}*Tf==final_pos );
-opti.subject_to( V{NoI}*Tf==final_vel );
-opti.subject_to( A{NoI}*Tf==final_accel );
+opti.subject_to( substitute(PT{1},tt,t0)==init_pos );
+opti.subject_to( substitute(VT{1},tt,t0)==init_vel );
+opti.subject_to( substitute(AT{1},tt,t0)==init_accel );
+opti.subject_to( substitute(PT{NoI},tt,tf)==final_pos );
+opti.subject_to( substitute(VT{NoI},tt,tf)==final_vel );
+opti.subject_to( substitute(AT{NoI},tt,tf)==final_accel );
 
 opti.subject_to( Psi{1}*T0==0 );
 % opti.subject_to( sin(Psi{NoI}*Tf)==sin(0) );%  (wrapping psi)
 
 %Continuity constraints
 for n=1:(NoI-1)
-    opti.subject_to( P{n+1}*T0==P{n}*Tf );
-    opti.subject_to( V{n+1}*T0==V{n}*Tf );
-    opti.subject_to( A{n+1}*T0==A{n}*Tf );
+    opti.subject_to( substitute(PT{n+1},tt,t0)==substitute(PT{n},tt,tf));
+    opti.subject_to( substitute(VT{n+1},tt,t0)==substitute(VT{n},tt,tf) );
+    opti.subject_to( substitute(AT{n+1},tt,t0)==substitute(AT{n},tt,tf) );
 
     opti.subject_to( sin(Psi{n+1}*T0)==sin(Psi{n}*Tf) ); %   (wrapping psi)
     opti.subject_to( cos(Psi{n+1}*T0)==cos(Psi{n}*Tf) ); %   (wrapping psi)
@@ -90,32 +100,31 @@ end
 
 g=9.81;
 %Compute perception cost
-dist_im_cost=0;
-vel_im_cost=0;
+perception_cost=0;
 
 for n=1:(NoI)
 
-    deltat=0.4;
+    deltat=0.25;
     t_constrained=0.0:deltat:1.0;
     j=1;
 
-    t=opti.variable(1,1);
-    T=[t*t*t;t*t;t;1];
-    At=A{n}*T;
-    Pt=P{n}*T;
-    axt=At(1,:); ayt=At(2,:); azt=At(3,:);
-    psit=Psi{n}*T;
+%     t=opti.variable(1,1);
+%     T=[t*t*t;t*t;t;1];
+%     At=A{n}*T;
+%     Pt=P{n}*T;
+    axt=AT{n}(1,:); ayt=AT{n}(2,:); azt=AT{n}(3,:);
+    psit=Psi{n}*[tt^3; tt^2; tt; 1];
 
     qabc=qabcFromAccel([axt ayt azt],g);
     qpsi=[cos(psit/2), 0, 0, sin(psit/2)]; %Note that qpsi has norm=1
     q=multquat(qabc,qpsi); %Note that q is guaranteed to have norm=1
     w_R_b=toRotMat(q);
     w_fe=[1 1 1 1]';   %feature in world frame
-    w_T_b=[w_R_b Pt; zeros(1,3) 1];
+    w_T_b=[w_R_b PT{n}; zeros(1,3) 1];
 
     b_T_c=[roty(90)*rotz(90) zeros(3,1); zeros(1,3) 1];
 
-    k=inv(b_T_c)*invPose(w_T_b)*w_fe; %
+    k=invPose(w_T_b)*w_fe; %inv(b_T_c)*
     s=k(1:2)/k(3);
     
     
@@ -124,27 +133,18 @@ for n=1:(NoI)
     
     f{n}=(s'*s); %I wanna minimize the integral of this funcion. Approx. using symp. Rule
 
-    dist_im_cost_interval=0;
-   
-    s_dot=jacobian(s,t);
-    
-    vel_im_cost_interval=0;
-    
+    perception_cost_interval=0;
     for t_i=t_constrained
-        
-        simpson=getSimpsonCoeff(j,numel(t_constrained));
-        dist_im_cost_interval=dist_im_cost_interval+simpson*substitute(f{n},t,t_i);
-        vel_im_cost_interval=vel_im_cost_interval+simpson*substitute(s_dot'*s_dot,t,t_i);
+        perception_cost_interval=perception_cost_interval+getSimpsonCoeff(j,numel(t_constrained))*substitute(f{n},tt,t_i);
         
 %          opti.subject_to(substitute(k(3),t,t_i)>=0 );
+        
         j=j+1;
     end
 
-   dist_im_cost_interval=(deltat/3.0)*dist_im_cost_interval; %Only for completeness (Simpson's rule), doesn't affect optimization
-   vel_im_cost_interval=(deltat/3.0)*vel_im_cost_interval; %Only for completeness (Simpson's rule), doesn't affect optimization
-   
-   vel_im_cost=vel_im_cost+vel_im_cost_interval;
-   dist_im_cost=dist_im_cost+dist_im_cost_interval;
+    perception_cost_interval=(deltat/3.0)*perception_cost_interval; %Only for completeness (Simpson's rule), doesn't affect optimization
+    
+   perception_cost=perception_cost+perception_cost_interval;
    
    
 end
@@ -156,6 +156,7 @@ opti.minimize(jerk_cost + 33333*psi_cost );
 opti.solver('ipopt',struct('jit',jit_compilation));
 sol = opti.solve();
 
+%%
 for n=1:NoI
     P_guess{n}=sol.value(P{n});
 end
@@ -164,7 +165,7 @@ end
 for n=1:NoI
     opti.set_initial(P{n}, P_guess{n})
 end
-opti.minimize(0.0*jerk_cost +0.0*psi_cost+ dist_im_cost +0.0*vel_im_cost);
+opti.minimize(0.5*jerk_cost +0.0*psi_cost+ perception_cost );
 sol = opti.solve();
 
 
@@ -184,7 +185,7 @@ view([45,45]); axis equal
 % 
 disp("Plotting")
 for n=1:NoI
-    for tau_i=t_constrained %t0:0.05:tf  %t_constrained
+    for tau_i=t0:0.05:tf  %t_constrained
 
         Tau_i=[tau_i^3 tau_i^2 tau_i 1]';
 
@@ -244,6 +245,21 @@ end
 % end
 
 
+
+%%
+
+
+P=P{1}
+
+t=opti.variable(1,1);
+
+PT=P*[t^3;t^2;t;1];
+
+VT=jacobian(PT, t);
+
+AT=jacobian(VT, t);
+
+JT=jacobian(AT, t);
 
 
 %% Using the Hopf fibration approach
