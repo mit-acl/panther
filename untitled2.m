@@ -57,7 +57,7 @@ Psi{n} = [0 opti.variable(1,3)]; %0t^3 + at^2 + bt + c
 
 VPsi{n}=[0    0     2*Psi{n}(1,2) Psi{n}(1,3)];
 
-APsi{n}=[0    0    0   2*Psi{n}(1,2);];
+APsi{n}=[0    0    0   VPsi{n}(1,3);];
 
 jerk=J{n}(:,end);
 apsi=APsi{n}(:,end);
