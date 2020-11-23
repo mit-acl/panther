@@ -18,10 +18,10 @@ opti = casadi.Opti();
 t0=0.0;
 tf=1.0;
 
-syms t
-T=[t*t*t t*t t 1]';
-T0=double(subs(T,t,t0));
-Tf=double(subs(T,t,tf));
+syms t_m %matlab symbolic t
+T_m=[t_m^3 t_m^2 t_m 1]';
+T0=double(subs(T_m,t_m,t0));
+Tf=double(subs(T_m,t_m,tf));
 
 init_pos=[0;0;0];
 init_vel=[0;0;0];
@@ -29,6 +29,9 @@ init_accel=[0;0;0];
 final_pos=[2;0;0];
 final_vel=[0;0;0];
 final_accel=[0;0;0];
+
+t=opti.variable(1,1);
+T=[t*t*t;t*t;t;1];
 
 for n=1:NoI
 
@@ -92,6 +95,7 @@ g=9.81;
 %Compute perception cost
 dist_im_cost=0;
 vel_im_cost=0;
+vel_isInFOV_im_cost=0;
 
 for n=1:(NoI)
 
@@ -99,8 +103,6 @@ for n=1:(NoI)
     t_constrained=0.0:deltat:1.0;
     j=1;
 
-    t=opti.variable(1,1);
-    T=[t*t*t;t*t;t;1];
     At=A{n}*T;
     Pt=P{n}*T;
     axt=At(1,:); ayt=At(2,:); azt=At(3,:);
@@ -115,37 +117,40 @@ for n=1:(NoI)
 
     b_T_c=[roty(90)*rotz(90) zeros(3,1); zeros(1,3) 1];
 
-    k=inv(b_T_c)*invPose(w_T_b)*w_fe; %
-    s=k(1:2)/k(3);
-    
-    
-    beta=10;
-    sigmoid=1/(1+exp(beta*k(3))); %smooth approx  of {1 if k(3)>0   0 if k(3)<0 )
-    
-    f{n}=(s'*s); %I wanna minimize the integral of this funcion. Approx. using symp. Rule
+    c_P=inv(b_T_c)*invPose(w_T_b)*w_fe; %Position of the feature in the camera frame
+    s=c_P(1:2)/c_P(3);  
+   
 
     dist_im_cost_interval=0;
+    vel_im_cost_interval=0;
+    vel_isInFOV_im_cost_interval=0;
    
     s_dot=jacobian(s,t);
     
-    vel_im_cost_interval=0;
+    % See https://en.wikipedia.org/wiki/Cone#Equation_form:~:text=In%20implicit%20form%2C%20the%20same%20solid%20is%20defined%20by%20the%20inequalities
+    theta_deg=45;
+    is_in_FOV1=-(c_P(1)^2+c_P(2)^2)*(cosd(theta_deg))^2 +(c_P(3)^2)*(sind(theta_deg))^2; %(if this quantity is >=0)
+    is_in_FOV2=c_P(3); %(and this quantity is >=0)
+    
+%     isInFOV=is_in_FOV1*is_in_FOV2; % be careful because if both are
+%     negative, this is also satisfied
+    
+    beta=10;
+    isInFOV_smooth=  (   1/(1+exp(-beta*is_in_FOV1))  )*(   1/(1+exp(-beta*is_in_FOV2))  );
+
+    f_vel_im{n}=(s_dot'*s_dot);
+    f_dist_im{n}=(s'*s); %I wanna minimize the integral of this funcion. Approx. using symp. Rule
+    f_isInFOV_im{n}=(isInFOV_smooth); %/(0.1+f_vel_im{n})
+    f_vel_isInFOV_im{n}=(-isInFOV_smooth)/(0.1+f_vel_im{n});
     
     for t_i=t_constrained
         
         simpson=getSimpsonCoeff(j,numel(t_constrained));
-        dist_im_cost_interval=dist_im_cost_interval+simpson*substitute(f{n},t,t_i);
-        vel_im_cost_interval=vel_im_cost_interval+simpson*substitute(s_dot'*s_dot,t,t_i);
-        
-%          opti.subject_to(substitute(k(3),t,t_i)>=0 );
-        j=j+1;
-    end
 
-   dist_im_cost_interval=(deltat/3.0)*dist_im_cost_interval; %Only for completeness (Simpson's rule), doesn't affect optimization
-   vel_im_cost_interval=(deltat/3.0)*vel_im_cost_interval; %Only for completeness (Simpson's rule), doesn't affect optimization
-   
-   vel_im_cost=vel_im_cost+vel_im_cost_interval;
-   dist_im_cost=dist_im_cost+dist_im_cost_interval;
-   
+        dist_im_cost=dist_im_cost               + (deltat/3.0)*simpson*substitute(f_dist_im{n},t,t_i);
+        vel_im_cost=vel_im_cost                 + (deltat/3.0)*simpson*substitute(f_vel_im{n},t,t_i);
+        vel_isInFOV_im_cost=vel_isInFOV_im_cost + (deltat/3.0)*simpson*substitute(f_vel_isInFOV_im{n},t,t_i);
+    end
    
 end
 
@@ -156,24 +161,30 @@ opti.minimize(jerk_cost + 33333*psi_cost );
 opti.solver('ipopt',struct('jit',jit_compilation));
 sol = opti.solve();
 
+
 for n=1:NoI
     P_guess{n}=sol.value(P{n});
+    Psi_guess{n}=sol.value(Psi{n});
 end
 
 %Use the initial guess to solve with all costs
 for n=1:NoI
     opti.set_initial(P{n}, P_guess{n})
+    opti.set_initial(Psi{n}, Psi_guess{n})
 end
-opti.minimize(0.0*jerk_cost +0.0*psi_cost+ dist_im_cost +0.0*vel_im_cost);
+
+
+opti.minimize(0.0000005*jerk_cost+...
+              0.0*psi_cost+...
+              0.0*dist_im_cost+...
+              1.0*vel_isInFOV_im_cost);
 sol = opti.solve();
 
 
-syms t real
-T=[t*t*t t*t t 1]';
 figure; hold on;
 
 for n=1:NoI
-    position=sol.value(P{n})*T;
+    position=sol.value(P{n})*T_m;
     fplot3(position(1),position(2),position(3),[t0,tf]); 
 end
 
@@ -217,7 +228,7 @@ subplot(3,1,3); hold on; title('ayaw')
 for n=1:NoI
     init_interval=t0+(n-1)*(tf-t0);
     interval=[init_interval, tf+(n-1)*(tf-t0)];
-    tau=t-init_interval;
+    tau=t_m-init_interval;
     
     Tau=[tau^3 tau^2 tau 1]';
     
@@ -230,19 +241,29 @@ for n=1:NoI
 end
 
 
-% for n=1:NoI
-%     init_interval=t0+(n-1)*(tf-t0);
-%     interval=[init_interval, tf+(n-1)*(tf-t0)]
-%     tau=t-init_interval;
-%     
-%     Tau=[tau^3 tau^2 tau 1]';
-%     
-%     f_tau=substitute(f{n},t,tau);
-%     
-%     
-%     plot(f{n}
-% end
+figure; hold on; 
+subplot(3,1,1);hold on; title('isInFOV()')
+subplot(3,1,2); hold on; title('Cost v')
+subplot(3,1,3); hold on; title('Cost -isInFOV()/(e + v)')
 
+for n=1:NoI
+    for tau_i=t_constrained %t0:0.05:tf  %t_constrained
+        init_interval=t0+(n-1)*(tf-t0);
+        interval=[init_interval, tf+(n-1)*(tf-t0)];
+%         tau=t-init_interval;
+
+
+       
+    subplot(3,1,1);    ylim([0,1]);
+    stem(init_interval+tau_i, sol.value(substitute(f_isInFOV_im{n},t,tau_i)),'filled','r')
+    subplot(3,1,2);
+    stem(init_interval+tau_i, sol.value(substitute(f_vel_im{n},t,tau_i)),'filled','r')
+    subplot(3,1,3);
+    stem(init_interval+tau_i, sol.value(substitute(f_vel_isInFOV_im{n},t,tau_i)),'filled','r')
+       
+    end
+    
+end
 
 
 
