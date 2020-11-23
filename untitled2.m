@@ -38,13 +38,13 @@ for n=1:NoI
 P{n} = opti.variable(3,4);
 
 V{n}=[0 3*P{n}(1,1) 2*P{n}(1,2) P{n}(1,3);
-   0 3*P{n}(2,1) 2*P{n}(2,2) P{n}(2,3);
-   0 3*P{n}(3,1) 2*P{n}(3,2) P{n}(3,3);
+      0 3*P{n}(2,1) 2*P{n}(2,2) P{n}(2,3);
+      0 3*P{n}(3,1) 2*P{n}(3,2) P{n}(3,3);
 ];
 
-A{n}=[0    0     6*V{n}(1,2) 2*V{n}(1,3);
-   0    0     6*V{n}(2,2) 2*V{n}(2,3);
-   0    0     6*V{n}(3,2) 2*V{n}(3,3);
+A{n}=[0    0     2*V{n}(1,2) V{n}(1,3);
+      0    0     2*V{n}(2,2) V{n}(2,3);
+      0    0     2*V{n}(3,2) V{n}(3,3);
 ];
 
 J{n}=[
@@ -249,11 +249,8 @@ subplot(3,1,3); hold on; title('Cost -isInFOV()/(e + v)')
 for n=1:NoI
     for tau_i=t_constrained %t0:0.05:tf  %t_constrained
         init_interval=t0+(n-1)*(tf-t0);
-        interval=[init_interval, tf+(n-1)*(tf-t0)];
-%         tau=t-init_interval;
 
-
-       
+      
     subplot(3,1,1);    ylim([0,1]);
     stem(init_interval+tau_i, sol.value(substitute(f_isInFOV_im{n},t,tau_i)),'filled','r')
     subplot(3,1,2);
@@ -263,6 +260,25 @@ for n=1:NoI
        
     end
     
+end
+
+figure; 
+subplot(3,1,1);hold on; title('p')
+subplot(3,1,2); hold on; title('v')
+subplot(3,1,3); hold on; title('a')
+for n=1:NoI
+    init_interval=t0+(n-1)*(tf-t0);
+    interval=[init_interval, tf+(n-1)*(tf-t0)];
+    tau=t_m-init_interval;
+    
+    Tau=[tau^3 tau^2 tau 1]';
+    
+    subplot(3,1,1);
+    fplot(sol.value(P{n})*Tau, interval)
+    subplot(3,1,2);
+    fplot(sol.value(V{n})*Tau, interval)
+    subplot(3,1,3);
+    fplot(sol.value(A{n})*Tau, interval)
 end
 
 
