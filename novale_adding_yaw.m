@@ -9,8 +9,8 @@ set(0,'defaultfigurecolor',[1 1 1])
 import casadi.*
 addpath(genpath('./utils'));
 
-t_init=0;
-t_final=4;
+t0=0;
+tf=4;
 
 deg_pol_=3;
 num_pol_ =5;
@@ -23,21 +23,22 @@ pf=[4;0;0];
 vf=[0;0;0];
 af=[0;0;0];
 
-num_of_obst_=1;
+num_of_obst_=0;
 
 p_ = deg_pol_;
 M_ = num_pol_ + 2 * p_;
 N_ = M_ - p_ - 1;
 num_of_segments_ = (M_ - 2 * p_);  % this is the same as num_pol_
 
-deltaT_ = (t_final - t_init) / (1.0 * (M_ - 2 * p_ - 1 + 1));
+deltaT_ = (tf - t0) / (1.0 * (M_ - 2 * p_ - 1 + 1));
 
-t_final = t_init + (1.0 * (M_ - 2 * p_ - 1 + 1)) * deltaT_;
+tf = t0 + (1.0 * (M_ - 2 * p_ - 1 + 1)) * deltaT_;
 
-t_init_ = t_init;
-t_final_ = t_final;
+t0_ = t0;
+tf_ = tf;
 
-%%
+% a=MyClampedUniformSpline(t0, tf, deg_pol_, num_pol_)
+
 
 opti = casadi.Opti();
 
@@ -135,7 +136,7 @@ end
 
 knots=[];
 for i=0:p_
-    knots=[knots t_init_];
+    knots=[knots t0_];
 end
 
 for i=(p_ + 1):(M_ - p_ - 1)
@@ -143,7 +144,7 @@ for i=(p_ + 1):(M_ - p_ - 1)
 end
 
 for i=(M_ - p_):M_
-    knots=[knots t_final_];
+    knots=[knots tf_];
 end
 
 knots_=knots;
@@ -169,7 +170,6 @@ qNm2_ = (p_ * p_ * qNm1_ - (tNm1 - tNm1Pp) * (af * (-tN + tNm1Pp) + vf) - p_ * (
 
 
 %%Add Constraints
-
 for i=0:N_ 
     q_exp_{tm(i)}=opti.variable(3,1); %Control points
 end
@@ -223,18 +223,110 @@ end
 %TODO: add here the sphere, velocity and acceleration constraints
 
 
-%Adding objective:
+%%%%%Psi stuff
+syms t_m %matlab symbolic t
+T_m=[t_m^3 t_m^2 t_m 1]';
+T0=double(subs(T_m,t_m,t0));
+Tf=double(subs(T_m,t_m,tf));
+NoI=num_pol_;
+for n=1:NoI
 
-cost=0;
+Psi{n} = [0 opti.variable(1,3)]; %0t^3 + at^2 + bt + c 
+VPsi{n}=[0    0     2*Psi{n}(1,2) Psi{n}(1,3)];
+APsi{n}=[0    0    0   VPsi{n}(1,3)];
 
-for i=0:(num_of_segments_-1)   
-    
-    Q=[q_exp_{tm(i)} q_exp_{tm(i+1)} q_exp_{tm(i+2)} q_exp_{tm(i+3)}];
-    jerk=Q*A_pos_bs_{tm(i)}*[6 0 0 0]';
-    cost=cost + jerk'*jerk;
-    
+
 end
 
+opti.subject_to( Psi{1}*T0==0 );
+
+%Continuity constraints
+for n=1:(NoI-1)
+
+    opti.subject_to( sin(Psi{n+1}*T0)==sin(Psi{n}*Tf) ); %   (wrapping psi)
+    opti.subject_to( cos(Psi{n+1}*T0)==cos(Psi{n}*Tf) ); %   (wrapping psi)
+      
+end
+
+
+
+%Adding objective:
+
+jerk_cost=0;
+for i=0:(num_of_segments_-1)   
+    Q=[q_exp_{tm(i)} q_exp_{tm(i+1)} q_exp_{tm(i+2)} q_exp_{tm(i+3)}];
+    jerk=Q*A_pos_bs_{tm(i)}*[6 0 0 0]';
+    jerk_cost=jerk_cost + jerk'*jerk;
+end
+
+%Compute perception cost
+dist_im_cost=0;
+vel_im_cost=0;
+vel_isInFOV_im_cost=0;
+
+t=opti.variable(1,1);
+T=[t*t*t;t*t;t;1];
+for j=0:(NoI-1)
+
+%     init_int=knots(tm(p_+j));
+%     end_int=knots(tm(p_+j+1));
+%     
+%     uj=(t_m-init_int)/(end_int - init_int   );
+%    
+    Uj=[t^3 t^2 t 1]';
+    dUj=[3*t^2 2*t 1 0]';
+    ddUj=[6*t   2  0 0]';
+    dddUj=[6   0  0 0]';
+    
+    Qj=[q_exp_{tm(j)} q_exp_{tm(j+1)} q_exp_{tm(j+2)} q_exp_{tm(j+3)}];
+    
+    pos=Qj*A_pos_bs_{tm(j)}*Uj;
+    vel= (1/(deltaT_))   *Qj*A_pos_bs_{tm(j)}  * dUj;
+    accel= (1/(deltaT_^2)) *Qj*A_pos_bs_{tm(j)}  * ddUj;
+    jerk= (1/(deltaT_^3)) *Qj*A_pos_bs_{tm(j)}  * dddUj;
+
+    
+    axt=accel(1,:); ayt=accel(2,:); azt=accel(3,:);
+    psit=Psi{tm(j)}*T;
+
+    qabc=qabcFromAccel([axt ayt azt],9.81);
+    qpsi=[cos(psit/2), 0, 0, sin(psit/2)]; %Note that qpsi has norm=1
+    q=multquat(qabc,qpsi); %Note that q is guaranteed to have norm=1
+    w_R_b=toRotMat(q);
+    w_fe=[1 1 1 1]';   %feature in world frame
+    w_T_b=[w_R_b pos; zeros(1,3) 1];
+
+    b_T_c=[roty(90)*rotz(90) zeros(3,1); zeros(1,3) 1];
+
+    c_P=inv(b_T_c)*invPose(w_T_b)*w_fe; %Position of the feature in the camera frame
+    s=c_P(1:2)/c_P(3);  
+   
+    s_dot=jacobian(s,t);
+    
+    % See https://en.wikipedia.org/wiki/Cone#Equation_form:~:text=In%20implicit%20form%2C%20the%20same%20solid%20is%20defined%20by%20the%20inequalities
+    theta_deg=45;
+    is_in_FOV1=-(c_P(1)^2+c_P(2)^2)*(cosd(theta_deg))^2 +(c_P(3)^2)*(sind(theta_deg))^2; %(if this quantity is >=0)
+    is_in_FOV2=c_P(3); %(and this quantity is >=0)
+      
+    beta=60;
+    isInFOV_smooth=  (   1/(1+exp(-beta*is_in_FOV1))  )*(   1/(1+exp(-beta*is_in_FOV2))  );
+
+    f_vel_im{tm(j)}=(s_dot'*s_dot);
+    f_dist_im{tm(j)}=(s'*s); %I wanna minimize the integral of this funcion. Approx. using symp. Rule
+    f_isInFOV_im{tm(j)}=(isInFOV_smooth); %/(0.1+f_vel_im{n})
+    f_vel_isInFOV_im{tm(j)}=(-isInFOV_smooth)/(0.1+f_vel_im{tm(j)});
+    
+    delta_simpson=0.4;
+    t_constrained=0.0:delta_simpson:1.0;
+    for t_i=t_constrained        
+        simpson=getSimpsonCoeff(j,numel(t_constrained));
+
+        dist_im_cost=dist_im_cost               + (delta_simpson/3.0)*simpson*substitute(f_dist_im{tm(j)},t,t_i);
+        vel_im_cost=vel_im_cost                 + (delta_simpson/3.0)*simpson*substitute(f_vel_im{tm(j)},t,t_i);
+        vel_isInFOV_im_cost=vel_isInFOV_im_cost + (delta_simpson/3.0)*simpson*substitute(f_vel_isInFOV_im{tm(j)},t,t_i);
+    end
+   
+end
 
 
 %For now, force final poition
@@ -246,7 +338,9 @@ weight_=30;
 
 jit_compilation=false;
 %Solve first without perception cost (to get an initial guess)
-opti.minimize( cost );
+opti.minimize(0.0000005*jerk_cost+... %%              0.0*psi_cost+...
+              0.0*dist_im_cost+...
+              1.0*vel_isInFOV_im_cost);
 opti.solver('ipopt',struct('jit',jit_compilation));
 sol = opti.solve();
 
@@ -264,7 +358,6 @@ for j=0:(num_of_segments_-1)
     init_int=knots(tm(p_+j));
     end_int=knots(tm(p_+j+1));
     
-    
     uj=(t_m-init_int)/(end_int - init_int   );
    
     Uj=[uj^3 uj^2 uj 1]';
@@ -276,7 +369,6 @@ for j=0:(num_of_segments_-1)
     vel= (1/(deltaT_))   *Qj*A_pos_bs_{tm(j)}  * dUj;
     accel= (1/(deltaT_^2)) *Qj*A_pos_bs_{tm(j)}  * ddUj;
     jerk= (1/(deltaT_^3)) *Qj*A_pos_bs_{tm(j)}  * dddUj;
-    
 
     interval=[init_int, end_int];
         
@@ -293,7 +385,7 @@ end
 
 
 figure; hold on;
-plotSphere(p0,0.05,'r'); plotSphere(pf,0.05,'b'); % plotSphere(w_fe(1:3),0.05,'g');
+plotSphere(p0,0.05,'r'); plotSphere(pf,0.05,'b'); plotSphere(w_fe(1:3),0.05,'g');
 
 
 for j=0:(num_of_segments_-1)  
@@ -321,11 +413,14 @@ for j=0:(num_of_segments_-1)
 
     fplot3(pos(1),pos(2),pos(3),interval); 
 
+
     for t_m_i=init_int:0.5:end_int  %t_constrained
+        
+        psiT=sol.value(Psi{n})*[t_m_i^3 t_m_i^2 t_m_i 1]';
         
         w_t_b=subs(pos,t_m,t_m_i);
         qabc=qabcFromAccel(subs(accel,t_m,t_m_i), 9.81);
-        qpsi=[0 0 0 1];%[cos(psiT/2), 0, 0, sin(psiT/2)]; %Note that qpsi has norm=1
+        qpsi=[cos(psiT/2), 0, 0, sin(psiT/2)]; %Note that qpsi has norm=1
         q=multquat(qabc,qpsi); %Note that q is guaranteed to have norm=1
         w_R_b=toRotMat(q);
         w_T_b=[w_R_b w_t_b; 0 0 0 1];
@@ -377,7 +472,7 @@ for i=0:(N_-3) % i  is the interval (\equiv segment)
     x=vertexes(1,:);     y=vertexes(2,:);    z=vertexes(3,:);
     
     [k1,av1] = convhull(x,y,z);
-    trisurf(k1,x,y,z,'FaceColor','cyan')
+    %trisurf(k1,x,y,z,'FaceColor','cyan')
     
 end
 
@@ -585,8 +680,8 @@ end
 
 %Use the initial guess to solve with all costs
 for n=1:NoI
-    opti.set_initial(P{n}, P_guess{n})
-    opti.set_initial(Psi{n}, Psi_guess{n})
+    opti.set0ial(P{n}, P_guess{n})
+    opti.set0ial(Psi{n}, Psi_guess{n})
 end
 
 
@@ -699,7 +794,4 @@ for n=1:NoI
     fplot(sol.value(A{n})*Tau, interval)
 end
 
-%convert c index to matlab index
-function result=tm(x)
-    result=x+1;
-end
+

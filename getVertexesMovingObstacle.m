@@ -5,14 +5,8 @@ function vertexes=getVertexesMovingObstacle(t_init, t_end)
   all_vertexes=[];
   
   for t=linspace(t_init,t_end,6)
-      
-     
-      
-    pos_x=sin(t)+2*sin(2*t);
-    pos_y=(cos(t)-2*cos(2*t))/3;
-    pos_z=-sin(3*t);
-    
-    p=[pos_x;pos_y;pos_z];
+       
+    p=getPosMovingObstacle(t);
     
     all_vertexes=[all_vertexes p+[hs hs hs]' ];
     
