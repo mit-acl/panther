@@ -1,3 +1,4 @@
+
 close all; clc;clear;
 set(0,'DefaultFigureWindowStyle','docked') %'normal' 'docked'
 set(0,'defaulttextInterpreter','latex');
@@ -7,6 +8,422 @@ set(0,'defaultfigurecolor',[1 1 1])
 
 import casadi.*
 addpath(genpath('./utils'));
+
+t_init=0;
+t_final=4;
+
+deg_pol_=3;
+num_pol_ =5;
+
+p0=[-4;0;0];
+v0=[0;0;0];
+a0=[0;0;0];
+
+pf=[4;0;0];
+vf=[0;0;0];
+af=[0;0;0];
+
+num_of_obst_=1;
+
+p_ = deg_pol_;
+M_ = num_pol_ + 2 * p_;
+N_ = M_ - p_ - 1;
+num_of_segments_ = (M_ - 2 * p_);  % this is the same as num_pol_
+
+deltaT_ = (t_final - t_init) / (1.0 * (M_ - 2 * p_ - 1 + 1));
+
+t_final = t_init + (1.0 * (M_ - 2 * p_ - 1 + 1)) * deltaT_;
+
+t_init_ = t_init;
+t_final_ = t_final;
+
+opti = casadi.Opti();
+
+
+
+
+A_pos_bs_seg0 =[  -1.0000,    3.0000,   -3.0000,    1.0000;
+                    1.7500,   -4.5000,    3.0000,         0;
+                   -0.9167,    1.5000,         0,         0;
+                    0.1667,         0,         0,         0;];
+
+A_pos_bs_seg1 = [   -0.2500,    0.7500,   -0.7500,    0.2500;
+                    0.5833,   -1.2500,    0.2500,    0.5833;
+                   -0.5000,    0.5000,    0.5000,    0.1667;
+                    0.1667,         0,         0,         0;];
+
+A_pos_bs_rest =[  -0.1667,    0.5000,   -0.5000,    0.1667,
+                    0.5000,   -1.0000,         0,    0.6667,
+                   -0.5000,    0.5000,    0.5000,    0.1667,
+                    0.1667,         0,         0,         0;];
+
+A_pos_bs_seg_last2 =[  -0.1667,    0.5000,   -0.5000,    0.1667;
+                        0.5000,   -1.0000,    0.0000,    0.6667;
+                       -0.5833,    0.5000,    0.5000,    0.1667;
+                        0.2500,         0,         0,         0;];
+
+A_pos_bs_seg_last =[   -0.1667,    0.5000,   -0.5000,   0.1667;
+                        0.9167,   -1.2500,   -0.2500,   0.5833;
+                       -1.7500,    0.7500,    0.7500,   0.2500;
+                        1.0000,         0,         0,        0;];
+
+                    
+
+
+A_pos_bs_{tm(0)}= A_pos_bs_seg0;
+A_pos_bs_{tm(1)}= A_pos_bs_seg1;
+for i=0:(num_pol_ - 5)
+   A_pos_bs_{end+1}= A_pos_bs_rest;
+end
+A_pos_bs_{end+1}=A_pos_bs_seg_last2;
+A_pos_bs_{end+1}=A_pos_bs_seg_last;
+
+
+M_pos_bs2mv_seg0 =[
+ 1.1023313949144333268037598827505,   0.34205724556666972091534262290224, -0.092730934245582874453361910127569, -0.032032766697130621302846975595457;
+-0.049683556253749178166501110354147,   0.65780347324677179710050722860615,   0.53053863760186903419935333658941,   0.21181027098212013015654520131648;
+-0.047309044211162346038612724896666,  0.015594436894155586093013710069499,    0.5051827557159349613158383363043,   0.63650059656260427054519368539331;
+-0.0053387944495217444854096022766043, -0.015455155707597083292181849856206,  0.057009540927778303009976212933907,   0.18372189915240558222286892942066];
+
+M_pos_bs2mv_seg1 =[
+0.27558284872860833170093997068761,  0.085514311391667430228835655725561, -0.023182733561395718613340477531892, -0.0080081916742826553257117438988644;
+ 0.6099042761975865811763242163579,   0.63806904207840509091198555324809,   0.29959938009132258684985572472215,    0.12252106674808682651445224109921;
+0.11985166952332682033244282138185,   0.29187180223752445806795208227413,   0.66657381254229419731416328431806,    0.70176522577378930289881964199594;
+-0.0053387944495217444854096022766043, -0.015455155707597083292181849856206,  0.057009540927778303009976212933907,    0.18372189915240558222286892942066];
+
+M_pos_bs2mv_rest =[
+0.18372189915240555446729331379174,  0.057009540927778309948870116841135, -0.015455155707597117986651369392348, -0.0053387944495218164764338553140988;
+0.70176522577378919187651717948029,   0.66657381254229419731416328431806,   0.29187180223752384744528853843804,    0.11985166952332582113172065874096;
+0.11985166952332682033244282138185,   0.29187180223752445806795208227413,   0.66657381254229419731416328431806,    0.70176522577378930289881964199594;
+-0.0053387944495217444854096022766043, -0.015455155707597083292181849856206,  0.057009540927778303009976212933907,    0.18372189915240558222286892942066];
+
+
+M_pos_bs2mv_seg_last2 =[
+0.18372189915240569324517139193631,  0.057009540927778309948870116841135, -0.015455155707597145742226985021261, -0.0053387944495218164764338553140988;
+0.70176522577378952494342456702725,   0.66657381254229453038107067186502,   0.29187180223752412500104469472717,    0.11985166952332593215402312125661;
+ 0.1225210667480875342816304396365,   0.29959938009132280889446064975346,   0.63806904207840497988968309073243,    0.60990427619758624810941682881094;
+-0.0080081916742826154270717964323012, -0.023182733561395621468825822830695,  0.085514311391667444106623463540018,    0.27558284872860833170093997068761];
+
+M_pos_bs2mv_seg_last =[
+0.18372189915240555446729331379174, 0.057009540927778309948870116841135, -0.015455155707597117986651369392348, -0.0053387944495218164764338553140988;
+0.63650059656260415952289122287766,   0.5051827557159349613158383363043,  0.015594436894155294659469745965907,  -0.047309044211162887272337229660479;
+0.21181027098212068526805751389475,  0.53053863760186914522165579910506,   0.65780347324677146403359984105919,  -0.049683556253749622255710960416764;
+-0.032032766697130461708287185729205, -0.09273093424558248587530329132278,   0.34205724556666977642649385416007,     1.1023313949144333268037598827505];
+
+
+M_pos_bs2mv_{tm(0)}= M_pos_bs2mv_seg0;
+M_pos_bs2mv_{tm(1)}= M_pos_bs2mv_seg1;
+for i=0:(num_pol_ - 5)
+   M_pos_bs2mv_{end+1}= M_pos_bs2mv_rest;
+end
+M_pos_bs2mv_{end+1}=M_pos_bs2mv_seg_last2;
+M_pos_bs2mv_{end+1}=M_pos_bs2mv_seg_last;
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%This comes from the initial guess, set as decision variables for now
+for i=1:(num_of_obst_*num_of_segments_)
+    n_{i}=opti.variable(3,1); 
+    d_{i}=opti.variable(1,1);
+end
+
+knots=[];
+for i=0:p_
+    knots=[knots t_init_];
+end
+
+for i=(p_ + 1):(M_ - p_ - 1)
+    knots=[knots knots(tm(i - 1)) + deltaT_];
+end
+
+for i=(M_ - p_):M_
+    knots=[knots t_final_];
+end
+
+knots_=knots;
+
+t1 = knots_(tm(1));
+t2 = knots_(tm(2));
+tpP1 = knots_(tm(p_ + 1));
+t1PpP1 = knots_(tm(1 + p_ + 1));
+
+tN = knots_(tm(N_));
+tNm1 = knots_(tm(N_ - 1));
+tNPp = knots_(tm(N_ + p_));
+tNm1Pp = knots_(tm(N_ - 1 + p_));
+
+
+q0_ = p0;
+q1_ = p0 + (-t1 + tpP1) * v0 / p_;
+q2_ = (p_ * p_ * q1_ - (t1PpP1 - t2) * (a0 * (t2 - tpP1) + v0) - p_ * (q1_ + (-t1PpP1 + t2) * v0)) / ((-1 + p_) * p_);
+
+qN_ = pf;
+qNm1_ = pf + ((tN - tNPp) * vf) / p_;
+qNm2_ = (p_ * p_ * qNm1_ - (tNm1 - tNm1Pp) * (af * (-tN + tNm1Pp) + vf) - p_ * (qNm1_ + (-tNm1 + tNm1Pp) * vf)) / ((-1 + p_) * p_);
+
+
+%%Add Constraints
+
+for i=0:N_ 
+    q_exp_{tm(i)}=opti.variable(3,1); %Control points
+end
+
+opti.subject_to( q_exp_{tm(0)}== q0_ );
+opti.subject_to( q_exp_{tm(1)}== q1_ );
+opti.subject_to( q_exp_{tm(2)}== q2_ );
+
+
+%Final velocity and acceleration are zero \equiv q_exp_[N_]=q_exp_[N_-1]=q_exp_[N_-2]
+opti.subject_to( q_exp_{tm(N_)}== q_exp_{tm(N_-1)} );
+opti.subject_to( q_exp_{tm(N_-1)}== q_exp_{tm(N_-2)} );
+
+
+%%%%%%PLANE CONSTRAINTS
+
+epsilon=1;
+
+for i=0:(N_-3) % i  is the interval (\equiv segment)
+    
+    Qbs=[q_exp_{tm(i)} q_exp_{tm(i+1)} q_exp_{tm(i+2)} q_exp_{tm(i+3)}];
+    Qmv=Qbs*M_pos_bs2mv_{tm(i)}; %transformPosBSpline2otherBasis(Qbs,i); TODO
+
+    init_int=knots(tm(p_+i));
+    end_int=knots(tm(p_+i+1));
+
+    for obst_index=0:(num_of_obst_-1)
+        
+       ip = obst_index * num_of_segments_ + i;  % index plane
+       
+      %impose that all the vertexes of the obstacle are on one side of the plane
+      vertexes=getVertexesMovingObstacle(init_int,end_int); %This call should depend on the obstacle itself
+
+      for r=1:size(vertexes,2) %vertex=vertexes
+          vertex=vertexes(:,r);
+          opti.subject_to( (-(n_{tm(ip)}'*vertex + d_{tm(ip)} - epsilon))<= 0);
+      end
+      
+      %and the control points on the other side
+      for u=0:3
+      
+        q_ipu = Qmv(:,tm(u));
+        opti.subject_to( n_{tm(ip)}'*q_ipu + d_{tm(ip)} + epsilon <= 0);
+      
+      end
+        
+    end   
+    
+end
+
+%TODO: add here the sphere, velocity and acceleration constraints
+
+
+%Adding objective:
+
+cost=0;
+
+for i=0:(num_of_segments_-1)   
+    
+    Q=[q_exp_{tm(i)} q_exp_{tm(i+1)} q_exp_{tm(i+2)} q_exp_{tm(i+3)}];
+    jerk=Q*A_pos_bs_{tm(i)}*[6 0 0 0]';
+    cost=cost + jerk'*jerk;
+    
+end
+
+
+
+%For now, force final poition
+opti.subject_to( q_exp_{tm(N_)}== pf );
+
+weight_=30;
+% cost= cost  + weight_*(q_exp_{tm(N_)}-pf)'*(q_exp_{tm(N_)}-pf);
+
+
+jit_compilation=false;
+%Solve first without perception cost (to get an initial guess)
+opti.minimize( cost );
+opti.solver('ipopt',struct('jit',jit_compilation));
+sol = opti.solve();
+
+figure; 
+subplot(4,1,1);hold on; title('p')
+subplot(4,1,2); hold on; title('v')
+subplot(4,1,3); hold on; title('a')
+subplot(4,1,4); hold on; title('j')
+for j=0:(num_of_segments_-1)  
+
+    Qj=sol.value([q_exp_{tm(j)} q_exp_{tm(j+1)} q_exp_{tm(j+2)} q_exp_{tm(j+3)}]);
+    
+    syms t_m real
+    
+    init_int=knots(tm(p_+j));
+    end_int=knots(tm(p_+j+1));
+    
+    
+    uj=(t_m-init_int)/(end_int - init_int   );
+   
+    Uj=[uj^3 uj^2 uj 1]';
+    dUj=[3*uj^2 2*uj 1 0]';
+    ddUj=[6*uj   2  0 0]';
+    dddUj=[6   0  0 0]';
+    
+    pos=Qj*A_pos_bs_{tm(j)}*Uj;
+    vel= (1/(deltaT_))   *Qj*A_pos_bs_{tm(j)}  * dUj;
+    accel= (1/(deltaT_^2)) *Qj*A_pos_bs_{tm(j)}  * ddUj;
+    jerk= (1/(deltaT_^3)) *Qj*A_pos_bs_{tm(j)}  * dddUj;
+    
+
+    interval=[init_int, end_int];
+        
+    subplot(4,1,1);
+    fplot(pos, interval)
+    subplot(4,1,2);
+    fplot(vel, interval)
+    subplot(4,1,3);
+    fplot(accel, interval)
+    subplot(4,1,4);
+    fplot(jerk, interval)
+
+end
+
+
+figure; hold on;
+plotSphere(p0,0.05,'r'); plotSphere(pf,0.05,'b'); % plotSphere(w_fe(1:3),0.05,'g');
+
+
+for j=0:(num_of_segments_-1)  
+
+    Qj=sol.value([q_exp_{tm(j)} q_exp_{tm(j+1)} q_exp_{tm(j+2)} q_exp_{tm(j+3)}]);
+    
+    syms t_m real
+    
+    init_int=knots(tm(p_+j));
+    end_int=knots(tm(p_+j+1));
+    
+    uj=(t_m-init_int)/(end_int - init_int   );
+   
+    Uj=[uj^3 uj^2 uj 1]';
+    dUj=[3*uj^2 2*uj 1 0]';
+    ddUj=[6*uj   2  0 0]';
+    dddUj=[6   0  0 0]';
+    
+    pos=Qj*A_pos_bs_{tm(j)}*Uj;
+    vel= (1/(deltaT_))   *Qj*A_pos_bs_{tm(j)}  * dUj;
+    accel= (1/(deltaT_^2)) *Qj*A_pos_bs_{tm(j)}  * ddUj;
+    jerk= (1/(deltaT_^3)) *Qj*A_pos_bs_{tm(j)}  * dddUj;
+
+    interval=[init_int, end_int];
+
+    fplot3(pos(1),pos(2),pos(3),interval); 
+
+    for t_m_i=init_int:0.5:end_int  %t_constrained
+        
+        w_t_b=subs(pos,t_m,t_m_i);
+        qabc=qabcFromAccel(subs(accel,t_m,t_m_i), 9.81);
+        qpsi=[0 0 0 1];%[cos(psiT/2), 0, 0, sin(psiT/2)]; %Note that qpsi has norm=1
+        q=multquat(qabc,qpsi); %Note that q is guaranteed to have norm=1
+        w_R_b=toRotMat(q);
+        w_T_b=[w_R_b w_t_b; 0 0 0 1];
+        plotAxesArrowsT(0.2,double(w_T_b))
+    end
+    
+%     subplot(4,1,1);
+%     fplot(pos, interval)
+%     subplot(4,1,2);
+%     fplot(vel, interval)
+%     subplot(4,1,3);
+%     fplot(accel, interval)
+%     subplot(4,1,4);
+%     fplot(jerk, interval)
+
+end
+view([45,45]); axis equal; xlabel('x'); ylabel('y'); zlabel('z');
+
+
+% disp("Plotting")
+% for n=1:NoI
+%     for tau_i=t0:0.05:tf  %t_constrained
+% 
+%         Tau_i=[tau_i^3 tau_i^2 tau_i 1]';
+% 
+%         w_t_b = sol.value(P{n})*Tau_i;
+%         accel = sol.value(A{n})*Tau_i;
+%         psiT=sol.value(Psi{n})*Tau_i;
+% 
+%         qabc=qabcFromAccel(accel, g);
+%         qpsi=[cos(psiT/2), 0, 0, sin(psiT/2)]; %Note that qpsi has norm=1
+%         q=multquat(qabc,qpsi); %Note that q is guaranteed to have norm=1
+%         w_R_b=toRotMat(q);
+%         w_T_b=[w_R_b w_t_b; 0 0 0 1];
+%         plotAxesArrowsT(0.2,w_T_b)
+% 
+%     end
+%     disp(['Done plotting interval ', num2str(n)])
+% end
+
+for i=0:(N_-3) % i  is the interval (\equiv segment)
+    init_int=knots(tm(p_+i));
+    end_int=knots(tm(p_+i+1));
+ 
+    for obst_index=0:(num_of_obst_-1)
+       vertexes=getVertexesMovingObstacle(init_int,end_int); %This call should depend on the obstacle itself
+    end
+    
+    x=vertexes(1,:);     y=vertexes(2,:);    z=vertexes(3,:);
+    
+    [k1,av1] = convhull(x,y,z);
+    trisurf(k1,x,y,z,'FaceColor','cyan')
+    
+end
+
+fprintf('Final Cost=')
+sol.value((q_exp_{tm(N_)}-pf)'*(q_exp_{tm(N_)}-pf))
+
+%%
+
+for n=1:NoI
+
+P{n} = opti.variable(3,4);
+
+V{n}=[0 3*P{n}(1,1) 2*P{n}(1,2) P{n}(1,3);
+      0 3*P{n}(2,1) 2*P{n}(2,2) P{n}(2,3);
+      0 3*P{n}(3,1) 2*P{n}(3,2) P{n}(3,3);
+];
+
+A{n}=[0    0     2*V{n}(1,2) V{n}(1,3);
+      0    0     2*V{n}(2,2) V{n}(2,3);
+      0    0     2*V{n}(3,2) V{n}(3,3);
+];
+
+J{n}=[
+   0    0    0   6*V{n}(1,2);
+   0    0    0   6*V{n}(2,2);
+   0    0    0   6*V{n}(3,2);
+];
+
+Psi{n} = [0 opti.variable(1,3)]; %0t^3 + at^2 + bt + c 
+
+VPsi{n}=[0    0     2*Psi{n}(1,2) Psi{n}(1,3)];
+
+APsi{n}=[0    0    0   VPsi{n}(1,3)];
+
+jerk=J{n}(:,end);
+apsi=APsi{n}(:,end);
+
+psi_cost=psi_cost+apsi*apsi; %apsi is a scalar
+jerk_cost = jerk_cost + jerk'*jerk;
+
+end
+
+
+
+
+
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 NoI=4; %number of intervals
 
@@ -280,247 +697,7 @@ for n=1:NoI
     fplot(sol.value(A{n})*Tau, interval)
 end
 
-
-
-%% Using the Hopf fibration approach
-% clear; clc; close all;
-% set(0,'DefaultFigureWindowStyle','docked') %'normal' 'docked'
-% addpath(genpath('./utils'));
-% 
-% t=sym('t','real');
-% ax=sym('ax','real');
-% ay=sym('ay','real');
-% az=sym('az','real');
-% a=sym('a','real');
-% b=sym('b','real');
-% c=sym('c','real');
-% % psi=sym('psi','real');
-% 
-% T2=[t*t t 1]';
-% T3=[t*t*t t*t t 1]';
-% h=sym('h',[1,3],'real'); %coeff of psi
-% psi=h*T2;
-% 
-% P=sym('P%d%d',[3,4],'real');
-% Pt=P*T3;
-% 
-% g=sym('g','real'); %g is 9.81
-% 
-% qabc=qabcFromAccel([ax ay az],g);
-% qpsi=[cos(psi/2), 0, 0, sin(psi/2)]; %Note that qpsi has norm=1
-% q=multquat(qabc,qpsi); %Note that q is guaranteed to have norm=1
-% w_R_b=toRotMat(q);
-% w_fe=[1 1 1 1]';   %feature in world frame
-% w_T_b=[w_R_b Pt; zeros(1,3) 1];
-% k=invPose(w_T_b)*w_fe;
-% s=k(1:2)/k(3);
-% disp("simplifying...")
-% f=simplify(s'*s)
-
-%%
-%Using the Mellinger approach (Rot. matrix)
-% for t=0.5;%0.1:0.5:1.0
-% 
-% ax=A(1,:)*[t*t*t;t*t;t;1];
-% ay=A(2,:)*[t*t*t;t*t;t;1];
-% az=A(3,:)*[t*t*t;t*t;t;1];
-% 
-% cost=cost + (P14 - (ay*(ay*cos(h1*t^2 + h2*t + h3) - ax*sin(h1*t^2 + h2*t + h3)) + cos(h1*t^2 + h2*t + h3)*(az + g)^2)/((az + g)^2*(ax*cos(h1*t^2 + h2*t + h3) + ay*sin(h1*t^2 + h2*t + h3))^2 + (ay*(ay*cos(h1*t^2 + h2*t + h3) - ax*sin(h1*t^2 + h2*t + h3)) + cos(h1*t^2 + h2*t + h3)*(az + g)^2)^2 + (ax*(ay*cos(h1*t^2 + h2*t + h3) - ax*sin(h1*t^2 + h2*t + h3)) - sin(h1*t^2 + h2*t + h3)*(az + g)^2)^2)^(1/2) + P13*t + P11*t^3 + P12*t^2)^2/(P34 + P33*t + P31*t^3 + P32*t^2 + ((az + g)*(ax*cos(h1*t^2 + h2*t + h3) + ay*sin(h1*t^2 + h2*t + h3)))/((az + g)^2*(ax*cos(h1*t^2 + h2*t + h3) + ay*sin(h1*t^2 + h2*t + h3))^2 + (ay*(ay*cos(h1*t^2 + h2*t + h3) - ax*sin(h1*t^2 + h2*t + h3)) + cos(h1*t^2 + h2*t + h3)*(az + g)^2)^2 + (ax*(ay*cos(h1*t^2 + h2*t + h3) - ax*sin(h1*t^2 + h2*t + h3)) - sin(h1*t^2 + h2*t + h3)*(az + g)^2)^2)^(1/2))^2 + (P24 + P23*t + (ax*(ay*cos(h1*t^2 + h2*t + h3) - ax*sin(h1*t^2 + h2*t + h3)) - sin(h1*t^2 + h2*t + h3)*(az + g)^2)/((az + g)^2*(ax*cos(h1*t^2 + h2*t + h3) + ay*sin(h1*t^2 + h2*t + h3))^2 + (ay*(ay*cos(h1*t^2 + h2*t + h3) - ax*sin(h1*t^2 + h2*t + h3)) + cos(h1*t^2 + h2*t + h3)*(az + g)^2)^2 + (ax*(ay*cos(h1*t^2 + h2*t + h3) - ax*sin(h1*t^2 + h2*t + h3)) - sin(h1*t^2 + h2*t + h3)*(az + g)^2)^2)^(1/2) + P21*t^3 + P22*t^2)^2/(P34 + P33*t + P31*t^3 + P32*t^2 + ((az + g)*(ax*cos(h1*t^2 + h2*t + h3) + ay*sin(h1*t^2 + h2*t + h3)))/((az + g)^2*(ax*cos(h1*t^2 + h2*t + h3) + ay*sin(h1*t^2 + h2*t + h3))^2 + (ay*(ay*cos(h1*t^2 + h2*t + h3) - ax*sin(h1*t^2 + h2*t + h3)) + cos(h1*t^2 + h2*t + h3)*(az + g)^2)^2 + (ax*(ay*cos(h1*t^2 + h2*t + h3) - ax*sin(h1*t^2 + h2*t + h3)) - sin(h1*t^2 + h2*t + h3)*(az + g)^2)^2)^(1/2))^2;
-% 
-% end
-
-%Using the Hopf fibration approach
-
-%Solve without perception cost (convex problem):
-%%
-close all; clc;
-w_R_b=rotx(30);
-w_t_b=[1 0 0]';
-w_T_b=[w_R_b w_t_b; 0 0 0 1];
-plotAxesArrowsT(0.2,w_T_b)
-
-
-%% Using the Mellinger approach (Rot. matrix)
-clc
-syms t real
-syms ax ay az real
-syms g real
-T2=[t*t t 1]';
-T3=[t*t*t t*t t 1]';
-h=sym('h',[1,3],'real'); %coeff of psi
-
-P=sym('P%d%d',[3,4],'real');
-
-Pt=P*T3;
-
-psi=h*T2;
-
-sp=sin(psi);
-cp=cos(psi);
-
-a=[ax ay az]';
-zb=a+[0 0 g]';
-xc=[cp sp 0]';
-yb=cross(zb,xc);
-xb=cross(yb,zb);
-R=[xb/norm(xb) yb/norm(yb) zb/norm(zb)];
-
-
-w_fe=[-1 0 0 1]';   %feature in world frame
-k=[R Pt; zeros(1,3) 1]*w_fe;
-s=k(1:2)/k(3);
-f=simplify(s'*s)
-
-% int(f,t,0,1)
-
-%%
-P=SX.sym('P',[3,4]);
-t=SX.sym('t');
-T=[t*t*t t*t t 1]';
-
-PT=P*T;
-
-VT=[gradient(PT(1),t);
-    gradient(PT(2),t);
-    gradient(PT(3),t)];
-
-AT=[gradient(VT(1),t);
-    gradient(VT(2),t);
-    gradient(VT(3),t)];
-
-JT=[gradient(AT(1),t);
-    gradient(AT(2),t);
-    gradient(AT(3),t)];
-
-f=JT'*JT;
-
-t0=0;
-tf=1;
-
-init_pos=[0 0 0]';
-init_vel=[0 0 0]';
-
-final_pos=[0 0 2]';
-
-g=[ substitute(PT,t,t0)==init_pos;
-%     substitute(VT,t,t0)==init_vel;
-    substitute(PT,t,tf)==final_pos;
-]
-
-nlp = struct;            % NLP declaration
-nlp.x = [P(:)];         % decision vars
-nlp.f = f;               % objective
-nlp.g = g;               % constraints
-
-
-
-F = nlpsol('F','ipopt',nlp);
-
-% Solve the problem using a guess
-solution=F('x0',rand(size(P(:))),'ubg',0,'lbg',0)
-
-
-x_opt = solution.x;
-disp(x_opt)
-
-P=full(reshape(x_opt,size(P)));
-
-syms t real
-T=[t*t*t t*t t 1]';
-fplot(P*T,[t0 tf])
-
-
-
-%%
-sp=sin(psi)
-cp=cos(psi)
-
-a=[ax ay az]';
-
-t=a+[0 0 g]';
-
-zb=t
-xc=[cp sp 0]';
-
-
-yb=cross(zb,xc);
-
-xb=cross(yb,zb);
-
-R=[xb/norm(xb) yb/norm(yb) zb/norm(zb)]
-
-
-%%
-% Symbols/expressions
-x = MX.sym('x');
-y = MX.sym('y');
-z = MX.sym('z');
-f = x^2+100*z^2;
-g = z+(1-x)^2-y;
-
-nlp = struct;            % NLP declaration
-nlp.x = [x;y;z];         % decision vars
-nlp.f = f;               % objective
-nlp.g = g;               % constraints
-
-% Create solver instance
-F = nlpsol('F','ipopt',nlp);
-
-% Solve the problem using a guess
-F('x0',[2.5 3.0 0.75],'ubg',0,'lbg',0)
-
-
-%%
-clc;
-syms a b c real
-syms q0 q1 q2 q3 real
-
-eqs=[
-    q0^2+q1^2-q2^2-q3^2==a
-    2*(q0*q3+q1*q2)==b
-    2*(q1*q3-q0*q2)==c
-];
-
-tmp=1/sqrt(2*(1+c));
-q0=tmp*(1+c);
-q1=tmp*(-b);
-q2=tmp*a;
-q3=0;
-
-assume(a*a+b*b+c*c==1)
-
-simplify(q0^2+q1^2-q2^2-q3^2)
-
-%%
-
-syms t p1 p2 p3 real
-t=sym('t','real');
-p0=sym('p0','real');
-p1=sym('p1','real');
-p2=sym('p2','real');
-p3=sym('p3','real');
-
-
-quatmultiply([0 1+p1 p2 p3],[cos(t),sin(t),0,0])'
-
-
-% quaternion(t,t,t,t)
-% *quaternion(cos(t),sin(t),0,0)
-
-% solve(eqs, [q0 q1 q2 q3])
-
-
-function result=getSimpsonCoeff(j,total)
-
-    j_is_even = (rem(j, 2) == 0);
-
-    %https://en.wikipedia.org/wiki/Simpson%27s_rule
-    if(j==1 || j==total)  %Beginning or end
-        result=1.0;
-    elseif (j_is_even)
-        result=4.0;
-    else 
-        result=2.0;
-    end
-
+%convert c index to matlab index
+function result=tm(x)
+    result=x+1;
 end
