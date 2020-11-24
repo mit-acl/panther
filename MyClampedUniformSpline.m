@@ -1,3 +1,4 @@
+%Jesus Tordesillas Torres, jtorde@mit.edu, November 2020
 
 %See https://www.mathworks.com/help/matlab/matlab_oop/comparing-handle-and-value-classes.html
 classdef MyClampedUniformSpline < handle
@@ -10,20 +11,20 @@ classdef MyClampedUniformSpline < handle
         N
         p   
         knots
-        num_pol
+        num_seg
         num_cpoints
         CPoints %Cell array of size 3\times(N+1)
     end
     
     methods
-        function obj = MyClampedUniformSpline(t0, tf, deg_pol, num_pol, casadi_opti)
+        function obj = MyClampedUniformSpline(t0, tf, deg, dim, num_seg, casadi_opti)
 %             if nargin == 0, obj.q = Q.Identity; end
 %             if nargin == 1, obj.q = varargin{1}; end
             obj.t0 = t0;
             obj.tf = tf;
-            obj.p = deg_pol;
-            obj.num_pol = num_pol;
-            obj.M =  obj.num_pol + 2 * obj.p;
+            obj.p = deg;
+            obj.num_seg = num_seg;
+            obj.M =  obj.num_seg + 2 * obj.p;
             obj.delta_t = (obj.tf -  obj.t0) / (1.0 * (obj.M - 2 * obj.p - 1 + 1));
             obj.N = obj.M - obj.p - 1;
             obj.num_cpoints=obj.N+1;
@@ -45,9 +46,8 @@ classdef MyClampedUniformSpline < handle
             %Create the control points
             obj.CPoints={};
             for i=1:obj.num_cpoints
-                obj.CPoints{end+1}=casadi_opti.variable(3,1); %Control points
+                obj.CPoints{end+1}=casadi_opti.variable(dim,1); %Control points
             end
-            obj.CPoints
 
         end
 
@@ -134,7 +134,7 @@ classdef MyClampedUniformSpline < handle
         function result=getControlCost(obj)
             
             result=0;
-            for j=0:(obj.num_pol-1)   
+            for j=0:(obj.num_seg-1)   
 %                 Q=[q_exp_{tm(i)} q_exp_{tm(i+1)} q_exp_{tm(i+2)} q_exp_{tm(i+3)}];
 %                 jerk=Q*A_pos_bs_{tm(i)}*[6 0 0 0]';
                 jerk=obj.evalDerivativeU(obj.p,0.5,j);
@@ -172,7 +172,7 @@ classdef MyClampedUniformSpline < handle
             Qj=obj.convertCellArrayCPsToMatrix(Q_j_cell);
             
             ADiffT=(A* subs(diff(Tmp,tmp,order),tmp,u));
-            
+                       
             if(numel(symvar(ADiffT))==0)
                 ADiffT=double(ADiffT);
             end
@@ -206,7 +206,7 @@ classdef MyClampedUniformSpline < handle
         
         function plotDerivative(obj,order)
             syms t real
-            for j=0:(obj.num_pol-1)
+            for j=0:(obj.num_seg-1)
                 interv=obj.timeSpanOfInterval(j);           
                 u=(t-min(interv))/(max(interv)-min(interv));
                 fplot(obj.evalDerivativeU(order,u,j),interv); hold on;
@@ -216,7 +216,7 @@ classdef MyClampedUniformSpline < handle
         function plotPos3D(obj)
             figure; hold on;
             syms t real
-            for j=0:(obj.num_pol-1)
+            for j=0:(obj.num_seg-1)
                 interv=obj.timeSpanOfInterval(j);           
                 u=(t-min(interv))/(max(interv)-min(interv));
                 pos=obj.evalDerivativeU(0,u,j);
@@ -242,12 +242,12 @@ classdef MyClampedUniformSpline < handle
         end
 
         function A=getA_BS_Interval(obj,j)
-            %the intervals are [0,1,2,...,num_pol-2,num_pol-1]
-            if(j<(obj.num_pol-2))
+            %the intervals are [0,1,2,...,num_seg-2,num_seg-1]
+            if(j<(obj.num_seg-2))
                 A=computeMatrixForClampedUniformBSpline(obj.p,j,[0,1]);
-            elseif(j==(obj.num_pol-2))
+            elseif(j==(obj.num_seg-2))
                 A=computeMatrixForClampedUniformBSpline(obj.p,-2,[0,1]);
-            elseif(j==(obj.num_pol-1))
+            elseif(j==(obj.num_seg-1))
                 A=computeMatrixForClampedUniformBSpline(obj.p,-1,[0,1]);
             else
                 error("This interval does not exist");
@@ -280,6 +280,7 @@ classdef MyClampedUniformSpline < handle
         end
         
         function updateCPsWithSolution(obj, sol_casadi)
+            Q={};
             for i=0:(obj.num_cpoints-1)
                 Q{tm(i)}=sol_casadi.value(obj.CPoints{tm(i)}); %Control points
             end
