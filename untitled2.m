@@ -10,8 +10,25 @@ import casadi.*
 addpath(genpath('./minvo/src/utils'));
 addpath(genpath('./minvo/src/solutions'));
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%% PARAMETERS! %%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+%constant factors for the costs
+c_costs.jerk_cost=            0.0;
+c_costs.yaw_cost=             0.0;%5e-3;
+c_costs.dist_im_cost=         0.0;
+c_costs.vel_isInFOV_im_cost=  1.0;
+
+%half of the angle of the cone
+theta_FOV_deg=45;
+
+%
+num_eval_simpson=15;
+
 t0=0;
-tf=4;
+tf=10;
 
 deg_pos=3;
 dim_pos=3;
@@ -19,21 +36,12 @@ dim_pos=3;
 deg_yaw=2;
 dim_yaw=1;
 
-num_seg =5; %number of segments
+num_seg =4; %number of segments
 
+p0=[-4;0;0]; v0=[0;0;0]; a0=[0;0;0]; y0=0;
+pf=[4;0;0]; vf=[0;0;0]; af=[0;0;0];
 
-p0=[-4;0;0];
-v0=[0;0;0];
-a0=[0;0;0];
-
-y0=0;
-
-
-pf=[4;0;0];
-vf=[0;0;0];
-af=[0;0;0];
-
-num_of_obst_=1;
+num_of_obst=0;
 
 
 opti = casadi.Opti();
@@ -42,7 +50,7 @@ sp=MyClampedUniformSpline(t0,tf,deg_pos, dim_pos, num_seg, opti); %spline positi
 sy=MyClampedUniformSpline(t0,tf,deg_yaw, dim_yaw, num_seg, opti); %spline position.
 
 %This comes from the initial guess, set as decision variables for now
-for i=1:(num_of_obst_*sp.num_seg)
+for i=1:(num_of_obst*sp.num_seg)
     n_{i}=opti.variable(3,1); 
     d_{i}=opti.variable(1,1);
 end
@@ -55,23 +63,18 @@ end
 opti.subject_to( sp.getPosT(t0)== p0 );
 opti.subject_to( sp.getVelT(t0)== v0 );
 opti.subject_to( sp.getAccelT(t0)== a0 );
-opti.subject_to( sy.getPosT(t0)== y0 );
+% opti.subject_to( sy.getPosT(t0)== y0 );
 
 %Final conditions
 opti.subject_to( sp.getPosT(tf)== pf );
 opti.subject_to( sp.getVelT(tf)== vf );
 opti.subject_to( sp.getAccelT(tf)== af );
 
-%Cost
-jerk_cost=sp.getControlCost();
-
-yaw_cost=sy.getControlCost();
-%PLANE CONSTRAINTS
+%Plane constraints
 epsilon=1;
 
-
 for j=0:(sp.num_seg-1)
-    for obst_index=0:(num_of_obst_-1)
+    for obst_index=0:(num_of_obst-1)
         
       ip = obst_index * sp.num_seg + j;  % index plane
        
@@ -93,13 +96,105 @@ for j=0:(sp.num_seg-1)
     end   
 end
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%% OBJECTIVE! %%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%Cost
+jerk_cost=sp.getControlCost();
+yaw_cost=sy.getControlCost();
+
+g=9.81;
+%Compute perception cost
+dist_im_cost=0;
+vel_im_cost=0;
+vel_isInFOV_im_cost=0;
+
+clear i
+clear n
+
+t_simpson=linspace(t0,tf,num_eval_simpson);
+delta_simpson=(t_simpson(2)-t_simpson(1));
+
+simpson_index=1;
+
+u=opti.variable(1,1); %it must be defined outside the loop (so that then I can use substitute(...,u,..) regardless of the interval
+
+for j=0:(sp.num_seg-1)
+    
+%     syms u real
+    
+    w_t_b = sp.getPosU(u,j);
+    accel = sp.getAccelU(u,j);
+    yaw= sy.getPosU(u,j);
+    
+    qabc=qabcFromAccel(accel,g);
+    qpsi=[cos(yaw/2), 0, 0, sin(yaw/2)]; %Note that qpsi has norm=1
+    q=multquat(qabc,qpsi); %Note that q is guaranteed to have norm=1
+    w_R_b=toRotMat(q);
+    w_fe=[1 1 1 1]';   %feature in world frame
+    w_T_b=[w_R_b w_t_b; zeros(1,3) 1];
+    b_T_c=[roty(90)*rotz(90) zeros(3,1); zeros(1,3) 1];
+
+    c_P=inv(b_T_c)*invPose(w_T_b)*w_fe; %Position of the feature in the camera frame
+    s=c_P(1:2)/c_P(3);  
+  
+    s_dot=jacobian(s,u);
+    
+    % See https://en.wikipedia.org/wiki/Cone#Equation_form:~:text=In%20implicit%20form%2C%20the%20same%20solid%20is%20defined%20by%20the%20inequalities
+    
+    is_in_FOV1=-(c_P(1)^2+c_P(2)^2)*(cosd(theta_FOV_deg))^2 +(c_P(3)^2)*(sind(theta_FOV_deg))^2; %(if this quantity is >=0)
+    is_in_FOV2=c_P(3); %(and this quantity is >=0)
+    
+    beta=10;
+    isInFOV_smooth=  (   1/(1+exp(-beta*is_in_FOV1))  )*(   1/(1+exp(-beta*is_in_FOV2))  );
+
+    f_vel_im{tm(j)}=(s_dot'*s_dot);
+    f_dist_im{tm(j)}=(s'*s); %I wanna minimize the integral of this funcion. Approx. using symp. Rule
+    f_isInFOV_im{tm(j)}=(isInFOV_smooth); %/(0.1+f_vel_im{n})
+    f_vel_isInFOV_im{tm(j)}=(-isInFOV_smooth)/(0.1+f_vel_im{tm(j)});
+    
+    span_interval=sp.timeSpanOfInterval(j);
+    t_init_interval=min(span_interval);   
+    t_final_interval=max(span_interval);
+    delta_interval=t_final_interval-t_init_interval;
+    
+    tsf=t_simpson; %tsf \eqiv t_simpson_filtered
+    tsf=tsf(tsf>=min(t_init_interval));
+    if(j==(sp.num_seg-1))
+        tsf=tsf(tsf<=max(t_final_interval));
+    else
+        tsf=tsf(tsf<max(t_final_interval));
+    end
+    
+    u_simpson{tm(j)}=(tsf-t_init_interval)/delta_interval;
+
+    
+    for u_i=u_simpson{tm(j)}
+        
+        simpson=getSimpsonCoeff(simpson_index,numel(u_simpson{tm(j)}));
+
+        dist_im_cost=dist_im_cost               + (delta_simpson/3.0)*simpson*substitute(f_dist_im{tm(j)},u,u_i);
+        vel_im_cost=vel_im_cost                 + (delta_simpson/3.0)*simpson*substitute(f_vel_im{tm(j)},u,u_i);
+        vel_isInFOV_im_cost=vel_isInFOV_im_cost + (delta_simpson/3.0)*simpson*substitute(f_vel_isInFOV_im{tm(j)},u,u_i);
+        
+        simpson_index=simpson_index+1;
+        
+    end
+end
+
+
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%% SOLVE! %%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%% SOLVE! %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 jit_compilation=false;
-opti.minimize( jerk_cost +0.00000000000001*yaw_cost);
+opti.minimize(c_costs.jerk_cost*           jerk_cost+...
+              c_costs.yaw_cost*            yaw_cost+...
+              c_costs.dist_im_cost*        dist_im_cost+...
+              c_costs.vel_isInFOV_im_cost* vel_isInFOV_im_cost);
 opti.solver('ipopt',struct('jit',jit_compilation));
 sol = opti.solve();
 sp.updateCPsWithSolution(sol)
@@ -114,20 +209,21 @@ sy.plotPosVelAccelJerk()
 
 
 sp.plotPos3D();
-plotSphere(p0,0.05,'r'); plotSphere(pf,0.05,'b'); %plotSphere(w_fe(1:3),0.05,'g');
+plotSphere(p0,0.05,'b'); plotSphere(pf,0.05,'r'); plotSphere(w_fe(1:3),0.05,'g');
 
-view([45,45]); axis equal
+view([280,15]); axis equal
 % 
 disp("Plotting")
-for t_i=t0:0.3:tf  %t_constrained
-
+for t_i=t_simpson %t0:0.3:tf  
+    
     w_t_b = sp.getPosT(t_i);
     accel = sp.getAccelT(t_i);% sol.value(A{n})*Tau_i;
+    yaw = sy.getPosT(t_i);
 %         psiT=sol.value(Psi{n})*Tau_i;
 
     qabc=qabcFromAccel(accel, 9.81);
 
-    qpsi=[0 0 0 1]';%[cos(psiT/2), 0, 0, sin(psiT/2)]; %Note that qpsi has norm=1
+    qpsi=[cos(yaw/2), 0, 0, sin(yaw/2)]; %Note that qpsi has norm=1
     q=multquat(qabc,qpsi); %Note that q is guaranteed to have norm=1
 
     w_R_b=toRotMat(q);
@@ -142,15 +238,79 @@ lightangle(gca,45,0)
 
 for j=0:(sp.num_seg-1) % i  is the interval (\equiv segment)
     
-      init_int=min(sp.timeSpanOfInterval(j)); 
-      end_int=max(sp.timeSpanOfInterval(j)); 
-      vertexes=getVertexesMovingObstacle(init_int,end_int); %This call should depend on the obstacle itself
-    
-    x=vertexes(1,:);     y=vertexes(2,:);    z=vertexes(3,:);
-    
-    [k1,av1] = convhull(x,y,z);
-    trisurf(k1,x,y,z,'FaceColor','cyan')
+    for index_obs=0:(num_of_obst-1)
+        init_int=min(sp.timeSpanOfInterval(j)); 
+        end_int=max(sp.timeSpanOfInterval(j)); 
+        vertexes=getVertexesMovingObstacle(init_int,end_int); %This call should depend on the obstacle itself
+
+        x=vertexes(1,:);     y=vertexes(2,:);    z=vertexes(3,:);
+
+        [k1,av1] = convhull(x,y,z);
+        trisurf(k1,x,y,z,'FaceColor','cyan')
+    end
     
 end
 
 
+figure; hold on; 
+subplot(3,1,1);hold on; title('isInFOV()')
+subplot(3,1,2); hold on; title('Cost v')
+subplot(3,1,3); hold on; title('Cost -isInFOV()/(e + v)')
+
+
+
+for j=0:(sp.num_seg-1)
+    
+    for u_i=u_simpson{tm(j)}
+        
+        t_i=sp.u2t(u_i,j);
+        
+        subplot(3,1,1);    ylim([0,1]);        
+        stem(t_i, sol.value(substitute(f_isInFOV_im{tm(j)},u,u_i)),'filled','r')
+        subplot(3,1,2);
+        stem(t_i, sol.value(substitute(f_vel_im{tm(j)},u,u_i)),'filled','r')
+        subplot(3,1,3);
+        stem(t_i, sol.value(substitute(f_vel_isInFOV_im{tm(j)},u,u_i)),'filled','r')
+        
+    end
+    
+end
+
+%%
+% clc
+% p=randi([1 20],1,1);
+% order=randi([1 20],1,1);
+% syms tmp real;
+% Tmp=(tmp.^[p:-1:0])';
+% quiero=diff(Tmp,tmp,order)'
+% % diffTmp=([polyder(ones(1,p+1)) zeros(1,p-order+1)].*[(tmp.^[p-order:-1:0]) zeros(1,order)])';
+% 
+% 
+% pto0=p:-1:0;
+% if(order>p)
+%     tengo=zeros(1,p+1);
+% else
+%     tengo=(factorial(pto0)./factorial(max(pto0-order,0))).*[(tmp.^[p-order:-1:0]) zeros(1,order)];
+% end
+% 
+% % var_exponents
+% % tengo
+% assert(nnz(quiero-tengo)==0)
+
+% factorial(p)/factorial(p-order)
+
+% (diag([p:-1:+1])^order)
+
+% if(order>=p)
+%     tengo=sort([nonzeros(diag([1:p],-1)^order); zeros(order,1)] , 'descend').*[(tmp.^[(p-order):-1:0])' ; zeros(order,1)]
+% else
+%     tengo=sort([nonzeros(diag([1:p],-1)^order); zeros(order,1)] , 'descend').*[(tmp.^[(p-order):-1:0])' ; zeros(order,1)]
+% end
+% 
+% quiero-tengo
+
+% %This generates sampling without including the initial and final points of
+% %the interval
+% num_att_cons_per_interval=4; %Number of attitude evaluations (Simpson rule)
+% delta_u_bet_att_cons=1/(num_att_cons_per_interval+1);
+% u_constrained= linspace(delta_u_bet_att_cons,1-delta_u_bet_att_cons,num_att_cons_per_interval);

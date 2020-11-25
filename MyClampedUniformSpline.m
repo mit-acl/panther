@@ -156,13 +156,15 @@ classdef MyClampedUniformSpline < handle
                result=[result cps{kk}]; 
             end
         end
+        
+        %Converts local time (u) to global time (t) 
+        function result=u2t(obj,u,j)
+            interv=obj.timeSpanOfInterval(j);
+            result=min(interv)+u*(max(interv)-min(interv));
+        end
 
         function result = evalDerivativeU(obj,order,u,j) %j>=0 is the index of the interval
-                               % u \in [0,1] is the time along that interval
-            
-            syms tmp real;
-           
-            Tmp=(tmp.^[obj.p:-1:0])';
+                               % u \in [0,1] is the time along that interval    
             
             A=obj.getA_BS_Interval(j);
             
@@ -171,9 +173,24 @@ classdef MyClampedUniformSpline < handle
 %             Qj=cell2mat(obj.getCPsofInterval(j)); %doesn't work with sym objects
             Qj=obj.convertCellArrayCPsToMatrix(Q_j_cell);
             
-            ADiffT=(A* subs(diff(Tmp,tmp,order),tmp,u));
-                       
-            if(numel(symvar(ADiffT))==0)
+            %Option 1 (works if u is not an acadi variable)
+%             syms tmp real;
+%             Tmp=(tmp.^[obj.p:-1:0])';
+%             diffT= subs(diff(Tmp,tmp,order),tmp,u);
+            %%%%%%%%%%%%%%%%%%%%%%
+            
+            %Option 2 (works always)
+            pto0=obj.p:-1:0;
+            if(order>obj.p)
+                diffT=zeros(obj.p+1,1);
+            else
+                diffT=((factorial(pto0)./factorial(max(pto0-order,0))).*[(u.^[obj.p-order:-1:0]) zeros(1,order)])';
+            end
+            %%%%%%%%%%%%%%%%%%%%%%
+            
+            ADiffT=A*diffT;
+            
+            if(numel(symvar(ADiffT'))==0)
                 ADiffT=double(ADiffT);
             end
            
