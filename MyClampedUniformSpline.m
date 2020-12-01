@@ -137,8 +137,8 @@ classdef MyClampedUniformSpline < handle
             for j=0:(obj.num_seg-1)   
 %                 Q=[q_exp_{tm(i)} q_exp_{tm(i+1)} q_exp_{tm(i+2)} q_exp_{tm(i+3)}];
 %                 jerk=Q*A_pos_bs_{tm(i)}*[6 0 0 0]';
-                jerk=obj.evalDerivativeU(obj.p,0.5,j);
-                result=result + jerk'*jerk*obj.delta_t;
+                control=obj.evalDerivativeU(obj.p,0.5,j);
+                result=result + control'*control*obj.delta_t;
             end
             
         end
@@ -303,6 +303,18 @@ classdef MyClampedUniformSpline < handle
             end
             obj.CPoints=Q; 
         end
+
+        function printCPs(obj)
+            for i=0:(obj.num_cpoints-1)
+                obj.CPoints{tm(i)}'
+            end
+        end
+        
+%         function initialGuessForCPs(obj, Q_guess, opti_casadi)
+% %             for i=0:(obj.num_cpoints-1)
+% %                 opti_casadi.set_initial(Q{tm(i)},Q_guess{tm(i)}); %Control points
+% %             end
+%         end
  
     end
 end

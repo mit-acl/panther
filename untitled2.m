@@ -16,13 +16,18 @@ addpath(genpath('./minvo/src/solutions'));
 
 
 %constant factors for the costs
-c_costs.jerk_cost=            0.0;
+c_costs.jerk_cost=            0.0005;
 c_costs.yaw_cost=             0.0;%5e-3;
 c_costs.dist_im_cost=         0.0;
 c_costs.vel_isInFOV_im_cost=  1.0;
 
 %half of the angle of the cone
 theta_FOV_deg=45;
+
+
+beta1=100;
+beta2=100;
+offset_vel=0.01;
 
 %
 num_eval_simpson=15;
@@ -137,7 +142,7 @@ for j=0:(sp.num_seg-1)
     b_T_c=[roty(90)*rotz(90) zeros(3,1); zeros(1,3) 1];
 
     c_P=inv(b_T_c)*invPose(w_T_b)*w_fe; %Position of the feature in the camera frame
-    s=c_P(1:2)/c_P(3);  
+    s=c_P(1:2)/(c_P(3));  
   
     s_dot=jacobian(s,u);
     
@@ -146,13 +151,13 @@ for j=0:(sp.num_seg-1)
     is_in_FOV1=-(c_P(1)^2+c_P(2)^2)*(cosd(theta_FOV_deg))^2 +(c_P(3)^2)*(sind(theta_FOV_deg))^2; %(if this quantity is >=0)
     is_in_FOV2=c_P(3); %(and this quantity is >=0)
     
-    beta=10;
-    isInFOV_smooth=  (   1/(1+exp(-beta*is_in_FOV1))  )*(   1/(1+exp(-beta*is_in_FOV2))  );
+
+    isInFOV_smooth=  (   1/(1+exp(-beta1*is_in_FOV1))  )*(   1/(1+exp(-beta2*is_in_FOV2))  );
 
     f_vel_im{tm(j)}=(s_dot'*s_dot);
     f_dist_im{tm(j)}=(s'*s); %I wanna minimize the integral of this funcion. Approx. using symp. Rule
     f_isInFOV_im{tm(j)}=(isInFOV_smooth); %/(0.1+f_vel_im{n})
-    f_vel_isInFOV_im{tm(j)}=(-isInFOV_smooth)/(0.1+f_vel_im{tm(j)});
+    f_vel_isInFOV_im{tm(j)}=(-isInFOV_smooth)/(offset_vel+f_vel_im{tm(j)});
     
     span_interval=sp.timeSpanOfInterval(j);
     t_init_interval=min(span_interval);   
@@ -191,15 +196,73 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 jit_compilation=false;
-opti.minimize(c_costs.jerk_cost*           jerk_cost+...
-              c_costs.yaw_cost*            yaw_cost+...
-              c_costs.dist_im_cost*        dist_im_cost+...
-              c_costs.vel_isInFOV_im_cost* vel_isInFOV_im_cost);
-opti.solver('ipopt',struct('jit',jit_compilation));
+
+total_cost=c_costs.jerk_cost*           jerk_cost+...
+           c_costs.yaw_cost*            yaw_cost+...
+           c_costs.dist_im_cost*        dist_im_cost+...
+           c_costs.vel_isInFOV_im_cost* vel_isInFOV_im_cost;
+       
+total_cost=simplify(total_cost);
+
+% opti.callback(@(i) stairs(opti.debug.value(total_cost)));
+
+opti.minimize(total_cost);
+opts = struct;
+% opts.ipopt.hessian_approximation = 'limited-memory';
+opts.jit=jit_compilation;
+opti.solver('ipopt',opts); %{"ipopt.hessian_approximation":"limited-memory"}
+
+
+
 sol = opti.solve();
+% sp.updateCPsWithSolution(sol)
+% sy.updateCPsWithSolution(sol)
+
+
+%%
+disp ("SOLUTION 1")
+disp("Translation")
+for i=0:(sp.num_cpoints-1)
+    sol.value(sp.CPoints{tm(i)})'
+     opti.set_initial(sp.CPoints{tm(i)},sol.value(sp.CPoints{tm(i)})); %Control points
+end
+
+disp("Yaw")
+for i=0:(sy.num_cpoints-1)
+    sol.value(sy.CPoints{tm(i)});
+    opti.set_initial(sy.CPoints{tm(i)},sol.value(sy.CPoints{tm(i)})); %Control points
+end
+
+% https://stackoverflow.com/questions/43104254/ipopt-solution-is-not-optimal
+opts = struct;
+opts.ipopt.warm_start_init_point = 'yes';
+opts.ipopt.warm_start_bound_push=1e-9;
+opts.ipopt.warm_start_bound_frac=1e-9;
+opts.ipopt.warm_start_slack_bound_frac=1e-9;
+opts.ipopt.warm_start_slack_bound_push=1e-9;
+opts.ipopt.warm_start_mult_bound_push=1e-9;
+opti.solver('ipopt',opts);
+
+
+%%
+
+sol = opti.solve();
+
 sp.updateCPsWithSolution(sol)
 sy.updateCPsWithSolution(sol)
 
+disp ("SOLUTION 2")
+disp("Translation")
+sp.printCPs();
+disp("Yaw")
+sy.printCPs();
+
+%%
+figure; hold on;
+semilogy(sol.stats.iterations.inf_du)
+semilogy(sol.stats.iterations.inf_pr)
+
+%% 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%% PLOTTING! %%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
