@@ -16,18 +16,19 @@ addpath(genpath('./minvo/src/solutions'));
 
 
 %constant factors for the costs
-c_costs.jerk_cost=            0.0005;
+c_costs.jerk_cost=            0.0;
 c_costs.yaw_cost=             0.0;%5e-3;
 c_costs.dist_im_cost=         0.0;
 c_costs.vel_isInFOV_im_cost=  1.0;
 
 %half of the angle of the cone
-theta_FOV_deg=45;
+theta_FOV_deg=80;
+theta_half_FOV_deg=theta_FOV_deg/2.0;
 
 
 beta1=100;
 beta2=100;
-offset_vel=0.01;
+offset_vel=0.1;
 
 %
 num_eval_simpson=15;
@@ -41,12 +42,15 @@ dim_pos=3;
 deg_yaw=2;
 dim_yaw=1;
 
-num_seg =4; %number of segments
+num_seg =3; %number of segments
 
 p0=[-4;0;0]; v0=[0;0;0]; a0=[0;0;0]; y0=0;
 pf=[4;0;0]; vf=[0;0;0]; af=[0;0;0];
 
 num_of_obst=0;
+
+%Transformation matrix camera/body
+b_T_c=[roty(90)*rotz(-90) zeros(3,1); zeros(1,3) 1];
 
 
 opti = casadi.Opti();
@@ -68,7 +72,7 @@ end
 opti.subject_to( sp.getPosT(t0)== p0 );
 opti.subject_to( sp.getVelT(t0)== v0 );
 opti.subject_to( sp.getAccelT(t0)== a0 );
-% opti.subject_to( sy.getPosT(t0)== y0 );
+opti.subject_to( sy.getPosT(t0)== y0 );
 
 %Final conditions
 opti.subject_to( sp.getPosT(tf)== pf );
@@ -121,15 +125,17 @@ clear n
 t_simpson=linspace(t0,tf,num_eval_simpson);
 delta_simpson=(t_simpson(2)-t_simpson(1));
 
-simpson_index=1;
+
 
 u=opti.variable(1,1); %it must be defined outside the loop (so that then I can use substitute(...,u,..) regardless of the interval
+
+simpson_index=1;
+simpson_coeffs=[];
 
 for j=0:(sp.num_seg-1)
     
 %     syms u real
-    
-    w_t_b = sp.getPosU(u,j);
+    w_t_b{tm(j)} = sp.evalDerivativeU(0,u,j); % sp.getPosU(u,j)
     accel = sp.getAccelU(u,j);
     yaw= sy.getPosU(u,j);
     
@@ -138,26 +144,46 @@ for j=0:(sp.num_seg-1)
     q=multquat(qabc,qpsi); %Note that q is guaranteed to have norm=1
     w_R_b=toRotMat(q);
     w_fe=[1 1 1 1]';   %feature in world frame
-    w_T_b=[w_R_b w_t_b; zeros(1,3) 1];
-    b_T_c=[roty(90)*rotz(90) zeros(3,1); zeros(1,3) 1];
-
-    c_P=inv(b_T_c)*invPose(w_T_b)*w_fe; %Position of the feature in the camera frame
+    w_T_b=[w_R_b w_t_b{tm(j)}; zeros(1,3) 1];
+   
+    
+    w_T_c=w_T_b*b_T_c;
+    c_T_b=invPose(b_T_c);
+    b_T_w=invPose(w_T_b);
+    
+    c_P=c_T_b*b_T_w*w_fe; %Position of the feature in the camera frame
     s=c_P(1:2)/(c_P(3));  
   
     s_dot=jacobian(s,u);
     
     % See https://en.wikipedia.org/wiki/Cone#Equation_form:~:text=In%20implicit%20form%2C%20the%20same%20solid%20is%20defined%20by%20the%20inequalities
-    
-    is_in_FOV1=-(c_P(1)^2+c_P(2)^2)*(cosd(theta_FOV_deg))^2 +(c_P(3)^2)*(sind(theta_FOV_deg))^2; %(if this quantity is >=0)
-    is_in_FOV2=c_P(3); %(and this quantity is >=0)
-    
 
-    isInFOV_smooth=  (   1/(1+exp(-beta1*is_in_FOV1))  )*(   1/(1+exp(-beta2*is_in_FOV2))  );
+      %%One possible version:
+%     xx{tm(j)}=c_P(1); yy{tm(j)}=c_P(2); zz{tm(j)}=c_P(3);
+%     x=c_P(1);y=c_P(2); z=c_P(3);
+%     is_in_FOV1{tm(j)}=-((x^2+y^2)*(cosd(theta_half_FOV_deg))^2 -(z^2)*(sind(theta_half_FOV_deg))^2); %(if this quantity is >=0)
+%     is_in_FOV2{tm(j)}=c_P(3); %(and this quantity is >=0)
+%     isInFOV_smooth=  (   1/(1+exp(-beta1*is_in_FOV1{tm(j)}))  )*(   1/(1+exp(-beta2*is_in_FOV2{tm(j)}))  );
+%     target_isInFOV_im{tm(j)}=isInFOV_smooth; %/(0.1+f_vel_im{n})
+%     
+%     %Costs (all of them following the convention of "minimize" )
+%     f_vel_im{tm(j)}=(s_dot'*s_dot);
+%     f_dist_im{tm(j)}=(s'*s); %I wanna minimize the integral of this funcion. Approx. using symp. Rule
+%     f_vel_isInFOV_im{tm(j)}=-(target_isInFOV_im{tm(j)}) /(offset_vel+f_vel_im{tm(j)});
+      %%End of one possible version
 
+    %Simpler version:
+    w_beta=w_fe(1:3)-w_T_c(1:3,4);
+    w_beta=w_beta/norm(w_beta);
+    is_in_FOV1=-cosd(theta_half_FOV_deg)+w_beta'*w_T_c(1:3,3); %This has to be >=0
+    isInFOV_smooth=  (   1/(1+exp(-beta1*is_in_FOV1))  );
+    target_isInFOV_im{tm(j)}=isInFOV_smooth;
+
+    %Costs (all of them following the convention of "minimize" )
     f_vel_im{tm(j)}=(s_dot'*s_dot);
-    f_dist_im{tm(j)}=(s'*s); %I wanna minimize the integral of this funcion. Approx. using symp. Rule
-    f_isInFOV_im{tm(j)}=(isInFOV_smooth); %/(0.1+f_vel_im{n})
-    f_vel_isInFOV_im{tm(j)}=(-isInFOV_smooth)/(offset_vel+f_vel_im{tm(j)});
+    f_dist_im{tm(j)}=(s'*s); %I wanna minimize the integral of this funcion. Approx. using Sympson's Rule
+    f_vel_isInFOV_im{tm(j)}=-(target_isInFOV_im{tm(j)}) /(offset_vel+f_vel_im{tm(j)});
+    %End of simpler version
     
     span_interval=sp.timeSpanOfInterval(j);
     t_init_interval=min(span_interval);   
@@ -172,21 +198,25 @@ for j=0:(sp.num_seg-1)
         tsf=tsf(tsf<max(t_final_interval));
     end
     
-    u_simpson{tm(j)}=(tsf-t_init_interval)/delta_interval;
+    u_simpson{tm(j)}=(tsf-t_init_interval)/delta_interval
 
-    
+    fun1 = Function('fun1',{u},{f_dist_im{tm(j)}});
+
     for u_i=u_simpson{tm(j)}
         
-        simpson=getSimpsonCoeff(simpson_index,numel(u_simpson{tm(j)}));
+        simpson_coeff=getSimpsonCoeff(simpson_index,num_eval_simpson);
 
-        dist_im_cost=dist_im_cost               + (delta_simpson/3.0)*simpson*substitute(f_dist_im{tm(j)},u,u_i);
-        vel_im_cost=vel_im_cost                 + (delta_simpson/3.0)*simpson*substitute(f_vel_im{tm(j)},u,u_i);
-        vel_isInFOV_im_cost=vel_isInFOV_im_cost + (delta_simpson/3.0)*simpson*substitute(f_vel_isInFOV_im{tm(j)},u,u_i);
+        dist_im_cost=dist_im_cost               + (delta_simpson/3.0)*simpson_coeff*substitute(f_dist_im{tm(j)},u,u_i);
+        vel_im_cost=vel_im_cost                 + (delta_simpson/3.0)*simpson_coeff*substitute(f_vel_im{tm(j)},u,u_i);
+        vel_isInFOV_im_cost=vel_isInFOV_im_cost + (delta_simpson/3.0)*simpson_coeff*substitute(f_vel_isInFOV_im{tm(j)},u,u_i);
+        
+        simpson_coeffs=[simpson_coeffs simpson_coeff]; %Store simply for debugging. Should be [1 4 2 4 2 ... 4 2 1]
         
         simpson_index=simpson_index+1;
         
     end
 end
+
 
 
 
@@ -197,12 +227,14 @@ end
 
 jit_compilation=false;
 
-total_cost=c_costs.jerk_cost*           jerk_cost+...
-           c_costs.yaw_cost*            yaw_cost+...
-           c_costs.dist_im_cost*        dist_im_cost+...
+c=c_costs.jerk_cost;
+f=jerk_cost;
+total_cost=        c_costs.jerk_cost*           jerk_cost+...
+                    c_costs.yaw_cost*            yaw_cost+...
+                  c_costs.dist_im_cost*        dist_im_cost+...
            c_costs.vel_isInFOV_im_cost* vel_isInFOV_im_cost;
        
-total_cost=simplify(total_cost);
+total_cost=simplify(total_cost); 
 
 % opti.callback(@(i) stairs(opti.debug.value(total_cost)));
 
@@ -212,52 +244,50 @@ opts = struct;
 opts.jit=jit_compilation;
 opti.solver('ipopt',opts); %{"ipopt.hessian_approximation":"limited-memory"}
 
-
-
 sol = opti.solve();
-% sp.updateCPsWithSolution(sol)
-% sy.updateCPsWithSolution(sol)
 
-
-%%
-disp ("SOLUTION 1")
-disp("Translation")
-for i=0:(sp.num_cpoints-1)
-    sol.value(sp.CPoints{tm(i)})'
-     opti.set_initial(sp.CPoints{tm(i)},sol.value(sp.CPoints{tm(i)})); %Control points
-end
-
-disp("Yaw")
-for i=0:(sy.num_cpoints-1)
-    sol.value(sy.CPoints{tm(i)});
-    opti.set_initial(sy.CPoints{tm(i)},sol.value(sy.CPoints{tm(i)})); %Control points
-end
-
-% https://stackoverflow.com/questions/43104254/ipopt-solution-is-not-optimal
-opts = struct;
-opts.ipopt.warm_start_init_point = 'yes';
-opts.ipopt.warm_start_bound_push=1e-9;
-opts.ipopt.warm_start_bound_frac=1e-9;
-opts.ipopt.warm_start_slack_bound_frac=1e-9;
-opts.ipopt.warm_start_slack_bound_push=1e-9;
-opts.ipopt.warm_start_mult_bound_push=1e-9;
-opti.solver('ipopt',opts);
-
-
-%%
-
-sol = opti.solve();
+% disp ("SOLUTION 1")
+% disp("Translation")
+% for i=0:(sp.num_cpoints-1)
+%     sol.value(sp.CPoints{tm(i)})'
+% %      opti.set_initial(sp.CPoints{tm(i)},sol.value(sp.CPoints{tm(i)})); %Control points
+% end
 
 sp.updateCPsWithSolution(sol)
 sy.updateCPsWithSolution(sol)
 
-disp ("SOLUTION 2")
-disp("Translation")
-sp.printCPs();
-disp("Yaw")
-sy.printCPs();
 
-%%
+
+
+% 
+% disp("Yaw")
+% for i=0:(sy.num_cpoints-1)
+%     sol.value(sy.CPoints{tm(i)});
+%     opti.set_initial(sy.CPoints{tm(i)},sol.value(sy.CPoints{tm(i)})); %Control points
+% end
+% 
+% % https://stackoverflow.com/questions/43104254/ipopt-solution-is-not-optimal
+% opts = struct;
+% opts.ipopt.warm_start_init_point = 'yes';
+% opts.ipopt.warm_start_bound_push=1e-9;
+% opts.ipopt.warm_start_bound_frac=1e-9;
+% opts.ipopt.warm_start_slack_bound_frac=1e-9;
+% opts.ipopt.warm_start_slack_bound_push=1e-9;
+% opts.ipopt.warm_start_mult_bound_push=1e-9;
+% opti.solver('ipopt',opts);
+% 
+% sol = opti.solve();
+% 
+% sp.updateCPsWithSolution(sol)
+% sy.updateCPsWithSolution(sol)
+% 
+% disp ("SOLUTION 2")
+% disp("Translation")
+% sp.printCPs();
+% disp("Yaw")
+% sy.printCPs();
+
+
 figure; hold on;
 semilogy(sol.stats.iterations.inf_du)
 semilogy(sol.stats.iterations.inf_pr)
@@ -268,11 +298,12 @@ semilogy(sol.stats.iterations.inf_pr)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 sp.plotPosVelAccelJerk()
+% sp.plotPosVelAccelJerkFiniteDifferences();
 sy.plotPosVelAccelJerk()
-
+% sy.plotPosVelAccelJerkFiniteDifferences();
 
 sp.plotPos3D();
-plotSphere(p0,0.05,'b'); plotSphere(pf,0.05,'r'); plotSphere(w_fe(1:3),0.05,'g');
+plotSphere(p0,0.2,'b'); plotSphere(pf,0.2,'r'); plotSphere(w_fe(1:3),0.2,'g');
 
 view([280,15]); axis equal
 % 
@@ -291,7 +322,14 @@ for t_i=t_simpson %t0:0.3:tf
 
     w_R_b=toRotMat(q);
     w_T_b=[w_R_b w_t_b; 0 0 0 1];
-    plotAxesArrowsT(0.2,w_T_b)
+    plotAxesArrowsT(0.5,w_T_b)
+    
+    %Plot the FOV cone
+    w_T_c=w_T_b*b_T_c;
+    position=w_T_c(1:3,4);
+    direction=w_T_c(1:3,3);
+    length=1;
+    plotCone(position,direction,theta_FOV_deg,length);
 
 end
 
@@ -323,22 +361,16 @@ subplot(3,1,3); hold on; title('Cost -isInFOV()/(e + v)')
 
 
 for j=0:(sp.num_seg-1)
-    
     for u_i=u_simpson{tm(j)}
-        
         t_i=sp.u2t(u_i,j);
-        
         subplot(3,1,1);    ylim([0,1]);        
-        stem(t_i, sol.value(substitute(f_isInFOV_im{tm(j)},u,u_i)),'filled','r')
+        stem(t_i, sol.value(substitute(target_isInFOV_im{tm(j)},u,u_i)),'filled','r')
         subplot(3,1,2);
         stem(t_i, sol.value(substitute(f_vel_im{tm(j)},u,u_i)),'filled','r')
         subplot(3,1,3);
-        stem(t_i, sol.value(substitute(f_vel_isInFOV_im{tm(j)},u,u_i)),'filled','r')
-        
+        stem(t_i, sol.value(substitute(f_vel_isInFOV_im{tm(j)},u,u_i)),'filled','r') 
     end
-    
 end
-
 %%
 % clc
 % p=randi([1 20],1,1);

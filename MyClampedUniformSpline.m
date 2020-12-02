@@ -173,28 +173,41 @@ classdef MyClampedUniformSpline < handle
 %             Qj=cell2mat(obj.getCPsofInterval(j)); %doesn't work with sym objects
             Qj=obj.convertCellArrayCPsToMatrix(Q_j_cell);
             
-            %Option 1 (works if u is not an acadi variable)
-%             syms tmp real;
-%             Tmp=(tmp.^[obj.p:-1:0])';
-%             diffT= subs(diff(Tmp,tmp,order),tmp,u);
+            %%%%%%%%%%%%%%%%%%%%%%
+            %Option 1 (works always, but there seems to be a bug in casadi here: https://groups.google.com/g/casadi-users/c/CBimXBsQ2MA)
+%             pto0=obj.p:-1:0;
+%             if(order>obj.p)
+%                 diffT=zeros(obj.p+1,1);
+%             else
+%                 diffT=((factorial(pto0)./factorial(max(pto0-order,0))).*[(u.^[obj.p-order:-1:0]) zeros(1,order)])';
+%             end
+%             ADiffT=A*diffT;
+%             
+%             if(numel(symvar(ADiffT'))==0)
+%                 ADiffT=double(ADiffT);
+%             end
+%            
+%             result=(1/(obj.delta_t^order)) *Qj*ADiffT;
             %%%%%%%%%%%%%%%%%%%%%%
             
             %Option 2 (works always)
-            pto0=obj.p:-1:0;
-            if(order>obj.p)
-                diffT=zeros(obj.p+1,1);
-            else
-                diffT=((factorial(pto0)./factorial(max(pto0-order,0))).*[(u.^[obj.p-order:-1:0]) zeros(1,order)])';
-            end
-            %%%%%%%%%%%%%%%%%%%%%%
+            syms u_sym real;
+            Tmp=(u_sym.^[obj.p:-1:0])';
+            diffT= diff(Tmp,u_sym,order); 
+            ADiffTdelta=simplify(A*diffT*(1/(obj.delta_t^order)));
             
-            ADiffT=A*diffT;
+            u_sym=u;
+            ADiffTdelta=eval(char(ADiffTdelta)); %See https://www.mathworks.com/matlabcentral/answers/310042-how-to-convert-symbolic-expressions-to-transfer-functions
+
+            result=Qj*ADiffTdelta;
             
-            if(numel(symvar(ADiffT'))==0)
-                ADiffT=double(ADiffT);
-            end
-           
-            result=(1/(obj.delta_t^order)) *Qj*ADiffT;
+%             if(numel(symvar(ADiffT'))==0)
+%                 ADiffT=double(ADiffT);
+%             end
+%            
+%             result=(1/(obj.delta_t^order)) *Qj*ADiffT;
+%             
+            
             
         end
         
