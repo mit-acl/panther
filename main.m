@@ -42,7 +42,7 @@ dim_pos=3;
 deg_yaw=2;
 dim_yaw=1;
 
-num_seg =3; %number of segments
+num_seg =4; %number of segments
 
 p0=[-4;0;0]; v0=[0;0;0]; a0=[0;0;0]; y0=0;
 pf=[4;0;0]; vf=[0;0;0]; af=[0;0;0];
@@ -63,6 +63,14 @@ for i=1:(num_of_obst*sp.num_seg)
     n_{i}=opti.variable(3,1); 
     d_{i}=opti.variable(1,1);
 end
+
+
+
+% for i=0:(sp.num_cpoints-1)
+% %     sol.value(sp.CPoints{tm(i)})'
+%     opti.set_initial(sp.CPoints{tm(i)}, rand(3,1)); %Control points
+% end
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%% CONSTRAINTS! %%%%%%%%%%%%%%%%%%%%%%%
