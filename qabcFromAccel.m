@@ -7,7 +7,7 @@ ay=accel(2);
 az=accel(3);
 
 thrust=[ax ay az+gravity];
-thust_normalized=thrust/norm(thrust);
+thust_normalized=thrust/(sqrt(thrust(1)^2+thrust(2)^2+thrust(3)^2));%norm(thrust); (norm() creates terms like abs()^2 when using symbolic)
 
 a=thust_normalized(1);
 b=thust_normalized(2);
