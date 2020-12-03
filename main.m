@@ -206,7 +206,7 @@ for j=0:(sp.num_seg-1)
         tsf=tsf(tsf<max(t_final_interval));
     end
     
-    u_simpson{tm(j)}=(tsf-t_init_interval)/delta_interval
+    u_simpson{tm(j)}=(tsf-t_init_interval)/delta_interval;
 
     fun1 = Function('fun1',{u},{f_dist_im{tm(j)}});
 
@@ -225,7 +225,7 @@ for j=0:(sp.num_seg-1)
     end
 end
 
-
+%%
 
 
 
@@ -248,7 +248,7 @@ total_cost=simplify(total_cost);
 
 opti.minimize(total_cost);
 opts = struct;
-% opts.ipopt.hessian_approximation = 'limited-memory';
+%opts.ipopt.hessian_approximation = 'limited-memory';
 opts.jit=jit_compilation;
 opti.solver('ipopt',opts); %{"ipopt.hessian_approximation":"limited-memory"}
 
