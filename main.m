@@ -281,6 +281,8 @@ opts.expand=true; %When this option is true, it goes WAY faster!
 
 opti.solver('ipopt',opts); %{"ipopt.hessian_approximation":"limited-memory"}
 
+% opts.qpsol ='qrqp';  %Other solver
+% opti.solver('sqpmethod',opts);
 
 
 opts_nlpsol.x=opti.x;

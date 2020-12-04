@@ -1,4 +1,3 @@
-
 clc; clear; close all;
 import casadi.*
 opti = casadi.Opti();
@@ -37,3 +36,31 @@ solution = solver('x0',initial_value, 'lbg',full(evalf(opti.lbg)),'ubg',full(eva
 
 disp("Solution using compiled code")
 disp(solution.x)
+
+%%
+clc; clear; close all;
+
+opti = casadi.Opti();
+x = opti.variable();
+y = opti.variable();
+p = opti.parameter();
+      
+opti.minimize(y.^2+sin(x-y-p).^2)
+opti.subject_to(x+y>=1)
+opti.subject_to(x+y<=100)
+      
+opti.solver('ipopt')
+% opti.solver('sqpmethod',struct('qpsol','qrqp'));
+
+%See example https://web.casadi.org/blog/nlp_sens/
+% and https://github.com/casadi/casadi/issues/2499
+% and https://lirias.kuleuven.be/retrieve/542250
+pv=[x;y]; %primal variables
+
+F = opti.to_function('F',{p,pv},{pv}); %opti.lam_g
+      
+initial_guess_pv=[0.1,0];
+F(3,initial_guess_pv) %Solve the problem for this given parameter and initial guess
+
+%In case you wanna generate c code
+F.generate('other.c') %THIS DOESN'T WORK IF YOU ARE USING ipopt AS THE SOLVER, SEE https://github.com/casadi/casadi/issues/2682
