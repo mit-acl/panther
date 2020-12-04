@@ -8,6 +8,7 @@ set(0,'defaultfigurecolor',[1 1 1])
 
 import casadi.*
 addpath(genpath('./minvo/src/utils'));
+addpath(genpath('./more_utils'));
 addpath(genpath('./minvo/src/solutions'));
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -146,13 +147,32 @@ for j=0:(sp.num_seg-1)
     w_t_b{tm(j)} = sp.evalDerivativeU(0,u,j); % sp.getPosU(u,j)
     accel = sp.getAccelU(u,j);
     yaw= sy.getPosU(u,j);
-    
-    qabc=qabcFromAccel(accel,g);
     qpsi=[cos(yaw/2), 0, 0, sin(yaw/2)]; %Note that qpsi has norm=1
-    q=multquat(qabc,qpsi); %Note that q is guaranteed to have norm=1
-    w_R_b=toRotMat(q);
-    w_fe=[1 1 1 1]';   %feature in world frame
+
+    
+      %%%%% Option 1
+%     qabc=qabcFromAccel(accel,g);
+%     q=multquat(qabc,qpsi); %Note that q is guaranteed to have norm=1
+%     w_R_b=toRotMat(q);
+%     %%%%% 
+    
+    
+    %%%%% Option 2 (same as option 1, but this saves ~0.2 seconds of computation (ONLY IF expand=FALSE) (due to the fact that Casadi doesn't simplify, and simply keeps concatenating operations)     
+    %if expand=true, option 1 and two give very similar comp. time
+    t=[accel(1); accel(2); accel(3)+9.81];
+    norm_t=sqrt(t(1)^2+t(2)^2+t(3)^2);
+    
+    q_tmp= [qpsi(1)*(norm_t+t(3));
+            -qpsi(1)*t(2)+qpsi(4)*t(1);
+            qpsi(4)*t(2)+qpsi(1)*t(1);
+            qpsi(4)*(norm_t+t(3))];
+
+    w_R_b=(1/(2*norm_t*(norm_t+t(3))))*toRotMat(q_tmp);
+    %%%%%%
+    
+    
     w_T_b=[w_R_b w_t_b{tm(j)}; zeros(1,3) 1];
+    w_fe=[1 1 1 1]';   %feature in world frame
    
     
     w_T_c=w_T_b*b_T_c;
@@ -225,7 +245,7 @@ for j=0:(sp.num_seg-1)
     end
 end
 
-%%
+
 
 
 
@@ -233,7 +253,7 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%% SOLVE! %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-jit_compilation=false;
+jit_compilation=false; %If true, when I call solve(), Matlab will automatically generate a .c file, convert it to a .mex and then solve the problem using that compiled code
 
 c=c_costs.jerk_cost;
 f=jerk_cost;
@@ -250,7 +270,28 @@ opti.minimize(total_cost);
 opts = struct;
 %opts.ipopt.hessian_approximation = 'limited-memory';
 opts.jit=jit_compilation;
+
+opts.compiler='clang';
+opts.jit_options.flags='-O0';  %Takes ~15 seconds to generate if O0 (much more if O1,...,O3)
+opts.jit_options.verbose=true;  %See example in shallow_water.cpp
+opts.expand=true; %When this option is true, it goes WAY faster!
+% opts.enable_forward=false; %Seems this option doesn't have effect?
+% opts.enable_reverse=false;
+% opts.enable_jacobian=false;
+
 opti.solver('ipopt',opts); %{"ipopt.hessian_approximation":"limited-memory"}
+
+
+
+opts_nlpsol.x=opti.x;
+opts_nlpsol.f=opti.f;
+opts_nlpsol.g=opti.g;
+opts_nlpsol.p=opti.p;
+solver = nlpsol('my_solver', 'ipopt', opts_nlpsol);
+solver.generate_dependencies('example.c')
+% arg = opti.advanced.arg() % get nlpsol args
+% solution = solver(lbg=arg['lbg'], ubg=arg['ubg'], lam_g0=arg['lam_g0'], p=arg['p'], x0=arg['x0']);
+
 
 sol = opti.solve();
 
