@@ -156,6 +156,10 @@ classdef MyClampedUniformSpline < handle
                result=[result cps{kk}]; 
             end
         end
+
+        function result=getCPsAsMatrix(obj)
+            result=convertCellArrayCPsToMatrix(obj, obj.CPoints);
+        end
         
         %Converts local time (u) to global time (t) 
         function result=u2t(obj,u,j)

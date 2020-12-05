@@ -1,27 +1,6 @@
-/*
- *    This file is part of CasADi.
- *
- *    CasADi -- A symbolic framework for dynamic optimization.
- *    Copyright (C) 2010-2014 Joel Andersson, Joris Gillis, Moritz Diehl,
- *                            K.U. Leuven. All rights reserved.
- *    Copyright (C) 2011-2014 Greg Horn
- *
- *    CasADi is free software; you can redistribute it and/or
- *    modify it under the terms of the GNU Lesser General Public
- *    License as published by the Free Software Foundation; either
- *    version 3 of the License, or (at your option) any later version.
- *
- *    CasADi is distributed in the hope that it will be useful,
- *    but WITHOUT ANY WARRANTY; without even the implied warranty of
- *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- *    Lesser General Public License for more details.
- *
- *    You should have received a copy of the GNU Lesser General Public
- *    License along with CasADi; if not, write to the Free Software
- *    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
- * USA
- *
- */
+// Taken (and modified) from https://github.com/casadi/casadi/blob/752695adf24e0d4c904cc0bbeeedbcb73025559d/docs/examples/cplusplus/cmake_pkgconfig/casadi_demo.cpp
+
+// Run first the casadi_demo.m file to generate the file my_function.casadi
 
 #include <casadi/casadi.hpp>
 // #include <ctime>
@@ -36,7 +15,7 @@ int main() {
   // Definitions of DM, DMVector,... are in dm_fwd.hpp
 
   // ///////////////////////// EXAMPLE OF HOW TO CALL a .casadi file
-  Function tmp = Function::load("./../my_function.casadi");
+  Function tmp = Function::load("./my_function.casadi");
   std::vector<DM> result =
       tmp(std::vector<DM>{3, std::vector<double>{0.1, 0.2, 0}});
   std::cout << result << std::endl;

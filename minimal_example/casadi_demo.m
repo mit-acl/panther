@@ -60,9 +60,7 @@ opti.subject_to(x(2,1)==0)
 opti.solver('ipopt')
 % opti.solver('sqpmethod',struct('qpsol','qrqp'));
 
-%See example https://web.casadi.org/blog/nlp_sens/
-% and https://github.com/casadi/casadi/issues/2499
-% and https://lirias.kuleuven.be/retrieve/542250
+%See examples in https://web.casadi.org/blog/nlp_sens/  and https://github.com/casadi/casadi/issues/2499  and https://lirias.kuleuven.be/retrieve/542250
 pv=[x;y]; %primal variables
 
 my_function = opti.to_function('my_function',{p,pv},{pv}); %opti.lam_g
@@ -75,6 +73,7 @@ my_function.generate('other.c') %THIS DOESN'T WORK IF YOU ARE USING ipopt AS THE
                       % https://github.com/casadi/casadi/issues/2682  and
                       % https://groups.google.com/g/casadi-users/c/fgzohGQj-h8/m/8pXm6YovEwAJ#c34:~:text=This%20must%20be%20combined%20with%20a,self%2Dcontained%20C%20code%20at%20the%20moment
 
+%In case you wanna generate a .casadi
 my_function.save('my_function.casadi')% See v3.5.5 Release notes https://github.com/casadi/casadi/releases
 
 % f = Function('f',{}, {opti.lbg, opti.ubg, });
