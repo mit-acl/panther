@@ -1,3 +1,12 @@
+#This file should print something like 
+#-- Found CasADi include dir: /usr/local/include;/usr/local/include/casadi
+#-- Found CasADi libs: /usr/local/lib/libcasadi.so
+
+#These folders where the pre-built binaries of Casadi are located, and I don't wanna compile against them 
+set(CMAKE_IGNORE_PATH ${CMAKE_IGNORE_PATH};/home/jtorde/installations/matlab_related/casadi/include)
+set(CMAKE_IGNORE_PATH ${CMAKE_IGNORE_PATH};/home/jtorde/installations/matlab_related/casadi/libcasadi.so)
+set(CMAKE_IGNORE_PATH ${CMAKE_IGNORE_PATH};/home/jtorde/installations/matlab_related/casadi)
+
 find_path(CASADI_INCLUDE_DIR
   casadi/casadi.hpp
   HINTS $ENV{CASADI_PREFIX}/include
