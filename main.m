@@ -45,9 +45,9 @@ b_T_c=[roty(90)*rotz(-90) zeros(3,1); zeros(1,3) 1];
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%% DEFINITION
 %%%%% factors for the cost
-c_costs.jerk_cost=            opti.parameter(1,1);
-c_costs.yaw_cost=             opti.parameter(1,1);
-c_costs.vel_isInFOV_im_cost=  opti.parameter(1,1);
+c_jerk=            opti.parameter(1,1);
+c_yaw=             opti.parameter(1,1);
+c_vel_isInFOV=  opti.parameter(1,1);
 % c_costs.dist_im_cost=         opti.parameter(1,1);
 
 
@@ -66,28 +66,6 @@ for i=1:(num_of_obst*num_seg)
     d{i}=opti.parameter(1,1);
 end
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%% ASSIGNMENT
-opti.set_value(c_costs.jerk_cost, 0.0);
-opti.set_value(c_costs.yaw_cost, 0.0);
-opti.set_value(c_costs.vel_isInFOV_im_cost, 1.0);
-
-opti.set_value(theta_FOV_deg, 80);
-
-opti.set_value(p0, [-4;0;0]);
-opti.set_value(v0, [0;0;0]);
-opti.set_value(a0, [0;0;0]);
-
-opti.set_value(pf, [4;0;0]);
-opti.set_value(vf, [0;0;0]);
-opti.set_value(af, [0;0;0]);
-
-opti.set_value(y0, 0);
-opti.set_value(ydot0, 0);
-
-for i=1:(num_of_obst*num_seg)
-    opti.set_value(n{i}, rand(3,1));
-    opti.set_value(d{i}, rand(1,1));
-end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%% CREATION OF THE SPLINES! %%%%%%%%%%%
@@ -289,11 +267,11 @@ end
 
 jit_compilation=false; %If true, when I call solve(), Matlab will automatically generate a .c file, convert it to a .mex and then solve the problem using that compiled code
 
-c=c_costs.jerk_cost;
+c=c_jerk;
 f=jerk_cost;
-total_cost=        c_costs.jerk_cost*           jerk_cost+...
-                    c_costs.yaw_cost*            yaw_cost+... % c_costs.dist_im_cost*        dist_im_cost+...
-           c_costs.vel_isInFOV_im_cost* vel_isInFOV_im_cost;
+total_cost=        c_jerk*           jerk_cost+...
+                    c_yaw*            yaw_cost+... % c_costs.dist_im_cost*        dist_im_cost+...
+           c_vel_isInFOV* vel_isInFOV_im_cost;
        
 total_cost=simplify(total_cost); 
 
@@ -332,24 +310,52 @@ end
 all_pCPs=sp.getCPsAsMatrix();
 all_yCPs=sy.getCPsAsMatrix();
 
-my_function = opti.to_function('mader_casadi_function',[{theta_FOV_deg},{p0},{v0},{a0},{pf},{vf},{af},{all_nd}],  {all_pCPs,all_yCPs},...
-                                                        {'theta_FOV_deg','p0','v0','a0','pf','vf','af','all_nd'}, {'all_pCPs','all_yCPs'});
+my_function = opti.to_function('mader_casadi_function',[{theta_FOV_deg},{p0},{v0},{a0},{pf},{vf},{af},{y0}, {ydot0}, {all_nd}, {c_jerk}, {c_yaw}, {c_vel_isInFOV}],  {all_pCPs,all_yCPs},...
+                                                        {'theta_FOV_deg','p0','v0','a0','pf','vf','af','y0', 'ydot0', 'all_nd', 'c_jerk', 'c_yaw', 'c_vel_isInFOV'}, {'all_pCPs','all_yCPs'});
 
-sol_tmp=my_function('theta_FOV_deg',80, ...  %theta_FOV_deg
-                      'p0',  [-4.0;0;0], ... %p0
-                      'v0',  [0;0;0], ... %v0
-                      'af',  [0;0;0], ... %a0
-                      'pf',  [4;0;0], ... %pf
-                      'vf',  [0;0;0], ... %vf
-                      'af',  [0;0;0], ... %af
-                      'all_nd',  all_nd_tmp); %n and d
+sol_tmp=my_function('theta_FOV_deg',80, ...  
+                      'p0',  [-4;0;0], ... 
+                      'v0',  [0;0;0], ... 
+                      'a0',  [0;0;0], ... 
+                      'pf',  [4;0;0], ... 
+                      'vf',  [0;0;0], ... 
+                      'af',  [0;0;0], ... 
+                      'y0',  0.0 ,...
+                      'ydot0',  0 ,...
+                      'c_jerk', 0.0,...
+                      'c_yaw', 0.0,...
+                      'c_vel_isInFOV', 1.0,...
+                      'all_nd',  all_nd_tmp);
 full(sol_tmp.all_pCPs)
 full(sol_tmp.all_yCPs)
 
 %%
                     
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%% ASSIGNMENT for the parameters
+opti.set_value(c_jerk, 0.0);
+opti.set_value(c_yaw, 0.0);
+opti.set_value(c_vel_isInFOV, 1.0);
 
+opti.set_value(theta_FOV_deg, 80);
+
+opti.set_value(p0, [-4;0;0]);
+opti.set_value(v0, [0;0;0]);
+opti.set_value(a0, [0;0;0]);
+
+opti.set_value(pf, [4;0;0]);
+opti.set_value(vf, [0;0;0]);
+opti.set_value(af, [0;0;0]);
+
+opti.set_value(y0, 0);
+opti.set_value(ydot0, 0);
+
+for i=1:(num_of_obst*num_seg)
+    opti.set_value(n{i}, rand(3,1));
+    opti.set_value(d{i}, rand(1,1));
+end
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%% SOLVE!
 sol = opti.solve();
 sp.updateCPsWithSolution(sol)
 sy.updateCPsWithSolution(sol)
