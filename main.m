@@ -339,6 +339,7 @@ sol_tmp=my_function('theta_FOV_deg',80, ...
 full(sol_tmp.all_pCPs)
 full(sol_tmp.all_yCPs)
 
+my_function.save('my_function.casadi') %The file generated is quite big
 %%
                     
 
