@@ -7,6 +7,6 @@ pushd build
 cmake ..
 make
 popd
-build/casadi_demo
+build/solver
 
 

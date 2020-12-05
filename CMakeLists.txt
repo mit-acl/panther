@@ -7,7 +7,7 @@ project(example_casadi_demo)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH};${PROJECT_SOURCE_DIR}/cmake_finders)
 find_package(CASADI REQUIRED)
 include_directories(src src/examples ${CASADI_INCLUDE_DIR} )
-add_executable(casadi_demo casadi_demo.cpp)
-target_link_libraries(casadi_demo ${CASADI_LIBRARIES})
+add_executable(solver solver.cpp)
+target_link_libraries(solver ${CASADI_LIBRARIES})
 
 

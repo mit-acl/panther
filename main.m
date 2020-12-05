@@ -67,7 +67,7 @@ for i=1:(num_of_obst*num_seg)
     d{i}=opti.parameter(1,1);
 end
 
-%%%% Positions of the feature
+%%%% Positions of the feature in the times [t0,t0+XX, ...,tf-XX, tf] (i.e. uniformly distributed and including t0 and tf)
 for i=1:num_eval_simpson
     w_fe{i}=opti.parameter(3,1);
 end
@@ -293,6 +293,9 @@ opts.compiler='clang';
 opts.jit_options.flags='-O0';  %Takes ~15 seconds to generate if O0 (much more if O1,...,O3)
 opts.jit_options.verbose=true;  %See example in shallow_water.cpp
 opts.expand=true; %When this option is true, it goes WAY faster!
+opts.print_time=true;
+opts.ipopt.print_level=5; %From 0 (no verbose) to 15 (very verbose), default is 5
+opts.ipopt.print_frequency_iter=1e10; %Big if you don't want to print all the iteratons
 % opts.enable_forward=false; %Seems this option doesn't have effect?
 % opts.enable_reverse=false;
 % opts.enable_jacobian=false;
