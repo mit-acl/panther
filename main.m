@@ -39,6 +39,7 @@ offset_vel=0.1;
 %Transformation matrix camera/body
 b_T_c=[roty(90)*rotz(-90) zeros(3,1); zeros(1,3) 1];
 
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%% PARAMETERS! %%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -64,6 +65,11 @@ n={}; d={};
 for i=1:(num_of_obst*num_seg)
     n{i}=opti.parameter(3,1); 
     d{i}=opti.parameter(1,1);
+end
+
+%%%% Positions of the feature
+for i=1:num_eval_simpson
+    w_fe{i}=opti.parameter(3,1);
 end
 
 
@@ -149,8 +155,8 @@ delta_simpson=(t_simpson(2)-t_simpson(1));
 
 
 
-u=opti.variable(1,1); %it must be defined outside the loop (so that then I can use substitute(...,u,..) regardless of the interval
-
+u=opti.variable(1,1); %it must be defined outside the loop (so that then I can use substitute it regardless of the interval
+w_fevar=opti.variable(3,1); %it must be defined outside the loop (so that then I can use substitute it regardless of the interval
 simpson_index=1;
 simpson_coeffs=[];
 
@@ -185,14 +191,13 @@ for j=0:(sp.num_seg-1)
     
     
     w_T_b=[w_R_b w_t_b{tm(j)}; zeros(1,3) 1];
-    w_fe=[1 1 1 1]';   %feature in world frame
    
     
     w_T_c=w_T_b*b_T_c;
     c_T_b=invPose(b_T_c);
     b_T_w=invPose(w_T_b);
     
-    c_P=c_T_b*b_T_w*w_fe; %Position of the feature in the camera frame
+    c_P=c_T_b*b_T_w*[w_fevar;1]; %Position of the feature in the camera frame
     s=c_P(1:2)/(c_P(3));  
   
     s_dot=jacobian(s,u);
@@ -214,7 +219,7 @@ for j=0:(sp.num_seg-1)
       %%End of one possible version
 
     %Simpler version:
-    w_beta=w_fe(1:3)-w_T_c(1:3,4);
+    w_beta=w_fevar(1:3)-w_T_c(1:3,4);
     w_beta=w_beta/norm(w_beta);
     is_in_FOV1=-cos(theta_half_FOV_deg*3.14159/180.0)+w_beta'*w_T_c(1:3,3); %This has to be >=0
     isInFOV_smooth=  (   1/(1+exp(-beta1*is_in_FOV1))  );
@@ -231,7 +236,7 @@ for j=0:(sp.num_seg-1)
     t_final_interval=max(span_interval);
     delta_interval=t_final_interval-t_init_interval;
     
-    tsf=t_simpson; %tsf \eqiv t_simpson_filtered
+    tsf=t_simpson; %tsf is a filtered version of  t_simpson
     tsf=tsf(tsf>=min(t_init_interval));
     if(j==(sp.num_seg-1))
         tsf=tsf(tsf<=max(t_final_interval));
@@ -244,12 +249,14 @@ for j=0:(sp.num_seg-1)
     fun1 = Function('fun1',{u},{f_dist_im{tm(j)}});
 
     for u_i=u_simpson{tm(j)}
+                
         
         simpson_coeff=getSimpsonCoeff(simpson_index,num_eval_simpson);
+        
 
-        dist_im_cost=dist_im_cost               + (delta_simpson/3.0)*simpson_coeff*substitute(f_dist_im{tm(j)},u,u_i);
-        vel_im_cost=vel_im_cost                 + (delta_simpson/3.0)*simpson_coeff*substitute(f_vel_im{tm(j)},u,u_i);
-        vel_isInFOV_im_cost=vel_isInFOV_im_cost + (delta_simpson/3.0)*simpson_coeff*substitute(f_vel_isInFOV_im{tm(j)},u,u_i);
+        dist_im_cost=dist_im_cost               + (delta_simpson/3.0)*simpson_coeff*substitute(    substitute(f_dist_im{tm(j)},u,u_i),     w_fevar, w_fe{simpson_index});
+        vel_im_cost=vel_im_cost                 + (delta_simpson/3.0)*simpson_coeff*substitute(    substitute(f_vel_im{tm(j)},u,u_i),     w_fevar, w_fe{simpson_index});
+        vel_isInFOV_im_cost=vel_isInFOV_im_cost + (delta_simpson/3.0)*simpson_coeff*substitute(    substitute(f_vel_isInFOV_im{tm(j)},u,u_i),     w_fevar, w_fe{simpson_index});
         
         simpson_coeffs=[simpson_coeffs simpson_coeff]; %Store simply for debugging. Should be [1 4 2 4 2 ... 4 2 1]
         
@@ -302,16 +309,18 @@ for i=1:(num_of_obst*num_seg)
     all_nd=[all_nd [n{i};d{i}]];
 end
 
-all_nd_tmp=[];
-for i=1:(num_of_obst*num_seg)
-    all_nd_tmp=[all_nd_tmp rand(4,1)];
+
+all_w_fe=[]; %all the positions of the feature, as a matrix. Each column is the position of the feature at each simpson sampling point
+for i=1:num_eval_simpson
+    all_w_fe=[all_w_fe w_fe{i}];
 end
+
 
 all_pCPs=sp.getCPsAsMatrix();
 all_yCPs=sy.getCPsAsMatrix();
 
-my_function = opti.to_function('mader_casadi_function',[{theta_FOV_deg},{p0},{v0},{a0},{pf},{vf},{af},{y0}, {ydot0}, {all_nd}, {c_jerk}, {c_yaw}, {c_vel_isInFOV}],  {all_pCPs,all_yCPs},...
-                                                        {'theta_FOV_deg','p0','v0','a0','pf','vf','af','y0', 'ydot0', 'all_nd', 'c_jerk', 'c_yaw', 'c_vel_isInFOV'}, {'all_pCPs','all_yCPs'});
+my_function = opti.to_function('mader_casadi_function',[{theta_FOV_deg},{p0},{v0},{a0},{pf},{vf},{af},{y0}, {ydot0}, {all_nd}, {all_w_fe}, {c_jerk}, {c_yaw}, {c_vel_isInFOV}],  {all_pCPs,all_yCPs},...
+                                                        {'theta_FOV_deg','p0','v0','a0','pf','vf','af','y0', 'ydot0', 'all_nd', 'all_w_fe', 'c_jerk', 'c_yaw', 'c_vel_isInFOV'}, {'all_pCPs','all_yCPs'});
 
 sol_tmp=my_function('theta_FOV_deg',80, ...  
                       'p0',  [-4;0;0], ... 
@@ -322,10 +331,11 @@ sol_tmp=my_function('theta_FOV_deg',80, ...
                       'af',  [0;0;0], ... 
                       'y0',  0.0 ,...
                       'ydot0',  0 ,...
+                      'all_w_fe', ones(3,num_eval_simpson),...
                       'c_jerk', 0.0,...
                       'c_yaw', 0.0,...
                       'c_vel_isInFOV', 1.0,...
-                      'all_nd',  all_nd_tmp);
+                      'all_nd',  rand(4,num_of_obst*num_seg));
 full(sol_tmp.all_pCPs)
 full(sol_tmp.all_yCPs)
 
@@ -353,6 +363,11 @@ opti.set_value(ydot0, 0);
 for i=1:(num_of_obst*num_seg)
     opti.set_value(n{i}, rand(3,1));
     opti.set_value(d{i}, rand(1,1));
+end
+
+%%%% Positions of the feature
+for i=1:num_eval_simpson
+    opti.set_value(w_fe{i}, [1 1 1]');
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%% SOLVE!
@@ -425,7 +440,7 @@ sy.plotPosVelAccelJerk()
 % sy.plotPosVelAccelJerkFiniteDifferences();
 
 sp.plotPos3D();
-plotSphere(opti.value(p0),0.2,'b'); plotSphere(opti.value(pf),0.2,'r'); plotSphere(w_fe(1:3),0.2,'g');
+plotSphere(opti.value(p0),0.2,'b'); plotSphere(opti.value(pf),0.2,'r'); 
 
 view([280,15]); axis equal
 % 
@@ -452,7 +467,13 @@ for t_i=t_simpson %t0:0.3:tf
     direction=w_T_c(1:3,3);
     length=1;
     plotCone(position,direction,opti.value(theta_FOV_deg),length);
+    
 
+
+end
+
+for i=1:num_eval_simpson
+    plotSphere(opti.value(w_fe{i}),0.2,'g');
 end
 
 grid on; xlabel('x'); ylabel('y'); zlabel('z'); 
@@ -482,15 +503,17 @@ subplot(3,1,3); hold on; title('Cost -isInFOV()/(e + v)')
 
 
 
+simpson_index=1;
 for j=0:(sp.num_seg-1)
     for u_i=u_simpson{tm(j)}
         t_i=sp.u2t(u_i,j);
         subplot(3,1,1);    ylim([0,1]);        
-        stem(t_i, sol.value(substitute(target_isInFOV_im{tm(j)},u,u_i)),'filled','r')
+        stem(t_i, sol.value(substitute(     substitute(target_isInFOV_im{tm(j)},u,u_i)    ,w_fevar, w_fe{simpson_index}  )),'filled','r')
         subplot(3,1,2);
-        stem(t_i, sol.value(substitute(f_vel_im{tm(j)},u,u_i)),'filled','r')
+        stem(t_i, sol.value(substitute(     substitute(f_vel_im{tm(j)},u,u_i)             ,w_fevar, w_fe{simpson_index}  )),'filled','r')
         subplot(3,1,3);
-        stem(t_i, sol.value(substitute(f_vel_isInFOV_im{tm(j)},u,u_i)),'filled','r') 
+        stem(t_i, sol.value(substitute(     substitute(f_vel_isInFOV_im{tm(j)},u,u_i)     ,w_fevar, w_fe{simpson_index}  )),'filled','r') 
+        simpson_index=simpson_index+1;
     end
 end
 %%
