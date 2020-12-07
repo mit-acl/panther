@@ -18,3 +18,6 @@
 	path = submodules/snapstack_msgs
 	url = https://gitlab.com/mit-acl/fsw/snap-stack/snapstack_msgs.git
 	branch = master
+[submodule "submodules/minvo"]
+	path = submodules/minvo
+	url = git@github.com:mit-acl/minvo.git
