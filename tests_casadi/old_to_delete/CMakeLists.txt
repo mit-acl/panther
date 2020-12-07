@@ -1,5 +1,0 @@
-cmake_minimum_required(VERSION 2.8.6)
-project(nlp-codegen-autogen C)
-add_library(nlp SHARED example.c)
-set_target_properties(nlp PROPERTIES PREFIX \"\")
-set_target_properties(nlp PROPERTIES SUFFIX \".casadi\")
