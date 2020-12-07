@@ -7,9 +7,10 @@ set(groot, 'defaultAxesTickLabelInterpreter','latex'); set(groot, 'defaultLegend
 set(0,'defaultfigurecolor',[1 1 1])
 
 import casadi.*
-addpath(genpath('./minvo/src/utils'));
+addpath(genpath('./../../submodules/minvo/src/utils'));
+addpath(genpath('./../../submodules/minvo/src/solutions'));
 addpath(genpath('./more_utils'));
-addpath(genpath('./minvo/src/solutions'));
+
 
 opti = casadi.Opti();
 
