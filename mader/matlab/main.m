@@ -84,12 +84,12 @@ sy=MyClampedUniformSpline(t0,tf,deg_yaw, dim_yaw, num_seg, opti); %spline yaw.
 %%%%%%%%%%%%%%%%%%%%%%%%%%% INITIAL GUESSES  %%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-for i=0:(sp.num_cpoints-1)
-    opti.set_initial(sp.CPoints{tm(i)}, zeros(3,1)); %Control points
+for i=1:sp.num_cpoints
+    opti.set_initial(sp.CPoints{i}, zeros(3,1)); %Control points
 end
 
-for i=0:(sy.num_cpoints-1)
-    opti.set_initial(sy.CPoints{tm(i)}, zeros(1,1)); %Control points
+for i=1:sy.num_cpoints
+    opti.set_initial(sy.CPoints{i}, zeros(1,1)); %Control points
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -111,8 +111,8 @@ opti.subject_to( sp.getAccelT(tf)== af );
 %Plane constraints
 epsilon=1;
 
-for j=0:(sp.num_seg-1)
-    for obst_index=0:(num_of_obst-1)
+for j=1:(sp.num_seg)
+    for obst_index=1:num_of_obst
         
       ip = obst_index * sp.num_seg + j;  % index plane
        
@@ -127,14 +127,23 @@ for j=0:(sp.num_seg-1)
 %       end
       
       %and the control points on the other side
-      Q_Mv=sp.getMINVOCPsofInterval(j);
+      Q_Mv=sp.getMINVO_Pos_CPsofInterval(j);
       for kk=1:size(Q_Mv,2)
-        opti.subject_to( n{tm(ip)}'*Q_Mv{kk} + d{tm(ip)} + epsilon <= 0);
+        opti.subject_to( n{tm(ip)}'*Q_Mv{kk} + d{ip} + epsilon <= 0);
       end
     end   
 end
 
-
+% v_max=1000;
+% %Max vel constraints
+% for j=1:sp.num_seg
+%     minvo_vel_cps=sp.getMINVO_Pos_CPsofInterval(j);
+%     dim=size(minvo_cps, 1);
+%     for u=1:size(minvo_cps,2)
+%             opti.subject_to( minvo_cps{u} <= v_max*ones(dim,1)  )
+%             opti.subject_to( minvo_cps{u} >= -v_max*ones(dim,1) )
+%     end
+% end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%% OBJECTIVE! %%%%%%%%%%%%%%%%%%%%%%%%%
@@ -161,10 +170,10 @@ w_fevar=opti.variable(3,1); %it must be defined outside the loop (so that then I
 simpson_index=1;
 simpson_coeffs=[];
 
-for j=0:(sp.num_seg-1)
+for j=1:sp.num_seg
     
 %     syms u real
-    w_t_b{tm(j)} = sp.evalDerivativeU(0,u,j); % sp.getPosU(u,j)
+    w_t_b{j} = sp.evalDerivativeU(0,u,j); % sp.getPosU(u,j)
     accel = sp.getAccelU(u,j);
     yaw= sy.getPosU(u,j);
     qpsi=[cos(yaw/2), 0, 0, sin(yaw/2)]; %Note that qpsi has norm=1
@@ -191,7 +200,7 @@ for j=0:(sp.num_seg-1)
     %%%%%%
     
     
-    w_T_b=[w_R_b w_t_b{tm(j)}; zeros(1,3) 1];
+    w_T_b=[w_R_b w_t_b{j}; zeros(1,3) 1];
    
     
     w_T_c=w_T_b*b_T_c;
@@ -206,17 +215,17 @@ for j=0:(sp.num_seg-1)
     % See https://en.wikipedia.org/wiki/Cone#Equation_form:~:text=In%20implicit%20form%2C%20the%20same%20solid%20is%20defined%20by%20the%20inequalities
 
       %%One possible version:
-%     xx{tm(j)}=c_P(1); yy{tm(j)}=c_P(2); zz{tm(j)}=c_P(3);
+%     xx{j}=c_P(1); yy{j}=c_P(2); zz{j}=c_P(3);
 %     x=c_P(1);y=c_P(2); z=c_P(3);
-%     is_in_FOV1{tm(j)}=-((x^2+y^2)*(cosd(theta_half_FOV_deg))^2 -(z^2)*(sind(theta_half_FOV_deg))^2); %(if this quantity is >=0)
-%     is_in_FOV2{tm(j)}=c_P(3); %(and this quantity is >=0)
-%     isInFOV_smooth=  (   1/(1+exp(-beta1*is_in_FOV1{tm(j)}))  )*(   1/(1+exp(-beta2*is_in_FOV2{tm(j)}))  );
-%     target_isInFOV_im{tm(j)}=isInFOV_smooth; %/(0.1+f_vel_im{n})
+%     is_in_FOV1{j}=-((x^2+y^2)*(cosd(theta_half_FOV_deg))^2 -(z^2)*(sind(theta_half_FOV_deg))^2); %(if this quantity is >=0)
+%     is_in_FOV2{j}=c_P(3); %(and this quantity is >=0)
+%     isInFOV_smooth=  (   1/(1+exp(-beta1*is_in_FOV1{j}))  )*(   1/(1+exp(-beta2*is_in_FOV2{j}))  );
+%     target_isInFOV_im{j}=isInFOV_smooth; %/(0.1+f_vel_im{n})
 %     
 %     %Costs (all of them following the convention of "minimize" )
-%     f_vel_im{tm(j)}=(s_dot'*s_dot);
-%     f_dist_im{tm(j)}=(s'*s); %I wanna minimize the integral of this funcion. Approx. using symp. Rule
-%     f_vel_isInFOV_im{tm(j)}=-(target_isInFOV_im{tm(j)}) /(offset_vel+f_vel_im{tm(j)});
+%     f_vel_im{j}=(s_dot'*s_dot);
+%     f_dist_im{j}=(s'*s); %I wanna minimize the integral of this funcion. Approx. using symp. Rule
+%     f_vel_isInFOV_im{j}=-(target_isInFOV_im{j}) /(offset_vel+f_vel_im{j});
       %%End of one possible version
 
     %Simpler version:
@@ -224,12 +233,12 @@ for j=0:(sp.num_seg-1)
     w_beta=w_beta/norm(w_beta);
     is_in_FOV1=-cos(theta_half_FOV_deg*3.14159/180.0)+w_beta'*w_T_c(1:3,3); %This has to be >=0
     isInFOV_smooth=  (   1/(1+exp(-beta1*is_in_FOV1))  );
-    target_isInFOV_im{tm(j)}=isInFOV_smooth;
+    target_isInFOV_im{j}=isInFOV_smooth;
 
     %Costs (all of them following the convention of "minimize" )
-    f_vel_im{tm(j)}=(s_dot'*s_dot);
-    f_dist_im{tm(j)}=(s'*s); %I wanna minimize the integral of this funcion. Approx. using Sympson's Rule
-    f_vel_isInFOV_im{tm(j)}=-(target_isInFOV_im{tm(j)}) /(offset_vel+f_vel_im{tm(j)});
+    f_vel_im{j}=(s_dot'*s_dot);
+    f_dist_im{j}=(s'*s); %I wanna minimize the integral of this funcion. Approx. using Sympson's Rule
+    f_vel_isInFOV_im{j}=-(target_isInFOV_im{j}) /(offset_vel+f_vel_im{j});
     %End of simpler version
     
     span_interval=sp.timeSpanOfInterval(j);
@@ -239,25 +248,25 @@ for j=0:(sp.num_seg-1)
     
     tsf=t_simpson; %tsf is a filtered version of  t_simpson
     tsf=tsf(tsf>=min(t_init_interval));
-    if(j==(sp.num_seg-1))
+    if(j==(sp.num_seg))
         tsf=tsf(tsf<=max(t_final_interval));
     else
         tsf=tsf(tsf<max(t_final_interval));
     end
     
-    u_simpson{tm(j)}=(tsf-t_init_interval)/delta_interval;
+    u_simpson{j}=(tsf-t_init_interval)/delta_interval;
 
-    fun1 = Function('fun1',{u},{f_dist_im{tm(j)}});
+    fun1 = Function('fun1',{u},{f_dist_im{j}});
 
-    for u_i=u_simpson{tm(j)}
+    for u_i=u_simpson{j}
                 
         
         simpson_coeff=getSimpsonCoeff(simpson_index,num_eval_simpson);
         
 
-        dist_im_cost=dist_im_cost               + (delta_simpson/3.0)*simpson_coeff*substitute(    substitute(f_dist_im{tm(j)},u,u_i),     w_fevar, w_fe{simpson_index});
-        vel_im_cost=vel_im_cost                 + (delta_simpson/3.0)*simpson_coeff*substitute(    substitute(f_vel_im{tm(j)},u,u_i),     w_fevar, w_fe{simpson_index});
-        vel_isInFOV_im_cost=vel_isInFOV_im_cost + (delta_simpson/3.0)*simpson_coeff*substitute(    substitute(f_vel_isInFOV_im{tm(j)},u,u_i),     w_fevar, w_fe{simpson_index});
+        dist_im_cost=dist_im_cost               + (delta_simpson/3.0)*simpson_coeff*substitute(    substitute(f_dist_im{j},u,u_i),     w_fevar, w_fe{simpson_index});
+        vel_im_cost=vel_im_cost                 + (delta_simpson/3.0)*simpson_coeff*substitute(    substitute(f_vel_im{j},u,u_i),     w_fevar, w_fe{simpson_index});
+        vel_isInFOV_im_cost=vel_isInFOV_im_cost + (delta_simpson/3.0)*simpson_coeff*substitute(    substitute(f_vel_isInFOV_im{j},u,u_i),     w_fevar, w_fe{simpson_index});
         
         simpson_coeffs=[simpson_coeffs simpson_coeff]; %Store simply for debugging. Should be [1 4 2 4 2 ... 4 2 1]
         
@@ -266,7 +275,7 @@ for j=0:(sp.num_seg-1)
     end
 end
 
-
+%%
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -319,7 +328,6 @@ for i=1:num_eval_simpson
     all_w_fe=[all_w_fe w_fe{i}];
 end
 
-
 all_pCPs=sp.getCPsAsMatrix();
 all_yCPs=sy.getCPsAsMatrix();
 
@@ -340,6 +348,8 @@ sol_tmp=my_function('theta_FOV_deg',80, ...
                       'c_yaw', 0.0,...
                       'c_vel_isInFOV', 1.0,...
                       'all_nd',  rand(4,num_of_obst*num_seg));
+                  
+get_stats(my_function) %See functions defined below
 full(sol_tmp.all_pCPs)
 full(sol_tmp.all_yCPs)
 
@@ -394,7 +404,7 @@ sy.updateCPsWithSolution(sol)
 
 % disp ("SOLUTION 1")
 % disp("Translation")
-% for i=0:(sp.num_cpoints-1)
+% for i=1:sp.num_cpoints
 %     sol.value(sp.CPoints{tm(i)})'
 % %      opti.set_initial(sp.CPoints{tm(i)},sol.value(sp.CPoints{tm(i)})); %Control points
 % end
@@ -403,7 +413,7 @@ sy.updateCPsWithSolution(sol)
 
 % 
 % disp("Yaw")
-% for i=0:(sy.num_cpoints-1)
+% for i=1:sy.num_cpoints
 %     sol.value(sy.CPoints{tm(i)});
 %     opti.set_initial(sy.CPoints{tm(i)},sol.value(sy.CPoints{tm(i)})); %Control points
 % end
@@ -485,9 +495,9 @@ grid on; xlabel('x'); ylabel('y'); zlabel('z');
 camlight
 lightangle(gca,45,0)
 
-for j=0:(sp.num_seg-1) % i  is the interval (\equiv segment)
+for j=1:sp.num_seg 
     
-    for index_obs=0:(num_of_obst-1)
+    for index_obs=1:num_of_obst
         init_int=min(sp.timeSpanOfInterval(j)); 
         end_int=max(sp.timeSpanOfInterval(j)); 
         vertexes=getVertexesMovingObstacle(init_int,end_int); %This call should depend on the obstacle itself
@@ -507,19 +517,41 @@ subplot(3,1,2); hold on; title('Cost v')
 subplot(3,1,3); hold on; title('Cost -isInFOV()/(e + v)')
 
 
-
 simpson_index=1;
-for j=0:(sp.num_seg-1)
-    for u_i=u_simpson{tm(j)}
+for j=1:sp.num_seg
+    for u_i=u_simpson{j}
         t_i=sp.u2t(u_i,j);
         subplot(3,1,1);    ylim([0,1]);        
-        stem(t_i, sol.value(substitute(     substitute(target_isInFOV_im{tm(j)},u,u_i)    ,w_fevar, w_fe{simpson_index}  )),'filled','r')
+        stem(t_i, sol.value(substitute(     substitute(target_isInFOV_im{j},u,u_i)    ,w_fevar, w_fe{simpson_index}  )),'filled','r')
         subplot(3,1,2);
-        stem(t_i, sol.value(substitute(     substitute(f_vel_im{tm(j)},u,u_i)             ,w_fevar, w_fe{simpson_index}  )),'filled','r')
+        stem(t_i, sol.value(substitute(     substitute(f_vel_im{j},u,u_i)             ,w_fevar, w_fe{simpson_index}  )),'filled','r')
         subplot(3,1,3);
-        stem(t_i, sol.value(substitute(     substitute(f_vel_isInFOV_im{tm(j)},u,u_i)     ,w_fevar, w_fe{simpson_index}  )),'filled','r') 
+        stem(t_i, sol.value(substitute(     substitute(f_vel_isInFOV_im{j},u,u_i)     ,w_fevar, w_fe{simpson_index}  )),'filled','r') 
         simpson_index=simpson_index+1;
     end
+end
+
+%Taken from https://gist.github.com/jgillis/9d12df1994b6fea08eddd0a3f0b0737f
+%See discussion at https://groups.google.com/g/casadi-users/c/1061E0eVAXM/m/dFHpw1CQBgAJ
+function [stats] = get_stats(f)
+  dep = 0;
+  % Loop over the algorithm
+  for k=0:f.n_instructions()-1
+%     fprintf("Trying with k= %d\n", k)
+    if f.instruction_id(k)==casadi.OP_CALL
+      fprintf("Found k= %d\n", k)
+      d = f.instruction_MX(k).which_function();
+      if d.name()=='solver'
+        dep = d;
+        break
+      end
+    end
+  end
+  if dep==0
+    stats = struct;
+  else
+    stats = dep.stats(1);
+  end
 end
 %%
 % clc

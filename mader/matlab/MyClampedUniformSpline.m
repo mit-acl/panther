@@ -1,5 +1,7 @@
 %Jesus Tordesillas Torres, jtorde@mit.edu, November 2020
 
+%Everything here is 1-based indexing (first element is one)
+
 %See https://www.mathworks.com/help/matlab/matlab_oop/comparing-handle-and-value-classes.html
 classdef MyClampedUniformSpline < handle
 
@@ -18,8 +20,7 @@ classdef MyClampedUniformSpline < handle
     
     methods
         function obj = MyClampedUniformSpline(t0, tf, deg, dim, num_seg, casadi_opti)
-%             if nargin == 0, obj.q = Q.Identity; end
-%             if nargin == 1, obj.q = varargin{1}; end
+
             obj.t0 = t0;
             obj.tf = tf;
             obj.p = deg;
@@ -28,20 +29,8 @@ classdef MyClampedUniformSpline < handle
             obj.delta_t = (obj.tf -  obj.t0) / (1.0 * (obj.M - 2 * obj.p - 1 + 1));
             obj.N = obj.M - obj.p - 1;
             obj.num_cpoints=obj.N+1;
-            
-            
-            obj.knots=[];
-            for i=0:obj.p
-                obj.knots=[obj.knots obj.t0];
-            end
 
-            for i=(obj.p + 1):(obj.M - obj.p - 1)
-                obj.knots=[obj.knots obj.knots(tm(i - 1)) + obj.delta_t];
-            end
-
-            for i=(obj.M - obj.p):obj.M
-                obj.knots=[obj.knots obj.tf];
-            end
+            obj.knots=[obj.t0*ones(1,obj.p+1)       obj.t0+obj.delta_t*(1:obj.M - 2*obj.p-1)          obj.tf*ones(1,obj.p+1)];
             
             %Create the control points
             obj.CPoints={};
@@ -65,27 +54,61 @@ classdef MyClampedUniformSpline < handle
             assert(t>=min(obj.knots),'t>=min(obj.knots) not satisfied')
 
             
-            result=max(0,min(find(obj.knots>=t))-obj.p-2);
+            result=max(1,min(find(obj.knots>=t))-obj.p-2+1);
             
         end
         
         function result=timeSpanOfInterval(obj,j)
-            init_int=obj.knots(tm(obj.p+j));
-            end_int=obj.knots(tm(obj.p+j+1));
+            init_int=obj.knots(obj.p+j);
+            end_int=obj.knots(obj.p+j+1);
             result=[init_int, end_int];
         end
         
         function result=getCPsofInterval(obj,j)
             result={};
             for index=j:(j+obj.p)
-                result{end+1}=obj.CPoints{tm(index)};
+                result{end+1}=obj.CPoints{index};
             end
         end
         
-        function result=getMINVOCPsofInterval(obj,j)
+%         function result=getVelCP(obj,l)
+%             assert(l<=(obj.N-1), 'l<=(N-1) not satisfied');
+%             result=(obj.p*(obj.CPoints{l+1}-obj.CPoints{l}))/(obj.knots(l+obj.p+1)-obj.knots(l+1));
+%         end
+% 
+%         function result=getAccelCP(obj,l)
+%             assert(l<=(obj.N-2), 'l<=(N-2) not satisfied');
+%             result=(obj.p-1)*(obj.getVelCP(l+1)-obj.getVelCP(l))/(obj.knots((l+obj.p+1))-obj.knots((l+2)));
+%         end
+
+        
+        function getMV_CPsofDerivativeInterval(obj,j)
+            
+        end
+        
+        function result=getMINVO_Vel_CPsofInterval(obj,j)
+                       
+            deg_vel=obj.p-1;
+            
+            Q_Bs_matrix=[];
+            for i=1:(deg_vel+1)
+                Q_Bs_matrix=[Q_Bs_matrix getVelCP(j)];
+            end
+           
+            A_BS=obj.getA_BS_Vel_Interval(j);
+            error("Work in progress")
+            A_MV;
+            
+            Q_Mv_matrix=Q_Bs_matrix*A_BS*inv(A_MV);
+            
+            
+            
+        end
+        
+        function result=getMINVO_Pos_CPsofInterval(obj,j)
             Q_Bs_matrix=obj.convertCellArrayCPsToMatrix(obj.getCPsofInterval(j));
             
-            A_BS=obj.getA_BS_Interval(j);
+            A_BS=obj.getA_BS_Pos_Interval(j);
             A_MV=getA_MV(obj.p,[0,1]);
             
             Q_Mv_matrix=Q_Bs_matrix*A_BS*inv(A_MV);
@@ -134,9 +157,9 @@ classdef MyClampedUniformSpline < handle
         function result=getControlCost(obj)
             
             result=0;
-            for j=0:(obj.num_seg-1)   
-%                 Q=[q_exp_{tm(i)} q_exp_{tm(i+1)} q_exp_{tm(i+2)} q_exp_{tm(i+3)}];
-%                 jerk=Q*A_pos_bs_{tm(i)}*[6 0 0 0]';
+            for j=1:obj.num_seg   
+%                 Q=[q_exp_{(i)} q_exp_{(i+1)} q_exp_{(i+2)} q_exp_{(i+3)}];
+%                 jerk=Q*A_pos_bs_{(i)}*[6 0 0 0]';
                 control=obj.evalDerivativeU(obj.p,0.5,j);
                 result=result + control'*control*obj.delta_t;
             end
@@ -167,10 +190,10 @@ classdef MyClampedUniformSpline < handle
             result=min(interv)+u*(max(interv)-min(interv));
         end
 
-        function result = evalDerivativeU(obj,order,u,j) %j>=0 is the index of the interval
+        function result = evalDerivativeU(obj,order,u,j) %j>=1 is the index of the interval
                                % u \in [0,1] is the time along that interval    
             
-            A=obj.getA_BS_Interval(j);
+            A=obj.getA_BS_Pos_Interval(j);
             
             Q_j_cell=obj.getCPsofInterval(j);
             
@@ -223,6 +246,7 @@ classdef MyClampedUniformSpline < handle
             interv=obj.timeSpanOfInterval(j);           
             
             u=(t-min(interv))/(max(interv)-min(interv));
+            
             result=obj.evalDerivativeU(order,u,j);
         end
 
@@ -240,7 +264,7 @@ classdef MyClampedUniformSpline < handle
         
         function plotDerivative(obj,order)
             syms t real
-            for j=0:(obj.num_seg-1)
+            for j=1:obj.num_seg
                 interv=obj.timeSpanOfInterval(j);           
                 u=(t-min(interv))/(max(interv)-min(interv));
                 fplot(obj.evalDerivativeU(order,u,j),interv); hold on;
@@ -250,7 +274,7 @@ classdef MyClampedUniformSpline < handle
         function plotPos3D(obj)
             figure; hold on;
             syms t real
-            for j=0:(obj.num_seg-1)
+            for j=1:obj.num_seg
                 interv=obj.timeSpanOfInterval(j);           
                 u=(t-min(interv))/(max(interv)-min(interv));
                 pos=obj.evalDerivativeU(0,u,j);
@@ -275,24 +299,45 @@ classdef MyClampedUniformSpline < handle
             obj.plotDerivative(3)      
         end
 
-        function A=getA_BS_Interval(obj,j)
+        function A=getA_BS_Derivative_Interval(obj,which_derivative,j) %which_derivative=0 for pos, 1 for vel, 2 for accel
             %the intervals are [0,1,2,...,num_seg-2,num_seg-1]
-            if(j<(obj.num_seg-2))
-                A=computeMatrixForClampedUniformBSpline(obj.p,j,[0,1]);
-            elseif(j==(obj.num_seg-2))
-                A=computeMatrixForClampedUniformBSpline(obj.p,-2,[0,1]);
+            
+            assert(which_derivative<=(obj.p-1))
+            assert(j>=1 )
+            assert(j<=obj.num_seg)
+       
+            degree_derivative=obj.p-which_derivative;
+            
+            % ultimo segmento es num_seg
+            % antepenultimo es num_seg-1
+            
+            %Note that this 
+            if(j<(obj.num_seg-1))
+                A=computeMatrixForClampedUniformBSpline(degree_derivative,j-1,[0,1]); 
             elseif(j==(obj.num_seg-1))
-                A=computeMatrixForClampedUniformBSpline(obj.p,-1,[0,1]);
-            else
-                error("This interval does not exist");
+                A=computeMatrixForClampedUniformBSpline(degree_derivative,-2,[0,1]);
+            elseif(j==obj.num_seg)
+                A=computeMatrixForClampedUniformBSpline(degree_derivative,-1,[0,1]); %last segment
             end
             
             A=double(A);
         end
         
+        function result=getA_BS_Pos_Interval(obj,j)
+            result=obj.getA_BS_Derivative_Interval(0,j);
+        end
+        
+        function result=getA_BS_Vel_Interval(obj,j)
+            result=obj.getA_BS_Derivative_Interval(1,j);
+        end
+        
+        function result=getA_BS_Accel_Interval(obj,j)
+            result=obj.getA_BS_Derivative_Interval(2,j);
+        end
+        
         %Simply to check the derivatives by doing finite differences
         function plotPosVelAccelJerkFiniteDifferences(obj)
-            figure; hold on;
+            hold on;
             pos=[];
             delta_tmp=(obj.tf-obj.t0)/100;
             
@@ -315,21 +360,21 @@ classdef MyClampedUniformSpline < handle
         
         function updateCPsWithSolution(obj, sol_casadi)
             Q={};
-            for i=0:(obj.num_cpoints-1)
-                Q{tm(i)}=sol_casadi.value(obj.CPoints{tm(i)}); %Control points
+            for i=1:obj.num_cpoints
+                Q{i}=sol_casadi.value(obj.CPoints{i}); %Control points
             end
             obj.CPoints=Q; 
         end
 
         function printCPs(obj)
-            for i=0:(obj.num_cpoints-1)
-                obj.CPoints{tm(i)}'
+            for i=1:obj.num_cpoints
+                obj.CPoints{i}'
             end
         end
         
 %         function initialGuessForCPs(obj, Q_guess, opti_casadi)
-% %             for i=0:(obj.num_cpoints-1)
-% %                 opti_casadi.set_initial(Q{tm(i)},Q_guess{tm(i)}); %Control points
+% %             for i=1:obj.num_cpoints
+% %                 opti_casadi.set_initial(Q{(i)},Q_guess{(i)}); %Control points
 % %             end
 %         end
  
