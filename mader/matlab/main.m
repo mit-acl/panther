@@ -1,4 +1,6 @@
 
+%Everything here is 1-based indexing (first element is one)
+
 close all; clc;clear;
 set(0,'DefaultFigureWindowStyle','docked') %'normal' 'docked'
 set(0,'defaulttextInterpreter','latex');
@@ -14,6 +16,8 @@ addpath(genpath('./more_utils'));
 
 opti = casadi.Opti();
 
+
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%% CONSTANTS! %%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -21,7 +25,7 @@ opti = casadi.Opti();
 num_eval_simpson=15;
 
 t0=0;
-tf=10;
+tf=10.5;
 
 deg_pos=3;
 dim_pos=3;
@@ -73,6 +77,9 @@ for i=1:num_eval_simpson
     w_fe{i}=opti.parameter(3,1);
 end
 
+%%% Maximum velocity and acceleration
+v_max=opti.parameter(3,1);
+a_max=opti.parameter(3,1);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%% CREATION OF THE SPLINES! %%%%%%%%%%%
@@ -127,23 +134,36 @@ for j=1:(sp.num_seg)
 %       end
       
       %and the control points on the other side
-      Q_Mv=sp.getMINVO_Pos_CPsofInterval(j);
+      Q_Mv=sp.getCPs_MV_Pos_ofInterval(j);
       for kk=1:size(Q_Mv,2)
         opti.subject_to( n{tm(ip)}'*Q_Mv{kk} + d{ip} + epsilon <= 0);
       end
     end   
 end
 
-% v_max=1000;
-% %Max vel constraints
-% for j=1:sp.num_seg
-%     minvo_vel_cps=sp.getMINVO_Pos_CPsofInterval(j);
-%     dim=size(minvo_cps, 1);
-%     for u=1:size(minvo_cps,2)
-%             opti.subject_to( minvo_cps{u} <= v_max*ones(dim,1)  )
-%             opti.subject_to( minvo_cps{u} >= -v_max*ones(dim,1) )
-%     end
-% end
+%Max vel constraints
+for j=1:sp.num_seg
+    minvo_vel_cps=sp.getCPs_MV_Vel_ofInterval(j);
+    dim=size(minvo_vel_cps, 1);
+    for u=1:size(minvo_vel_cps,2)
+        for xyz=1:3
+            opti.subject_to( minvo_vel_cps{u}(xyz) <= v_max(xyz)  )
+            opti.subject_to( minvo_vel_cps{u}(xyz) >= -v_max(xyz) )
+        end
+    end
+end
+
+%Max accel constraints
+for j=1:sp.num_seg
+    minvo_accel_cps=sp.getCPs_MV_Accel_ofInterval(j);
+    dim=size(minvo_accel_cps, 1);
+    for u=1:size(minvo_accel_cps,2)
+        for xyz=1:3
+            opti.subject_to( minvo_accel_cps{u}(xyz) <= a_max(xyz)  )
+            opti.subject_to( minvo_accel_cps{u}(xyz) >= -a_max(xyz) )
+        end
+    end
+end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%% OBJECTIVE! %%%%%%%%%%%%%%%%%%%%%%%%%
@@ -331,8 +351,8 @@ end
 all_pCPs=sp.getCPsAsMatrix();
 all_yCPs=sy.getCPsAsMatrix();
 
-my_function = opti.to_function('mader_casadi_function',[{theta_FOV_deg},{p0},{v0},{a0},{pf},{vf},{af},{y0}, {ydot0}, {all_nd}, {all_w_fe}, {c_jerk}, {c_yaw}, {c_vel_isInFOV}],  {all_pCPs,all_yCPs},...
-                                                        {'theta_FOV_deg','p0','v0','a0','pf','vf','af','y0', 'ydot0', 'all_nd', 'all_w_fe', 'c_jerk', 'c_yaw', 'c_vel_isInFOV'}, {'all_pCPs','all_yCPs'});
+my_function = opti.to_function('mader_casadi_function',[{theta_FOV_deg},{p0},{v0},{a0},{pf},{vf},{af},{y0}, {ydot0}, {v_max}, {a_max}, {all_nd}, {all_w_fe}, {c_jerk}, {c_yaw}, {c_vel_isInFOV}],  {all_pCPs,all_yCPs},...
+                                                        {'theta_FOV_deg','p0','v0','a0','pf','vf','af','y0', 'ydot0','v_max', 'a_max','all_nd', 'all_w_fe', 'c_jerk', 'c_yaw', 'c_vel_isInFOV'}, {'all_pCPs','all_yCPs'});
 
 sol_tmp=my_function('theta_FOV_deg',80, ...  
                       'p0',  [-4;0;0], ... 
@@ -343,6 +363,8 @@ sol_tmp=my_function('theta_FOV_deg',80, ...
                       'af',  [0;0;0], ... 
                       'y0',  0.0 ,...
                       'ydot0',  0 ,...
+                      'v_max', 1.6*ones(3,1),...
+                      'a_max', 5*ones(3,1),...
                       'all_w_fe', ones(3,num_eval_simpson),...
                       'c_jerk', 0.0,...
                       'c_yaw', 0.0,...
@@ -380,10 +402,14 @@ for i=1:(num_of_obst*num_seg)
     opti.set_value(d{i}, rand(1,1));
 end
 
-%%%% Positions of the feature
+%Positions of the feature
 for i=1:num_eval_simpson
     opti.set_value(w_fe{i}, [1 1 1]');
 end
+
+%Max vel and accel
+opti.set_value(v_max, 1.6*ones(3,1));
+opti.set_value(a_max, 5*ones(3,1));
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%% SOLVE!
 sol = opti.solve();
@@ -449,7 +475,7 @@ semilogy(sol.stats.iterations.inf_pr)
 %%%%%%%%%%%%%%%%%%%%%%%%%%% PLOTTING! %%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-sp.plotPosVelAccelJerk()
+sp.plotPosVelAccelJerk(opti.value(v_max), opti.value(a_max))
 % sp.plotPosVelAccelJerkFiniteDifferences();
 sy.plotPosVelAccelJerk()
 % sy.plotPosVelAccelJerkFiniteDifferences();

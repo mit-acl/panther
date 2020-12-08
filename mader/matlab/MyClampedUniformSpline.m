@@ -71,51 +71,69 @@ classdef MyClampedUniformSpline < handle
             end
         end
         
-%         function result=getVelCP(obj,l)
-%             assert(l<=(obj.N-1), 'l<=(N-1) not satisfied');
-%             result=(obj.p*(obj.CPoints{l+1}-obj.CPoints{l}))/(obj.knots(l+obj.p+1)-obj.knots(l+1));
-%         end
-% 
-%         function result=getAccelCP(obj,l)
-%             assert(l<=(obj.N-2), 'l<=(N-2) not satisfied');
-%             result=(obj.p-1)*(obj.getVelCP(l+1)-obj.getVelCP(l))/(obj.knots((l+obj.p+1))-obj.knots((l+2)));
-%         end
-
-        
-        function getMV_CPsofDerivativeInterval(obj,j)
-            
+        %returns the l-th BS velocity control point
+        function result=getCP_BS_Vel(obj,l)
+            assert(l<=(obj.N), 'l<=N not satisfied');
+            result=(obj.p*(obj.CPoints{l+1}-obj.CPoints{l}))/(obj.knots(l+obj.p+1)-obj.knots(l+1));
         end
         
-        function result=getMINVO_Vel_CPsofInterval(obj,j)
-                       
+        %returns the l-th BS acceleration control point
+        function result=getCP_BS_Accel(obj,l)
+            assert(l<=(obj.N-1), 'l<=(N-1) not satisfied');
+            result=(obj.p-1)*(obj.getCP_BS_Vel(l+1)-obj.getCP_BS_Vel(l))/(obj.knots((l+obj.p+1))-obj.knots((l+2)));
+        end
+        
+        %%%%%%%%%%%%%% BSPLINE (BS)
+        %%%%%%%%%%%%%%%%%%%%%%
+        %returns the BS velocity control points of the interval j
+        function result=getCPs_BS_Vel_ofInterval(obj,j)
             deg_vel=obj.p-1;
-            
             Q_Bs_matrix=[];
-            for i=1:(deg_vel+1)
-                Q_Bs_matrix=[Q_Bs_matrix getVelCP(j)];
+            
+            for tmp=j:(j+deg_vel)
+                Q_Bs_matrix=[Q_Bs_matrix obj.getCP_BS_Vel(tmp)];
             end
-           
-            A_BS=obj.getA_BS_Vel_Interval(j);
-            error("Work in progress")
-            A_MV;
-            
-            Q_Mv_matrix=Q_Bs_matrix*A_BS*inv(A_MV);
-            
-            
-            
+
+            result=obj.convertMatrixCPsToCellArray(Q_Bs_matrix);
         end
         
-        function result=getMINVO_Pos_CPsofInterval(obj,j)
-            Q_Bs_matrix=obj.convertCellArrayCPsToMatrix(obj.getCPsofInterval(j));
+        %returns the BS acceleration control points of the interval j
+        function result=getCPs_BS_Accel_ofInterval(obj,j)
+            deg_accel=obj.p-2;
+            Q_Bs_matrix=[];
             
-            A_BS=obj.getA_BS_Pos_Interval(j);
-            A_MV=getA_MV(obj.p,[0,1]);
-            
-            Q_Mv_matrix=Q_Bs_matrix*A_BS*inv(A_MV);
-            
-            result=obj.convertMatrixCPsToCellArray(Q_Mv_matrix);
-            
+            for tmp=j:(j+deg_accel)
+                Q_Bs_matrix=[Q_Bs_matrix obj.getCP_BS_Accel(tmp)];
+            end
+
+            result=obj.convertMatrixCPsToCellArray(Q_Bs_matrix);
         end
+        %%%%%%%%%%%%%%%%%%%%%%
+
+        %%%%%%%%%%%%%% MINVO (MV)
+        %%%%%%%%%%%%%%%%%%%%%%
+        %returns the MV position control points of the interval j
+        function result=getCPs_MV_Pos_ofInterval(obj,j)
+            Q_Bs_matrix=obj.convertCellArrayCPsToMatrix(obj.getCPs_BS_Pos_ofInterval(j));
+                                                   %Q_Bs_matrix*   A_BS*                         inv(A_MV)
+            result=obj.convertMatrixCPsToCellArray(Q_Bs_matrix*    obj.getA_BS_Pos_Interval(j)*  inv(getA_MV(obj.p, [0,1])));
+        end
+        
+        %returns the MV velocity control points of the interval j
+        function result=getCPs_MV_Vel_ofInterval(obj,j)
+            Q_Bs_matrix=obj.convertCellArrayCPsToMatrix(obj.getCPs_BS_Vel_ofInterval(j));
+                                                   %Q_Bs_matrix*   A_BS*                         inv(A_MV)
+            result=obj.convertMatrixCPsToCellArray(Q_Bs_matrix*    obj.getA_BS_Vel_Interval(j)*  inv(getA_MV(obj.p-1, [0,1])));
+        end
+        
+        %returns the MV acceleration control points of the interval j
+        function result=getCPs_MV_Accel_ofInterval(obj,j)
+            Q_Bs_matrix=obj.convertCellArrayCPsToMatrix(obj.getCPs_BS_Accel_ofInterval(j));
+                                                   %Q_Bs_matrix*   A_BS*                         inv(A_MV)
+            result=obj.convertMatrixCPsToCellArray(Q_Bs_matrix*    obj.getA_BS_Accel_Interval(j)*  inv(getA_MV(obj.p-2, [0,1])));
+        end
+        %%%%%%%%%%%%%%%%%%%%%%
+
 
         %j>=0 is the index of the interval
         % u \in [0,1] is the time along that interval
@@ -250,7 +268,7 @@ classdef MyClampedUniformSpline < handle
             result=obj.evalDerivativeU(order,u,j);
         end
 
-        function plotPosVelAccelJerk(obj)
+        function plotPosVelAccelJerk(obj, v_max, a_max, j_max)
             figure; hold on;
             subplot(4,1,1); hold on; title('pos')
             obj.plotPos();
@@ -260,6 +278,28 @@ classdef MyClampedUniformSpline < handle
             obj.plotAccel();
             subplot(4,1,4); hold on; title('jerk')
             obj.plotJerk();
+            style={'-.r','-.g','-.b'};
+            if(nargin>=2)
+                subplot(4,1,2);
+                for xyz=1:3
+                    yline(v_max(xyz),style{xyz});
+                    yline(-v_max(xyz),style{xyz});
+                end
+            end
+            if(nargin>=3)
+                subplot(4,1,3);
+                for xyz=1:3
+                    yline(a_max(xyz),style{xyz});
+                    yline(-a_max(xyz),style{xyz});
+                end
+            end     
+            if(nargin>=4)
+                subplot(4,1,4);
+                for xyz=1:3
+                    yline(j_max(xyz),style{xyz});
+                    yline(-j_max(xyz),style{xyz});
+                end
+            end     
         end
         
         function plotDerivative(obj,order)
