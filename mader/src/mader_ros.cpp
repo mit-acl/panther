@@ -207,8 +207,11 @@ MaderRos::MaderRos(ros::NodeHandle nh1, ros::NodeHandle nh2, ros::NodeHandle nh3
   clearMarkerActualTraj();
 
   ////// to avoid having to click on the GUI (TODO)
-  ros::Duration(0.5).sleep();  // TODO
-  bool success_service_call = system("rosservice call /change_mode 'mode: 1'");
+  mader_msgs::Mode tmp;
+  tmp.mode = 1;
+  modeCB(tmp);
+  // ros::Duration(1.0).sleep();  // TODO
+  // bool success_service_call = system("rosservice call /change_mode 'mode: 1'");
   ////
 
   ROS_INFO("Planner initialized");
@@ -316,6 +319,7 @@ void MaderRos::publishOwnTraj(const PieceWisePol& pwp)
 
 void MaderRos::replanCB(const ros::TimerEvent& e)
 {
+  // std::cout << "In MaderRos::replanCB" << std::endl;
   if (ros::ok() && published_initial_position_ == true)
   {
     mader_types::Edges edges_obstacles;
@@ -464,13 +468,13 @@ void MaderRos::modeCB(const mader_msgs::Mode& msg)
     // sub_state_.shutdown();
     pubCBTimer_.stop();
     replanCBTimer_.stop();
-    // std::cout << on_blue << "**************stopping replanCBTimer" << reset << std::endl;
+    std::cout << on_blue << "**************stopping replanCBTimer" << reset << std::endl;
     mader_ptr_->resetInitialization();
   }
   else
   {  // The mode changed to GO (the mode changes to go when takeoff is finished)
     // sub_state_ = nh_.subscribe("state", 1, &MaderRos::stateCB, this);  // TODO duplicated from above
-    // std::cout << on_blue << "**************starting replanCBTimer" << reset << std::endl;
+    std::cout << on_blue << "**************starting replanCBTimer" << reset << std::endl;
     pubCBTimer_.start();
     replanCBTimer_.start();
   }

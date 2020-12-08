@@ -17,7 +17,7 @@
 #include "timer.hpp"
 #include "termcolor.hpp"
 
-#include "nlopt_utils.hpp"
+// #include "nlopt_utils.hpp"
 
 using namespace termcolor;
 
@@ -35,22 +35,6 @@ Mader::Mader(parameters par) : par_(par)
   mtx_initial_cond.lock();
   stateA_.setZero();
   mtx_initial_cond.unlock();
-
-  // Check that the gradients are right
-  if (nlopt_utils::checkGradientsNlopt(par_.basis) == false)
-  {
-    std::cout << "==============================================" << std::endl;
-    std::cout << bold << "Gradient check was " << red << "NOT OK " << reset << std::endl;
-    std::cout << "==============================================" << std::endl;
-
-    abort();
-  }
-  else
-  {
-    std::cout << "==============================================" << std::endl;
-    std::cout << bold << "Gradient check was " << green << " OK " << reset << std::endl;
-    std::cout << "==============================================" << std::endl;
-  }
 
   changeDroneStatus(DroneStatus::GOAL_REACHED);
   resetInitialization();
@@ -111,7 +95,8 @@ Mader::Mader(parameters par) : par_(par)
   A_rest_pos_basis_inverse_ = A_rest_pos_basis_.inverse();
 
   // solver_ = new SolverNlopt(par_for_solver);
-  solver_ = new SolverGurobi(par_for_solver);
+  // solver_ = new SolverGurobi(par_for_solver);
+  solver_ = new SolverIpopt(par_for_solver);
 
   separator_solver_ = new separator::Separator();
 }
@@ -634,6 +619,8 @@ bool Mader::replan(mader_types::Edges& edges_obstacles_out, std::vector<state>& 
     // std::cout << "Not Replanning" << std::endl;
     return false;
   }
+
+  // std::cout << "Replanning" << std::endl;
 
   //////////////////////////////////////////////////////////////////////////
   ///////////////////////// G <-- Project GTerm ////////////////////////////

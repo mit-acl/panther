@@ -398,10 +398,10 @@ classdef MyClampedUniformSpline < handle
             plot(times(1:end-3),diff(pos,3,2)/delta_tmp^3,'--')     
         end
         
-        function updateCPsWithSolution(obj, sol_casadi)
+        function updateCPsWithSolution(obj, Qsolution_matrix)
             Q={};
             for i=1:obj.num_cpoints
-                Q{i}=sol_casadi.value(obj.CPoints{i}); %Control points
+                Q{i}=Qsolution_matrix(:,i);%sol_casadi.value(obj.CPoints{i}); %Control points
             end
             obj.CPoints=Q; 
         end

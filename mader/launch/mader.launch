@@ -4,7 +4,7 @@
 	<arg name="goal_topic" default="goal"/>
 
 
-	<node ns="$(arg quad)" name="mader" pkg="mader" type="mader_node" output="screen" clear_params="false" > 
+	<node ns="$(arg quad)" name="mader" pkg="mader" type="mader_node" output="screen" clear_params="false"> 
     <rosparam file="$(find mader)/param/mader.yaml" command="load"/>
         <!-- Subscriptions -->
 		<remap from="~state" to="state"/>
@@ -30,4 +30,4 @@
 </launch>
 
 
-<!-- launch-prefix="xterm -e gdb -ex run args" -->
+<!-- launch-prefix="xterm -e gdb -ex run XXargs" -->

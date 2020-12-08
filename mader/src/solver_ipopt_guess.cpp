@@ -1,9 +1,9 @@
 
-#include "solver_gurobi.hpp"
+#include "solver_ipopt.hpp"
 #include "termcolor.hpp"
 #include "bspline_utils.hpp"
 #include "ros/ros.h"
-#include "solver_gurobi_utils.hpp"
+// #include "solver_gurobi_utils.hpp"
 
 #include <decomp_util/ellipsoid_decomp.h>  //For Polyhedron definition
 #include <unsupported/Eigen/Splines>
@@ -15,7 +15,7 @@
 
 using namespace termcolor;
 
-bool SolverGurobi::generateAStarGuess()
+bool SolverIpopt::generateAStarGuess()
 {
   std::cout << "[NL] Running A* from" << q0_.transpose() << " to " << final_state_.pos.transpose()
             << ", allowing time = " << kappa_ * max_runtime_ * 1000 << " ms" << std::endl;
@@ -33,30 +33,30 @@ bool SolverGurobi::generateAStarGuess()
   // std::cout << "The StraightLineGuess is" << std::endl;
   // printStd(q_guess_);
 
-  octopusSolver_->setUp(t_init_, t_final_, hulls_);
+  octopusSolver_ptr_->setUp(t_init_, t_final_, hulls_);
 
-  octopusSolver_->setq0q1q2(q0_, q1_, q2_);
-  octopusSolver_->setGoal(final_state_.pos);
+  octopusSolver_ptr_->setq0q1q2(q0_, q1_, q2_);
+  octopusSolver_ptr_->setGoal(final_state_.pos);
 
   double goal_size = 0.05;  //[meters]
 
-  octopusSolver_->setXYZMinMaxAndRa(x_min_, x_max_, y_min_, y_max_, z_min_, z_max_,
-                                    Ra_);                 // limits for the search, in world frame
-  octopusSolver_->setBBoxSearch(2000.0, 2000.0, 2000.0);  // limits for the search, centered on q2
-  octopusSolver_->setMaxValuesAndSamples(v_max_, a_max_, a_star_samp_x_, a_star_samp_y_, a_star_samp_z_,
-                                         a_star_fraction_voxel_size_);
+  octopusSolver_ptr_->setXYZMinMaxAndRa(x_min_, x_max_, y_min_, y_max_, z_min_, z_max_,
+                                        Ra_);                 // limits for the search, in world frame
+  octopusSolver_ptr_->setBBoxSearch(2000.0, 2000.0, 2000.0);  // limits for the search, centered on q2
+  octopusSolver_ptr_->setMaxValuesAndSamples(v_max_, a_max_, a_star_samp_x_, a_star_samp_y_, a_star_samp_z_,
+                                             a_star_fraction_voxel_size_);
 
-  octopusSolver_->setRunTime(kappa_ * max_runtime_);  // hack, should be kappa_ * max_runtime_
-  octopusSolver_->setGoalSize(goal_size);
-  octopusSolver_->setBias(a_star_bias_);
-  octopusSolver_->setVisual(false);
+  octopusSolver_ptr_->setRunTime(kappa_ * max_runtime_);  // hack, should be kappa_ * max_runtime_
+  octopusSolver_ptr_->setGoalSize(goal_size);
+  octopusSolver_ptr_->setBias(a_star_bias_);
+  octopusSolver_ptr_->setVisual(false);
 
   std::vector<Eigen::Vector3d> q;
   std::vector<Eigen::Vector3d> n;
   std::vector<double> d;
-  bool is_feasible = octopusSolver_->run(q, n, d);
+  bool is_feasible = octopusSolver_ptr_->run(q, n, d);
 
-  // num_of_LPs_run_ = octopusSolver_->getNumOfLPsRun();
+  // num_of_LPs_run_ = octopusSolver_ptr_->getNumOfLPsRun();
 
   // fillPlanesFromNDQ(n_guess_, d_guess_, q_guess_);
 
@@ -112,7 +112,7 @@ bool SolverGurobi::generateAStarGuess()
   }
 }
 
-void SolverGurobi::generateRandomD(std::vector<double>& d)
+void SolverIpopt::generateRandomD(std::vector<double>& d)
 {
   d.clear();
   for (int k = k_min_; k <= k_max_; k++)
@@ -122,7 +122,7 @@ void SolverGurobi::generateRandomD(std::vector<double>& d)
   }
 }
 
-void SolverGurobi::generateRandomN(std::vector<Eigen::Vector3d>& n)
+void SolverIpopt::generateRandomN(std::vector<Eigen::Vector3d>& n)
 {
   n.clear();
   for (int j = j_min_; j < j_max_; j = j + 3)
@@ -136,7 +136,7 @@ void SolverGurobi::generateRandomN(std::vector<Eigen::Vector3d>& n)
   // std::cout << "After Generating RandomN, n has size= " << n.size() << std::endl;
 }
 
-void SolverGurobi::generateRandomQ(std::vector<Eigen::Vector3d>& q)
+void SolverIpopt::generateRandomQ(std::vector<Eigen::Vector3d>& q)
 {
   q.clear();
 
@@ -154,7 +154,7 @@ void SolverGurobi::generateRandomQ(std::vector<Eigen::Vector3d>& q)
   saturateQ(q);  // make sure is inside the bounds specified
 }
 
-void SolverGurobi::generateRandomGuess()
+void SolverIpopt::generateRandomGuess()
 {
   n_guess_.clear();
   q_guess_.clear();
@@ -165,7 +165,7 @@ void SolverGurobi::generateRandomGuess()
   generateRandomQ(q_guess_);
 }
 
-void SolverGurobi::generateStraightLineGuess()
+void SolverIpopt::generateStraightLineGuess()
 {
   // std::cout << "Using StraightLineGuess" << std::endl;
   q_guess_.clear();
@@ -211,7 +211,7 @@ void SolverGurobi::generateStraightLineGuess()
       Eigen::Vector3d n_i;
       double d_i;
 
-      bool satisfies_LP = separator_solver_->solveModel(n_i, d_i, hulls_[obst_index][i], Qmv);
+      bool satisfies_LP = separator_solver_ptr_->solveModel(n_i, d_i, hulls_[obst_index][i], Qmv);
 
       n_guess_.push_back(n_i);
       d_guess_.push_back(d_i);

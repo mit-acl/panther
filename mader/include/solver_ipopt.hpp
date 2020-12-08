@@ -6,14 +6,15 @@
  * See LICENSE file for the license information
  * -------------------------------------------------------------------------- */
 
-#ifndef SOLVER_GUROBI_HPP
-#define SOLVER_GUROBI_HPP
+#ifndef SOLVER_IPOPT_HPP
+#define SOLVER_IPOPT_HPP
+
+//#include <casadi/casadi.hpp>
+
 #include <Eigen/Dense>
-#include "gurobi_c++.h"
 #include <Eigen/StdVector>
 
 #include <iomanip>  //set precision
-#include <nlopt.hpp>
 #include "mader_types.hpp"
 #include "utils.hpp"
 #include "timer.hpp"
@@ -22,14 +23,16 @@
 #include "octopus_search.hpp"
 #include "solver_params.hpp"
 
+#include <iostream>
+
 typedef MADER_timers::Timer MyTimer;
 
-class SolverGurobi
+class SolverIpopt
 {
 public:
-  SolverGurobi(par_solver &par);
+  SolverIpopt(par_solver &par);
 
-  ~SolverGurobi();
+  ~SolverIpopt();
 
   bool optimize();
 
@@ -69,13 +72,6 @@ private:
   void transformVelBSpline2otherBasis(const Eigen::Matrix<double, 3, 3> &Qbs, Eigen::Matrix<double, 3, 3> &Qmv,
                                       int interval);
 
-  // transform functions (with std)
-  void transformPosBSpline2otherBasis(const std::vector<std::vector<GRBLinExpr>> &Qbs,
-                                      std::vector<std::vector<GRBLinExpr>> &Qmv, int interval);
-
-  void transformVelBSpline2otherBasis(const std::vector<std::vector<GRBLinExpr>> &Qbs,
-                                      std::vector<std::vector<GRBLinExpr>> &Qmv, int interval);
-
   void generateRandomGuess();
   bool generateAStarGuess();
   void generateStraightLineGuess();
@@ -96,19 +92,12 @@ private:
 
   void printQND(std::vector<Eigen::Vector3d> &q, std::vector<Eigen::Vector3d> &n, std::vector<double> &d);
 
-  GRBEnv *env_ = new GRBEnv();
-  GRBModel m_ = GRBModel(*env_);
-
-  std::vector<std::vector<GRBVar>> q_var_;      // Each q_var_[i] has 3 elements (x,y,z)
-  std::vector<std::vector<GRBLinExpr>> q_exp_;  // Each q_exp_[i] has 3 elements (x,y,z)
+  void findCentroidHull(const Polyhedron_Std &hull, Eigen::Vector3d &centroid);
 
   std::vector<Eigen::Vector3d> n_;  // Each n_[i] has 3 elements (nx,ny,nz)
   std::vector<double> d_;           // d_[i] has 1 element
 
-  void findCentroidHull(const Polyhedron_Std &hull, Eigen::Vector3d &centroid);
-
-  // void printIndexesConstraints();
-  // void printIndexesVariables();
+  // casadi::Function casadi_function_;
 
   PieceWisePol solution_;
 
@@ -126,12 +115,12 @@ private:
   int M_;
   int N_;
 
+  double index_instruction_;  // hack
+
   int num_of_normals_;
 
   int num_of_obst_;
   int num_of_segments_;
-
-  nlopt::algorithm solver_;
 
   std::vector<Hyperplane3D> planes_;
 
@@ -190,8 +179,16 @@ private:
   double a_star_bias_ = 1.0;
   double a_star_fraction_voxel_size_ = 0.5;
 
-  separator::Separator *separator_solver_;
-  OctopusSearch *octopusSolver_;
+  // separator::Separator *separator_solver_ptr_;
+  // OctopusSearch *octopusSolver_ptr_;
+
+  std::unique_ptr<separator::Separator> separator_solver_ptr_;
+  std::unique_ptr<OctopusSearch> octopusSolver_ptr_;
+
+  // PImpl idiom
+  // https://www.geeksforgeeks.org/pimpl-idiom-in-c-with-examples/
+  struct PImpl;
+  std::unique_ptr<PImpl> m_casadi_ptr_;  // Opaque pointer
 
   double Ra_ = 1e10;
 };

@@ -1,0 +1,289 @@
+#LyX 2.3 created this file. For more info see http://www.lyx.org/
+\lyxformat 544
+\begin_document
+\begin_header
+\save_transient_properties true
+\origin unavailable
+\textclass article
+\use_default_options true
+\maintain_unincluded_children false
+\language english
+\language_package default
+\inputencoding auto
+\fontencoding global
+\font_roman "default" "default"
+\font_sans "default" "default"
+\font_typewriter "default" "default"
+\font_math "auto" "auto"
+\font_default_family default
+\use_non_tex_fonts false
+\font_sc false
+\font_osf false
+\font_sf_scale 100 100
+\font_tt_scale 100 100
+\use_microtype false
+\use_dash_ligatures true
+\graphics default
+\default_output_format default
+\output_sync 0
+\bibtex_command default
+\index_command default
+\paperfontsize default
+\use_hyperref false
+\papersize default
+\use_geometry false
+\use_package amsmath 1
+\use_package amssymb 1
+\use_package cancel 1
+\use_package esint 1
+\use_package mathdots 1
+\use_package mathtools 1
+\use_package mhchem 1
+\use_package stackrel 1
+\use_package stmaryrd 1
+\use_package undertilde 1
+\cite_engine basic
+\cite_engine_type default
+\use_bibtopic false
+\use_indices false
+\paperorientation portrait
+\suppress_date false
+\justification true
+\use_refstyle 1
+\use_minted 0
+\index Index
+\shortcut idx
+\color #008000
+\end_index
+\secnumdepth 3
+\tocdepth 3
+\paragraph_separation indent
+\paragraph_indentation default
+\is_math_indent 0
+\math_numbering_side default
+\quotes_style english
+\dynamic_quotes 0
+\papercolumns 1
+\papersides 1
+\paperpagestyle default
+\tracking_changes false
+\output_changes false
+\html_math_output 0
+\html_css_as_file 0
+\html_be_strict false
+\end_header
+
+\begin_body
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\frac{dp_{c++}(t_{c++})}{dt_{c++}}=\frac{dp_{cas}(\alpha t_{c++})}{dt_{c++}}=\alpha\frac{dp_{cas}(t_{c++})}{dt_{c++}}\le v_{max}\iff\frac{dp_{cas}(t_{c++})}{dt_{c++}}\le\frac{v_{max}}{\alpha}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\frac{d}{dt_{c++}}\left(\frac{dp_{c++}(t_{c++})}{dt_{c++}}\right)=\frac{d}{dt_{c++}}\left(\alpha\frac{dp_{cas}(t_{c++})}{dt_{c++}}\right)=\alpha\frac{d}{dt_{c++}}\left(\frac{dp_{cas}(t_{c++})}{dt_{c++}}\right)\le a_{max}\iff\frac{d^{2}p_{cas}(t_{c++})}{d^{2}t_{c++}}\le\frac{a_{max}}{\alpha}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+======================================
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\tau(t)=\underbrace{\left(\frac{\tau_{f}-\tau_{0}}{t_{f}-t_{0}}\right)}_{:=\alpha}(t-t_{0})+\tau_{0}\qquad\qquad t=\underbrace{\left(\frac{t_{f}-t_{0}}{\tau_{f}-\tau_{0}}\right)}_{=\frac{1}{\alpha}}(\tau_{f}-\tau_{0})+t_{0}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+p(t)=p(\tau)
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\left\{ \frac{df(t)}{dt}\le v_{max}\quad\forall t\in[t_{0},t_{f}]\right\} 
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\left\{ \frac{dg(\tau)}{d\tau}\le?\quad\forall\tau\in[\tau_{0},\tau_{f}]\right\} 
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\left\{ \alpha\frac{df(t)}{dt}\le?\quad\forall t\in[t_{0},t_{f}]\right\} 
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\left\{ \frac{df(t)}{dt}\le\frac{?}{\alpha}\quad\forall t\in[t_{0},t_{f}]\right\} 
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\implies?=\alpha v_{max}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+=====
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\left\{ \frac{d}{dt}\frac{df(t)}{dt}\le a_{max}\quad\forall t\in[t_{0},t_{f}]\right\} 
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\left\{ \frac{d}{d\tau}\frac{dg(\tau)}{d\tau}\le?\quad\forall\tau\in[\tau_{0},\tau_{f}]\right\} 
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\left\{ \frac{d}{d\tau}\frac{df(t)}{dt}\le?\quad\forall t\in[t_{0},t_{f}]\right\} 
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\left\{ \frac{df(t)}{dt}\le\frac{?}{\alpha}\quad\forall t\in[t_{0},t_{f}]\right\} 
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\implies?=\alpha v_{max}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+=====
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\left\{ \frac{df(\alpha(t-t_{0})+\tau_{0})}{dt}\le x\quad\forall t\in[t_{0},t_{f}]\right\} 
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\left\{ \frac{df(t)}{dt}\le v_{max}\quad\forall t\in[t_{0},t_{f}]\right\} =
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\frac{df\left(\tau(t)\right)}{dt}=\frac{df\left(\tau\right)}{d\tau}\frac{df\left(\tau\right)}{d\tau}=\frac{df(\alpha(t-t_{0})+\tau_{0})}{dt}=\alpha\frac{df(t)}{dt}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\frac{d^{2}f\left(\tau(t)\right)}{dt^{2}}=\frac{d}{dt}\left(\frac{df\left(\tau(t)\right)}{dt}\right)=\frac{d}{dt}\left(\alpha\frac{df(t)}{dt}\right)=\alpha\frac{d^{2}f(t)}{dt^{2}}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\end_body
+\end_document
