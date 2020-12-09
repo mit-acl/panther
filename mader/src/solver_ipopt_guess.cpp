@@ -21,17 +21,17 @@ bool SolverIpopt::generateAStarGuess()
             << ", allowing time = " << kappa_ * max_runtime_ * 1000 << " ms" << std::endl;
 
   n_guess_.clear();
-  q_guess_.clear();
+  qp_guess_.clear();
   d_guess_.clear();
   planes_.clear();
 
   generateStraightLineGuess();  // If A* doesn't succeed --> use straight lineGuess
   /*  generateRandomN(n_guess_);
     generateRandomD(d_guess_);
-    generateRandomQ(q_guess_);*/
+    generateRandomQ(qp_guess_);*/
 
   // std::cout << "The StraightLineGuess is" << std::endl;
-  // printStd(q_guess_);
+  // printStd(qp_guess_);
 
   octopusSolver_ptr_->setUp(t_init_, t_final_, hulls_);
 
@@ -58,12 +58,12 @@ bool SolverIpopt::generateAStarGuess()
 
   // num_of_LPs_run_ = octopusSolver_ptr_->getNumOfLPsRun();
 
-  // fillPlanesFromNDQ(n_guess_, d_guess_, q_guess_);
+  // fillPlanesFromNDQ(n_guess_, d_guess_, qp_guess_);
 
   if (is_feasible)
   {
     ROS_INFO_STREAM("[NL] A* found a feasible solution!");
-    q_guess_ = q;
+    qp_guess_ = q;
     n_guess_ = n;
     d_guess_ = d;
 
@@ -158,40 +158,40 @@ void SolverIpopt::generateRandomQ(std::vector<Eigen::Vector3d>& q)
 void SolverIpopt::generateRandomGuess()
 {
   n_guess_.clear();
-  q_guess_.clear();
+  qp_guess_.clear();
   d_guess_.clear();
 
   generateRandomN(n_guess_);
   generateRandomD(d_guess_);
-  generateRandomQ(q_guess_);
+  generateRandomQ(qp_guess_);
 }
 
 void SolverIpopt::generateStraightLineGuess()
 {
   // std::cout << "Using StraightLineGuess" << std::endl;
-  q_guess_.clear();
+  qp_guess_.clear();
   n_guess_.clear();
   d_guess_.clear();
 
-  q_guess_.push_back(q0_);  // Not a decision variable
-  q_guess_.push_back(q1_);  // Not a decision variable
-  q_guess_.push_back(q2_);  // Not a decision variable
+  qp_guess_.push_back(q0_);  // Not a decision variable
+  qp_guess_.push_back(q1_);  // Not a decision variable
+  qp_guess_.push_back(q2_);  // Not a decision variable
 
   for (int i = 1; i < (N_ - 2 - 2); i++)
   {
     Eigen::Vector3d q_i = q2_ + i * (final_state_.pos - q2_) / (N_ - 2 - 2);
-    q_guess_.push_back(q_i);
+    qp_guess_.push_back(q_i);
   }
 
-  q_guess_.push_back(qNm2_);  // three last cps are the same because of the vel/accel final conditions
-  q_guess_.push_back(qNm1_);
-  q_guess_.push_back(qN_);
-  // Now q_guess_ should have (N_+1) elements
-  saturateQ(q_guess_);  // make sure is inside the bounds specified
+  qp_guess_.push_back(qNm2_);  // three last cps are the same because of the vel/accel final conditions
+  qp_guess_.push_back(qNm1_);
+  qp_guess_.push_back(qN_);
+  // Now qp_guess_ should have (N_+1) elements
+  saturateQ(qp_guess_);  // make sure is inside the bounds specified
 
-  // std::vector<Eigen::Vector3d> q_guess_with_qNm1N = q_guess_;
-  // q_guess_with_qNm1N.push_back(qNm1_);
-  // q_guess_with_qNm1N.push_back(qN_);
+  // std::vector<Eigen::Vector3d> qp_guess_with_qNm1N = qp_guess_;
+  // qp_guess_with_qNm1N.push_back(qNm1_);
+  // qp_guess_with_qNm1N.push_back(qN_);
   //////////////////////
 
   for (int obst_index = 0; obst_index < num_of_obst_; obst_index++)
@@ -202,10 +202,10 @@ void SolverIpopt::generateStraightLineGuess()
 
       Eigen::Matrix<double, 3, 4> Qbs;  // b-spline
       Eigen::Matrix<double, 3, 4> Qmv;  // minvo. each column contains a MINVO control point
-      Qbs.col(0) = q_guess_[i];
-      Qbs.col(1) = q_guess_[i + 1];
-      Qbs.col(2) = q_guess_[i + 2];
-      Qbs.col(3) = q_guess_[i + 3];
+      Qbs.col(0) = qp_guess_[i];
+      Qbs.col(1) = qp_guess_[i + 1];
+      Qbs.col(2) = qp_guess_[i + 2];
+      Qbs.col(3) = qp_guess_[i + 3];
 
       transformPosBSpline2otherBasis(Qbs, Qmv, i);
 

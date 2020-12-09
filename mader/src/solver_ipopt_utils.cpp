@@ -69,3 +69,18 @@ void SolverIpopt::findCentroidHull(const Polyhedron_Std &hull, Eigen::Vector3d &
     centroid = centroid / hull.cols();
   }
 }
+
+void SolverIpopt::printStd(const std::vector<Eigen::Vector3d> &v)
+{
+  for (auto v_i : v)
+  {
+    std::cout << v_i.transpose() << std::endl;
+  }
+}
+void SolverIpopt::printStd(const std::vector<double> &v)
+{
+  for (auto v_i : v)
+  {
+    std::cout << v_i << std::endl;
+  }
+}

@@ -97,7 +97,7 @@ private:
   std::vector<Eigen::Vector3d> n_;  // Each n_[i] has 3 elements (nx,ny,nz)
   std::vector<double> d_;           // d_[i] has 1 element
 
-  PieceWisePol solution_;
+  PieceWisePol pwp_solution_;
 
   int basis_ = B_SPLINE;
 
@@ -146,9 +146,9 @@ private:
   double max_runtime_ = 2;  //[seconds]
 
   // Guesses
-  std::vector<Eigen::Vector3d> n_guess_;  // Guesses for the normals
-  std::vector<Eigen::Vector3d> q_guess_;  // Guesses for the normals
-  std::vector<double> d_guess_;           // Guesses for the normals
+  std::vector<Eigen::Vector3d> n_guess_;   // Guesses for the normals
+  std::vector<Eigen::Vector3d> qp_guess_;  // Guesses for the normals
+  std::vector<double> d_guess_;            // Guesses for the normals
 
   double kappa_ = 0.2;  // kappa_*max_runtime_ is spent on the initial guess
   double mu_ = 0.5;     // mu_*max_runtime_ is spent on the optimization

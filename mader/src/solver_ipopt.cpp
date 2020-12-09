@@ -364,79 +364,74 @@ bool SolverIpopt::optimize()
 
   map_arguments["all_nd"] = all_nd;  // casadi::DM::rand(4, 0);
 
-  casadi::DM matrix_q_pos_guess(casadi::Sparsity::dense(3, (N_ + 1)));  // TODO: do this just once
-  for (int i = 0; i < matrix_q_pos_guess.columns(); i++)
+  ///////////////// GUESS FOR POSITION CONTROL POINTS
+  casadi::DM matrix_qp_guess(casadi::Sparsity::dense(3, (N_ + 1)));  // TODO: do this just once
+  for (int i = 0; i < matrix_qp_guess.columns(); i++)
   {
-    matrix_q_pos_guess(0, i) = q_guess_[i].x();
-    matrix_q_pos_guess(1, i) = q_guess_[i].y();
-    matrix_q_pos_guess(2, i) = q_guess_[i].z();
+    matrix_qp_guess(0, i) = qp_guess_[i].x();
+    matrix_qp_guess(1, i) = qp_guess_[i].y();
+    matrix_qp_guess(2, i) = qp_guess_[i].z();
   }
 
-  map_arguments["guess_CPs_Pos"] = matrix_q_pos_guess;
+  map_arguments["guess_CPs_Pos"] = matrix_qp_guess;
 
-  std::cout << "GUESS\n" << map_arguments["guess_CPs_Pos"] << std::endl;
-
-  casadi::DM matrix_q_yaw_guess(casadi::Sparsity::dense(1, 6));  // TODO: do this just once
-  for (int i = 0; i < matrix_q_yaw_guess.columns(); i++)
+  ///////////////// GUESS FOR YAW CONTROL POINTS
+  casadi::DM matrix_qy_guess(casadi::Sparsity::dense(1, 6));  // TODO: do this just once
+  for (int i = 0; i < matrix_qy_guess.columns(); i++)
   {
-    matrix_q_yaw_guess(0, i) = rand();
+    matrix_qy_guess(0, i) = rand();  // qy_guess_[i];
   }
 
-  map_arguments["guess_CPs_Yaw"] = matrix_q_yaw_guess;
+  map_arguments["guess_CPs_Yaw"] = matrix_qy_guess;
 
+  ///////////////// CALL THE SOLVER
   std::map<std::string, casadi::DM> result = m_casadi_ptr_->casadi_function_(map_arguments);
 
-  /// Very hacky solution, see discussion at https://groups.google.com/g/casadi-users/c/1061E0eVAXM/m/dFHpw1CQBgAJ
-  /// Inspired from https://gist.github.com/jgillis/9d12df1994b6fea08eddd0a3f0b0737f
+  ///////////////// GET STATUS FROM THE SOLVER
+  // Very hacky solution, see discussion at https://groups.google.com/g/casadi-users/c/1061E0eVAXM/m/dFHpw1CQBgAJ
+  // Inspired from https://gist.github.com/jgillis/9d12df1994b6fea08eddd0a3f0b0737f
   std::cout << "index_instruction_= " << index_instruction_ << std::endl;
   auto optimstatus =
       m_casadi_ptr_->casadi_function_.instruction_MX(index_instruction_).which_function().stats(1)["return_status"];
-  /////////
 
-  std::vector<Eigen::Vector3d> q;
+  ///////////////// DECIDE ACCORDING TO STATUS OF THE SOLVER
+  std::vector<Eigen::Vector3d> qp;  // Solution found (Control points for position)
+  std::vector<double> qy;           // Solution found (Control points for yaw)
   if (optimstatus == "Solve_Succeeded" || optimstatus == "Acceptable_Level")
   {
     std::cout << green << "IPOPT found a solution!" << reset << std::endl;
 
-    auto all_pCPs = result["all_pCPs"];
-
     // copy the solution
-    std::cout << "all_pCPs.columns()= " << all_pCPs.columns() << std::endl;
-    for (int i = 0; i < all_pCPs.columns(); i++)
+    auto qp_casadi = result["all_pCPs"];
+    for (int i = 0; i < qp_casadi.columns(); i++)
     {
-      q.push_back(Eigen::Vector3d(double(all_pCPs(0, i)), double(all_pCPs(1, i)), double(all_pCPs(2, i))));
+      qp.push_back(Eigen::Vector3d(double(qp_casadi(0, i)), double(qp_casadi(1, i)), double(qp_casadi(2, i))));
     }
-    std::cout << "done!" << std::endl;
+
+    qy = static_cast<std::vector<double>>(result["all_yCPs"]);
   }
   else
   {
     std::cout << red << "IPOPT failed to find a solution, using initial guess (which is feasible)" << reset
               << std::endl;
-    q = q_guess_;
+    qp = qp_guess_;
   }
 
-  std::cout << "Calling CPs2TrajAndPwp!" << std::endl;
+  ///////////////// PRINT SOLUTION
+  std::cout << "Position control Points obtained= " << std::endl;
+  printStd(qp);
 
-  // std::cout << "N_= " << N_ << std::endl;
-  // std::cout << "p_= " << p_ << std::endl;
-  // std::cout << "num_pol_= " << num_pol_ << std::endl;
-  // std::cout << "knots_= " << knots_ << std::endl;
-  // std::cout << "dc_= " << dc_ << std::endl;
-  std::cout << "Control Points obtained= " << std::endl;
-  for (auto q_i : q)
-  {
-    std::cout << q_i.transpose() << std::endl;
-  }
+  std::cout << "Yaw control Points obtained= " << std::endl;
+  printStd(qy);
 
-  CPs2TrajAndPwp(q, traj_solution_, solution_, N_, p_, num_pol_, knots_, dc_);
+  ///////////////// Fill  traj_solution_ and pwp_solution_
+  CPs2TrajAndPwp(qp, traj_solution_, pwp_solution_, N_, p_, num_pol_, knots_, dc_);
   std::cout << "Called CPs2TrajAndPwp!" << std::endl;
 
   // Force last position =final_state_ (which it's not guaranteed because of the discretization with dc_)
   traj_solution_.back().vel = final_state_.vel;
   traj_solution_.back().accel = final_state_.accel;
   traj_solution_.back().jerk = Eigen::Vector3d::Zero();
-
-  // std::cout << blue << "traj_solution_.size()=" << traj_solution_.size() <<reset<< std::endl;
 
   // Uncomment the following line if you wanna visualize the planes
   // fillPlanesFromNDQ(n_, d_, q);  // TODO: move this outside the SolverIpopt class
@@ -446,7 +441,7 @@ bool SolverIpopt::optimize()
 
 void SolverIpopt::getSolution(PieceWisePol &solution)
 {
-  solution = solution_;
+  solution = pwp_solution_;
 }
 
 //////////////////////////////////////////

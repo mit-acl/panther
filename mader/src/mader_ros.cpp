@@ -8,8 +8,6 @@
 
 #include "mader_ros.hpp"
 
-#include <sensor_msgs/point_cloud_conversion.h>
-#include <sensor_msgs/point_cloud_conversion.h>
 #include <nav_msgs/Path.h>
 
 #include <decomp_ros_msgs/PolyhedronArray.h>
@@ -435,9 +433,11 @@ void MaderRos::stateCB(const snapstack_msgs::State& msg)
   state_tmp.setVel(msg.vel.x, msg.vel.y, msg.vel.z);
   state_tmp.setAccel(0.0, 0.0, 0.0);
   // std::cout << bold << red << "MSG_QUAT= " << msg.quat << reset << std::endl;
+  // TODO:  I should use here (for yaw) the convention MADER is using (Hopf fibration paper)
   double roll, pitch, yaw;
   quaternion2Euler(msg.quat, roll, pitch, yaw);
   state_tmp.setYaw(yaw);
+  // END OF TODO
   state_ = state_tmp;
   // std::cout << bold << red << "STATE_YAW= " << state_.yaw << reset << std::endl;
   mader_ptr_->updateState(state_tmp);
