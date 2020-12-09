@@ -7,10 +7,107 @@
  * -------------------------------------------------------------------------- */
 
 #include "bspline_utils.hpp"
+#include <cassert>
+
+///////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////
+
+// Given the control points, this function returns the associated traj and PieceWisePol
+void CPs2TrajAndPwp_cleaner(std::vector<Eigen::Vector3d> &qp, std::vector<double> &qy, std::vector<state> &traj,
+                            PieceWisePol &pwp_p, int param_pp, int param_py, Eigen::RowVectorXd &knots_p, double dc)
+{
+  assert((param_pp == 3) && "param_pp == 3 not satisfied");
+  assert((param_py == 2) && "param_py == 2 not satisfied");  // We are assumming this in the code below
+  assert(((knots_p.size() - 1) == (qp.size() - 1) + param_pp + 1) && "M=N+p+1 not satisfied");
+
+  int num_pol = (knots_p.size() - 1) - 2 * param_pp;  // M-2*p
+
+  // Stack the control points in matrices
+  Eigen::Matrix<double, 3, -1> qp_matrix(3, qp.size());
+  for (int i = 0; i < qp.size(); i++)
+  {
+    qp_matrix.col(i) = qp[i];
+  }
+
+  Eigen::VectorXd qy_matrix(1, qy.size());
+  for (int i = 0; i < qy.size(); i++)
+  {
+    qy_matrix(i) = qy[i];
+  }
+
+  /////////////////////////////////////////////////////////////////////
+  /// CONSTRUCT THE PIECE-WISE POLYNOMIAL FOR POSITION
+  /////////////////////////////////////////////////////////////////////
+  Eigen::Matrix<double, 4, 4> M;
+  M << 1, 4, 1, 0,   //////
+      -3, 0, 3, 0,   //////
+      3, -6, 3, 0,   //////
+      -1, 3, -3, 1;  //////
+  M = M / 6.0;       // *1/3!
+
+  pwp_p.clear();
+
+  for (int i = param_pp; i < (param_pp + num_pol + 1); i++)  // i < knots.size() - p
+  {
+    pwp_p.times.push_back(knots_p(i));
+  }
+
+  for (int j = 0; j < num_pol; j++)
+  {
+    Eigen::Matrix<double, 4, 1> cps_x = (qp_matrix.block(0, j, 1, 4).transpose());
+    Eigen::Matrix<double, 4, 1> cps_y = (qp_matrix.block(1, j, 1, 4).transpose());
+    Eigen::Matrix<double, 4, 1> cps_z = (qp_matrix.block(2, j, 1, 4).transpose());
+
+    pwp_p.coeff_x.push_back((M * cps_x).reverse());  // at^3 + bt^2 + ct + d --> [a b c d]'
+    pwp_p.coeff_y.push_back((M * cps_y).reverse());  // at^3 + bt^2 + ct + d --> [a b c d]'
+    pwp_p.coeff_z.push_back((M * cps_z).reverse());  // at^3 + bt^2 + ct + d --> [a b c d]'
+  }
+
+  /////////////////////////////////////////////////////////////////////
+  /// FILL ALL THE FIELDS OF TRAJ (BOTH POSITION AND YAW)
+  /////////////////////////////////////////////////////////////////////
+  Eigen::RowVectorXd knots_y = knots_p.block(0, 1, 1, knots_p.size() - 2);  // remove first and last position knot
+
+  // Construct now the B-Spline, see https://github.com/libigl/eigen/blob/master/unsupported/test/splines.cpp#L37
+  Eigen::Spline<double, 3, Eigen::Dynamic> spline_p(knots_p, qp_matrix);
+  Eigen::Spline<double, 1, Eigen::Dynamic> spline_y(knots_y, qy_matrix);
+
+  // Note that t_min and t_max are the same for both yaw and position
+  double t_min = knots_p.minCoeff();
+  double t_max = knots_p.maxCoeff();
+
+  // Clear and fill the trajectory
+  traj.clear();
+
+  for (double t = t_min; t <= t_max; t = t + dc)
+  {
+    // std::cout << "t= " << t << std::endl;
+    Eigen::MatrixXd derivatives_p = spline_p.derivatives(t, 4);  // compute the derivatives up to that order
+    Eigen::MatrixXd derivatives_y = spline_y.derivatives(t, 2);
+
+    state state_i;
+
+    state_i.setPos(derivatives_p.col(0));  // First column
+    state_i.setVel(derivatives_p.col(1));
+    state_i.setAccel(derivatives_p.col(2));
+    state_i.setJerk(derivatives_p.col(3));
+
+    state_i.setYaw(derivatives_y(0));
+    state_i.setDYaw(derivatives_y(1));
+    state_i.setDDYaw(derivatives_y(2));
+
+    traj.push_back(state_i);
+  }
+}
+
+///////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////
 
 // Given the control points, this function returns the associated traj and PieceWisePol
 // Note that if q.size()!=(N+1), then only some of the knots are used
-void CPs2TrajAndPwp(std::vector<Eigen::Vector3d> &q, std::vector<state> &traj, PieceWisePol &solution, int N, int p,
+void CPs2TrajAndPwp(std::vector<Eigen::Vector3d> &q, std::vector<state> &traj, PieceWisePol &pwp, int N, int p,
                     int num_pol, Eigen::RowVectorXd &knots, double dc)
 {
   // std::cout << "q.size()= " << q.size() << std::endl;
@@ -58,11 +155,11 @@ void CPs2TrajAndPwp(std::vector<Eigen::Vector3d> &q, std::vector<state> &traj, P
   // std::cout << "Control Points used are\n" << control_points << std::endl;
   // std::cout << "====================" << std::endl;
 
-  solution.clear();
+  pwp.clear();
 
   for (int i = p; i < (p + num_effective_pol + 1); i++)  // i < knots.size() - p
   {
-    solution.times.push_back(knots(i));
+    pwp.times.push_back(knots(i));
   }
 
   for (int j = 0; j < num_effective_pol; j++)
@@ -71,16 +168,16 @@ void CPs2TrajAndPwp(std::vector<Eigen::Vector3d> &q, std::vector<state> &traj, P
     Eigen::Matrix<double, 4, 1> cps_y = (control_points.block(1, j, 1, 4).transpose());
     Eigen::Matrix<double, 4, 1> cps_z = (control_points.block(2, j, 1, 4).transpose());
 
-    solution.coeff_x.push_back((M * cps_x).reverse());  // at^3 + bt^2 + ct + d --> [a b c d]'
-    solution.coeff_y.push_back((M * cps_y).reverse());  // at^3 + bt^2 + ct + d --> [a b c d]'
-    solution.coeff_z.push_back((M * cps_z).reverse());  // at^3 + bt^2 + ct + d --> [a b c d]'
+    pwp.coeff_x.push_back((M * cps_x).reverse());  // at^3 + bt^2 + ct + d --> [a b c d]'
+    pwp.coeff_y.push_back((M * cps_y).reverse());  // at^3 + bt^2 + ct + d --> [a b c d]'
+    pwp.coeff_z.push_back((M * cps_z).reverse());  // at^3 + bt^2 + ct + d --> [a b c d]'
   }
 
-  // std::cout << "polynomials in solution=" << solution.coeff_x.size() << std::endl;
+  // std::cout << "polynomials in pwp=" << pwp.coeff_x.size() << std::endl;
   // std::cout << "num_effective_pol=" << num_effective_pol << std::endl;
-  // std::cout << "times =" << solution.times.size() << std::endl;
+  // std::cout << "times =" << pwp.times.size() << std::endl;
 
-  // solution.print();
+  // pwp.print();
 
   /*
 

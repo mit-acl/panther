@@ -558,6 +558,7 @@ struct state
 
   double yaw = 0;
   double dyaw = 0;
+  double ddyaw = 0;
 
   void setPos(const double x, const double y, const double z)
   {
@@ -607,6 +608,14 @@ struct state
   void setYaw(const double& data)
   {
     yaw = data;
+  }
+  void setDYaw(const double& data)
+  {
+    dyaw = data;
+  }
+  void setDDYaw(const double& data)
+  {
+    ddyaw = data;
   }
   void setZero()
   {

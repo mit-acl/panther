@@ -328,7 +328,6 @@ bool SolverIpopt::optimize()
   std::cout << "a_max_= " << a_max_.transpose() << std::endl;
 
   // Conversion DM <--> Eigen:  https://github.com/casadi/casadi/issues/2563
-
   auto eigen2std = [](Eigen::Vector3d &v) { return std::vector<double>{ v.x(), v.y(), v.z() }; };
 
   std::map<std::string, casadi::DM> map_arguments;
@@ -372,7 +371,6 @@ bool SolverIpopt::optimize()
     matrix_qp_guess(1, i) = qp_guess_[i].y();
     matrix_qp_guess(2, i) = qp_guess_[i].z();
   }
-
   map_arguments["guess_CPs_Pos"] = matrix_qp_guess;
 
   ///////////////// GUESS FOR YAW CONTROL POINTS
@@ -381,7 +379,6 @@ bool SolverIpopt::optimize()
   {
     matrix_qy_guess(0, i) = rand();  // qy_guess_[i];
   }
-
   map_arguments["guess_CPs_Yaw"] = matrix_qy_guess;
 
   ///////////////// CALL THE SOLVER
@@ -390,7 +387,6 @@ bool SolverIpopt::optimize()
   ///////////////// GET STATUS FROM THE SOLVER
   // Very hacky solution, see discussion at https://groups.google.com/g/casadi-users/c/1061E0eVAXM/m/dFHpw1CQBgAJ
   // Inspired from https://gist.github.com/jgillis/9d12df1994b6fea08eddd0a3f0b0737f
-  std::cout << "index_instruction_= " << index_instruction_ << std::endl;
   auto optimstatus =
       m_casadi_ptr_->casadi_function_.instruction_MX(index_instruction_).which_function().stats(1)["return_status"];
 
@@ -425,7 +421,10 @@ bool SolverIpopt::optimize()
   printStd(qy);
 
   ///////////////// Fill  traj_solution_ and pwp_solution_
-  CPs2TrajAndPwp(qp, traj_solution_, pwp_solution_, N_, p_, num_pol_, knots_, dc_);
+  int param_pp = 3;
+  int param_py = 2;
+  CPs2TrajAndPwp_cleaner(qp, qy, traj_solution_, pwp_solution_, param_pp, param_py, knots_, dc_);
+
   std::cout << "Called CPs2TrajAndPwp!" << std::endl;
 
   // Force last position =final_state_ (which it's not guaranteed because of the discretization with dc_)
