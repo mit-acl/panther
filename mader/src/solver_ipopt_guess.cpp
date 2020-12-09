@@ -115,7 +115,8 @@ bool SolverIpopt::generateAStarGuess()
 void SolverIpopt::generateRandomD(std::vector<double>& d)
 {
   d.clear();
-  for (int k = k_min_; k <= k_max_; k++)
+
+  for (int j = 0; j < num_of_obst_ * num_of_segments_; j++)
   {
     double r1 = ((double)rand() / (RAND_MAX));
     d.push_back(r1);
@@ -125,7 +126,7 @@ void SolverIpopt::generateRandomD(std::vector<double>& d)
 void SolverIpopt::generateRandomN(std::vector<Eigen::Vector3d>& n)
 {
   n.clear();
-  for (int j = j_min_; j < j_max_; j = j + 3)
+  for (int j = 0; j < num_of_obst_ * num_of_segments_; j++)
   {
     double r1 = ((double)rand() / (RAND_MAX));
     double r2 = ((double)rand() / (RAND_MAX));

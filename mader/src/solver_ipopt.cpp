@@ -81,10 +81,8 @@ SolverIpopt::SolverIpopt(par_solver &par)
 
   dc_ = par.dc;
   v_max_ = par.v_max;
-  mv_max_ = -v_max_;
 
   a_max_ = par.a_max;
-  ma_max_ = -a_max_;
 
   weight_ = par.weight;
 

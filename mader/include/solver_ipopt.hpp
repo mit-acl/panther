@@ -97,8 +97,6 @@ private:
   std::vector<Eigen::Vector3d> n_;  // Each n_[i] has 3 elements (nx,ny,nz)
   std::vector<double> d_;           // d_[i] has 1 element
 
-  // casadi::Function casadi_function_;
-
   PieceWisePol solution_;
 
   int basis_ = B_SPLINE;
@@ -106,12 +104,12 @@ private:
   int deg_pol_ = 3;
   int num_pol_ = 5;
   int p_ = 5;
-  int i_min_;
-  int i_max_;
-  int j_min_;
-  int j_max_;
-  int k_min_;
-  int k_max_;
+  // int i_min_;
+  // int i_max_;
+  // int j_min_;
+  // int j_max_;
+  // int k_min_;
+  // int k_max_;
   int M_;
   int N_;
 
@@ -130,12 +128,11 @@ private:
   double t_final_;
   double deltaT_;
   Eigen::Vector3d v_max_;
-  Eigen::Vector3d mv_max_;
+
   Eigen::Vector3d a_max_;
-  Eigen::Vector3d ma_max_;
 
   double weight_ = 10000;
-  double weight_modified_ = 10000;
+  // double weight_modified_ = 10000;
 
   state initial_state_;
   state final_state_;
