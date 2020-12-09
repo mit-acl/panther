@@ -14,7 +14,7 @@
 ///////////////////////////////////////////////////////////////////
 
 // Given the control points, this function returns the associated traj and mt::PieceWisePol
-void CPs2TrajAndPwp_cleaner(std::vector<Eigen::Vector3d> &qp, std::vector<double> &qy, std::vector<state> &traj,
+void CPs2TrajAndPwp_cleaner(std::vector<Eigen::Vector3d> &qp, std::vector<double> &qy, std::vector<mt::state> &traj,
                             mt::PieceWisePol &pwp_p, int param_pp, int param_py, Eigen::RowVectorXd &knots_p, double dc)
 {
   assert((param_pp == 3) && "param_pp == 3 not satisfied");
@@ -88,7 +88,7 @@ void CPs2TrajAndPwp_cleaner(std::vector<Eigen::Vector3d> &qp, std::vector<double
     Eigen::MatrixXd derivatives_p = spline_p.derivatives(t, 4);  // compute the derivatives up to that order
     Eigen::MatrixXd derivatives_y = spline_y.derivatives(t, 3);
 
-    state state_i;
+    mt::state state_i;
 
     state_i.setPos(derivatives_p.col(0));  // First column
     state_i.setVel(derivatives_p.col(1));
@@ -111,7 +111,7 @@ void CPs2TrajAndPwp_cleaner(std::vector<Eigen::Vector3d> &qp, std::vector<double
 
 // Given the control points, this function returns the associated traj and mt::PieceWisePol
 // Note that if q.size()!=(N+1), then only some of the knots are used
-void CPs2TrajAndPwp(std::vector<Eigen::Vector3d> &q, std::vector<state> &traj, mt::PieceWisePol &pwp, int N, int p,
+void CPs2TrajAndPwp(std::vector<Eigen::Vector3d> &q, std::vector<mt::state> &traj, mt::PieceWisePol &pwp, int N, int p,
                     int num_pol, Eigen::RowVectorXd &knots, double dc)
 {
   // std::cout << "q.size()= " << q.size() << std::endl;
@@ -217,7 +217,7 @@ void CPs2TrajAndPwp(std::vector<Eigen::Vector3d> &q, std::vector<state> &traj, m
     // std::cout << "t= " << t << std::endl;
     Eigen::MatrixXd derivatives = spline.derivatives(t, 4);  // Compute all the derivatives up to order 4
 
-    state state_i;
+    mt::state state_i;
 
     state_i.setPos(derivatives.col(0));  // First column
     state_i.setVel(derivatives.col(1));

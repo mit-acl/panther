@@ -348,7 +348,7 @@ CGAL_Polyhedron_3 Mader::convexHullOfInterval(mt::dynTrajCompiled& traj, double 
 }
 
 // trajs_ is already locked when calling this function
-void Mader::removeTrajsThatWillNotAffectMe(const state& A, double t_start, double t_end)
+void Mader::removeTrajsThatWillNotAffectMe(const mt::state& A, double t_start, double t_end)
 {
   std::vector<int> ids_to_remove;
 
@@ -454,7 +454,7 @@ ConvexHullsOfCurves Mader::convexHullsOfCurves(double t_start, double t_end)
   return result;
 }
 
-void Mader::setTerminalGoal(state& term_goal)
+void Mader::setTerminalGoal(mt::state& term_goal)
 {
   mtx_G_term.lock();
   mtx_G.lock();
@@ -472,7 +472,7 @@ void Mader::setTerminalGoal(state& term_goal)
     mtx_plan_.lock();  // must be before changeDroneStatus
 
     changeDroneStatus(DroneStatus::YAWING);
-    state last_state = plan_.back();
+    mt::state last_state = plan_.back();
 
     double desired_yaw = atan2(G_term_.pos[1] - last_state.pos[1], G_term_.pos[0] - last_state.pos[0]);
     double diff = desired_yaw - last_state.yaw;
@@ -492,7 +492,7 @@ void Mader::setTerminalGoal(state& term_goal)
     for (int i = 1; i < (num_of_el + 1); i++)
     {
       std::cout << "Introducing Element " << i << " out of " << num_of_el << std::endl;
-      state state_i = plan_.get(i - 1);
+      mt::state state_i = plan_.get(i - 1);
       state_i.yaw = state_i.yaw + dyaw * par_.dc;
       if (i == num_of_el)
       {
@@ -525,25 +525,25 @@ void Mader::setTerminalGoal(state& term_goal)
   mtx_planner_status_.unlock();
 }
 
-void Mader::getG(state& G)
+void Mader::getG(mt::state& G)
 {
   G = G_;
 }
 
-void Mader::getState(state& data)
+void Mader::getState(mt::state& data)
 {
   mtx_state.lock();
   data = state_;
   mtx_state.unlock();
 }
 
-void Mader::updateState(state data)
+void Mader::updateState(mt::state data)
 {
   state_ = data;
 
   if (state_initialized_ == false)
   {
-    state tmp;
+    mt::state tmp;
     tmp.pos = data.pos;
     tmp.yaw = data.yaw;
     plan_.push_back(tmp);
@@ -652,8 +652,9 @@ bool Mader::safetyCheckAfterOpt(mt::PieceWisePol pwp_optimized)
   return result;
 }
 
-bool Mader::replan(mt::Edges& edges_obstacles_out, std::vector<state>& X_safe_out, std::vector<Hyperplane3D>& planes,
-                   int& num_of_LPs_run, int& num_of_QCQPs_run, mt::PieceWisePol& pwp_out)
+bool Mader::replan(mt::Edges& edges_obstacles_out, std::vector<mt::state>& X_safe_out,
+                   std::vector<Hyperplane3D>& planes, int& num_of_LPs_run, int& num_of_QCQPs_run,
+                   mt::PieceWisePol& pwp_out)
 {
   MyTimer replanCB_t(true);
 
@@ -673,11 +674,11 @@ bool Mader::replan(mt::Edges& edges_obstacles_out, std::vector<state>& X_safe_ou
   mtx_G.lock();
   mtx_G_term.lock();
 
-  state state_local = state_;
+  mt::state state_local = state_;
 
-  state G_term = G_term_;  // Local copy of the terminal terminal goal
+  mt::state G_term = G_term_;  // Local copy of the terminal terminal goal
 
-  state G = G_term;
+  mt::state G = G_term;
 
   mtx_G.unlock();
   mtx_G_term.unlock();
@@ -714,10 +715,10 @@ bool Mader::replan(mt::Edges& edges_obstacles_out, std::vector<state>& X_safe_ou
   std::cout << bold << on_white << "**********************IN REPLAN CB*******************" << reset << std::endl;
 
   //////////////////////////////////////////////////////////////////////////
-  ///////////////////////// Select state A /////////////////////////////////
+  ///////////////////////// Select mt::state A /////////////////////////////////
   //////////////////////////////////////////////////////////////////////////
 
-  state A;
+  mt::state A;
   int k_index_end, k_index;
 
   // If k_index_end=0, then A = plan_.back() = plan_[plan_.size() - 1]
@@ -770,7 +771,7 @@ bool Mader::replan(mt::Edges& edges_obstacles_out, std::vector<state>& X_safe_ou
   double ra = std::min((distA2TermGoal - 0.001), par_.Ra);  // radius of the sphere S
   bool noPointsOutsideS;
   int li1;  // last index inside the sphere of global_plan
-  state E;
+  mt::state E;
   // std::cout << bold << std::setprecision(3) << "A.pos= " << A.pos.transpose() << reset << std::endl;
   // std::cout << "A= " << A.pos.transpose() << std::endl;
   // std::cout << "G= " << G.pos.transpose() << std::endl;
@@ -781,8 +782,8 @@ bool Mader::replan(mt::Edges& edges_obstacles_out, std::vector<state>& X_safe_ou
     E.pos = G.pos;
   }
 
-  state initial = A;
-  state final = E;
+  mt::state initial = A;
+  mt::state final = E;
 
   //////////////////////////////////////////////////////////////////////////
   ///////////////////////// Solve optimization! ////////////////////////////
@@ -933,7 +934,7 @@ bool Mader::replan(mt::Edges& edges_obstacles_out, std::vector<state>& X_safe_ou
   //////////////////////////////////////////////////////////
 
   // Check if we have planned until G_term
-  state F = plan_.back();  // Final point of the safe path (\equiv final point of the comitted path)
+  mt::state F = plan_.back();  // Final point of the safe path (\equiv final point of the comitted path)
   double dist = (G_term_.pos - F.pos).norm();
 
   if (dist < par_.goal_radius)
@@ -962,7 +963,7 @@ void Mader::resetInitialization()
   terminal_goal_initialized_ = false;
 }
 
-bool Mader::getNextGoal(state& next_goal)
+bool Mader::getNextGoal(mt::state& next_goal)
 {
   if (initializedStateAndTermGoal() == false || (drone_status_ == DroneStatus::GOAL_REACHED && plan_.size() == 1))
   {

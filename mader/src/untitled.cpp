@@ -653,7 +653,7 @@ void SolverGurobi::initializeNumOfConstraints()
 }
 
 // Note that t_final will be updated in case the saturation in deltaT_ has had effect
-bool SolverGurobi::setInitStateFinalStateInitTFinalT(state initial_state, state final_state, double t_init,
+bool SolverGurobi::setInitStateFinalStateInitTFinalT(mt::state initial_state, mt::state final_state, double t_init,
                                                      double &t_final)
 {
   ///////////////////////////

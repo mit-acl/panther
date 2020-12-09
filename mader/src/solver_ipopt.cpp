@@ -116,7 +116,7 @@ void SolverIpopt::setHulls(ConvexHullsOfCurves_Std &hulls)
 //////////////////////////////////////////////////////////
 
 // Note that t_final will be updated in case the saturation in deltaT_ has had effect
-bool SolverIpopt::setInitStateFinalStateInitTFinalT(state initial_state, state final_state, double t_init,
+bool SolverIpopt::setInitStateFinalStateInitTFinalT(mt::state initial_state, mt::state final_state, double t_init,
                                                     double &t_final)
 {
   ///////////////////////////

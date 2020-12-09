@@ -50,7 +50,10 @@
 #define RESCUE_PATH 1
 
 #define OCCUPIED_SPACE 1
+
 #define UNKOWN_AND_OCCUPIED_SPACE 2
+
+// TODO: put this in a namespace
 
 template <typename T>
 bool safeGetParam(ros::NodeHandle& nh, std::string const& param_name, T& param_value)
@@ -69,7 +72,7 @@ visualization_msgs::MarkerArray pwp2ColoredMarkerArray(mt::PieceWisePol& pwp, do
 void rescaleCoeffPol(const Eigen::Matrix<double, 4, 1>& coeff_old, Eigen::Matrix<double, 4, 1>& coeff_new, double t0,
                      double tf);
 
-mt::PieceWisePol createPwpFromStaticPosition(const state& current_state);
+mt::PieceWisePol createPwpFromStaticPosition(const mt::state& current_state);
 
 mt::PieceWisePol pwpMsg2Pwp(const mader_msgs::PieceWisePolTraj& pwp_msg);
 mader_msgs::PieceWisePolTraj pwp2PwpMsg(const mt::PieceWisePol& pwp);
@@ -82,11 +85,11 @@ mt::PieceWisePol composePieceWisePol(const double t, const double dc, mt::PieceW
 
 bool boxIntersectsSphere(Eigen::Vector3d center, double r, Eigen::Vector3d c1, Eigen::Vector3d c2);
 
-void printStateDeque(std::deque<state>& data);
+void printStateDeque(std::deque<mt::state>& data);
 
 std::vector<std::string> pieceWisePol2String(const mt::PieceWisePol& piecewisepol);
 
-void printStateVector(std::vector<state>& data);
+void printStateVector(std::vector<mt::state>& data);
 
 std_msgs::ColorRGBA getColorJet(double v, double vmin, double vmax);
 

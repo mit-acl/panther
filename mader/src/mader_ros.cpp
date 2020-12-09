@@ -321,7 +321,7 @@ void MaderRos::replanCB(const ros::TimerEvent& e)
   if (ros::ok() && published_initial_position_ == true)
   {
     mt::Edges edges_obstacles;
-    std::vector<state> X_safe;
+    std::vector<mt::state> X_safe;
 
     std::vector<Hyperplane3D> planes;
     mt::PieceWisePol pwp;
@@ -428,7 +428,7 @@ void MaderRos::publishPoly(const vec_E<Polyhedron<3>>& poly)
 
 void MaderRos::stateCB(const snapstack_msgs::State& msg)
 {
-  state state_tmp;
+  mt::state state_tmp;
   state_tmp.setPos(msg.pos.x, msg.pos.y, msg.pos.z);
   state_tmp.setVel(msg.vel.x, msg.vel.y, msg.vel.z);
   state_tmp.setAccel(0.0, 0.0, 0.0);
@@ -482,7 +482,7 @@ void MaderRos::modeCB(const mader_msgs::Mode& msg)
 
 void MaderRos::pubCB(const ros::TimerEvent& e)
 {
-  state next_goal;
+  mt::state next_goal;
   if (mader_ptr_->getNextGoal(next_goal))
   {
     snapstack_msgs::Goal quadGoal;
@@ -533,7 +533,7 @@ void MaderRos::clearMarkerArray(visualization_msgs::MarkerArray* tmp, ros::Publi
   (*tmp).markers.clear();
 }
 
-void MaderRos::pubTraj(const std::vector<state>& data)
+void MaderRos::pubTraj(const std::vector<mt::state>& data)
 {
   // Trajectory
   nav_msgs::Path traj;
@@ -571,7 +571,7 @@ void MaderRos::pubActualTraj()
 {
   static geometry_msgs::Point p_last = pointOrigin();
 
-  state current_state;
+  mt::state current_state;
   mader_ptr_->getState(current_state);
   Eigen::Vector3d act_pos = current_state.pos;
 
@@ -644,7 +644,7 @@ void MaderRos::clearMarkerColoredTraj()
   pub_actual_traj_.publish(m);
 }
 
-void MaderRos::pubState(const state& data, const ros::Publisher pub)
+void MaderRos::pubState(const mt::state& data, const ros::Publisher pub)
 {
   geometry_msgs::PointStamped p;
   p.header.frame_id = world_name_;
@@ -654,7 +654,7 @@ void MaderRos::pubState(const state& data, const ros::Publisher pub)
 
 void MaderRos::terminalGoalCB(const geometry_msgs::PoseStamped& msg)
 {
-  state G_term;
+  mt::state G_term;
   double z;
   if (fabs(msg.pose.position.z) < 1e-5)  // This happens when you click in RVIZ (msg.z is 0.0)
   {
@@ -667,7 +667,7 @@ void MaderRos::terminalGoalCB(const geometry_msgs::PoseStamped& msg)
   G_term.setPos(msg.pose.position.x, msg.pose.position.y, z);
   mader_ptr_->setTerminalGoal(G_term);
 
-  state G;  // projected goal
+  mt::state G;  // projected goal
   mader_ptr_->getG(G);
 
   pubState(G_term, pub_point_G_term_);

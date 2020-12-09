@@ -82,10 +82,10 @@ int main()
 
   SolverGurobi my_solver(parameters);  // my_solver(a,g) a polynomials of degree 3
   my_solver.setMaxRuntimeKappaAndMu(0.2, 0.5, 0.5);
-  state initial_state;
+  mt::state initial_state;
   initial_state.pos = Eigen::Vector3d(-4.0, 0.0, 0.0);
 
-  state final_state;
+  mt::state final_state;
   final_state.pos = Eigen::Vector3d(4.0, 0.0, 0.0);
 
   double t_min = 0.0;

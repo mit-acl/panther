@@ -1261,7 +1261,7 @@ exitloop:
   }
   else
   {
-    std::cout << red << "This state should never occur" << reset << std::endl;
+    std::cout << red << "This mt::state should never occur" << reset << std::endl;
     abort();
     return false;
   }

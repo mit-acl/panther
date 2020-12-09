@@ -46,9 +46,9 @@ private:
   void publishPlanes(std::vector<Hyperplane3D>& planes);
 
   // class methods
-  void pubTraj(const std::vector<state>& data);
+  void pubTraj(const std::vector<mt::state>& data);
   void terminalGoalCB(const geometry_msgs::PoseStamped& msg);
-  void pubState(const state& msg, const ros::Publisher pub);
+  void pubState(const mt::state& msg, const ros::Publisher pub);
   void stateCB(const snapstack_msgs::State& msg);
   void modeCB(const mader_msgs::Mode& msg);
   void pubCB(const ros::TimerEvent& e);
@@ -74,7 +74,7 @@ private:
 
   void pubObstacles(mt::Edges edges_obstacles);
 
-  state state_;
+  mt::state state_;
 
   std::string world_name_ = "world";
 

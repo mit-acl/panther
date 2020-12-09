@@ -229,7 +229,7 @@ visualization_msgs::Marker edges2Marker(const mt::Edges& edges, std_msgs::ColorR
   return marker;
 }
 
-mt::PieceWisePol createPwpFromStaticPosition(const state& current_state)
+mt::PieceWisePol createPwpFromStaticPosition(const mt::state& current_state)
 {
   mt::PieceWisePol pwp;
   pwp.times = { ros::Time::now().toSec(), ros::Time::now().toSec() + 1e10 };
@@ -399,7 +399,7 @@ std::vector<std::string> pieceWisePol2String(const mt::PieceWisePol& piecewisepo
   return s;
 }
 
-void printStateDeque(std::deque<state>& data)
+void printStateDeque(std::deque<mt::state>& data)
 {
   for (int i = 0; i < data.size(); i++)
   {
@@ -407,7 +407,7 @@ void printStateDeque(std::deque<state>& data)
   }
 }
 
-void printStateVector(std::vector<state>& data)
+void printStateVector(std::vector<mt::state>& data)
 {
   for (int i = 0; i < data.size(); i++)
   {
