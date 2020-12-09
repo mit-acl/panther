@@ -338,14 +338,18 @@ bool SolverIpopt::optimize()
   map_arguments["pf"] = eigen2std(final_state_.pos);
   map_arguments["vf"] = eigen2std(final_state_.vel);
   map_arguments["af"] = eigen2std(final_state_.accel);
-  map_arguments["y0"] = 0.0;
-  map_arguments["ydot0"] = 0.0;
+  map_arguments["y0"] = initial_state_.yaw;
+  map_arguments["ydot0"] = initial_state_.dyaw;
+  map_arguments["ydotf"] =
+      final_state_.dyaw;  // Needed: if not (and if you are minimizing ddyaw), ddyaw=cte --> yaw will explode
+  std::cout << bold << blue << "y0= " << initial_state_.yaw << reset << std::endl;
+  std::cout << bold << blue << "ydot0= " << initial_state_.dyaw << reset << std::endl;
   map_arguments["v_max"] = eigen2std(v_max_);
   map_arguments["a_max"] = eigen2std(a_max_);
   map_arguments["total_time"] = (t_final_ - t_init_);
   map_arguments["all_w_fe"] = casadi::DM::ones(3, 15);
   map_arguments["c_jerk"] = 1.0;
-  map_arguments["c_yaw"] = 0.0;
+  map_arguments["c_yaw"] = 0.000001;
   map_arguments["c_vel_isInFOV"] = 0.0;
   map_arguments["c_final_pos"] = 0.2;
 
@@ -374,10 +378,16 @@ bool SolverIpopt::optimize()
   map_arguments["guess_CPs_Pos"] = matrix_qp_guess;
 
   ///////////////// GUESS FOR YAW CONTROL POINTS
+  qy_guess_.clear();  // THIS SHOULD GO IN THE OCTOPUS SEARCH?
+  for (int i = 0; i < 6; i++)
+  {
+    qy_guess_.push_back(rand());
+  }  // THIS SHOULD GO IN THE OCTOPUS SEARCH?
+
   casadi::DM matrix_qy_guess(casadi::Sparsity::dense(1, 6));  // TODO: do this just once
   for (int i = 0; i < matrix_qy_guess.columns(); i++)
   {
-    matrix_qy_guess(0, i) = rand();  // qy_guess_[i];
+    matrix_qy_guess(0, i) = qy_guess_[i];
   }
   map_arguments["guess_CPs_Yaw"] = matrix_qy_guess;
 
@@ -393,7 +403,10 @@ bool SolverIpopt::optimize()
   ///////////////// DECIDE ACCORDING TO STATUS OF THE SOLVER
   std::vector<Eigen::Vector3d> qp;  // Solution found (Control points for position)
   std::vector<double> qy;           // Solution found (Control points for yaw)
-  if (optimstatus == "Solve_Succeeded" || optimstatus == "Acceptable_Level")
+  std::cout << "optimstatus= " << optimstatus << std::endl;
+  // See names here:
+  // https://github.com/casadi/casadi/blob/fadc86444f3c7ab824dc3f2d91d4c0cfe7f9dad5/casadi/interfaces/ipopt/ipopt_interface.cpp
+  if (optimstatus == "Solve_Succeeded" || optimstatus == "Solved_To_Acceptable_Level")
   {
     std::cout << green << "IPOPT found a solution!" << reset << std::endl;
 
@@ -411,6 +424,7 @@ bool SolverIpopt::optimize()
     std::cout << red << "IPOPT failed to find a solution, using initial guess (which is feasible)" << reset
               << std::endl;
     qp = qp_guess_;
+    qy = qy_guess_;
   }
 
   ///////////////// PRINT SOLUTION
@@ -423,6 +437,7 @@ bool SolverIpopt::optimize()
   ///////////////// Fill  traj_solution_ and pwp_solution_
   int param_pp = 3;
   int param_py = 2;
+  std::cout << "qy.size()= " << qy.size() << std::endl;
   CPs2TrajAndPwp_cleaner(qp, qy, traj_solution_, pwp_solution_, param_pp, param_py, knots_, dc_);
 
   std::cout << "Called CPs2TrajAndPwp!" << std::endl;

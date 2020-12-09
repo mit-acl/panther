@@ -465,7 +465,49 @@ void Mader::setTerminalGoal(state& term_goal)
   G_.pos = G_term_.pos;
   if (drone_status_ == DroneStatus::GOAL_REACHED)
   {
+    /////////////////////////////////
+    /////////////////////////////////
+    /////////////////////////////////
+    mtx_plan_.lock();  // must be before changeDroneStatus
+
     changeDroneStatus(DroneStatus::YAWING);
+    state last_state = plan_.back();
+
+    double desired_yaw = atan2(G_term_.pos[1] - last_state.pos[1], G_term_.pos[0] - last_state.pos[0]);
+    double diff = desired_yaw - last_state.yaw;
+    angle_wrap(diff);
+
+    double dyaw = copysign(1, diff) * par_.w_max;
+
+    int num_of_el = (int)fabs(diff / (par_.dc * dyaw));
+
+    assert((plan_.size() >= 1) && "plan_.size() must be >=1");
+
+    std::cout << "num_of_el= " << num_of_el << std::endl;
+    std::cout << "diff= " << diff << std::endl;
+    std::cout << "par_.w_max= " << par_.w_max << std::endl;
+    std::cout << "par_.dc= " << par_.dc << std::endl;
+
+    for (int i = 1; i < (num_of_el + 1); i++)
+    {
+      std::cout << "Introducing Element " << i << " out of " << num_of_el << std::endl;
+      state state_i = plan_.get(i - 1);
+      state_i.yaw = state_i.yaw + dyaw * par_.dc;
+      if (i == num_of_el)
+      {
+        state_i.dyaw = 0;  // 0 final yaw velocity
+      }
+      else
+      {
+        state_i.dyaw = dyaw;
+      }
+      plan_.push_back(state_i);
+    }
+    mtx_plan_.unlock();
+    // abort();
+    /////////////////////////////////
+    /////////////////////////////////
+    /////////////////////////////////
   }
   if (drone_status_ == DroneStatus::GOAL_SEEN)
   {
@@ -504,7 +546,6 @@ void Mader::updateState(state data)
     tmp.pos = data.pos;
     tmp.yaw = data.yaw;
     plan_.push_back(tmp);
-    previous_yaw_ = tmp.yaw;
   }
 
   state_initialized_ = true;
@@ -919,48 +960,6 @@ void Mader::resetInitialization()
   terminal_goal_initialized_ = false;
 }
 
-void Mader::yaw(double diff, state& next_goal)
-{
-  saturate(diff, -par_.dc * par_.w_max, par_.dc * par_.w_max);
-  double dyaw_not_filtered;
-
-  dyaw_not_filtered = copysign(1, diff) * par_.w_max;
-
-  dyaw_filtered_ = (1 - par_.alpha_filter_dyaw) * dyaw_not_filtered + par_.alpha_filter_dyaw * dyaw_filtered_;
-  next_goal.dyaw = dyaw_filtered_;
-  next_goal.yaw = previous_yaw_ + dyaw_filtered_ * par_.dc;
-}
-
-void Mader::getDesiredYaw(state& next_goal)
-{
-  double diff = 0.0;
-  double desired_yaw = 0.0;
-
-  switch (drone_status_)
-  {
-    case DroneStatus::YAWING:
-      desired_yaw = atan2(G_term_.pos[1] - next_goal.pos[1], G_term_.pos[0] - next_goal.pos[0]);
-      diff = desired_yaw - state_.yaw;
-      break;
-    case DroneStatus::TRAVELING:
-    case DroneStatus::GOAL_SEEN:
-      desired_yaw = atan2(M_.pos[1] - next_goal.pos[1], M_.pos[0] - next_goal.pos[0]);
-      diff = desired_yaw - state_.yaw;
-      break;
-    case DroneStatus::GOAL_REACHED:
-      next_goal.dyaw = 0.0;
-      next_goal.yaw = previous_yaw_;
-      return;
-  }
-
-  angle_wrap(diff);
-  if (fabs(diff) < 0.04 && drone_status_ == DroneStatus::YAWING)
-  {
-    changeDroneStatus(DroneStatus::TRAVELING);
-  }
-  yaw(diff, next_goal);
-}
-
 bool Mader::getNextGoal(state& next_goal)
 {
   if (initializedStateAndTermGoal() == false || (drone_status_ == DroneStatus::GOAL_REACHED && plan_.size() == 1))
@@ -979,9 +978,11 @@ bool Mader::getNextGoal(state& next_goal)
   {
     plan_.pop_front();
   }
-  getDesiredYaw(next_goal);
 
-  previous_yaw_ = next_goal.yaw;
+  if (plan_.size() == 1 && drone_status_ == DroneStatus::YAWING)
+  {
+    changeDroneStatus(DroneStatus::TRAVELING);
+  }
 
   mtx_goals.unlock();
   mtx_plan_.unlock();

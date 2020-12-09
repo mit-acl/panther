@@ -104,12 +104,6 @@ private:
   int deg_pol_ = 3;
   int num_pol_ = 5;
   int p_ = 5;
-  // int i_min_;
-  // int i_max_;
-  // int j_min_;
-  // int j_max_;
-  // int k_min_;
-  // int k_max_;
   int M_;
   int N_;
 
@@ -147,8 +141,9 @@ private:
 
   // Guesses
   std::vector<Eigen::Vector3d> n_guess_;   // Guesses for the normals
-  std::vector<Eigen::Vector3d> qp_guess_;  // Guesses for the normals
-  std::vector<double> d_guess_;            // Guesses for the normals
+  std::vector<double> d_guess_;            // Guesses for the d of the planes
+  std::vector<Eigen::Vector3d> qp_guess_;  // Guesses for the position control points
+  std::vector<double> qy_guess_;           // Guesses for the yaw control points
 
   double kappa_ = 0.2;  // kappa_*max_runtime_ is spent on the initial guess
   double mu_ = 0.5;     // mu_*max_runtime_ is spent on the optimization

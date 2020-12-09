@@ -30,10 +30,10 @@ void CPs2TrajAndPwp_cleaner(std::vector<Eigen::Vector3d> &qp, std::vector<double
     qp_matrix.col(i) = qp[i];
   }
 
-  Eigen::VectorXd qy_matrix(1, qy.size());
+  Eigen::Matrix<double, 1, -1> qy_matrix(1, qy.size());
   for (int i = 0; i < qy.size(); i++)
   {
-    qy_matrix(i) = qy[i];
+    qy_matrix(0, i) = qy[i];
   }
 
   /////////////////////////////////////////////////////////////////////
@@ -69,6 +69,8 @@ void CPs2TrajAndPwp_cleaner(std::vector<Eigen::Vector3d> &qp, std::vector<double
   /////////////////////////////////////////////////////////////////////
   Eigen::RowVectorXd knots_y = knots_p.block(0, 1, 1, knots_p.size() - 2);  // remove first and last position knot
 
+  std::cout << std::setprecision(15) << "knots_y= " << knots_y << std::endl;
+
   // Construct now the B-Spline, see https://github.com/libigl/eigen/blob/master/unsupported/test/splines.cpp#L37
   Eigen::Spline<double, 3, Eigen::Dynamic> spline_p(knots_p, qp_matrix);
   Eigen::Spline<double, 1, Eigen::Dynamic> spline_y(knots_y, qy_matrix);
@@ -84,7 +86,7 @@ void CPs2TrajAndPwp_cleaner(std::vector<Eigen::Vector3d> &qp, std::vector<double
   {
     // std::cout << "t= " << t << std::endl;
     Eigen::MatrixXd derivatives_p = spline_p.derivatives(t, 4);  // compute the derivatives up to that order
-    Eigen::MatrixXd derivatives_y = spline_y.derivatives(t, 2);
+    Eigen::MatrixXd derivatives_y = spline_y.derivatives(t, 3);
 
     state state_i;
 
@@ -93,9 +95,11 @@ void CPs2TrajAndPwp_cleaner(std::vector<Eigen::Vector3d> &qp, std::vector<double
     state_i.setAccel(derivatives_p.col(2));
     state_i.setJerk(derivatives_p.col(3));
 
-    state_i.setYaw(derivatives_y(0));
-    state_i.setDYaw(derivatives_y(1));
-    state_i.setDDYaw(derivatives_y(2));
+    // std::cout << "derivatives_y= " << derivatives_y << std::endl;
+
+    state_i.setYaw(derivatives_y(0, 0));
+    state_i.setDYaw(derivatives_y(0, 1));
+    state_i.setDDYaw(derivatives_y(0, 2));
 
     traj.push_back(state_i);
   }

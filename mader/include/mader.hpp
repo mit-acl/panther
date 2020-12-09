@@ -60,8 +60,6 @@ private:
   state M_;
   committedTrajectory plan_;
 
-  double previous_yaw_ = 0.0;
-
   void dynTraj2dynTrajCompiled(const dynTraj& traj, dynTrajCompiled& traj_compiled);
 
   bool initializedStateAndTermGoal();
@@ -81,9 +79,6 @@ private:
   std::vector<Eigen::Vector3d> vertexesOfInterval(PieceWisePol& pwp, double t_start, double t_end,
                                                   const Eigen::Vector3d& delta_inflation);
   std::vector<Eigen::Vector3d> vertexesOfInterval(dynTrajCompiled& traj, double t_start, double t_end);
-  void yaw(double diff, state& next_goal);
-
-  void getDesiredYaw(state& next_goal);
 
   void updateInitialCond(int i);
 
@@ -112,8 +107,6 @@ private:
 
   int drone_status_ = DroneStatus::TRAVELING;  // status_ can be TRAVELING, GOAL_SEEN, GOAL_REACHED
   int planner_status_ = PlannerStatus::FIRST_PLAN;
-
-  double dyaw_filtered_ = 0;
 
   std::mutex mtx_goals;
 
