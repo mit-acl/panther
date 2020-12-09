@@ -19,12 +19,10 @@ typedef Eigen::Matrix<double, 3, Eigen::Dynamic> Polyhedron_Std;
 typedef std::vector<Polyhedron_Std> ConvexHullsOfCurve_Std;
 typedef std::vector<ConvexHullsOfCurve_Std> ConvexHullsOfCurves_Std;
 
-namespace mader_types
+namespace mt  // mader_types
 {
 typedef std::pair<Eigen::Vector3d, Eigen::Vector3d> Edge;
 typedef std::vector<Edge> Edges;
-
-}  // namespace mader_types
 
 // TODO: move this to a class (so that no one can modify these matrices)
 struct basisConverter
@@ -451,7 +449,7 @@ struct dynTraj
   int id;
   double time_received;  // time at which this trajectory was received from an agent
   bool is_agent;         // true for a trajectory of an agent, false for an obstacle
-  PieceWisePol pwp;
+  mt::PieceWisePol pwp;
 };
 
 struct dynTrajCompiled
@@ -462,12 +460,12 @@ struct dynTrajCompiled
   double time_received;  // time at which this trajectory was received from an agent
   bool is_agent;         // true for a trajectory of an agent, false for an obstacle
   bool is_static;
-  PieceWisePol pwp;
+  mt::PieceWisePol pwp;
 };
 
-// struct PieceWisePolWithInfo
+// struct mt::PieceWisePolWithInfo
 // {
-//   PieceWisePol pwp;
+//   mt::PieceWisePol pwp;
 
 //   Eigen::Vector3d bbox;
 //   int id;
@@ -548,6 +546,8 @@ struct parameters
   double beta = 0.0;
   double gamma = 0.5;
 };
+
+}  // namespace mt
 
 struct state
 {

@@ -34,4 +34,4 @@ vec_E<Polyhedron<3>> vectorGCALPol2vectorJPSPol(ConvexHullsOfCurves& convex_hull
 
 CGAL_Polyhedron_3 convexHullOfPoints(const std::vector<Point_3>& points);
 
-mader_types::Edges vectorGCALPol2edges(const ConvexHullsOfCurves& convexHulls);
+mt::Edges vectorGCALPol2edges(const ConvexHullsOfCurves& convexHulls);

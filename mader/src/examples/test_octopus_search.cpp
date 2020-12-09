@@ -323,7 +323,7 @@ int main(int argc, char** argv)
   myAStarSolver.getAllTrajsFound(all_trajs_found);
 
   trajectory best_traj_found;
-  PieceWisePol pwp_best_traj_found;
+  mt::PieceWisePol pwp_best_traj_found;
   myAStarSolver.getBestTrajFound(best_traj_found, pwp_best_traj_found, dc);
 
   // for (double t = t_min; t <= t_max; t = t + dc)
@@ -375,7 +375,7 @@ int main(int argc, char** argv)
   best_trajectory_found_pub.publish(marker_array_best_traj);
 
   // Get the edges of the convex hulls and publish them
-  mader_types::Edges edges_convex_hulls;
+  mt::Edges edges_convex_hulls;
   myAStarSolver.getEdgesConvexHulls(edges_convex_hulls);
   convex_hulls_pub.publish(edges2Marker(edges_convex_hulls, color(RED_NORMAL)));
 

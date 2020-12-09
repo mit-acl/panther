@@ -92,8 +92,8 @@ public:
 
   int getNumOfLPsRun();
 
-  void getBestTrajFound(trajectory& best_traj_found, PieceWisePol& pwp, double dc);
-  void getEdgesConvexHulls(mader_types::Edges& edges_convex_hulls);
+  void getBestTrajFound(trajectory& best_traj_found, mt::PieceWisePol& pwp, double dc);
+  void getEdgesConvexHulls(mt::Edges& edges_convex_hulls);
 
   int B_SPLINE = 1;  // B-Spline Basis
   int MINVO = 2;     // Minimum volume basis

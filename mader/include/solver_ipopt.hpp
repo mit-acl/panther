@@ -47,7 +47,7 @@ public:
   void getPlanes(std::vector<Hyperplane3D> &planes);
   int getNumOfLPsRun();
   int getNumOfQCQPsRun();
-  void getSolution(PieceWisePol &solution);
+  void getSolution(mt::PieceWisePol &solution);
   double getTimeNeeded();
 
   int B_SPLINE = 1;  // B-Spline Basis
@@ -97,12 +97,12 @@ private:
   std::vector<Eigen::Vector3d> n_;  // Each n_[i] has 3 elements (nx,ny,nz)
   std::vector<double> d_;           // d_[i] has 1 element
 
-  PieceWisePol pwp_solution_;
+  par_solver par_;
+
+  mt::PieceWisePol pwp_solution_;
 
   int basis_ = B_SPLINE;
 
-  int deg_pol_ = 3;
-  int num_pol_ = 5;
   int p_ = 5;
   int M_;
   int N_;
@@ -116,17 +116,10 @@ private:
 
   std::vector<Hyperplane3D> planes_;
 
-  double dc_;
   Eigen::RowVectorXd knots_;
   double t_init_;
   double t_final_;
   double deltaT_;
-  Eigen::Vector3d v_max_;
-
-  Eigen::Vector3d a_max_;
-
-  double weight_ = 10000;
-  // double weight_modified_ = 10000;
 
   state initial_state_;
   state final_state_;
@@ -148,31 +141,14 @@ private:
   double kappa_ = 0.2;  // kappa_*max_runtime_ is spent on the initial guess
   double mu_ = 0.5;     // mu_*max_runtime_ is spent on the optimization
 
-  double x_min_ = -std::numeric_limits<double>::max();
-  double x_max_ = std::numeric_limits<double>::max();
-
-  double y_min_ = -std::numeric_limits<double>::max();
-  double y_max_ = std::numeric_limits<double>::max();
-
-  double z_min_ = -std::numeric_limits<double>::max();
-  double z_max_ = std::numeric_limits<double>::max();
-
   int num_of_QCQPs_run_ = 0;
-
-  int a_star_samp_x_ = 7;
-  int a_star_samp_y_ = 7;
-  int a_star_samp_z_ = 7;
 
   // transformation between the B-spline control points and other basis
   std::vector<Eigen::Matrix<double, 4, 4>> M_pos_bs2basis_;
   std::vector<Eigen::Matrix<double, 3, 3>> M_vel_bs2basis_;
   std::vector<Eigen::Matrix<double, 4, 4>> A_pos_bs_;
 
-  double a_star_bias_ = 1.0;
-  double a_star_fraction_voxel_size_ = 0.5;
-
-  // separator::Separator *separator_solver_ptr_;
-  // OctopusSearch *octopusSolver_ptr_;
+  // double a_star_bias_ = 1.0;
 
   std::unique_ptr<separator::Separator> separator_solver_ptr_;
   std::unique_ptr<OctopusSearch> octopusSolver_ptr_;
@@ -182,6 +158,6 @@ private:
   struct PImpl;
   std::unique_ptr<PImpl> m_casadi_ptr_;  // Opaque pointer
 
-  double Ra_ = 1e10;
+  // double Ra_ = 1e10;
 };
 #endif

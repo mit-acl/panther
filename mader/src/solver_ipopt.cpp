@@ -23,33 +23,30 @@ struct SolverIpopt::PImpl
 
 SolverIpopt::SolverIpopt(par_solver &par)
 {
-  deg_pol_ = par.deg_pol;
-  num_pol_ = par.num_pol;
+  par_ = par;
 
-  p_ = deg_pol_;
-  M_ = num_pol_ + 2 * p_;
+  // All these values are for the position spline
+  p_ = par_.deg_pol;
+  M_ = par_.num_pol + 2 * p_;
   N_ = M_ - p_ - 1;
-  num_of_segments_ = (M_ - 2 * p_);  // this is the same as num_pol_
-
+  num_of_segments_ = (M_ - 2 * p_);  // this is the same as par_.num_pol
   ///////////////////////////////////////
 
-  a_star_bias_ = par.a_star_bias;
-
-  basisConverter basis_converter;
+  mt::basisConverter basis_converter;
   // basis used for collision
-  if (par.basis == "MINVO")
+  if (par_.basis == "MINVO")
   {
     basis_ = MINVO;
     M_pos_bs2basis_ = basis_converter.getMinvoPosConverters(num_of_segments_);
     M_vel_bs2basis_ = basis_converter.getMinvoVelConverters(num_of_segments_);
   }
-  else if (par.basis == "BEZIER")
+  else if (par_.basis == "BEZIER")
   {
     basis_ = BEZIER;
     M_pos_bs2basis_ = basis_converter.getBezierPosConverters(num_of_segments_);
     M_vel_bs2basis_ = basis_converter.getBezierVelConverters(num_of_segments_);
   }
-  else if (par.basis == "B_SPLINE")
+  else if (par_.basis == "B_SPLINE")
   {
     basis_ = B_SPLINE;
     M_pos_bs2basis_ = basis_converter.getBSplinePosConverters(num_of_segments_);
@@ -57,7 +54,7 @@ SolverIpopt::SolverIpopt(par_solver &par)
   }
   else
   {
-    std::cout << red << "Basis " << par.basis << " not implemented yet" << reset << std::endl;
+    std::cout << red << "Basis " << par_.basis << " not implemented yet" << reset << std::endl;
     std::cout << red << "============================================" << reset << std::endl;
     abort();
   }
@@ -65,34 +62,10 @@ SolverIpopt::SolverIpopt(par_solver &par)
   ///////////////////////////////////////
   ///////////////////////////////////////
 
-  x_min_ = par.x_min;
-  x_max_ = par.x_max;
-
-  y_min_ = par.y_min;
-  y_max_ = par.y_max;
-
-  z_min_ = par.z_min;
-  z_max_ = par.z_max;
-  Ra_ = par.Ra;
-  a_star_samp_x_ = par.a_star_samp_x;
-  a_star_samp_y_ = par.a_star_samp_y;
-  a_star_samp_z_ = par.a_star_samp_z;
-  a_star_fraction_voxel_size_ = par.a_star_fraction_voxel_size;
-
-  dc_ = par.dc;
-  v_max_ = par.v_max;
-
-  a_max_ = par.a_max;
-
-  weight_ = par.weight;
-
-  // separator_solver_ptr_ = new separator::Separator();
-  // octopusSolver_ptr_ = new OctopusSearch(par.basis, num_pol_, deg_pol_, par.alpha_shrink);
-
   // // TODO: if C++14, use std::make_unique instead
   separator_solver_ptr_ = std::unique_ptr<separator::Separator>(new separator::Separator());
   octopusSolver_ptr_ =
-      std::unique_ptr<OctopusSearch>(new OctopusSearch(par.basis, num_pol_, deg_pol_, par.alpha_shrink));
+      std::unique_ptr<OctopusSearch>(new OctopusSearch(par_.basis, par_.num_pol, par_.deg_pol, par_.alpha_shrink));
 
   // hack
   std::fstream myfile("/home/jtorde/Desktop/ws/src/mader/mader/matlab/index_instruction.txt", std::ios_base::in);
@@ -157,10 +130,10 @@ bool SolverIpopt::setInitStateFinalStateInitTFinalT(state initial_state, state f
 
   // here we saturate the value to ensure it is within the limits
   // the reason for this is the epsilon_tol_constraints (in the previous iteration, it may be slightly unfeasible)
-  saturate(v0, -v_max_, v_max_);
-  saturate(a0, -a_max_, a_max_);
-  saturate(vf, -v_max_, v_max_);
-  saturate(af, -a_max_, a_max_);
+  saturate(v0, -par_.v_max, par_.v_max);
+  saturate(a0, -par_.a_max, par_.a_max);
+  saturate(vf, -par_.v_max, par_.v_max);
+  saturate(af, -par_.a_max, par_.a_max);
 
   initial_state_ = initial_state;
   final_state_ = final_state;
@@ -183,8 +156,8 @@ bool SolverIpopt::setInitStateFinalStateInitTFinalT(state initial_state, state f
     double upper_bound, lower_bound;
     if (fabs(a0(axis)) > 1e-7)
     {
-      upper_bound = ((p_ - 1) * (sgn(a0(axis)) * v_max_(axis) - v0(axis)) / (a0(axis)));
-      lower_bound = ((p_ - 1) * (-sgn(a0(axis)) * v_max_(axis) - v0(axis)) / (a0(axis)));
+      upper_bound = ((p_ - 1) * (sgn(a0(axis)) * par_.v_max(axis) - v0(axis)) / (a0(axis)));
+      lower_bound = ((p_ - 1) * (-sgn(a0(axis)) * par_.v_max(axis) - v0(axis)) / (a0(axis)));
 
       // std::cout << "axis= " << axis << std::endl;
       // std::cout << "lower_bound= " << lower_bound << std::endl;
@@ -213,8 +186,8 @@ bool SolverIpopt::setInitStateFinalStateInitTFinalT(state initial_state, state f
     }
   }
 
-  // Eigen::Vector3d bound1 = ((p_ - 1) * (v_max_ - v0).array() / (a0.array()));
-  // Eigen::Vector3d bound2 = ((p_ - 1) * (-v_max_ - v0).array() / (a0.array()));
+  // Eigen::Vector3d bound1 = ((p_ - 1) * (par_.v_max - v0).array() / (a0.array()));
+  // Eigen::Vector3d bound2 = ((p_ - 1) * (-par_.v_max - v0).array() / (a0.array()));
 
   // // note that if any element of a0 is ==0.0, then its corresponding element in bound1 (or bound2) is +-infinity,
   // but
@@ -299,15 +272,15 @@ bool SolverIpopt::optimize()
   traj_solution_.clear();
   // note that, for a v0 and a0 given, q2_ is not guaranteed to lie within the bounds. If that's the case --> keep
   // executing previous trajectory
-  if (q2_.x() > x_max_ || q2_.x() < x_min_ ||  //////////////
-      q2_.y() > y_max_ || q2_.y() < y_min_ ||  /////////////////
-      q2_.z() > z_max_ || q2_.z() < z_min_)
+  if (q2_.x() > par_.x_max || q2_.x() < par_.x_min ||  //////////////
+      q2_.y() > par_.y_max || q2_.y() < par_.y_min ||  /////////////////
+      q2_.z() > par_.z_max || q2_.z() < par_.z_min)
   {
     std::cout << bold << red << "q2_ is not in [min, max]" << reset << std::endl;
     std::cout << "q2_= " << q2_.transpose() << std::endl;
-    std::cout << "x_min_= " << x_min_ << ", x_max_=" << x_max_ << std::endl;
-    std::cout << "y_min_= " << y_min_ << ", y_max_=" << y_max_ << std::endl;
-    std::cout << "z_min_= " << z_min_ << ", z_max_=" << z_max_ << std::endl;
+    std::cout << "par_.x_min= " << par_.x_min << ", par_.x_max=" << par_.x_max << std::endl;
+    std::cout << "par_.y_min= " << par_.y_min << ", par_.y_max=" << par_.y_max << std::endl;
+    std::cout << "par_.z_min= " << par_.z_min << ", par_.z_max=" << par_.z_max << std::endl;
     return false;
   }
   bool guess_is_feasible = generateAStarGuess();  // I obtain q_quess_, n_guess_, d_guess_
@@ -324,8 +297,8 @@ bool SolverIpopt::optimize()
   //////////////////////////////////// CASADI!
 
   std::cout << "Casadi!" << std::endl;
-  std::cout << "v_max_= " << v_max_.transpose() << std::endl;
-  std::cout << "a_max_= " << a_max_.transpose() << std::endl;
+  std::cout << "par_.v_max= " << par_.v_max.transpose() << std::endl;
+  std::cout << "par_.a_max= " << par_.a_max.transpose() << std::endl;
 
   // Conversion DM <--> Eigen:  https://github.com/casadi/casadi/issues/2563
   auto eigen2std = [](Eigen::Vector3d &v) { return std::vector<double>{ v.x(), v.y(), v.z() }; };
@@ -344,8 +317,8 @@ bool SolverIpopt::optimize()
       final_state_.dyaw;  // Needed: if not (and if you are minimizing ddyaw), ddyaw=cte --> yaw will explode
   std::cout << bold << blue << "y0= " << initial_state_.yaw << reset << std::endl;
   std::cout << bold << blue << "ydot0= " << initial_state_.dyaw << reset << std::endl;
-  map_arguments["v_max"] = eigen2std(v_max_);
-  map_arguments["a_max"] = eigen2std(a_max_);
+  map_arguments["v_max"] = eigen2std(par_.v_max);
+  map_arguments["a_max"] = eigen2std(par_.a_max);
   map_arguments["total_time"] = (t_final_ - t_init_);
   map_arguments["all_w_fe"] = casadi::DM::ones(3, 15);
   map_arguments["c_jerk"] = 1.0;
@@ -438,11 +411,11 @@ bool SolverIpopt::optimize()
   int param_pp = 3;
   int param_py = 2;
   std::cout << "qy.size()= " << qy.size() << std::endl;
-  CPs2TrajAndPwp_cleaner(qp, qy, traj_solution_, pwp_solution_, param_pp, param_py, knots_, dc_);
+  CPs2TrajAndPwp_cleaner(qp, qy, traj_solution_, pwp_solution_, param_pp, param_py, knots_, par_.dc);
 
   std::cout << "Called CPs2TrajAndPwp!" << std::endl;
 
-  // Force last position =final_state_ (which it's not guaranteed because of the discretization with dc_)
+  // Force last position =final_state_ (which it's not guaranteed because of the discretization with par_.dc)
   traj_solution_.back().vel = final_state_.vel;
   traj_solution_.back().accel = final_state_.accel;
   traj_solution_.back().jerk = Eigen::Vector3d::Zero();
@@ -453,7 +426,7 @@ bool SolverIpopt::optimize()
   return true;
 }
 
-void SolverIpopt::getSolution(PieceWisePol &solution)
+void SolverIpopt::getSolution(mt::PieceWisePol &solution)
 {
   solution = pwp_solution_;
 }

@@ -13,9 +13,9 @@
 ///////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////
 
-// Given the control points, this function returns the associated traj and PieceWisePol
+// Given the control points, this function returns the associated traj and mt::PieceWisePol
 void CPs2TrajAndPwp_cleaner(std::vector<Eigen::Vector3d> &qp, std::vector<double> &qy, std::vector<state> &traj,
-                            PieceWisePol &pwp_p, int param_pp, int param_py, Eigen::RowVectorXd &knots_p, double dc)
+                            mt::PieceWisePol &pwp_p, int param_pp, int param_py, Eigen::RowVectorXd &knots_p, double dc)
 {
   assert((param_pp == 3) && "param_pp == 3 not satisfied");
   assert((param_py == 2) && "param_py == 2 not satisfied");  // We are assumming this in the code below
@@ -109,9 +109,9 @@ void CPs2TrajAndPwp_cleaner(std::vector<Eigen::Vector3d> &qp, std::vector<double
 ///////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////
 
-// Given the control points, this function returns the associated traj and PieceWisePol
+// Given the control points, this function returns the associated traj and mt::PieceWisePol
 // Note that if q.size()!=(N+1), then only some of the knots are used
-void CPs2TrajAndPwp(std::vector<Eigen::Vector3d> &q, std::vector<state> &traj, PieceWisePol &pwp, int N, int p,
+void CPs2TrajAndPwp(std::vector<Eigen::Vector3d> &q, std::vector<state> &traj, mt::PieceWisePol &pwp, int N, int p,
                     int num_pol, Eigen::RowVectorXd &knots, double dc)
 {
   // std::cout << "q.size()= " << q.size() << std::endl;

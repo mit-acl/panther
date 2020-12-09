@@ -40,7 +40,7 @@ SolverGurobi::SolverGurobi(par_sgurobi &par)
   ///////////////////////////////////////
   ///////////////////////////////////////
 
-  basisConverter basis_converter;
+  mt::basisConverter basis_converter;
 
   std::cout << "In the SolverGurobi Constructor\n";
 
@@ -2054,7 +2054,7 @@ bool SolverGurobi::optimize()
   return true;
 }
 
-void SolverGurobi::getSolution(PieceWisePol &solution)
+void SolverGurobi::getSolution(mt::PieceWisePol &solution)
 {
   solution = solution_;
 }
