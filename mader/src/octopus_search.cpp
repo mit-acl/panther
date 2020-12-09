@@ -122,9 +122,9 @@ void OctopusSearch::setVisual(bool visual)
   visual_ = visual;
 }
 
-void OctopusSearch::getBestTrajFound(trajectory& best_traj_found, mt::PieceWisePol& pwp, double dc)
+void OctopusSearch::getBestTrajFound(mt::trajectory& best_traj_found, mt::PieceWisePol& pwp, double dc)
 {
-  trajectory traj;
+  mt::trajectory traj;
   CPs2TrajAndPwp(result_, best_traj_found, pwp, N_, p_, num_pol_, knots_, dc);
 }
 
@@ -164,7 +164,7 @@ void OctopusSearch::getEdgesConvexHulls(mt::Edges& edges_convex_hulls)
   }
 }
 
-void OctopusSearch::getAllTrajsFound(std::vector<trajectory>& all_trajs_found)
+void OctopusSearch::getAllTrajsFound(std::vector<mt::trajectory>& all_trajs_found)
 {
   all_trajs_found.clear();
 
@@ -185,7 +185,7 @@ void OctopusSearch::getAllTrajsFound(std::vector<trajectory>& all_trajs_found)
 
     std::reverse(std::begin(cps), std::end(cps));  // cps=[q0 q1 q2 q3 q4 ...]
 
-    trajectory traj;
+    mt::trajectory traj;
     mt::PieceWisePol pwp;
     CPs2TrajAndPwp(cps, traj, pwp, N_, p_, num_pol_, knots_, 0.01);  // Last number is the resolution
 

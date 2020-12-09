@@ -58,7 +58,7 @@ public:
 
 private:
   state M_;
-  committedTrajectory plan_;
+  mt::committedTrajectory plan_;
 
   void dynTraj2dynTrajCompiled(const mt::dynTraj& traj, mt::dynTrajCompiled& traj_compiled);
 

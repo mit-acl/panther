@@ -868,7 +868,7 @@ Eigen::Vector3d getFirstIntersectionWithSphere(std::vector<Eigen::Vector3d>& pat
   return intersection;
 }
 
-visualization_msgs::MarkerArray trajectory2ColoredMarkerArray(const trajectory& data, double max_value, int increm,
+visualization_msgs::MarkerArray trajectory2ColoredMarkerArray(const mt::trajectory& data, double max_value, int increm,
                                                               std::string ns, double scale, std::string color_type,
                                                               int id_agent, int n_agents)
 {

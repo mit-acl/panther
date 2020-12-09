@@ -19,6 +19,110 @@ typedef Eigen::Matrix<double, 3, Eigen::Dynamic> Polyhedron_Std;
 typedef std::vector<Polyhedron_Std> ConvexHullsOfCurve_Std;
 typedef std::vector<ConvexHullsOfCurve_Std> ConvexHullsOfCurves_Std;
 
+struct state
+{
+  Eigen::Vector3d pos = Eigen::Vector3d::Zero();
+  Eigen::Vector3d vel = Eigen::Vector3d::Zero();
+  Eigen::Vector3d accel = Eigen::Vector3d::Zero();
+  Eigen::Vector3d jerk = Eigen::Vector3d::Zero();
+
+  double yaw = 0;
+  double dyaw = 0;
+  double ddyaw = 0;
+
+  void setPos(const double x, const double y, const double z)
+  {
+    pos << x, y, z;
+  }
+  void setVel(const double x, const double y, const double z)
+  {
+    vel << x, y, z;
+  }
+  void setAccel(const double x, const double y, const double z)
+  {
+    accel << x, y, z;
+  }
+
+  void setJerk(const double x, const double y, const double z)
+  {
+    jerk << x, y, z;
+  }
+
+  void setPos(const Eigen::Vector3d& data)
+  {
+    pos << data.x(), data.y(), data.z();
+  }
+
+  void setVel(const Eigen::Vector3d& data)
+  {
+    vel << data.x(), data.y(), data.z();
+  }
+
+  void setAccel(const Eigen::Vector3d& data)
+  {
+    accel << data.x(), data.y(), data.z();
+  }
+
+  void setJerk(const Eigen::Vector3d& data)
+  {
+    jerk << data.x(), data.y(), data.z();
+  }
+
+  void setState(const Eigen::Matrix<double, 9, 1>& data)
+  {
+    pos << data(0, 0), data(1, 0), data(2, 0);
+    vel << data(3, 0), data(4, 0), data(5, 0);
+    accel << data(6, 0), data(7, 0), data(8, 0);
+  }
+
+  void setYaw(const double& data)
+  {
+    yaw = data;
+  }
+  void setDYaw(const double& data)
+  {
+    dyaw = data;
+  }
+  void setDDYaw(const double& data)
+  {
+    ddyaw = data;
+  }
+  void setZero()
+  {
+    pos = Eigen::Vector3d::Zero();
+    vel = Eigen::Vector3d::Zero();
+    accel = Eigen::Vector3d::Zero();
+    jerk = Eigen::Vector3d::Zero();
+    yaw = 0;
+    dyaw = 0;
+  }
+
+  const void printPos()
+  {
+    std::cout << "Pos= " << pos.transpose() << std::endl;
+  }
+
+  const void print()
+  {
+    std::cout << std::setprecision(3) << "Pos= " << pos.transpose() << std::endl;
+    std::cout << std::setprecision(3) << "Vel= " << vel.transpose() << std::endl;
+    std::cout << std::setprecision(3) << "Accel= " << accel.transpose() << std::endl;
+    std::cout << std::setprecision(3) << "Yaw= " << yaw << std::endl;
+    std::cout << std::setprecision(3) << "DYaw= " << dyaw << std::endl;
+  }
+
+  const void printHorizontal()
+  {
+    using namespace termcolor;
+    std::cout << std::setprecision(3) << "Pos, Vel, Accel, Jerk, Yaw, DYaw= " << red << pos.transpose() << reset;
+    std::cout << " " << std::setprecision(3) << blue << vel.transpose() << reset;
+    std::cout << " " << std::setprecision(3) << green << accel.transpose() << reset;
+    std::cout << " " << std::setprecision(3) << jerk.transpose() << reset;
+    std::cout << " " << std::setprecision(3) << yellow << yaw << reset;
+    std::cout << " " << std::setprecision(3) << magenta << dyaw << reset << std::endl;
+  }
+};
+
 namespace mt  // mader_types
 {
 typedef std::pair<Eigen::Vector3d, Eigen::Vector3d> Edge;
@@ -547,114 +651,6 @@ struct parameters
   double gamma = 0.5;
 };
 
-}  // namespace mt
-
-struct state
-{
-  Eigen::Vector3d pos = Eigen::Vector3d::Zero();
-  Eigen::Vector3d vel = Eigen::Vector3d::Zero();
-  Eigen::Vector3d accel = Eigen::Vector3d::Zero();
-  Eigen::Vector3d jerk = Eigen::Vector3d::Zero();
-
-  double yaw = 0;
-  double dyaw = 0;
-  double ddyaw = 0;
-
-  void setPos(const double x, const double y, const double z)
-  {
-    pos << x, y, z;
-  }
-  void setVel(const double x, const double y, const double z)
-  {
-    vel << x, y, z;
-  }
-  void setAccel(const double x, const double y, const double z)
-  {
-    accel << x, y, z;
-  }
-
-  void setJerk(const double x, const double y, const double z)
-  {
-    jerk << x, y, z;
-  }
-
-  void setPos(const Eigen::Vector3d& data)
-  {
-    pos << data.x(), data.y(), data.z();
-  }
-
-  void setVel(const Eigen::Vector3d& data)
-  {
-    vel << data.x(), data.y(), data.z();
-  }
-
-  void setAccel(const Eigen::Vector3d& data)
-  {
-    accel << data.x(), data.y(), data.z();
-  }
-
-  void setJerk(const Eigen::Vector3d& data)
-  {
-    jerk << data.x(), data.y(), data.z();
-  }
-
-  void setState(const Eigen::Matrix<double, 9, 1>& data)
-  {
-    pos << data(0, 0), data(1, 0), data(2, 0);
-    vel << data(3, 0), data(4, 0), data(5, 0);
-    accel << data(6, 0), data(7, 0), data(8, 0);
-  }
-
-  void setYaw(const double& data)
-  {
-    yaw = data;
-  }
-  void setDYaw(const double& data)
-  {
-    dyaw = data;
-  }
-  void setDDYaw(const double& data)
-  {
-    ddyaw = data;
-  }
-  void setZero()
-  {
-    pos = Eigen::Vector3d::Zero();
-    vel = Eigen::Vector3d::Zero();
-    accel = Eigen::Vector3d::Zero();
-    jerk = Eigen::Vector3d::Zero();
-    yaw = 0;
-    dyaw = 0;
-  }
-
-  const void printPos()
-  {
-    std::cout << "Pos= " << pos.transpose() << std::endl;
-  }
-
-  const void print()
-  {
-    std::cout << std::setprecision(3) << "Pos= " << pos.transpose() << std::endl;
-    std::cout << std::setprecision(3) << "Vel= " << vel.transpose() << std::endl;
-    std::cout << std::setprecision(3) << "Accel= " << accel.transpose() << std::endl;
-    std::cout << std::setprecision(3) << "Yaw= " << yaw << std::endl;
-    std::cout << std::setprecision(3) << "DYaw= " << dyaw << std::endl;
-  }
-
-  const void printHorizontal()
-  {
-    using namespace termcolor;
-    std::cout << std::setprecision(3) << "Pos, Vel, Accel, Jerk, Yaw, DYaw= " << red << pos.transpose() << reset;
-    std::cout << " " << std::setprecision(3) << blue << vel.transpose() << reset;
-    std::cout << " " << std::setprecision(3) << green << accel.transpose() << reset;
-    std::cout << " " << std::setprecision(3) << jerk.transpose() << reset;
-    std::cout << " " << std::setprecision(3) << yellow << yaw << reset;
-    std::cout << " " << std::setprecision(3) << magenta << dyaw << reset << std::endl;
-  }
-};
-
-typedef std::vector<state> trajectory;
-
 struct committedTrajectory
 {
   std::deque<state> content;
@@ -720,3 +716,7 @@ struct committedTrajectory
     return my_vector;
   }
 };
+
+typedef std::vector<state> trajectory;
+
+}  // namespace mt

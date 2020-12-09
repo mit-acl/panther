@@ -154,7 +154,7 @@ std::ostream& operator<<(std::ostream& out, const std::vector<T>& v)
   return out;
 }
 
-visualization_msgs::MarkerArray trajectory2ColoredMarkerArray(const trajectory& data, double max_value, int increm,
+visualization_msgs::MarkerArray trajectory2ColoredMarkerArray(const mt::trajectory& data, double max_value, int increm,
                                                               std::string ns, double scale, std::string color_type,
                                                               int id_agent, int n_agents);
 

@@ -319,10 +319,10 @@ int main(int argc, char** argv)
   bool solved = myAStarSolver.run(q, n, d);
 
   // Recover all the trajectories found and the best trajectory
-  std::vector<trajectory> all_trajs_found;
+  std::vector<mt::trajectory> all_trajs_found;
   myAStarSolver.getAllTrajsFound(all_trajs_found);
 
-  trajectory best_traj_found;
+  mt::trajectory best_traj_found;
   mt::PieceWisePol pwp_best_traj_found;
   myAStarSolver.getBestTrajFound(best_traj_found, pwp_best_traj_found, dc);
 

@@ -41,7 +41,7 @@ public:
   bool setInitStateFinalStateInitTFinalT(state initial_state, state final_state, double t_init, double &t_final);
   void setHulls(ConvexHullsOfCurves_Std &hulls);
 
-  trajectory traj_solution_;
+  mt::trajectory traj_solution_;
 
   // getters
   void getPlanes(std::vector<Hyperplane3D> &planes);
