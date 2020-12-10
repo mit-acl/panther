@@ -18,6 +18,23 @@
 
 using namespace termcolor;
 
+// std::string getPathName(const std::string &s)
+// {
+//   char sep = '/';
+
+// #ifdef _WIN32
+//   sep = '\\';
+// #endif
+
+//   size_t i = s.rfind(sep, s.length());
+//   if (i != std::string::npos)
+//   {
+//     return (s.substr(0, i));
+//   }
+
+//   return ("");
+// }
+
 struct SolverIpopt::PImpl
 {
   casadi::Function casadi_function_;
@@ -72,7 +89,9 @@ SolverIpopt::SolverIpopt(par_solver &par)
   // hack
 
   std::fstream myfile(ros::package::getPath("mader") + "/matlab/index_instruction.txt",
-                      std::ios_base::in);  // TODO: remove this ros dependency
+                      std::ios_base::in);  // TODO: remove this ROS dependency
+  // OTHER OPTION:    std::cout << bold << red << getPathName(__FILE__) << reset << std::endl;
+  // getPathName() is defined above in this file
   myfile >> index_instruction_;
   std::cout << "index_instruction_= " << index_instruction_ << std::endl;
   /// end of hack
@@ -333,14 +352,23 @@ bool SolverIpopt::optimize()
 
   std::cout << "Total time= " << (t_final_ - t_init_) << std::endl;
 
-  int tmp_num_of_planes = 0;
-  casadi::DM all_nd(casadi::Sparsity::dense(4, tmp_num_of_planes));  // TODO: do this just once
-  for (int i = 0; i < tmp_num_of_planes; i++)
+  int tmp_num_of_obstacles_casadi = 10;
+  int tmp_num_of_planes = tmp_num_of_obstacles_casadi * num_of_segments_;
+
+  assert((n_guess_.size() <= tmp_num_of_planes) && "the casadi function does not support so many planes");
+
+  //  casadi::DM all_nd(casadi::Sparsity::dense(4, tmp_num_of_planes));  // TODO: do this just once
+
+  casadi::DM all_nd(casadi::DM::zeros(4, tmp_num_of_planes));  // TODO: do this just once
+  for (int i = 0; i < n_guess_.size(); i++)
   {
+    // Casadi needs the plane equation as n_casadi'x+d_casadi<=0
+    // The free space is on the side n'x+d <= -1 (and also on the side n'x+d <= 1)
+    // Hence, n_casadi=n, and d_casadi=d-1
     all_nd(0, i) = n_guess_[i].x();
     all_nd(1, i) = n_guess_[i].y();
     all_nd(2, i) = n_guess_[i].z();
-    all_nd(3, i) = d_guess_[i];
+    all_nd(3, i) = d_guess_[i] - 1;
   }
 
   map_arguments["all_nd"] = all_nd;  // casadi::DM::rand(4, 0);

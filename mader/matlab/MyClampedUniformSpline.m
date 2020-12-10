@@ -85,6 +85,10 @@ classdef MyClampedUniformSpline < handle
         
         %%%%%%%%%%%%%% BSPLINE (BS)
         %%%%%%%%%%%%%%%%%%%%%%
+        %returns the BS position control points of the interval j
+        function result=getCPs_BS_Pos_ofInterval(obj,j)
+            result=obj.CPoints(j:j+obj.p);
+        end
         %returns the BS velocity control points of the interval j
         function result=getCPs_BS_Vel_ofInterval(obj,j)
             deg_vel=obj.p-1;

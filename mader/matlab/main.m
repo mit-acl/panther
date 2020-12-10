@@ -34,7 +34,7 @@ dim_yaw=1;
 
 num_seg =4; %number of segments
 
-num_of_obst=0; %This is actually the maximum num of the obstacles 
+num_of_obst=10; %This is actually the maximum num of the obstacles 
 
 beta1=100;
 beta2=100;
@@ -125,12 +125,11 @@ opti.subject_to( sp.getAccelT(tf)== af_scaled );
 opti.subject_to( sy.getVelT(tf)==ydotf_scaled); % Needed: if not (and if you are minimizing ddyaw), ddyaw=cte --> yaw will explode
 
 %Plane constraints
-epsilon=1;
+% epsilon=1;
 
 for j=1:(sp.num_seg)
     for obst_index=1:num_of_obst
-        
-      ip = obst_index * sp.num_seg + j;  % index plane
+      ip = (obst_index-1) * sp.num_seg + j;  % index plane
        
 %       init_int=min(sp.timeSpanOfInterval(j)); 
 %       end_int=max(sp.timeSpanOfInterval(j)); 
@@ -143,9 +142,9 @@ for j=1:(sp.num_seg)
 %       end
       
       %and the control points on the other side
-      Q_Mv=sp.getCPs_MV_Pos_ofInterval(j);
-      for kk=1:size(Q_Mv,2)
-        opti.subject_to( n{tm(ip)}'*Q_Mv{kk} + d{ip} + epsilon <= 0);
+      Q_MV=sp.getCPs_MV_Pos_ofInterval(j);
+      for kk=1:size(Q_MV,2)
+        opti.subject_to( n{ip}'*Q_MV{kk} + d{ip} <= 0);
       end
     end   
 end
@@ -405,7 +404,7 @@ sol=my_function(  'guess_CPs_Pos',rand(size(all_pCPs)), ...
                       'c_yaw', 0.0,...
                       'c_vel_isInFOV', 1.0,...
                       'c_final_pos', 100,...
-                      'all_nd',  rand(4,num_of_obst*num_seg));
+                      'all_nd',  zeros(4,num_of_obst*num_seg));
 
 %                       'c_jerk', 0.0,...
 %                       'c_yaw', 0.0,...

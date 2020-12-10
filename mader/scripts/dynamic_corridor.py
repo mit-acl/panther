@@ -56,6 +56,10 @@ class MovingCorridor:
         print(total_num_obs)
         self.num_of_dyn_objects=int(0.65*total_num_obs);
         self.num_of_stat_objects=total_num_obs-self.num_of_dyn_objects; #They are actually dynamic obstacles
+        #HACK
+        self.num_of_dyn_objects=1;
+        self.num_of_stat_objects=0;
+        #END OF HACK
         self.x_min= 2.0
         self.x_max= 75.0
         self.y_min= -3.0 
@@ -305,6 +309,10 @@ class FakeSim:
         # y_string='cos('+tt +str(offset)+')';
         # z_string='1'
 
+        x_string='1';
+        y_string='1';
+        z_string='1';
+
         return [x_string, y_string, z_string]
 
     def wave_in_z(self,x,y,z,scale, offset, slower):
@@ -313,7 +321,11 @@ class FakeSim:
 
         x_string=str(x);
         y_string=str(y)
-        z_string=str(scale)+'*(-sin( '+tt +str(offset)+'))' + '+' + str(z);                     
+        z_string=str(scale)+'*(-sin( '+tt +str(offset)+'))' + '+' + str(z);  
+
+        x_string='1';
+        y_string='1';
+        z_string='1';                   
 
         return [x_string, y_string, z_string]
 

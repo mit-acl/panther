@@ -71,7 +71,8 @@ bool SolverIpopt::generateAStarGuess()
     // https://github.com/mit-acl/separator/tree/06c0ddc6e2f11dbfc5b6083c2ea31b23fd4fa9d1
 
     // At this point the blue planes have the the equation n'x+d == -1
-    // The free space is on the side n'x+d <= -1
+    // The free space is on the side n'x+d <= -1 (and also on the side n'x+d <= 1)
+    // The obstacle is on the side n'x+d >= 1 (and also on the side n'x+d >= -1)
     // and these blue planes does NOT have to be close to the vertexes of the obstacle
 
     /////////////////////////////////////
