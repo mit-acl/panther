@@ -9,3 +9,4 @@ En el orginial MADER repo:
 	Change to Release en el CMakeList.txt
 	namespaces
 	mode()
+	I think I should use remove
