@@ -1,0 +1,11 @@
+
+En este repo:
+	Make sure qyaw_guess is feasible (because I commit to it when ipopt doesn't find a solution)
+	
+
+
+En el orginial MADER repo:
+
+	Change to Release en el CMakeList.txt
+	namespaces
+	mode()
