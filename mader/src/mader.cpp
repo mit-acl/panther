@@ -53,6 +53,7 @@ Mader::Mader(mt::parameters par) : par_(par)
   par_for_solver.Ra = par_.Ra;
   par_for_solver.v_max = par_.v_max;
   par_for_solver.a_max = par_.a_max;
+  par_for_solver.ydot_max = par_.ydot_max;
   par_for_solver.dc = par_.dc;
   par_for_solver.dist_to_use_straight_guess = par_.goal_radius;
   par_for_solver.a_star_samp_x = par_.a_star_samp_x;
@@ -483,7 +484,7 @@ void Mader::setTerminalGoal(mt::state& term_goal)
     double diff = desired_yaw - last_state.yaw;
     angle_wrap(diff);
 
-    double dyaw = copysign(1, diff) * par_.w_max;
+    double dyaw = copysign(1, diff) * par_.ydot_max;
 
     int num_of_el = (int)fabs(diff / (par_.dc * dyaw));
 
@@ -491,7 +492,7 @@ void Mader::setTerminalGoal(mt::state& term_goal)
 
     std::cout << "num_of_el= " << num_of_el << std::endl;
     std::cout << "diff= " << diff << std::endl;
-    std::cout << "par_.w_max= " << par_.w_max << std::endl;
+    std::cout << "par_.ydot_max= " << par_.ydot_max << std::endl;
     std::cout << "par_.dc= " << par_.dc << std::endl;
 
     for (int i = 1; i < (num_of_el + 1); i++)

@@ -81,6 +81,7 @@ end
 %%% Maximum velocity and acceleration
 v_max=opti.parameter(3,1);
 a_max=opti.parameter(3,1);
+ydot_max=opti.parameter(1,1);
 
 total_time=opti.parameter(1,1); %This allows a different t0 and tf than the one above 
 
@@ -108,6 +109,8 @@ ydotf_scaled=ydotf/scaling;
 v_max_scaled=v_max/scaling;
 a_max_scaled=a_max/(scaling^2); %TODO: check if it should be ^2, I think so
 
+ydot_max_scaled=ydot_max/scaling; %v_max for yaw
+
 %Initial conditions
 opti.subject_to( sp.getPosT(t0)== p0 );
 opti.subject_to( sp.getVelT(t0)== v0_scaled );
@@ -119,7 +122,7 @@ opti.subject_to( sy.getVelT(t0)== ydot0_scaled );
 % opti.subject_to( sp.getPosT(tf)== pf );
 opti.subject_to( sp.getVelT(tf)== vf_scaled );
 opti.subject_to( sp.getAccelT(tf)== af_scaled );
-opti.subject_to( sy.getVelT(tf)==ydotf_scaled)' % Needed: if not (and if you are minimizing ddyaw), ddyaw=cte --> yaw will explode
+opti.subject_to( sy.getVelT(tf)==ydotf_scaled); % Needed: if not (and if you are minimizing ddyaw), ddyaw=cte --> yaw will explode
 
 %Plane constraints
 epsilon=1;
@@ -150,7 +153,7 @@ end
 
 
 
-%Max vel constraints
+%Max vel constraints (position)
 for j=1:sp.num_seg
     minvo_vel_cps=sp.getCPs_MV_Vel_ofInterval(j);
     dim=size(minvo_vel_cps, 1);
@@ -162,7 +165,7 @@ for j=1:sp.num_seg
     end
 end
 
-%Max accel constraints
+%Max accel constraints (position)
 for j=1:sp.num_seg
     minvo_accel_cps=sp.getCPs_MV_Accel_ofInterval(j);
     dim=size(minvo_accel_cps, 1);
@@ -173,6 +176,17 @@ for j=1:sp.num_seg
         end
     end
 end
+
+%Max vel constraints (yaw)
+for j=1:sy.num_seg
+    minvo_vel_cps=sy.getCPs_MV_Vel_ofInterval(j);
+    dim=size(minvo_vel_cps, 1);
+    for u=1:size(minvo_vel_cps,2)
+        opti.subject_to( minvo_vel_cps{u} <= ydot_max_scaled  )
+        opti.subject_to( minvo_vel_cps{u}  >= -ydot_max_scaled )
+    end
+end
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%% OBJECTIVE! %%%%%%%%%%%%%%%%%%%%%%%%%
@@ -357,12 +371,13 @@ all_pCPs=sp.getCPsAsMatrix();
 all_yCPs=sy.getCPsAsMatrix();
 
 my_function = opti.to_function('mader_casadi_function',...
-    [ {all_pCPs},     {all_yCPs},     {theta_FOV_deg},{p0},{v0},{a0},{pf},{vf},{af},{y0}, {ydot0}, {ydotf}, {v_max}, {a_max}, {total_time}, {all_nd}, {all_w_fe}, {c_jerk}, {c_yaw}, {c_vel_isInFOV}, {c_final_pos}], {all_pCPs,all_yCPs},...
-    {'guess_CPs_Pos','guess_CPs_Yaw', 'theta_FOV_deg','p0','v0','a0','pf','vf','af','y0', 'ydot0', 'ydotf', 'v_max', 'a_max', 'total_time', 'all_nd', 'all_w_fe', 'c_jerk', 'c_yaw', 'c_vel_isInFOV', 'c_final_pos'}, {'all_pCPs','all_yCPs'}...
+    [ {all_pCPs},     {all_yCPs},     {theta_FOV_deg},{p0},{v0},{a0},{pf},{vf},{af},{y0}, {ydot0}, {ydotf}, {v_max}, {a_max}, {ydot_max}, {total_time}, {all_nd}, {all_w_fe}, {c_jerk}, {c_yaw}, {c_vel_isInFOV}, {c_final_pos}], {all_pCPs,all_yCPs},...
+    {'guess_CPs_Pos','guess_CPs_Yaw', 'theta_FOV_deg','p0','v0','a0','pf','vf','af','y0', 'ydot0', 'ydotf', 'v_max', 'a_max', 'ydot_max', 'total_time', 'all_nd', 'all_w_fe', 'c_jerk', 'c_yaw', 'c_vel_isInFOV', 'c_final_pos'}, {'all_pCPs','all_yCPs'}...
                                );
 
 v_max_value=1.6*ones(3,1);
 a_max_value=5*ones(3,1);
+ydot_max_value=1.0; 
 total_time=10.5;
 theta_FOV_deg_value=80;
 for i=1:num_eval_simpson
@@ -383,6 +398,7 @@ sol=my_function(  'guess_CPs_Pos',rand(size(all_pCPs)), ...
                       'ydotf',  0.0 ,...
                       'v_max', v_max_value,...
                       'a_max', a_max_value,...
+                      'ydot_max', ydot_max_value,...
                       'total_time', total_time,...
                       'all_w_fe', cell2mat(w_fe_value),...
                       'c_jerk', 0.0,...
@@ -473,7 +489,7 @@ sy.updateCPsWithSolution(full(sol.all_yCPs))
 
 sp.plotPosVelAccelJerk(v_max_value, a_max_value)
 % sp.plotPosVelAccelJerkFiniteDifferences();
-sy.plotPosVelAccelJerk()
+sy.plotPosVelAccelJerk(ydot_max_value)
 % sy.plotPosVelAccelJerkFiniteDifferences();
 
 sp.plotPos3D();

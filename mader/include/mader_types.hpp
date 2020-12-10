@@ -592,7 +592,7 @@ struct parameters
 
   double Ra;
 
-  double w_max;
+  double ydot_max;
   double alpha_filter_dyaw;
 
   // bool impose_fov = false;

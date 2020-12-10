@@ -319,6 +319,7 @@ bool SolverIpopt::optimize()
   std::cout << bold << blue << "ydot0= " << initial_state_.dyaw << reset << std::endl;
   map_arguments["v_max"] = eigen2std(par_.v_max);
   map_arguments["a_max"] = eigen2std(par_.a_max);
+  map_arguments["ydot_max"] = par_.ydot_max;
   map_arguments["total_time"] = (t_final_ - t_init_);
   map_arguments["all_w_fe"] = casadi::DM::ones(3, 15);
   map_arguments["c_jerk"] = par_.c_jerk;
@@ -397,7 +398,8 @@ bool SolverIpopt::optimize()
     std::cout << red << "IPOPT failed to find a solution, using initial guess (which is feasible)" << reset
               << std::endl;
     qp = qp_guess_;
-    qy = qy_guess_;
+    qy = qy_guess_;  // TODO: I need to make sure that this is feasible as well!! (both in position, in velocity and in
+                     // initial/final conditions)
   }
 
   ///////////////// PRINT SOLUTION

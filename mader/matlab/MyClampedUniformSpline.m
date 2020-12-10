@@ -278,26 +278,26 @@ classdef MyClampedUniformSpline < handle
             obj.plotAccel();
             subplot(4,1,4); hold on; title('jerk')
             obj.plotJerk();
-            style={'-.r','-.g','-.b'};
+            style={'-.r','-.g','-.b'}; 
             if(nargin>=2)
                 subplot(4,1,2);
-                for xyz=1:3
-                    yline(v_max(xyz),style{xyz});
-                    yline(-v_max(xyz),style{xyz});
+                for coordinate=1:numel(v_max)
+                    yline(v_max(coordinate),style{coordinate}); %TODO: this will crash if there are moree than three coordinates (because of the def of style above)
+                    yline(-v_max(coordinate),style{coordinate});
                 end
             end
             if(nargin>=3)
                 subplot(4,1,3);
-                for xyz=1:3
-                    yline(a_max(xyz),style{xyz});
-                    yline(-a_max(xyz),style{xyz});
+                for coordinate=1:numel(a_max)
+                    yline(a_max(coordinate),style{coordinate}); %TODO: this will crash if there are moree than three coordinates (because of the def of style above)
+                    yline(-a_max(coordinate),style{coordinate});
                 end
             end     
             if(nargin>=4)
                 subplot(4,1,4);
-                for xyz=1:3
-                    yline(j_max(xyz),style{xyz});
-                    yline(-j_max(xyz),style{xyz});
+                for coordinate=1:numel(j_max)
+                    yline(j_max(coordinate),style{coordinate}); %TODO: this will crash if there are moree than three coordinates (because of the def of style above)
+                    yline(-j_max(coordinate),style{coordinate});
                 end
             end     
         end

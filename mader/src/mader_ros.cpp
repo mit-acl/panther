@@ -33,7 +33,7 @@ MaderRos::MaderRos(ros::NodeHandle nh1, ros::NodeHandle nh2, ros::NodeHandle nh3
 
   safeGetParam(nh1_, "Ra", par_.Ra);
 
-  safeGetParam(nh1_, "w_max", par_.w_max);
+  safeGetParam(nh1_, "ydot_max", par_.ydot_max);
   safeGetParam(nh1_, "alpha_filter_dyaw", par_.alpha_filter_dyaw);
 
   safeGetParam(nh1_, "x_min", par_.x_min);
@@ -104,6 +104,8 @@ MaderRos::MaderRos(ros::NodeHandle nh1, ros::NodeHandle nh2, ros::NodeHandle nh3
   assert((par_.c_yaw >= 0) && "par_.c_yaw>=0 must hold");
   assert((par_.c_vel_isInFOV >= 0) && "par_.c_vel_isInFOV>=0 must hold");
   assert((par_.c_final_pos >= 0) && "par_.c_final_pos>=0 must hold");
+
+  assert((par_.ydot_max >= 0) && "ydot_max>=0 must hold");
 
   if (par_.gamma <= 0)
   {
