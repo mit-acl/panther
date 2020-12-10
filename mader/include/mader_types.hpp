@@ -337,10 +337,10 @@ struct basisConverter
     return A_pos_bs_rest;
   }
   //////MATRICES A FOR MINVO POSITION/////////
-  std::vector<Eigen::Matrix<double, 4, 4>> getAMinvo(int num_pol)
+  std::vector<Eigen::Matrix<double, 4, 4>> getAMinvo(int num_seg)
   {
-    std::vector<Eigen::Matrix<double, 4, 4>> A_pos_mv;  // will have as many elements as num_pol
-    for (int i = 0; i < num_pol; i++)
+    std::vector<Eigen::Matrix<double, 4, 4>> A_pos_mv;  // will have as many elements as num_seg
+    for (int i = 0; i < num_seg; i++)
     {
       A_pos_mv.push_back(A_pos_mv_rest);
     }
@@ -348,10 +348,10 @@ struct basisConverter
   }
 
   //////MATRICES A FOR Bezier POSITION/////////
-  std::vector<Eigen::Matrix<double, 4, 4>> getABezier(int num_pol)
+  std::vector<Eigen::Matrix<double, 4, 4>> getABezier(int num_seg)
   {
-    std::vector<Eigen::Matrix<double, 4, 4>> A_pos_be;  // will have as many elements as num_pol
-    for (int i = 0; i < num_pol; i++)
+    std::vector<Eigen::Matrix<double, 4, 4>> A_pos_be;  // will have as many elements as num_seg
+    for (int i = 0; i < num_seg; i++)
     {
       A_pos_be.push_back(A_pos_be_rest);
     }
@@ -359,12 +359,12 @@ struct basisConverter
   }
 
   //////MATRICES A FOR BSPLINE POSITION/////////
-  std::vector<Eigen::Matrix<double, 4, 4>> getABSpline(int num_pol)
+  std::vector<Eigen::Matrix<double, 4, 4>> getABSpline(int num_seg)
   {
-    std::vector<Eigen::Matrix<double, 4, 4>> A_pos_bs;  // will have as many elements as num_pol
+    std::vector<Eigen::Matrix<double, 4, 4>> A_pos_bs;  // will have as many elements as num_seg
     A_pos_bs.push_back(A_pos_bs_seg0);
     A_pos_bs.push_back(A_pos_bs_seg1);
-    for (int i = 0; i < (num_pol - 4); i++)
+    for (int i = 0; i < (num_seg - 4); i++)
     {
       A_pos_bs.push_back(A_pos_bs_rest);
     }
@@ -374,12 +374,12 @@ struct basisConverter
   }
 
   //////BSPLINE to MINVO POSITION/////////
-  std::vector<Eigen::Matrix<double, 4, 4>> getMinvoPosConverters(int num_pol)
+  std::vector<Eigen::Matrix<double, 4, 4>> getMinvoPosConverters(int num_seg)
   {
-    std::vector<Eigen::Matrix<double, 4, 4>> M_pos_bs2mv;  // will have as many elements as num_pol
+    std::vector<Eigen::Matrix<double, 4, 4>> M_pos_bs2mv;  // will have as many elements as num_seg
     M_pos_bs2mv.push_back(M_pos_bs2mv_seg0);
     M_pos_bs2mv.push_back(M_pos_bs2mv_seg1);
-    for (int i = 0; i < (num_pol - 4); i++)
+    for (int i = 0; i < (num_seg - 4); i++)
     {
       M_pos_bs2mv.push_back(M_pos_bs2mv_rest);
     }
@@ -389,12 +389,12 @@ struct basisConverter
   }
 
   //////BSPLINE to BEZIER POSITION/////////
-  std::vector<Eigen::Matrix<double, 4, 4>> getBezierPosConverters(int num_pol)
+  std::vector<Eigen::Matrix<double, 4, 4>> getBezierPosConverters(int num_seg)
   {
-    std::vector<Eigen::Matrix<double, 4, 4>> M_pos_bs2be;  // will have as many elements as num_pol
+    std::vector<Eigen::Matrix<double, 4, 4>> M_pos_bs2be;  // will have as many elements as num_seg
     M_pos_bs2be.push_back(M_pos_bs2be_seg0);
     M_pos_bs2be.push_back(M_pos_bs2be_seg1);
-    for (int i = 0; i < (num_pol - 4); i++)
+    for (int i = 0; i < (num_seg - 4); i++)
     {
       M_pos_bs2be.push_back(M_pos_bs2be_rest);
     }
@@ -404,10 +404,10 @@ struct basisConverter
   }
 
   //////BSPLINE to BSPLINE POSITION/////////
-  std::vector<Eigen::Matrix<double, 4, 4>> getBSplinePosConverters(int num_pol)
+  std::vector<Eigen::Matrix<double, 4, 4>> getBSplinePosConverters(int num_seg)
   {
-    std::vector<Eigen::Matrix<double, 4, 4>> M_pos_bs2bs;  // will have as many elements as num_pol
-    for (int i = 0; i < num_pol; i++)
+    std::vector<Eigen::Matrix<double, 4, 4>> M_pos_bs2bs;  // will have as many elements as num_seg
+    for (int i = 0; i < num_seg; i++)
     {
       M_pos_bs2bs.push_back(Eigen::Matrix<double, 4, 4>::Identity());
     }
@@ -415,11 +415,11 @@ struct basisConverter
   }
 
   //////BSPLINE to MINVO Velocity/////////
-  std::vector<Eigen::Matrix<double, 3, 3>> getMinvoVelConverters(int num_pol)
+  std::vector<Eigen::Matrix<double, 3, 3>> getMinvoVelConverters(int num_seg)
   {
-    std::vector<Eigen::Matrix<double, 3, 3>> M_vel_bs2mv;  // will have as many elements as num_pol
+    std::vector<Eigen::Matrix<double, 3, 3>> M_vel_bs2mv;  // will have as many elements as num_seg
     M_vel_bs2mv.push_back(M_vel_bs2mv_seg0);
-    for (int i = 0; i < (num_pol - 2 - 1); i++)
+    for (int i = 0; i < (num_seg - 2 - 1); i++)
     {
       M_vel_bs2mv.push_back(M_vel_bs2mv_rest);
     }
@@ -428,11 +428,11 @@ struct basisConverter
   }
 
   //////BSPLINE to BEZIER Velocity/////////
-  std::vector<Eigen::Matrix<double, 3, 3>> getBezierVelConverters(int num_pol)
+  std::vector<Eigen::Matrix<double, 3, 3>> getBezierVelConverters(int num_seg)
   {
     std::vector<Eigen::Matrix<double, 3, 3>> M_vel_bs2be;  // will have as many elements as segments
     M_vel_bs2be.push_back(M_vel_bs2be_seg0);
-    for (int i = 0; i < (num_pol - 2 - 1); i++)
+    for (int i = 0; i < (num_seg - 2 - 1); i++)
     {
       M_vel_bs2be.push_back(M_vel_bs2be_rest);
     }
@@ -441,10 +441,10 @@ struct basisConverter
   }
 
   //////BSPLINE to BSPLINE Velocity/////////
-  std::vector<Eigen::Matrix<double, 3, 3>> getBSplineVelConverters(int num_pol)
+  std::vector<Eigen::Matrix<double, 3, 3>> getBSplineVelConverters(int num_seg)
   {
-    std::vector<Eigen::Matrix<double, 3, 3>> M_vel_bs2bs;  // will have as many elements as num_pol
-    for (int i = 0; i < num_pol; i++)
+    std::vector<Eigen::Matrix<double, 3, 3>> M_vel_bs2bs;  // will have as many elements as num_seg
+    for (int i = 0; i < num_seg; i++)
     {
       M_vel_bs2bs.push_back(Eigen::Matrix<double, 3, 3>::Identity());
     }
@@ -593,7 +593,6 @@ struct parameters
   double Ra;
 
   double ydot_max;
-  double alpha_filter_dyaw;
 
   // bool impose_fov = false;
 
@@ -609,7 +608,7 @@ struct parameters
   double y_min;
   double y_max;
 
-  double z_ground;
+  double z_min;
   double z_max;
 
   Eigen::Vector3d v_max;
@@ -617,13 +616,10 @@ struct parameters
 
   double factor_alpha;
 
-  int num_pol;
-  int deg_pol;
-  double weight;
-  double epsilon_tol_constraints;
-  double xtol_rel;
-  double ftol_rel;
-  std::string solver;
+  int num_seg;
+  int deg_pos;
+  int deg_yaw;
+  int num_max_of_obst;
 
   double upper_bound_runtime_snlopt;
   double lower_bound_runtime_snlopt;

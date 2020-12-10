@@ -26,7 +26,7 @@ Eigen::Vector3d getPosDynObstacle(double t)
   return pos;
 }
 
-ConvexHullsOfCurve createStaticObstacle(double x, double y, double z, int num_pol, double bbox_x, double bbox_y,
+ConvexHullsOfCurve createStaticObstacle(double x, double y, double z, int num_seg, double bbox_x, double bbox_y,
                                         double bbox_z)
 {
   ConvexHullsOfCurve hulls_curve;
@@ -44,7 +44,7 @@ ConvexHullsOfCurve createStaticObstacle(double x, double y, double z, int num_po
 
   CGAL_Polyhedron_3 hull_interval = convexHullOfPoints(points);
 
-  for (int i = 0; i < num_pol; i++)
+  for (int i = 0; i < num_seg; i++)
   {
     hulls_curve.push_back(hull_interval);  // static obstacle
   }
@@ -105,10 +105,10 @@ visualization_msgs::Marker getMarker(Eigen::Vector3d& center, double bbox_x, dou
 }
 
 ConvexHullsOfCurve createDynamicObstacle(std::vector<visualization_msgs::MarkerArray>& ma_vector, double x, double y,
-                                         double z, int num_pol, double bbox_x, double bbox_y, double bbox_z,
+                                         double z, int num_seg, double bbox_x, double bbox_y, double bbox_z,
                                          double t_min, double t_max)
 {
-  double time_per_interval = (t_max - t_min) / num_pol;
+  double time_per_interval = (t_max - t_min) / num_seg;
   double time_discretization = 0.01;
 
   ConvexHullsOfCurve hulls_curve;
@@ -117,7 +117,7 @@ ConvexHullsOfCurve createDynamicObstacle(std::vector<visualization_msgs::MarkerA
   // ma.markers.clear();
 
   int j = 0;
-  for (int interval_index = 0; interval_index < num_pol; interval_index++)
+  for (int interval_index = 0; interval_index < num_seg; interval_index++)
   {
     std::vector<Point_3> points_interval;
 
@@ -172,10 +172,10 @@ int main(int argc, char** argv)
   std::vector<ros::Publisher> traj_obstacle_colored_pubs;
   std::vector<ros::Publisher> best_trajectory_found_intervals_pubs;
 
-  int num_pol = 7;
-  int deg_pol = 3;
+  int num_seg = 7;
+  int deg_pos = 3;
 
-  for (int i = 0; i < num_pol; i++)
+  for (int i = 0; i < num_seg; i++)
   {
     ros::Publisher tmp =
         nh.advertise<visualization_msgs::MarkerArray>("/traj_obstacle_colored_int_" + std::to_string(i), 1, true);
@@ -239,18 +239,18 @@ int main(int argc, char** argv)
 
   std::vector<visualization_msgs::MarkerArray> ma_vector;
 
-  // ConvexHullsOfCurve hulls_curve = createStaticObstacle(0.0, 0.0, bbox_z / 2.0, num_pol, bbox_x, bbox_y, bbox_z);
+  // ConvexHullsOfCurve hulls_curve = createStaticObstacle(0.0, 0.0, bbox_z / 2.0, num_seg, bbox_x, bbox_y, bbox_z);
   ConvexHullsOfCurve hulls_curve =
-      createDynamicObstacle(ma_vector, 0.0, 0.0, bbox_z / 2.0, num_pol, bbox_x, bbox_y, bbox_z, t_min, t_max);
+      createDynamicObstacle(ma_vector, 0.0, 0.0, bbox_z / 2.0, num_seg, bbox_x, bbox_y, bbox_z, t_min, t_max);
   hulls_curves.push_back(hulls_curve);  // only one obstacle
 
   for (int i = 1; i <= num_of_obs_up; i++)
   {
     ConvexHullsOfCurve hulls_curve =
-        createStaticObstacle(0.0, i * (bbox_y + separation), 0.0, num_pol, bbox_x, bbox_y, bbox_z);
+        createStaticObstacle(0.0, i * (bbox_y + separation), 0.0, num_seg, bbox_x, bbox_y, bbox_z);
     hulls_curves.push_back(hulls_curve);  // only one obstacle
 
-    hulls_curve = createStaticObstacle(0.0, -i * (bbox_y + separation), 0.0, num_pol, bbox_x, bbox_y, bbox_z);
+    hulls_curve = createStaticObstacle(0.0, -i * (bbox_y + separation), 0.0, num_seg, bbox_x, bbox_y, bbox_z);
     hulls_curves.push_back(hulls_curve);  // only one obstacle
   }
 
@@ -264,7 +264,7 @@ int main(int argc, char** argv)
   ConvexHullsOfCurves_Std hulls_std = vectorGCALPol2vectorStdEigen(hulls_curves);
   // vec_E<Polyhedron<3>> jps_poly = vectorGCALPol2vectorJPSPol(hulls_curves);
 
-  for (int i = 0; i < num_pol; i++)
+  for (int i = 0; i < num_seg; i++)
   {
     ConvexHullsOfCurve tmp2;
     ConvexHullsOfCurves tmp;
@@ -289,14 +289,14 @@ int main(int argc, char** argv)
   // hull.push_back(Eigen::Vector3d(1.0, -1.0, -700.0));
 
   // Assummes static obstacle
-  /*  for (int i = 0; i < num_pol; i++)
+  /*  for (int i = 0; i < num_seg; i++)
     {
       hulls_curve.push_back(hull);
     }
 
     hulls_curves.push_back(hulls_curve);*/
 
-  OctopusSearch myAStarSolver(basis, num_pol, deg_pol, alpha_shrink);
+  OctopusSearch myAStarSolver(basis, num_seg, deg_pos, alpha_shrink);
   myAStarSolver.setUp(t_min, t_max, hulls_std);
 
   myAStarSolver.setq0q1q2(q0, q1, q2);
@@ -359,8 +359,8 @@ int main(int argc, char** argv)
   marker_array_best_traj = trajectory2ColoredMarkerArray(best_traj_found, v_max.maxCoeff(), increm_best,
                                                          "traj" + std::to_string(j), scale, "time", 0, 1);
 
-  double entries_per_interval = marker_array_best_traj.markers.size() / num_pol;
-  for (int i = 0; i < num_pol; i++)
+  double entries_per_interval = marker_array_best_traj.markers.size() / num_seg;
+  for (int i = 0; i < num_seg; i++)
   {
     std::vector<visualization_msgs::Marker> tmp(                                 /////////
         marker_array_best_traj.markers.begin() + i * entries_per_interval,       /////////

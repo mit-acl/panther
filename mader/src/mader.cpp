@@ -39,43 +39,39 @@ Mader::Mader(mt::parameters par) : par_(par)
   changeDroneStatus(DroneStatus::GOAL_REACHED);
   resetInitialization();
 
-  par_solver par_for_solver;
+  // par_solver par_for_solver;
 
-  par_for_solver.x_min = par_.x_min;
-  par_for_solver.x_max = par_.x_max;
+  // par_for_solver.x_min = par_.x_min;
+  // par_for_solver.x_max = par_.x_max;
 
-  par_for_solver.y_min = par_.y_min;
-  par_for_solver.y_max = par_.y_max;
+  // par_for_solver.y_min = par_.y_min;
+  // par_for_solver.y_max = par_.y_max;
 
-  par_for_solver.z_min = par_.z_ground;
-  par_for_solver.z_max = par_.z_max;
+  // par_for_solver.z_min = par_.z_min;
+  // par_for_solver.z_max = par_.z_max;
 
-  par_for_solver.Ra = par_.Ra;
-  par_for_solver.v_max = par_.v_max;
-  par_for_solver.a_max = par_.a_max;
-  par_for_solver.ydot_max = par_.ydot_max;
-  par_for_solver.dc = par_.dc;
-  par_for_solver.dist_to_use_straight_guess = par_.goal_radius;
-  par_for_solver.a_star_samp_x = par_.a_star_samp_x;
-  par_for_solver.a_star_samp_y = par_.a_star_samp_y;
-  par_for_solver.a_star_samp_z = par_.a_star_samp_z;
-  par_for_solver.a_star_fraction_voxel_size = par_.a_star_fraction_voxel_size;
-  par_for_solver.num_pol = par_.num_pol;
-  par_for_solver.deg_pol = par_.deg_pol;
-  par_for_solver.weight = par_.weight;
-  par_for_solver.epsilon_tol_constraints = par_.epsilon_tol_constraints;
-  par_for_solver.xtol_rel = par_.xtol_rel;
-  par_for_solver.ftol_rel = par_.ftol_rel;
-  par_for_solver.solver = par_.solver;
-  par_for_solver.basis = par_.basis;
-  par_for_solver.a_star_bias = par_.a_star_bias;
-  par_for_solver.allow_infeasible_guess = par_.allow_infeasible_guess;
-  par_for_solver.alpha_shrink = par_.alpha_shrink;
+  // par_for_solver.Ra = par_.Ra;
+  // par_for_solver.v_max = par_.v_max;
+  // par_for_solver.a_max = par_.a_max;
+  // par_for_solver.ydot_max = par_.ydot_max;
+  // par_for_solver.dc = par_.dc;
+  // par_for_solver.dist_to_use_straight_guess = par_.goal_radius;
+  // par_for_solver.a_star_samp_x = par_.a_star_samp_x;
+  // par_for_solver.a_star_samp_y = par_.a_star_samp_y;
+  // par_for_solver.a_star_samp_z = par_.a_star_samp_z;
+  // par_for_solver.a_star_fraction_voxel_size = par_.a_star_fraction_voxel_size;
+  // par_for_solver.num_seg = par_.num_seg;
+  // par_for_solver.deg_pos = par_.deg_pos;
 
-  par_for_solver.c_jerk = par_.c_jerk;
-  par_for_solver.c_yaw = par_.c_yaw;
-  par_for_solver.c_vel_isInFOV = par_.c_vel_isInFOV;
-  par_for_solver.c_final_pos = par_.c_final_pos;
+  // par_for_solver.basis = par_.basis;
+  // par_for_solver.a_star_bias = par_.a_star_bias;
+  // par_for_solver.allow_infeasible_guess = par_.allow_infeasible_guess;
+  // par_for_solver.alpha_shrink = par_.alpha_shrink;
+
+  // par_for_solver.c_jerk = par_.c_jerk;
+  // par_for_solver.c_yaw = par_.c_yaw;
+  // par_for_solver.c_vel_isInFOV = par_.c_vel_isInFOV;
+  // par_for_solver.c_final_pos = par_.c_final_pos;
 
   mt::basisConverter basis_converter;
 
@@ -102,7 +98,7 @@ Mader::Mader(mt::parameters par) : par_(par)
 
   // solver_ = new SolverNlopt(par_for_solver);
   // solver_ = new SolverGurobi(par_for_solver);
-  solver_ = new SolverIpopt(par_for_solver);
+  solver_ = new SolverIpopt(par_);
 
   separator_solver_ = new separator::Separator();
 }
@@ -389,8 +385,8 @@ void Mader::removeTrajsThatWillNotAffectMe(const mt::state& A, double t_start, d
     }
     else
     {                                                            // DYNAMIC OBSTACLES/AGENTS
-      double deltaT = (t_end - t_start) / (1.0 * par_.num_pol);  // num_pol is the number of intervals
-      for (int i = 0; i < par_.num_pol; i++)                     // for each interval
+      double deltaT = (t_end - t_start) / (1.0 * par_.num_seg);  // num_seg is the number of intervals
+      for (int i = 0; i < par_.num_seg; i++)                     // for each interval
       {
         std::vector<Eigen::Vector3d> points =
             vertexesOfInterval(traj, t_start + i * deltaT, t_start + (i + 1) * deltaT);
@@ -438,9 +434,9 @@ bool Mader::IsTranslating()
 ConvexHullsOfCurve Mader::convexHullsOfCurve(mt::dynTrajCompiled& traj, double t_start, double t_end)
 {
   ConvexHullsOfCurve convexHulls;
-  double deltaT = (t_end - t_start) / (1.0 * par_.num_pol);  // num_pol is the number of intervals
+  double deltaT = (t_end - t_start) / (1.0 * par_.num_seg);  // num_seg is the number of intervals
 
-  for (int i = 0; i < par_.num_pol; i++)
+  for (int i = 0; i < par_.num_seg; i++)
   {
     convexHulls.push_back(convexHullOfInterval(traj, t_start + i * deltaT, t_start + (i + 1) * deltaT));
   }
@@ -597,8 +593,8 @@ bool Mader::trajsAndPwpAreInCollision(mt::dynTrajCompiled traj, mt::PieceWisePol
   Eigen::Vector3d n_i;
   double d_i;
 
-  double deltaT = (t_end - t_start) / (1.0 * par_.num_pol);  // num_pol is the number of intervals
-  for (int i = 0; i < par_.num_pol; i++)                     // for each interval
+  double deltaT = (t_end - t_start) / (1.0 * par_.num_seg);  // num_seg is the number of intervals
+  for (int i = 0; i < par_.num_seg; i++)                     // for each interval
   {
     // This is my trajectory (no inflation)
     std::vector<Eigen::Vector3d> pointsA =

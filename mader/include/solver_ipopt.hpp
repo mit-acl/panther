@@ -21,7 +21,7 @@
 #include <decomp_geometry/polyhedron.h>  //For Polyhedron  and Hyperplane definition
 #include "separator.hpp"
 #include "octopus_search.hpp"
-#include "solver_params.hpp"
+// #include "solver_params.hpp"
 
 #include <iostream>
 
@@ -30,7 +30,7 @@ typedef MADER_timers::Timer MyTimer;
 class SolverIpopt
 {
 public:
-  SolverIpopt(par_solver &par);
+  SolverIpopt(mt::parameters &par);
 
   ~SolverIpopt();
 
@@ -98,7 +98,7 @@ private:
   std::vector<Eigen::Vector3d> n_;  // Each n_[i] has 3 elements (nx,ny,nz)
   std::vector<double> d_;           // d_[i] has 1 element
 
-  par_solver par_;
+  mt::parameters par_;
 
   mt::PieceWisePol pwp_solution_;
 

@@ -15,7 +15,7 @@
 
 typedef MADER_timers::Timer MyTimer;
 
-ConvexHullsOfCurve createStaticObstacle(double x, double y, double z, int num_pol, double bbox_x, double bbox_y,
+ConvexHullsOfCurve createStaticObstacle(double x, double y, double z, int num_seg, double bbox_x, double bbox_y,
                                         double bbox_z)
 {
   ConvexHullsOfCurve hulls_curve;
@@ -33,7 +33,7 @@ ConvexHullsOfCurve createStaticObstacle(double x, double y, double z, int num_po
 
   CGAL_Polyhedron_3 hull_interval = convexHullOfPoints(points);
 
-  for (int i = 0; i < num_pol; i++)
+  for (int i = 0; i < num_seg; i++)
   {
     hulls_curve.push_back(hull_interval);  // static obstacle
   }
@@ -46,9 +46,9 @@ int main()
   double bbox_x = 0.4;
   double bbox_y = 0.4;
   double bbox_z = 0.4;
-  int num_pol = 4;
+  int num_seg = 4;
 
-  ConvexHullsOfCurve hulls_curve = createStaticObstacle(0.0, 0.0, bbox_z / 2.0, num_pol, bbox_x, bbox_y, bbox_z);
+  ConvexHullsOfCurve hulls_curve = createStaticObstacle(0.0, 0.0, bbox_z / 2.0, num_seg, bbox_x, bbox_y, bbox_z);
   ConvexHullsOfCurves hulls_curves;
   hulls_curves.push_back(hulls_curve);
   ConvexHullsOfCurves_Std hulls_std = vectorGCALPol2vectorStdEigen(hulls_curves);
@@ -62,8 +62,8 @@ int main()
   parameters.a_star_samp_y = 5;
   parameters.a_star_samp_z = 5;
   parameters.a_star_fraction_voxel_size = 0.5;
-  parameters.num_pol = num_pol;
-  parameters.deg_pol = 3;
+  parameters.num_seg = num_seg;
+  parameters.deg_pos = 3;
   parameters.weight = 1.0;
   parameters.epsilon_tol_constraints = 0.001;
   parameters.xtol_rel = 0.0000000000001;
@@ -95,7 +95,7 @@ int main()
   bool converged = snlopt.optimize();
 
   double time_needed = snlopt.getTimeNeeded();
-  double delta = (t_max - t_min) / num_pol;
+  double delta = (t_max - t_min) / num_seg;
 }
 // std::ofstream myfile;
 // myfile.open("/home/jtorde/Desktop/ws/src/mader/mader/src/solvers/nlopt/example.txt");
@@ -106,7 +106,7 @@ int main()
 
 // if (converged)
 // {
-//   myfile << num_pol << ", " << delta << ", " << time_needed << std::endl;
+//   myfile << num_seg << ", " << delta << ", " << time_needed << std::endl;
 // }
 // //  }
 // myfile.close();

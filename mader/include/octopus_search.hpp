@@ -59,7 +59,7 @@ struct matrix_hash : std::unary_function<T, size_t>
 class OctopusSearch
 {
 public:
-  OctopusSearch(std::string basis, int num_pol, int deg_pol, double alpha_shrink);
+  OctopusSearch(std::string basis, int num_seg, int deg_pos, double alpha_shrink);
   void setUp(double t_min, double t_max, const ConvexHullsOfCurves_Std& hulls);
   ~OctopusSearch();
 
@@ -221,7 +221,7 @@ private:
   std::vector<Eigen::Matrix<double, 3, 3>> M_vel_bs2basis_;
   std::vector<Eigen::Matrix<double, 4, 4>> M_pos_bs2basis_inverse_;  // Mbs2basis_
 
-  int num_pol_;
+  int num_seg_;
 
   std::vector<Eigen::Vector3d> result_;
 

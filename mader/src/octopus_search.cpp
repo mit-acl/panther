@@ -23,35 +23,35 @@ int sgn(T val)
   return (T(0) < val) - (val < T(0));
 }
 
-OctopusSearch::OctopusSearch(std::string basis, int num_pol, int deg_pol, double alpha_shrink)
+OctopusSearch::OctopusSearch(std::string basis, int num_seg, int deg_pos, double alpha_shrink)
 {
-  p_ = deg_pol;
-  M_ = num_pol + 2 * p_;
+  p_ = deg_pos;
+  M_ = num_seg + 2 * p_;
   N_ = M_ - p_ - 1;
-  num_pol_ = num_pol;
+  num_seg_ = num_seg;
 
   mt::basisConverter basis_converter;
 
   if (basis == "MINVO")
   {
     // std::cout << green << bold << "A* is using MINVO" << reset << std::endl;
-    M_pos_bs2basis_ = basis_converter.getMinvoPosConverters(num_pol);
-    M_vel_bs2basis_ = basis_converter.getBSplineVelConverters(num_pol);  // getMinvoVelConverters TODO!!
+    M_pos_bs2basis_ = basis_converter.getMinvoPosConverters(num_seg);
+    M_vel_bs2basis_ = basis_converter.getBSplineVelConverters(num_seg);  // getMinvoVelConverters TODO!!
     basis_ = MINVO;
   }
   else if (basis == "BEZIER")
   {
     // std::cout << green << bold << "A* is using BEZIER" << reset << std::endl;
-    M_pos_bs2basis_ = basis_converter.getBezierPosConverters(num_pol);
-    M_vel_bs2basis_ = basis_converter.getBSplineVelConverters(num_pol);  // getBezierVelConverters TODO!!
+    M_pos_bs2basis_ = basis_converter.getBezierPosConverters(num_seg);
+    M_vel_bs2basis_ = basis_converter.getBSplineVelConverters(num_seg);  // getBezierVelConverters TODO!!
     basis_ = BEZIER;
   }
   else if (basis == "B_SPLINE")
   {
     // std::cout << green << bold << "A* is using B_SPLINE" << reset << std::endl;
 
-    M_pos_bs2basis_ = basis_converter.getBSplinePosConverters(num_pol);
-    M_vel_bs2basis_ = basis_converter.getBSplineVelConverters(num_pol);
+    M_pos_bs2basis_ = basis_converter.getBSplinePosConverters(num_seg);
+    M_vel_bs2basis_ = basis_converter.getBSplineVelConverters(num_seg);
 
     basis_ = B_SPLINE;
   }
@@ -125,7 +125,7 @@ void OctopusSearch::setVisual(bool visual)
 void OctopusSearch::getBestTrajFound(mt::trajectory& best_traj_found, mt::PieceWisePol& pwp, double dc)
 {
   mt::trajectory traj;
-  CPs2TrajAndPwp(result_, best_traj_found, pwp, N_, p_, num_pol_, knots_, dc);
+  CPs2TrajAndPwp(result_, best_traj_found, pwp, N_, p_, num_seg_, knots_, dc);
 }
 
 void OctopusSearch::getEdgesConvexHulls(mt::Edges& edges_convex_hulls)
@@ -187,7 +187,7 @@ void OctopusSearch::getAllTrajsFound(std::vector<mt::trajectory>& all_trajs_foun
 
     mt::trajectory traj;
     mt::PieceWisePol pwp;
-    CPs2TrajAndPwp(cps, traj, pwp, N_, p_, num_pol_, knots_, 0.01);  // Last number is the resolution
+    CPs2TrajAndPwp(cps, traj, pwp, N_, p_, num_seg_, knots_, 0.01);  // Last number is the resolution
 
     all_trajs_found.push_back(traj);
   }

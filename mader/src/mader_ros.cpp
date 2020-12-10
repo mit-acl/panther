@@ -16,6 +16,7 @@
 #include <Eigen/Geometry>
 
 #include <jsk_rviz_plugins/OverlayText.h>
+#include <assert.h> /* assert */
 
 typedef MADER_timers::Timer MyTimer;
 
@@ -34,7 +35,6 @@ MaderRos::MaderRos(ros::NodeHandle nh1, ros::NodeHandle nh2, ros::NodeHandle nh3
   safeGetParam(nh1_, "Ra", par_.Ra);
 
   safeGetParam(nh1_, "ydot_max", par_.ydot_max);
-  safeGetParam(nh1_, "alpha_filter_dyaw", par_.alpha_filter_dyaw);
 
   safeGetParam(nh1_, "x_min", par_.x_min);
   safeGetParam(nh1_, "x_max", par_.x_max);
@@ -42,7 +42,7 @@ MaderRos::MaderRos(ros::NodeHandle nh1, ros::NodeHandle nh2, ros::NodeHandle nh3
   safeGetParam(nh1_, "y_min", par_.y_min);
   safeGetParam(nh1_, "y_max", par_.y_max);
 
-  safeGetParam(nh1_, "z_ground", par_.z_ground);
+  safeGetParam(nh1_, "z_min", par_.z_min);
   safeGetParam(nh1_, "z_max", par_.z_max);
 
   std::vector<double> v_max_tmp;
@@ -58,13 +58,10 @@ MaderRos::MaderRos(ros::NodeHandle nh1, ros::NodeHandle nh2, ros::NodeHandle nh3
 
   safeGetParam(nh1_, "factor_alpha", par_.factor_alpha);
 
-  safeGetParam(nh1_, "num_pol", par_.num_pol);
-  safeGetParam(nh1_, "deg_pol", par_.deg_pol);
-  safeGetParam(nh1_, "weight", par_.weight);
-  safeGetParam(nh1_, "epsilon_tol_constraints", par_.epsilon_tol_constraints);
-  safeGetParam(nh1_, "xtol_rel", par_.xtol_rel);
-  safeGetParam(nh1_, "ftol_rel", par_.ftol_rel);
-  safeGetParam(nh1_, "solver", par_.solver);
+  safeGetParam(nh1_, "num_seg", par_.num_seg);
+  safeGetParam(nh1_, "deg_pos", par_.deg_pos);
+  safeGetParam(nh1_, "deg_yaw", par_.deg_yaw);
+  safeGetParam(nh1_, "num_max_of_obst", par_.num_max_of_obst);
 
   safeGetParam(nh1_, "upper_bound_runtime_snlopt", par_.upper_bound_runtime_snlopt);
   safeGetParam(nh1_, "lower_bound_runtime_snlopt", par_.lower_bound_runtime_snlopt);
@@ -98,7 +95,8 @@ MaderRos::MaderRos(ros::NodeHandle nh1, ros::NodeHandle nh2, ros::NodeHandle nh3
   safeGetParam(nh1_, "c_vel_isInFOV", par_.c_vel_isInFOV);
   safeGetParam(nh1_, "c_final_pos", par_.c_final_pos);
 
-  std::cout << "Parameters obtained" << std::endl;
+  // CHECK parameters
+  std::cout << bold << "Parameters obtained, checking them..." << reset << std::endl;
 
   assert((par_.c_jerk >= 0) && "par_.c_jerk>=0 must hold");
   assert((par_.c_yaw >= 0) && "par_.c_yaw>=0 must hold");
@@ -106,57 +104,27 @@ MaderRos::MaderRos(ros::NodeHandle nh1, ros::NodeHandle nh2, ros::NodeHandle nh3
   assert((par_.c_final_pos >= 0) && "par_.c_final_pos>=0 must hold");
 
   assert((par_.ydot_max >= 0) && "ydot_max>=0 must hold");
+  assert((par_.gamma <= 0) && "par_.gamma <= 0 must hold");
+  assert((par_.beta < 0 || par_.alpha < 0) && " ");
+  assert((par_.a_max.z() >= 9.81) && "par_.a_max.z() >= 9.81, the drone will flip");
+  assert((par_.factor_v_max > 1.0 || par_.factor_v_max < 0.0) && "Needed: 0<=factor_v_max<=1");
+  assert((par_.kappa < 0 || par_.mu < 0) && "Needed: kappa and mu > 0");
+  assert(((par_.kappa + par_.mu) > 1) && "Needed: (par_.kappa + par_.mu) <= 1");
+  assert((par_.a_star_fraction_voxel_size < 0.0 || par_.a_star_fraction_voxel_size > 1.0) && "Needed: (par_.kappa + "
+                                                                                             "par_.mu) <= 1");
+  assert((par_.deg_pos == 3) && "MADER needs deg_pos==3");
+  assert((par_.deg_yaw == 2) && "MADER needs deg_yaw==2");
+  assert((par_.num_max_of_obst >= 0) && "num_max_of_obst>=0 must hold");
+  assert((par_.num_seg >= 1) && "num_seg>=1 must hold");
 
-  if (par_.gamma <= 0)
-  {
-    std::cout << bold << red << "gamma should be >0" << std::endl;
-    abort();
-  }
+  assert((par_.fov_horiz_deg >= 0) && "fov_horiz_deg>=0 must hold");
+  assert((par_.fov_vert_deg >= 0) && "fov_vert_deg>=0 must hold");
 
-  if (par_.beta < 0 || par_.alpha < 0)
-  {
-    std::cout << bold << red << "par_.beta < 0 || par_.alpha < 0 don't make sense" << std::endl;
-    abort();
-  }
+  assert((par_.fov_vert_deg == par_.fov_horiz_deg) &&
+         "par_.fov_vert_deg == par_.fov_horiz_deg must hold");  // Remove this if not using FOV
+                                                                // cone
 
-  if (par_.epsilon_tol_constraints > 0.02)
-  {
-    std::cout << bold << red
-              << "The tolerance on the constraints is too big. Note that we are saturating v0 and a0 in snlopt.cpp --> "
-                 "there will be jumps in accel/vel"
-              << std::endl;
-    abort();
-  }
-
-  if (par_.a_max.z() >= 9.81)
-  {
-    std::cout << bold << red << "par_.a_max.z() >= 9.81, the drone will flip" << std::endl;
-    abort();
-  }
-
-  if (par_.factor_v_max > 1.0 || par_.factor_v_max < 0.0)
-  {
-    std::cout << bold << red << "Needed: 0<=factor_v_max<=1  " << reset << std::endl;
-    abort();
-  }
-
-  if (par_.kappa < 0 || par_.mu < 0)
-  {
-    std::cout << bold << red << "Needed: kappa and mu > 0" << reset << std::endl;
-    abort();
-  }
-
-  if ((par_.kappa + par_.mu) > 1)
-  {
-    std::cout << bold << red << "Needed: (par_.kappa + par_.mu) <= 1" << reset << std::endl;
-    abort();
-  }
-
-  if (par_.a_star_fraction_voxel_size < 0.0 || par_.a_star_fraction_voxel_size > 1.0)
-  {
-    std::cout << bold << red << "Needed: 0<=a_star_fraction_voxel_size<=1  " << reset << std::endl;
-    abort();
-  }
+  std::cout << bold << "Parameters checked" << reset << std::endl;
 
   mader_ptr_ = std::unique_ptr<Mader>(new Mader(par_));
 
@@ -404,7 +372,7 @@ void MaderRos::publishPlanes(std::vector<Hyperplane3D>& planes)
   int i = 0;
   for (auto plane_i : planes)
   {
-    if ((i % par_.num_pol) == 0)  // planes for a new obstacle --> new color
+    if ((i % par_.num_seg) == 0)  // planes for a new obstacle --> new color
     {
       color = visual_tools_->getRandColor();  // rviz_visual_tools::TRANSLUCENT_LIGHT;  //
     }
@@ -468,7 +436,7 @@ void MaderRos::stateCB(const snapstack_msgs::State& msg)
     pubActualTraj();
   }
 
-  // publishFOV();
+  publishFOV();
 }
 
 void MaderRos::modeCB(const mader_msgs::Mode& msg)

@@ -21,7 +21,7 @@ void CPs2TrajAndPwp_cleaner(std::vector<Eigen::Vector3d> &qp, std::vector<double
   assert((param_py == 2) && "param_py == 2 not satisfied");  // We are assumming this in the code below
   assert(((knots_p.size() - 1) == (qp.size() - 1) + param_pp + 1) && "M=N+p+1 not satisfied");
 
-  int num_pol = (knots_p.size() - 1) - 2 * param_pp;  // M-2*p
+  int num_seg = (knots_p.size() - 1) - 2 * param_pp;  // M-2*p
 
   // Stack the control points in matrices
   Eigen::Matrix<double, 3, -1> qp_matrix(3, qp.size());
@@ -48,12 +48,12 @@ void CPs2TrajAndPwp_cleaner(std::vector<Eigen::Vector3d> &qp, std::vector<double
 
   pwp_p.clear();
 
-  for (int i = param_pp; i < (param_pp + num_pol + 1); i++)  // i < knots.size() - p
+  for (int i = param_pp; i < (param_pp + num_seg + 1); i++)  // i < knots.size() - p
   {
     pwp_p.times.push_back(knots_p(i));
   }
 
-  for (int j = 0; j < num_pol; j++)
+  for (int j = 0; j < num_seg; j++)
   {
     Eigen::Matrix<double, 4, 1> cps_x = (qp_matrix.block(0, j, 1, 4).transpose());
     Eigen::Matrix<double, 4, 1> cps_y = (qp_matrix.block(1, j, 1, 4).transpose());
@@ -112,7 +112,7 @@ void CPs2TrajAndPwp_cleaner(std::vector<Eigen::Vector3d> &qp, std::vector<double
 // Given the control points, this function returns the associated traj and mt::PieceWisePol
 // Note that if q.size()!=(N+1), then only some of the knots are used
 void CPs2TrajAndPwp(std::vector<Eigen::Vector3d> &q, std::vector<mt::state> &traj, mt::PieceWisePol &pwp, int N, int p,
-                    int num_pol, Eigen::RowVectorXd &knots, double dc)
+                    int num_seg, Eigen::RowVectorXd &knots, double dc)
 {
   // std::cout << "q.size()= " << q.size() << std::endl;
   // std::cout << "N= " << N << std::endl;
@@ -130,7 +130,7 @@ void CPs2TrajAndPwp(std::vector<Eigen::Vector3d> &q, std::vector<mt::state> &tra
 
   int N_effective = q.size() - 1;
   Eigen::RowVectorXd knots_effective = knots.block(0, 0, 1, N_effective + p + 2);
-  int num_effective_pol = (N_effective + 1 - p);  // is not num_pol when q.size()!=N+1
+  int num_effective_pol = (N_effective + 1 - p);  // is not num_seg when q.size()!=N+1
 
   Eigen::MatrixXd control_points(3, N_effective + 1);
 

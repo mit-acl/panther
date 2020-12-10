@@ -29,13 +29,13 @@ using namespace termcolor;
 
 SolverGurobi::SolverGurobi(par_sgurobi &par)
 {
-  deg_pol_ = par.deg_pol;
-  num_pol_ = par.num_pol;
+  deg_pos_ = par.deg_pos;
+  num_seg_ = par.num_seg;
 
-  p_ = deg_pol_;
-  M_ = num_pol_ + 2 * p_;
+  p_ = deg_pos_;
+  M_ = num_seg_ + 2 * p_;
   N_ = M_ - p_ - 1;
-  num_of_segments_ = (M_ - 2 * p_);  // this is the same as num_pol_
+  num_of_segments_ = (M_ - 2 * p_);  // this is the same as num_seg_
 
   ///////////////////////////////////////
   ///////////////////////////////////////
@@ -103,7 +103,7 @@ SolverGurobi::SolverGurobi(par_sgurobi &par)
 
   separator_solver_ = new separator::Separator();
 
-  octopusSolver_ = new OctopusSearch(par.basis, num_pol_, deg_pol_, par.alpha_shrink);
+  octopusSolver_ = new OctopusSearch(par.basis, num_seg_, deg_pos_, par.alpha_shrink);
 }
 
 SolverGurobi::~SolverGurobi()
@@ -2002,7 +2002,7 @@ bool SolverGurobi::optimize()
      reset
               << std::endl;*/
 
-  CPs2TrajAndPwp(q, traj_solution_, solution_, N_, p_, num_pol_, knots_, dc_);
+  CPs2TrajAndPwp(q, traj_solution_, solution_, N_, p_, num_seg_, knots_, dc_);
   ///////////////
 
   ///////////////For debugging

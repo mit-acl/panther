@@ -40,15 +40,15 @@ struct SolverIpopt::PImpl
   casadi::Function casadi_function_;
 };
 
-SolverIpopt::SolverIpopt(par_solver &par)
+SolverIpopt::SolverIpopt(mt::parameters &par)
 {
   par_ = par;
 
   // All these values are for the position spline
-  p_ = par_.deg_pol;
-  M_ = par_.num_pol + 2 * p_;
+  p_ = par_.deg_pos;
+  M_ = par_.num_seg + 2 * p_;
   N_ = M_ - p_ - 1;
-  num_of_segments_ = (M_ - 2 * p_);  // this is the same as par_.num_pol
+  // num_seg = (M_ - 2 * p_);  // this is the same as par_.num_seg
   ///////////////////////////////////////
 
   mt::basisConverter basis_converter;
@@ -56,20 +56,20 @@ SolverIpopt::SolverIpopt(par_solver &par)
   if (par_.basis == "MINVO")
   {
     basis_ = MINVO;
-    M_pos_bs2basis_ = basis_converter.getMinvoPosConverters(num_of_segments_);
-    M_vel_bs2basis_ = basis_converter.getMinvoVelConverters(num_of_segments_);
+    M_pos_bs2basis_ = basis_converter.getMinvoPosConverters(par_.num_seg);
+    M_vel_bs2basis_ = basis_converter.getMinvoVelConverters(par_.num_seg);
   }
   else if (par_.basis == "BEZIER")
   {
     basis_ = BEZIER;
-    M_pos_bs2basis_ = basis_converter.getBezierPosConverters(num_of_segments_);
-    M_vel_bs2basis_ = basis_converter.getBezierVelConverters(num_of_segments_);
+    M_pos_bs2basis_ = basis_converter.getBezierPosConverters(par_.num_seg);
+    M_vel_bs2basis_ = basis_converter.getBezierVelConverters(par_.num_seg);
   }
   else if (par_.basis == "B_SPLINE")
   {
     basis_ = B_SPLINE;
-    M_pos_bs2basis_ = basis_converter.getBSplinePosConverters(num_of_segments_);
-    M_vel_bs2basis_ = basis_converter.getBSplineVelConverters(num_of_segments_);
+    M_pos_bs2basis_ = basis_converter.getBSplinePosConverters(par_.num_seg);
+    M_vel_bs2basis_ = basis_converter.getBSplineVelConverters(par_.num_seg);
   }
   else
   {
@@ -84,7 +84,7 @@ SolverIpopt::SolverIpopt(par_solver &par)
   // // TODO: if C++14, use std::make_unique instead
   separator_solver_ptr_ = std::unique_ptr<separator::Separator>(new separator::Separator());
   octopusSolver_ptr_ =
-      std::unique_ptr<OctopusSearch>(new OctopusSearch(par_.basis, par_.num_pol, par_.deg_pol, par_.alpha_shrink));
+      std::unique_ptr<OctopusSearch>(new OctopusSearch(par_.basis, par_.num_seg, par_.deg_pos, par_.alpha_shrink));
 
   // hack
 
@@ -133,7 +133,7 @@ void SolverIpopt::setHulls(ConvexHullsOfCurves_Std &hulls)
   hulls_.clear();
   hulls_ = hulls;
   num_of_obst_ = hulls_.size();
-  num_of_normals_ = num_of_segments_ * num_of_obst_;
+  num_of_normals_ = par_.num_seg * num_of_obst_;
 }
 
 //////////////////////////////////////////////////////////
@@ -327,7 +327,7 @@ bool SolverIpopt::optimize()
   auto eigen2std = [](Eigen::Vector3d &v) { return std::vector<double>{ v.x(), v.y(), v.z() }; };
 
   std::map<std::string, casadi::DM> map_arguments;
-  map_arguments["theta_FOV_deg"] = 80.0;  // TODO: as a parameter
+  map_arguments["theta_FOV_deg"] = par_.fov_vert_deg;  // TODO: decide between cone/tetrahedron
   map_arguments["p0"] = eigen2std(initial_state_.pos);
   map_arguments["v0"] = eigen2std(initial_state_.vel);
   map_arguments["a0"] = eigen2std(initial_state_.accel);
@@ -352,14 +352,13 @@ bool SolverIpopt::optimize()
 
   std::cout << "Total time= " << (t_final_ - t_init_) << std::endl;
 
-  int tmp_num_of_obstacles_casadi = 10;
-  int tmp_num_of_planes = tmp_num_of_obstacles_casadi * num_of_segments_;
+  int max_num_of_planes = par_.num_max_of_obst * par_.num_seg;
 
-  assert((n_guess_.size() <= tmp_num_of_planes) && "the casadi function does not support so many planes");
+  assert((n_guess_.size() <= max_num_of_planes) && "the casadi function does not support so many planes");
 
-  //  casadi::DM all_nd(casadi::Sparsity::dense(4, tmp_num_of_planes));  // TODO: do this just once
+  //  casadi::DM all_nd(casadi::Sparsity::dense(4, max_num_of_planes));  // TODO: do this just once
 
-  casadi::DM all_nd(casadi::DM::zeros(4, tmp_num_of_planes));  // TODO: do this just once
+  casadi::DM all_nd(casadi::DM::zeros(4, max_num_of_planes));  // TODO: do this just once
   for (int i = 0; i < n_guess_.size(); i++)
   {
     // Casadi needs the plane equation as n_casadi'x+d_casadi<=0
@@ -478,9 +477,9 @@ void SolverIpopt::fillPlanesFromNDQ(const std::vector<Eigen::Vector3d> &n, const
 
   for (int obst_index = 0; obst_index < num_of_obst_; obst_index++)
   {
-    for (int i = 0; i < num_of_segments_; i++)
+    for (int i = 0; i < par_.num_seg; i++)
     {
-      int ip = obst_index * num_of_segments_ + i;  // index plane
+      int ip = obst_index * par_.num_seg + i;  // index plane
       Eigen::Vector3d centroid_hull;
       findCentroidHull(hulls_[obst_index][i], centroid_hull);
 
