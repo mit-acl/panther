@@ -119,7 +119,7 @@ opti.subject_to( sy.getVelT(t0)== ydot0_scaled );
 % opti.subject_to( sp.getPosT(tf)== pf );
 opti.subject_to( sp.getVelT(tf)== vf_scaled );
 opti.subject_to( sp.getAccelT(tf)== af_scaled );
-opti.subject_to( sy.getVelT(tf)==ydotf_scaled)
+opti.subject_to( sy.getVelT(tf)==ydotf_scaled)' % Needed: if not (and if you are minimizing ddyaw), ddyaw=cte --> yaw will explode
 
 %Plane constraints
 epsilon=1;
