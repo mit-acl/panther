@@ -14,6 +14,8 @@
 #include <vector>
 #include <fstream>
 
+#include <ros/package.h>  //TODO: remove this ros dependency
+
 using namespace termcolor;
 
 struct SolverIpopt::PImpl
@@ -68,15 +70,17 @@ SolverIpopt::SolverIpopt(par_solver &par)
       std::unique_ptr<OctopusSearch>(new OctopusSearch(par_.basis, par_.num_pol, par_.deg_pol, par_.alpha_shrink));
 
   // hack
-  std::fstream myfile("/home/jtorde/Desktop/ws/src/mader/mader/matlab/index_instruction.txt", std::ios_base::in);
+
+  std::fstream myfile(ros::package::getPath("mader") + "/matlab/index_instruction.txt",
+                      std::ios_base::in);  // TODO: remove this ros dependency
   myfile >> index_instruction_;
   std::cout << "index_instruction_= " << index_instruction_ << std::endl;
   /// end of hack
 
   m_casadi_ptr_ = std::unique_ptr<PImpl>(new PImpl());
 
-  m_casadi_ptr_->casadi_function_ = casadi::Function::load("/home/jtorde/Desktop/ws/src/mader/mader/matlab/"
-                                                           "my_function.casadi");
+  m_casadi_ptr_->casadi_function_ = casadi::Function::load(ros::package::getPath("mader") + "/matlab/"
+                                                                                            "my_function.casadi");
 }
 
 SolverIpopt::~SolverIpopt()
