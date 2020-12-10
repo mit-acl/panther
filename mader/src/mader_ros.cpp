@@ -93,7 +93,17 @@ MaderRos::MaderRos(ros::NodeHandle nh1, ros::NodeHandle nh2, ros::NodeHandle nh3
   safeGetParam(nh1_, "fov_vert_deg", par_.fov_vert_deg);
   safeGetParam(nh1_, "fov_depth", par_.fov_depth);
 
+  safeGetParam(nh1_, "c_jerk", par_.c_jerk);
+  safeGetParam(nh1_, "c_yaw", par_.c_yaw);
+  safeGetParam(nh1_, "c_vel_isInFOV", par_.c_vel_isInFOV);
+  safeGetParam(nh1_, "c_final_pos", par_.c_final_pos);
+
   std::cout << "Parameters obtained" << std::endl;
+
+  assert((par_.c_jerk >= 0) && "par_.c_jerk>=0 must hold");
+  assert((par_.c_yaw >= 0) && "par_.c_yaw>=0 must hold");
+  assert((par_.c_vel_isInFOV >= 0) && "par_.c_vel_isInFOV>=0 must hold");
+  assert((par_.c_final_pos >= 0) && "par_.c_final_pos>=0 must hold");
 
   if (par_.gamma <= 0)
   {

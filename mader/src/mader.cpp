@@ -71,6 +71,11 @@ Mader::Mader(mt::parameters par) : par_(par)
   par_for_solver.allow_infeasible_guess = par_.allow_infeasible_guess;
   par_for_solver.alpha_shrink = par_.alpha_shrink;
 
+  par_for_solver.c_jerk = par_.c_jerk;
+  par_for_solver.c_yaw = par_.c_yaw;
+  par_for_solver.c_vel_isInFOV = par_.c_vel_isInFOV;
+  par_for_solver.c_final_pos = par_.c_final_pos;
+
   mt::basisConverter basis_converter;
 
   if (par.basis == "MINVO")

@@ -321,10 +321,10 @@ bool SolverIpopt::optimize()
   map_arguments["a_max"] = eigen2std(par_.a_max);
   map_arguments["total_time"] = (t_final_ - t_init_);
   map_arguments["all_w_fe"] = casadi::DM::ones(3, 15);
-  map_arguments["c_jerk"] = 1.0;
-  map_arguments["c_yaw"] = 0.000001;
-  map_arguments["c_vel_isInFOV"] = 0.0;
-  map_arguments["c_final_pos"] = 0.2;
+  map_arguments["c_jerk"] = par_.c_jerk;
+  map_arguments["c_yaw"] = par_.c_yaw;
+  map_arguments["c_vel_isInFOV"] = par_.c_vel_isInFOV;
+  map_arguments["c_final_pos"] = par_.c_final_pos;
 
   std::cout << "Total time= " << (t_final_ - t_init_) << std::endl;
 

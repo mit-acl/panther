@@ -35,6 +35,12 @@ struct par_solver
   double Ra;
 
   double alpha_shrink;
+
+  // weights
+  double c_jerk;
+  double c_yaw;
+  double c_vel_isInFOV;
+  double c_final_pos;
 };
 
 #endif

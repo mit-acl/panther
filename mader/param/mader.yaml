@@ -57,6 +57,12 @@ solver: "LD_MMA"
 #  // crash://LD_TNEWTON_PRECOND_RESTART //LD_TNEWTON_RESTART //LD_TNEWTON_PRECOND //LD_VAR1  //LD_LBFGS_NOCEDAL //
 # //COBYLA
 
+#Parameters for Casadi
+c_jerk: 1.0
+c_yaw: 0.000001
+c_vel_isInFOV: 0.0
+c_final_pos: 0.2
+
 # kappa + mu <=1 Ideally kappa + mu<1 (so that there is time for other stuff)
 upper_bound_runtime_snlopt: 0.35 #[seconds] snlopt (init guess + solver) will never take longer than this amount of seconds
 lower_bound_runtime_snlopt: 0.05 #[seconds] snlopt (init guess + solver) will never take less than this amount of seconds

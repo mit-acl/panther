@@ -649,6 +649,12 @@ struct parameters
   double alpha = 0.0;
   double beta = 0.0;
   double gamma = 0.5;
+
+  // weights
+  double c_jerk = 1.0;
+  double c_yaw = 0.0;
+  double c_vel_isInFOV = 0.0;
+  double c_final_pos = 100.0;
 };
 
 struct committedTrajectory
