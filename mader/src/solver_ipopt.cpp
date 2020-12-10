@@ -130,7 +130,7 @@ bool SolverIpopt::setInitStateFinalStateInitTFinalT(mt::state initial_state, mt:
 
   // here we saturate the value to ensure it is within the limits
   // the reason for this is the epsilon_tol_constraints (in the previous iteration, it may be slightly unfeasible)
-  saturate(v0, -par_.v_max, par_.v_max);
+  saturate(v0, -par_.v_max, par_.v_max);  // TODO: but this changes are not reflected in initial_state_
   saturate(a0, -par_.a_max, par_.a_max);
   saturate(vf, -par_.v_max, par_.v_max);
   saturate(af, -par_.a_max, par_.a_max);
@@ -355,8 +355,8 @@ bool SolverIpopt::optimize()
   qy_guess_.clear();  // THIS SHOULD GO IN THE OCTOPUS SEARCH?
   for (int i = 0; i < 6; i++)
   {
-    qy_guess_.push_back(rand());
-  }  // THIS SHOULD GO IN THE OCTOPUS SEARCH?
+    qy_guess_.push_back(initial_state_.yaw);  // rand()
+  }                                           // THIS SHOULD GO IN THE OCTOPUS SEARCH?
 
   casadi::DM matrix_qy_guess(casadi::Sparsity::dense(1, 6));  // TODO: do this just once
   for (int i = 0; i < matrix_qy_guess.columns(); i++)
@@ -395,11 +395,12 @@ bool SolverIpopt::optimize()
   }
   else
   {
-    std::cout << red << "IPOPT failed to find a solution, using initial guess (which is feasible)" << reset
-              << std::endl;
+    std::cout << red << "IPOPT failed to find a solution" << reset
+              << std::endl;  //, using initial guess (which is feasible)
     qp = qp_guess_;
     qy = qy_guess_;  // TODO: I need to make sure that this is feasible as well!! (both in position, in velocity and in
-                     // initial/final conditions)
+                     // initial/final conditions). For now, let's return false until I fix this.
+    return false;
   }
 
   ///////////////// PRINT SOLUTION

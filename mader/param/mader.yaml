@@ -60,7 +60,7 @@ solver: "LD_MMA"
 #Parameters for Casadi
 c_jerk: 0.0
 c_yaw: 0.00001
-c_vel_isInFOV: 100.0
+c_vel_isInFOV: 1.0
 c_final_pos: 20
 
 # kappa + mu <=1 Ideally kappa + mu<1 (so that there is time for other stuff)
