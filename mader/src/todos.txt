@@ -2,7 +2,7 @@
 En este repo:
 	Make sure qyaw_guess is feasible (because I commit to it when ipopt doesn't find a solution)
 	Improve the way qyaw_guess is generated
-	
+	max_runtime_casadi
 
 
 En el orginial MADER repo:
