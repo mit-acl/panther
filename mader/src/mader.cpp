@@ -710,7 +710,7 @@ bool Mader::replan(mt::Edges& edges_obstacles_out, std::vector<mt::state>& X_saf
       (drone_status_ == DroneStatus::GOAL_SEEN))
   {
     // std::cout << "No replanning needed because" << std::endl;
-    // print_status();
+    // printDroneStatus();
     return false;
   }
 
@@ -967,9 +967,14 @@ void Mader::resetInitialization()
 
 bool Mader::getNextGoal(mt::state& next_goal)
 {
-  if (initializedStateAndTermGoal() == false || (drone_status_ == DroneStatus::GOAL_REACHED && plan_.size() == 1))
+  if (initializedStateAndTermGoal() == false)  // || (drone_status_ == DroneStatus::GOAL_REACHED && plan_.size() == 1))
+                                               // TODO: if included this part commented out, the last state (which is
+                                               // the one that has zero accel) will never get published
   {
     // std::cout << "Not publishing new goal!!" << std::endl;
+    // std::cout << "plan_.size() ==" << plan_.size() << std::endl;
+    // std::cout << "plan_.content[0] ==" << std::endl;
+    // plan_.content[0].print();
     return false;
   }
 
@@ -1041,7 +1046,7 @@ void Mader::changeDroneStatus(int new_status)
   drone_status_ = new_status;
 }
 
-void Mader::print_status()
+void Mader::printDroneStatus()
 {
   switch (drone_status_)
   {

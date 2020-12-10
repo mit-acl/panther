@@ -454,6 +454,12 @@ bool SolverIpopt::optimize()
   traj_solution_.back().accel = final_state_.accel;
   traj_solution_.back().jerk = Eigen::Vector3d::Zero();
 
+  // std::cout << bold << red << "traj_solution_.[-2].accel= " << traj_solution_.end()[-2].accel.transpose() << reset
+  //           << std::endl;
+
+  // std::cout << bold << red << "traj_solution_.back().accel= " << traj_solution_.back().accel.transpose() << reset
+  //           << std::endl;
+
   // Uncomment the following line if you wanna visualize the planes
   // fillPlanesFromNDQ(n_, d_, q);  // TODO: move this outside the SolverIpopt class
 

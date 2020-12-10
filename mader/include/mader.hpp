@@ -91,7 +91,7 @@ private:
   bool initialized();
   bool initializedAllExceptPlanner();
 
-  void print_status();
+  void printDroneStatus();
 
   mt::parameters par_;
 
