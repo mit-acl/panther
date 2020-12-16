@@ -62,6 +62,7 @@ MaderRos::MaderRos(ros::NodeHandle nh1, ros::NodeHandle nh2, ros::NodeHandle nh3
   safeGetParam(nh1_, "deg_pos", par_.deg_pos);
   safeGetParam(nh1_, "deg_yaw", par_.deg_yaw);
   safeGetParam(nh1_, "num_max_of_obst", par_.num_max_of_obst);
+  safeGetParam(nh1_, "num_samples_simpson", par_.num_samples_simpson);
 
   safeGetParam(nh1_, "upper_bound_runtime_snlopt", par_.upper_bound_runtime_snlopt);
   safeGetParam(nh1_, "lower_bound_runtime_snlopt", par_.lower_bound_runtime_snlopt);

@@ -150,6 +150,7 @@ void Mader::updateTrajObstacles(mt::dynTraj traj)
     have_received_trajectories_while_checking_ = true;
   }
 
+  // std::cout << red << bold << "in  updateTrajObstacles(), waiting to lock mtx_trajs_" << reset << std::endl;
   mtx_trajs_.lock();
 
   std::vector<mt::dynTrajCompiled>::iterator obs_ptr =
@@ -221,6 +222,7 @@ void Mader::updateTrajObstacles(mt::dynTraj traj)
   }
 
   mtx_trajs_.unlock();
+  // std::cout << red << bold << "in updateTrajObstacles(), mtx_trajs_ unlocked" << reset << std::endl;
 
   have_received_trajectories_while_checking_ = false;
   // std::cout << bold << blue << "updateTrajObstacles took " << tmp_t << reset << std::endl;
@@ -454,6 +456,40 @@ ConvexHullsOfCurves Mader::convexHullsOfCurves(double t_start, double t_end)
   }
 
   return result;
+}
+
+std::vector<Eigen::Vector3d> Mader::sampleFeaturePositions(double t_start, double t_end)
+{
+  std::vector<Eigen::Vector3d> samples;
+
+  // std::cout << red << bold << "in sampleFeaturePositions, waiting to lock mtx_trajs_" << reset << std::endl;
+  mtx_trajs_.lock();
+  // std::cout << red << bold << "in sampleFeaturePositions, waiting to lock t_" << reset << std::endl;
+  mtx_t_.lock();
+
+  double delta = (t_end - t_start) / par_.num_samples_simpson;
+
+  for (int i = 0; i < par_.num_samples_simpson; i++)
+  {
+    t_ = t_start + i * delta;  // which is constant along the trajectory
+
+    if (trajs_.size() > 0)
+    {  // take the trajectory of the first obstacle for now
+      samples.push_back(Eigen::Vector3d(trajs_[0].function[0].value(),  ////////////
+                                        trajs_[0].function[1].value(),  ////////////
+                                        trajs_[0].function[2].value()));
+    }
+    else
+    {
+      samples.push_back(Eigen::Vector3d::Ones());
+    }
+  }
+  mtx_t_.unlock();
+  // std::cout << red << bold << "in sampleFeaturePositions, mtx_t_ unlocked" << reset << std::endl;
+  mtx_trajs_.unlock();
+  // std::cout << red << bold << "in sampleFeaturePositions, mtx_trajs_ unlocked" << reset << std::endl;
+
+  return samples;
 }
 
 void Mader::setTerminalGoal(mt::state& term_goal)
@@ -728,7 +764,7 @@ bool Mader::replan(mt::Edges& edges_obstacles_out, std::vector<mt::state>& X_saf
   mtx_plan_.lock();
 
   saturate(deltaT_, par_.lower_bound_runtime_snlopt / par_.dc, par_.upper_bound_runtime_snlopt / par_.dc);
-  
+
   k_index_end = std::max((int)(plan_.size() - deltaT_), 0);
 
   if (plan_.size() < 5)
@@ -823,18 +859,21 @@ bool Mader::replan(mt::Edges& edges_obstacles_out, std::vector<mt::state>& X_saf
 
   ////////////////
 
+  // std::cout << red << bold << "in replan(), waiting to lock mtx_trajs_" << reset << std::endl;
   mtx_trajs_.lock();
 
   time_init_opt_ = ros::Time::now().toSec();
   removeTrajsThatWillNotAffectMe(A, t_start, t_final);
   ConvexHullsOfCurves hulls = convexHullsOfCurves(t_start, t_final);
   mtx_trajs_.unlock();
+  // std::cout << red << bold << "in replan(), mtx_trajs_ unlocked" << reset << std::endl;
 
   ConvexHullsOfCurves_Std hulls_std = vectorGCALPol2vectorStdEigen(hulls);
   // poly_safe_out = vectorGCALPol2vectorJPSPol(hulls);
   edges_obstacles_out = vectorGCALPol2edges(hulls);
 
   solver_->setHulls(hulls_std);
+  solver_->setSimpsonFeatureSamples(sampleFeaturePositions(t_start, t_final));
 
   //////////////////////
   std::cout << on_cyan << bold << "Solved so far" << solutions_found_ << "/" << total_replannings_ << reset
@@ -872,9 +911,13 @@ bool Mader::replan(mt::Edges& edges_obstacles_out, std::vector<mt::state>& X_saf
   solver_->getSolution(pwp_now);
 
   MyTimer check_t(true);
+
+  // std::cout << red << bold << "before safetyCheckAfterOpt(), waiting to lock mtx_trajs_" << reset << std::endl;
   mtx_trajs_.lock();
   bool is_safe_after_opt = safetyCheckAfterOpt(pwp_now);
   mtx_trajs_.unlock();
+  // std::cout << red << bold << "before safetyCheckAfterOpt(), mtx_trajs_ unlocked" << reset << std::endl;
+
   // std::cout << bold << "Check Timer=" << check_t << std::endl;
 
   if (is_safe_after_opt == false)

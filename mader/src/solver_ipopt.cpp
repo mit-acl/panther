@@ -38,6 +38,7 @@ using namespace termcolor;
 struct SolverIpopt::PImpl
 {
   casadi::Function casadi_function_;
+  casadi::DM all_w_fe_;
 };
 
 SolverIpopt::SolverIpopt(mt::parameters &par)
@@ -100,6 +101,8 @@ SolverIpopt::SolverIpopt(mt::parameters &par)
 
   m_casadi_ptr_->casadi_function_ = casadi::Function::load(ros::package::getPath("mader") + "/matlab/"
                                                                                             "my_function.casadi");
+
+  m_casadi_ptr_->all_w_fe_ = casadi::DM::rand(3, par_.num_samples_simpson);
 }
 
 SolverIpopt::~SolverIpopt()
@@ -137,6 +140,17 @@ void SolverIpopt::setHulls(ConvexHullsOfCurves_Std &hulls)
 }
 
 //////////////////////////////////////////////////////////
+
+void SolverIpopt::setSimpsonFeatureSamples(const std::vector<Eigen::Vector3d> &samples)
+{
+  assert(samples.size() == par_.num_samples_simpson);
+  for (int i = 0; i < samples.size(); i++)
+  {
+    m_casadi_ptr_->all_w_fe_(0, i) = samples[i].x();
+    m_casadi_ptr_->all_w_fe_(1, i) = samples[i].y();
+    m_casadi_ptr_->all_w_fe_(2, i) = samples[i].z();
+  }
+}
 
 // Note that t_final will be updated in case the saturation in deltaT_ has had effect
 bool SolverIpopt::setInitStateFinalStateInitTFinalT(mt::state initial_state, mt::state final_state, double t_init,
@@ -344,7 +358,9 @@ bool SolverIpopt::optimize()
   map_arguments["a_max"] = eigen2std(par_.a_max);
   map_arguments["ydot_max"] = par_.ydot_max;
   map_arguments["total_time"] = (t_final_ - t_init_);
-  map_arguments["all_w_fe"] = casadi::DM::ones(3, 15);
+  // all_w_fe is a matrix whose columns are the positions of the feature (in world frame) in the times [t0,t0+XX,
+  // ...,tf-XX, tf] (i.e. uniformly distributed and including t0 and tf)
+  map_arguments["all_w_fe"] = m_casadi_ptr_->all_w_fe_;
   map_arguments["c_jerk"] = par_.c_jerk;
   map_arguments["c_yaw"] = par_.c_yaw;
   map_arguments["c_vel_isInFOV"] = par_.c_vel_isInFOV;

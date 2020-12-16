@@ -9,8 +9,6 @@
 #ifndef SOLVER_IPOPT_HPP
 #define SOLVER_IPOPT_HPP
 
-//#include <casadi/casadi.hpp>
-
 #include <Eigen/Dense>
 #include <Eigen/StdVector>
 
@@ -41,6 +39,7 @@ public:
   bool setInitStateFinalStateInitTFinalT(mt::state initial_state, mt::state final_state, double t_init,
                                          double &t_final);
   void setHulls(ConvexHullsOfCurves_Std &hulls);
+  void setSimpsonFeatureSamples(const std::vector<Eigen::Vector3d> &samples);
 
   mt::trajectory traj_solution_;
 

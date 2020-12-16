@@ -25,9 +25,8 @@ deg_pos=3;
 deg_yaw=2;
 num_seg =4; %number of segments
 num_max_of_obst=10; %This is the maximum num of the obstacles 
+num_samples_simpson=15;
 
-
-num_eval_simpson=15;
 t0=0;
 tf=10.5;
 
@@ -72,7 +71,7 @@ for i=1:(num_max_of_obst*num_seg)
 end
 
 %%%% Positions of the feature in the times [t0,t0+XX, ...,tf-XX, tf] (i.e. uniformly distributed and including t0 and tf)
-for i=1:num_eval_simpson
+for i=1:num_samples_simpson
     w_fe{i}=opti.parameter(3,1);
 end
 
@@ -200,7 +199,7 @@ vel_im_cost=0;
 vel_isInFOV_im_cost=0;
 
 clear i
-t_simpson=linspace(t0,tf,num_eval_simpson);
+t_simpson=linspace(t0,tf,num_samples_simpson);
 delta_simpson=(t_simpson(2)-t_simpson(1));
 
 
@@ -301,7 +300,7 @@ for j=1:sp.num_seg
     for u_i=u_simpson{j}
                 
         
-        simpson_coeff=getSimpsonCoeff(simpson_index,num_eval_simpson);
+        simpson_coeff=getSimpsonCoeff(simpson_index,num_samples_simpson);
         
 
         dist_im_cost=dist_im_cost               + (delta_simpson/3.0)*simpson_coeff*substitute(    substitute(f_dist_im{j},u,u_i),     w_fevar, w_fe{simpson_index});
@@ -360,7 +359,7 @@ for i=1:(num_max_of_obst*num_seg)
 end
 
 all_w_fe=[]; %all the positions of the feature, as a matrix. Each column is the position of the feature at each simpson sampling point
-for i=1:num_eval_simpson
+for i=1:num_samples_simpson
     all_w_fe=[all_w_fe w_fe{i}];
 end
 
@@ -377,7 +376,7 @@ a_max_value=5*ones(3,1);
 ydot_max_value=1.0; 
 total_time=10.5;
 theta_FOV_deg_value=80;
-for i=1:num_eval_simpson
+for i=1:num_samples_simpson
     w_fe_value{i}=[1 1 1]';
 end
                            
@@ -423,8 +422,7 @@ fprintf(my_file,'deg_pos: %d\n',deg_pos);
 fprintf(my_file,'deg_yaw: %d\n',deg_yaw);
 fprintf(my_file,'num_seg: %d\n',num_seg);
 fprintf(my_file,'num_max_of_obst: %d\n',num_max_of_obst);
-
-
+fprintf(my_file,'num_samples_simpson: %d\n',num_samples_simpson);
 
 sp.updateCPsWithSolution(full(sol.all_pCPs))
 sy.updateCPsWithSolution(full(sol.all_yCPs))
@@ -470,7 +468,7 @@ sy.updateCPsWithSolution(full(sol.all_yCPs))
 % end
 % 
 % %Positions of the feature
-% for i=1:num_eval_simpson
+% for i=1:num_samples_simpson
 %     opti.set_value(w_fe{i}, [1 1 1]');
 % end
 % 
@@ -531,7 +529,7 @@ for t_i=t_simpson %t0:0.3:tf
 
 end
 
-for i=1:num_eval_simpson
+for i=1:num_samples_simpson
     plotSphere(w_fe_value{i},0.2,'g');
 end
 

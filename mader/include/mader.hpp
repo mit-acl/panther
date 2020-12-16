@@ -93,6 +93,8 @@ private:
 
   void printDroneStatus();
 
+  std::vector<Eigen::Vector3d> sampleFeaturePositions(double t_start, double t_end);
+
   mt::parameters par_;
 
   double t_;  // variable where the expressions of the trajs of the dyn obs are evaluated

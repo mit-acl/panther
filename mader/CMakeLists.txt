@@ -18,7 +18,7 @@ find_package(CASADI REQUIRED)
 include_directories( ${CASADI_INCLUDE_DIR} )
 
 #From terminal: catkin config -DCMAKE_BUILD_TYPE=Release (or RelWithDebInfo) or Debug
-set(CMAKE_BUILD_TYPE Release) 
+set(CMAKE_BUILD_TYPE RelWithDebInfo) 
 
 find_package(catkin REQUIRED COMPONENTS 
 	roscpp

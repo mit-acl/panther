@@ -620,6 +620,7 @@ struct parameters
   int deg_pos;
   int deg_yaw;
   int num_max_of_obst;
+  int num_samples_simpson;
 
   double upper_bound_runtime_snlopt;
   double lower_bound_runtime_snlopt;
