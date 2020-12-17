@@ -16,8 +16,6 @@ addpath(genpath('./more_utils'));
 
 opti = casadi.Opti();
 
-
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%% CONSTANTS! %%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -276,41 +274,41 @@ for j=1:sp.num_seg
 
       %%%%%%%%%%%%%%%%%%
     %Simpler version:
-%     gamma=100;
-%     w_beta=w_fevar(1:3)-w_T_c(1:3,4);
-%     w_beta=w_beta/norm(w_beta);
-%     is_in_FOV1=-cos(thetax_half_FOV_deg*pi/180.0)+w_beta'*w_T_c(1:3,3); %This has to be >=0
-%     isInFOV_smooth=  (   1/(1+exp(-gamma*is_in_FOV1))  );
-%     target_isInFOV_im{j}=isInFOV_smooth;
-% 
-%     %Costs (all of them following the convention of "minimize" )
-%     f_vel_im{j}=(s_dot'*s_dot);
-%     f_dist_im{j}=(s'*s); %I wanna minimize the integral of this function. Approx. using Sympson's Rule
-%     f_vel_isInFOV_im{j}=-(target_isInFOV_im{j}) /(offset_vel+f_vel_im{j});
+    gamma=100;
+    w_beta=w_fevar(1:3)-w_T_c(1:3,4);
+    w_beta=w_beta/norm(w_beta);
+    is_in_FOV1=-cos(thetax_half_FOV_deg*pi/180.0)+w_beta'*w_T_c(1:3,3); %This has to be >=0
+    isInFOV_smooth=  (   1/(1+exp(-gamma*is_in_FOV1))  );
+    target_isInFOV_im{j}=isInFOV_smooth;
+
+    %Costs (all of them following the convention of "minimize" )
+    f_vel_im{j}=(s_dot'*s_dot);
+    f_dist_im{j}=(s'*s); %I wanna minimize the integral of this function. Approx. using Sympson's Rule
+    f_vel_isInFOV_im{j}=-(target_isInFOV_im{j}) /(offset_vel+f_vel_im{j});
     %End of simpler version
       %%%%%%%%%%%%%%%%%%
 
 %     %%%%%%%%%%%%%%%%%%%
-    %%Yet another version
-    gamma=20;
-%     sth2=(sin(theta_half_FOV_rad))^2;
-%     cth2=(cos(theta_half_FOV_rad))^2;
-    tthx2=(tan(thetax_half_FOV_rad))^2;
-    tthy2=(tan(thetay_half_FOV_rad))^2;
-    
-    xx{j}=c_P(1); yy{j}=c_P(2); zz{j}=c_P(3);
-    x=c_P(1);y=c_P(2); z=c_P(3);  s=0.95;
-    is_in_FOV1{j}=-(    (x^2)/tthx2  +  (y^2)/tthy2   -(s^2)*(x^2)*(y^2) -(z^4)     ); %(if this quantity is >=0). Squicular cone, see section 15.4 of https://arxiv.org/pdf/1604.02174.pdf 
-                                                                                     % Note that  a^2=tan^2(theta_half_x)     b^2=tan^2(theta_half_y)      c=1  
-    is_in_FOV2{j}=z; %(and this quantity is >=0) 
-    isInFOV_smooth=  (   1/(1+exp(-gamma*is_in_FOV1{j}))  )*(   1/(1+exp(-gamma*is_in_FOV2{j}))  );
-    target_isInFOV_im{j}=isInFOV_smooth; 
-    
-    %Costs (all of them following the convention of "minimize" )
-    f_vel_im{j}=(s_dot'*s_dot);
-    f_dist_im{j}=(s'*s); %I wanna minimize the integral of this funcion. Approx. using symp. Rule
-    f_vel_isInFOV_im{j}=-(target_isInFOV_im{j}) /(offset_vel+f_vel_im{j});
-    %%End of version 3
+%     %%Yet another version
+%     gamma=20;
+% %     sth2=(sin(theta_half_FOV_rad))^2;
+% %     cth2=(cos(theta_half_FOV_rad))^2;
+%     tthx2=(tan(thetax_half_FOV_rad))^2;
+%     tthy2=(tan(thetay_half_FOV_rad))^2;
+%     
+%     xx{j}=c_P(1); yy{j}=c_P(2); zz{j}=c_P(3);
+%     x=c_P(1);y=c_P(2); z=c_P(3);  s=0.95;
+%     is_in_FOV1{j}=-(    (x^2)*(z^2)/tthx2  +  (y^2)*(z^2)/tthy2   -(s^2)*(x^2)*(y^2) -(z^4)     ); %(if this quantity is >=0). Squicular cone, see section 15.4 of https://arxiv.org/pdf/1604.02174.pdf 
+%                                                                                      % Note that  a^2=tan^2(theta_half_x)     b^2=tan^2(theta_half_y)      c=1  
+%     is_in_FOV2{j}=z; %(and this quantity is >=0) 
+%     isInFOV_smooth=  (   1/(1+exp(-gamma*is_in_FOV1{j}))  )*(   1/(1+exp(-gamma*is_in_FOV2{j}))  );
+%     target_isInFOV_im{j}=isInFOV_smooth; 
+%     
+%     %Costs (all of them following the convention of "minimize" )
+%     f_vel_im{j}=(s_dot'*s_dot);
+%     f_dist_im{j}=(s'*s); %I wanna minimize the integral of this funcion. Approx. using symp. Rule
+%     f_vel_isInFOV_im{j}=-(target_isInFOV_im{j}) /(offset_vel+f_vel_im{j});
+%     %%End of version 3
 %     %%%%%%%%%%%%%%%%%%%
     
     span_interval=sp.timeSpanOfInterval(j);
