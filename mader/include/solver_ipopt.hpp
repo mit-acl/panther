@@ -107,6 +107,8 @@ private:
   int M_;
   int N_;
 
+  int Ny_;
+
   double index_instruction_;  // hack
 
   int num_of_normals_;

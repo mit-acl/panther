@@ -49,6 +49,8 @@ SolverIpopt::SolverIpopt(mt::parameters &par)
   p_ = par_.deg_pos;
   M_ = par_.num_seg + 2 * p_;
   N_ = M_ - p_ - 1;
+
+  Ny_ = (par_.num_seg + par_.deg_yaw - 1);
   // num_seg = (M_ - 2 * p_);  // this is the same as par_.num_seg
   ///////////////////////////////////////
 
@@ -341,7 +343,8 @@ bool SolverIpopt::optimize()
   auto eigen2std = [](Eigen::Vector3d &v) { return std::vector<double>{ v.x(), v.y(), v.z() }; };
 
   std::map<std::string, casadi::DM> map_arguments;
-  map_arguments["theta_FOV_deg"] = par_.fov_vert_deg;  // TODO: decide between cone/tetrahedron
+  map_arguments["thetax_FOV_deg"] = par_.fov_x_deg;
+  map_arguments["thetay_FOV_deg"] = par_.fov_y_deg;
   map_arguments["p0"] = eigen2std(initial_state_.pos);
   map_arguments["v0"] = eigen2std(initial_state_.vel);
   map_arguments["a0"] = eigen2std(initial_state_.accel);
@@ -400,12 +403,14 @@ bool SolverIpopt::optimize()
 
   ///////////////// GUESS FOR YAW CONTROL POINTS
   qy_guess_.clear();  // THIS SHOULD GO IN THE OCTOPUS SEARCH?
-  for (int i = 0; i < 6; i++)
+  for (int i = 0; i < (Ny_ + 1); i++)
   {
     qy_guess_.push_back(initial_state_.yaw);  // rand()
   }                                           // THIS SHOULD GO IN THE OCTOPUS SEARCH?
 
-  casadi::DM matrix_qy_guess(casadi::Sparsity::dense(1, 6));  // TODO: do this just once
+  std::cout << bold << red << "par_.num_seg= " << par_.num_seg << reset << std::endl;
+
+  casadi::DM matrix_qy_guess(casadi::Sparsity::dense(1, (Ny_ + 1)));  // TODO: do this just once
   for (int i = 0; i < matrix_qy_guess.columns(); i++)
   {
     matrix_qy_guess(0, i) = qy_guess_[i];

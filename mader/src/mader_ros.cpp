@@ -87,8 +87,8 @@ MaderRos::MaderRos(ros::NodeHandle nh1, ros::NodeHandle nh2, ros::NodeHandle nh3
 
   safeGetParam(nh1_, "alpha_shrink", par_.alpha_shrink);
 
-  safeGetParam(nh1_, "fov_horiz_deg", par_.fov_horiz_deg);
-  safeGetParam(nh1_, "fov_vert_deg", par_.fov_vert_deg);
+  safeGetParam(nh1_, "fov_x_deg", par_.fov_x_deg);
+  safeGetParam(nh1_, "fov_y_deg", par_.fov_y_deg);
   safeGetParam(nh1_, "fov_depth", par_.fov_depth);
 
   safeGetParam(nh1_, "c_jerk", par_.c_jerk);
@@ -118,12 +118,12 @@ MaderRos::MaderRos(ros::NodeHandle nh1, ros::NodeHandle nh2, ros::NodeHandle nh3
   assert((par_.num_max_of_obst >= 0) && "num_max_of_obst>=0 must hold");
   assert((par_.num_seg >= 1) && "num_seg>=1 must hold");
 
-  assert((par_.fov_horiz_deg >= 0) && "fov_horiz_deg>=0 must hold");
-  assert((par_.fov_vert_deg >= 0) && "fov_vert_deg>=0 must hold");
+  assert((par_.fov_x_deg >= 0) && "fov_x_deg>=0 must hold");
+  assert((par_.fov_y_deg >= 0) && "fov_y_deg>=0 must hold");
 
-  assert((par_.fov_vert_deg == par_.fov_horiz_deg) &&
-         "par_.fov_vert_deg == par_.fov_horiz_deg must hold");  // Remove this if not using FOV
-                                                                // cone
+  assert((par_.fov_y_deg == par_.fov_x_deg) && "par_.fov_y_deg == par_.fov_x_deg must hold");  // Remove this if
+                                                                                               // not using FOV
+                                                                                               // cone
 
   std::cout << bold << "Parameters checked" << reset << std::endl;
 
@@ -233,8 +233,8 @@ void MaderRos::trajCB(const mader_msgs::DynTraj& msg)
   //   // check if it's inside the field of view.
   //   can_use_its_info =
   //       B_pos.x() < par_.fov_depth &&                                                       //////////////////////
-  //       fabs(atan2(B_pos.y(), B_pos.x())) < ((par_.fov_horiz_deg * M_PI / 180.0) / 2.0) &&  //////////////////////
-  //       fabs(atan2(B_pos.z(), B_pos.x())) < ((par_.fov_vert_deg * M_PI / 180.0) / 2.0);     ///////////////////////
+  //       fabs(atan2(B_pos.y(), B_pos.x())) < ((par_.fov_x_deg * M_PI / 180.0) / 2.0) &&  //////////////////////
+  //       fabs(atan2(B_pos.z(), B_pos.x())) < ((par_.fov_y_deg * M_PI / 180.0) / 2.0);     ///////////////////////
 
   //   // std::cout << "inFOV= " << can_use_its_info << std::endl;
   // }
@@ -668,8 +668,8 @@ void MaderRos::publishFOV()
   marker_fov.action = marker_fov.ADD;
   marker_fov.pose = identityGeometryMsgsPose();
 
-  double delta_y = par_.fov_depth * fabs(tan((par_.fov_horiz_deg * M_PI / 180) / 2.0));
-  double delta_z = par_.fov_depth * fabs(tan((par_.fov_vert_deg * M_PI / 180) / 2.0));
+  double delta_y = par_.fov_depth * fabs(tan((par_.fov_x_deg * M_PI / 180) / 2.0));
+  double delta_z = par_.fov_depth * fabs(tan((par_.fov_y_deg * M_PI / 180) / 2.0));
 
   geometry_msgs::Point v0 = eigen2point(Eigen::Vector3d(0.0, 0.0, 0.0));
   geometry_msgs::Point v1 = eigen2point(Eigen::Vector3d(par_.fov_depth, delta_y, -delta_z));

@@ -33,8 +33,6 @@ tf=10.5;
 dim_pos=3;
 dim_yaw=1;
 
-beta1=100;
-beta2=100;
 offset_vel=0.1;
 
 %Transformation matrix camera/body b_T_c
@@ -54,8 +52,14 @@ c_final_pos = opti.parameter(1,1);
 % c_costs.dist_im_cost=         opti.parameter(1,1);
 
 
-theta_FOV_deg=opti.parameter(1,1);    %total angle of the cone
-theta_half_FOV_deg=theta_FOV_deg/2.0; %half of the angle of the cone
+thetax_FOV_deg=opti.parameter(1,1);    %total angle of the FOV in the x direction
+thetay_FOV_deg=opti.parameter(1,1);    %total angle of the FOV in the y direction
+
+thetax_half_FOV_deg=thetax_FOV_deg/2.0; %half of the angle of the cone
+thetax_half_FOV_rad=thetax_half_FOV_deg*pi/180.0;
+
+thetay_half_FOV_deg=thetay_FOV_deg/2.0; %half of the angle of the cone
+thetay_half_FOV_rad=thetay_half_FOV_deg*pi/180.0;
 
 %%%%% Initial and final conditions
 p0=opti.parameter(3,1); v0=opti.parameter(3,1); a0=opti.parameter(3,1);
@@ -253,32 +257,61 @@ for j=1:sp.num_seg
     
     % See https://en.wikipedia.org/wiki/Cone#Equation_form:~:text=In%20implicit%20form%2C%20the%20same%20solid%20is%20defined%20by%20the%20inequalities
 
-      %%One possible version:
+    %%%%%%%%%%%%%%%%%%%
+%     %One possible version:
+%       gamma1=100; gamma2=100;
 %     xx{j}=c_P(1); yy{j}=c_P(2); zz{j}=c_P(3);
 %     x=c_P(1);y=c_P(2); z=c_P(3);
-%     is_in_FOV1{j}=-((x^2+y^2)*(cosd(theta_half_FOV_deg))^2 -(z^2)*(sind(theta_half_FOV_deg))^2); %(if this quantity is >=0)
+%     is_in_FOV1{j}=-((x^2+y^2)*(cos(theta_half_FOV_deg*pi/180.0))^2 -(z^2)*(sin(theta_half_FOV_deg*pi/180.0))^2); %(if this quantity is >=0)
 %     is_in_FOV2{j}=c_P(3); %(and this quantity is >=0)
-%     isInFOV_smooth=  (   1/(1+exp(-beta1*is_in_FOV1{j}))  )*(   1/(1+exp(-beta2*is_in_FOV2{j}))  );
+%     isInFOV_smooth=  (   1/(1+exp(-gamma1*is_in_FOV1{j}))  )*(   1/(1+exp(-gamma2*is_in_FOV2{j}))  );
 %     target_isInFOV_im{j}=isInFOV_smooth; %/(0.1+f_vel_im{n})
 %     
 %     %Costs (all of them following the convention of "minimize" )
 %     f_vel_im{j}=(s_dot'*s_dot);
 %     f_dist_im{j}=(s'*s); %I wanna minimize the integral of this funcion. Approx. using symp. Rule
 %     f_vel_isInFOV_im{j}=-(target_isInFOV_im{j}) /(offset_vel+f_vel_im{j});
-      %%End of one possible version
+%       %End of one possible version
+      %%%%%%%%%%%%%%%%%%%
 
+      %%%%%%%%%%%%%%%%%%
     %Simpler version:
-    w_beta=w_fevar(1:3)-w_T_c(1:3,4);
-    w_beta=w_beta/norm(w_beta);
-    is_in_FOV1=-cos(theta_half_FOV_deg*3.14159/180.0)+w_beta'*w_T_c(1:3,3); %This has to be >=0
-    isInFOV_smooth=  (   1/(1+exp(-beta1*is_in_FOV1))  );
-    target_isInFOV_im{j}=isInFOV_smooth;
+%     gamma=100;
+%     w_beta=w_fevar(1:3)-w_T_c(1:3,4);
+%     w_beta=w_beta/norm(w_beta);
+%     is_in_FOV1=-cos(thetax_half_FOV_deg*pi/180.0)+w_beta'*w_T_c(1:3,3); %This has to be >=0
+%     isInFOV_smooth=  (   1/(1+exp(-gamma*is_in_FOV1))  );
+%     target_isInFOV_im{j}=isInFOV_smooth;
+% 
+%     %Costs (all of them following the convention of "minimize" )
+%     f_vel_im{j}=(s_dot'*s_dot);
+%     f_dist_im{j}=(s'*s); %I wanna minimize the integral of this function. Approx. using Sympson's Rule
+%     f_vel_isInFOV_im{j}=-(target_isInFOV_im{j}) /(offset_vel+f_vel_im{j});
+    %End of simpler version
+      %%%%%%%%%%%%%%%%%%
 
+%     %%%%%%%%%%%%%%%%%%%
+    %%Yet another version
+    gamma=20;
+%     sth2=(sin(theta_half_FOV_rad))^2;
+%     cth2=(cos(theta_half_FOV_rad))^2;
+    tthx2=(tan(thetax_half_FOV_rad))^2;
+    tthy2=(tan(thetay_half_FOV_rad))^2;
+    
+    xx{j}=c_P(1); yy{j}=c_P(2); zz{j}=c_P(3);
+    x=c_P(1);y=c_P(2); z=c_P(3);  s=0.95;
+    is_in_FOV1{j}=-(    (x^2)/tthx2  +  (y^2)/tthy2   -(s^2)*(x^2)*(y^2) -(z^4)     ); %(if this quantity is >=0). Squicular cone, see section 15.4 of https://arxiv.org/pdf/1604.02174.pdf 
+                                                                                     % Note that  a^2=tan^2(theta_half_x)     b^2=tan^2(theta_half_y)      c=1  
+    is_in_FOV2{j}=z; %(and this quantity is >=0) 
+    isInFOV_smooth=  (   1/(1+exp(-gamma*is_in_FOV1{j}))  )*(   1/(1+exp(-gamma*is_in_FOV2{j}))  );
+    target_isInFOV_im{j}=isInFOV_smooth; 
+    
     %Costs (all of them following the convention of "minimize" )
     f_vel_im{j}=(s_dot'*s_dot);
-    f_dist_im{j}=(s'*s); %I wanna minimize the integral of this funcion. Approx. using Sympson's Rule
+    f_dist_im{j}=(s'*s); %I wanna minimize the integral of this funcion. Approx. using symp. Rule
     f_vel_isInFOV_im{j}=-(target_isInFOV_im{j}) /(offset_vel+f_vel_im{j});
-    %End of simpler version
+    %%End of version 3
+%     %%%%%%%%%%%%%%%%%%%
     
     span_interval=sp.timeSpanOfInterval(j);
     t_init_interval=min(span_interval);   
@@ -367,22 +400,25 @@ all_pCPs=sp.getCPsAsMatrix();
 all_yCPs=sy.getCPsAsMatrix();
 
 my_function = opti.to_function('mader_casadi_function',...
-    [ {all_pCPs},     {all_yCPs},     {theta_FOV_deg},{p0},{v0},{a0},{pf},{vf},{af},{y0}, {ydot0}, {ydotf}, {v_max}, {a_max}, {ydot_max}, {total_time}, {all_nd}, {all_w_fe}, {c_jerk}, {c_yaw}, {c_vel_isInFOV}, {c_final_pos}], {all_pCPs,all_yCPs},...
-    {'guess_CPs_Pos','guess_CPs_Yaw', 'theta_FOV_deg','p0','v0','a0','pf','vf','af','y0', 'ydot0', 'ydotf', 'v_max', 'a_max', 'ydot_max', 'total_time', 'all_nd', 'all_w_fe', 'c_jerk', 'c_yaw', 'c_vel_isInFOV', 'c_final_pos'}, {'all_pCPs','all_yCPs'}...
+    [ {all_pCPs},     {all_yCPs},     {thetax_FOV_deg},{thetay_FOV_deg},{p0},{v0},{a0},{pf},{vf},{af},{y0}, {ydot0}, {ydotf}, {v_max}, {a_max}, {ydot_max}, {total_time}, {all_nd}, {all_w_fe}, {c_jerk}, {c_yaw}, {c_vel_isInFOV}, {c_final_pos}], {all_pCPs,all_yCPs},...
+    {'guess_CPs_Pos','guess_CPs_Yaw', 'thetax_FOV_deg','thetay_FOV_deg','p0','v0','a0','pf','vf','af','y0', 'ydot0', 'ydotf', 'v_max', 'a_max', 'ydot_max', 'total_time', 'all_nd', 'all_w_fe', 'c_jerk', 'c_yaw', 'c_vel_isInFOV', 'c_final_pos'}, {'all_pCPs','all_yCPs'}...
                                );
 
 v_max_value=1.6*ones(3,1);
 a_max_value=5*ones(3,1);
 ydot_max_value=1.0; 
 total_time=10.5;
-theta_FOV_deg_value=80;
+thetax_FOV_deg_value=80;
+thetay_FOV_deg_value=80;
+
 for i=1:num_samples_simpson
     w_fe_value{i}=[1 1 1]';
 end
                            
-sol=my_function(  'guess_CPs_Pos',rand(size(all_pCPs)), ... 
+sol=my_function(      'guess_CPs_Pos',rand(size(all_pCPs)), ... 
                       'guess_CPs_Yaw',rand(size(all_yCPs)), ... 
-                      'theta_FOV_deg',theta_FOV_deg_value, ...  
+                      'thetax_FOV_deg',thetax_FOV_deg_value, ...  
+                      'thetay_FOV_deg',thetay_FOV_deg_value, ... 
                       'p0',  [-4;0;0], ... 
                       'v0',  [0;0;0], ... 
                       'a0',  [0;0;0], ... 
@@ -525,7 +561,7 @@ for t_i=t_simpson %t0:0.3:tf
     position=w_T_c(1:3,4);
     direction=w_T_c(1:3,3);
     length=1;
-    plotCone(position,direction,theta_FOV_deg_value,length);  %opti.value(theta_FOV_deg)
+    plotCone(position,direction,thetax_FOV_deg_value,length);  %opti.value(theta_FOV_deg) %NOTE THAT WE ARE PLOTTING IT AS A CIRCULAR CONE (in reality is has thetax and thetay, and it is a squircular cone) 
 
 end
 
