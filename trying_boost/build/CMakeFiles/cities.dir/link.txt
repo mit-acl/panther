@@ -1,0 +1,1 @@
+/usr/bin/c++  -std=c++11  -rdynamic CMakeFiles/cities.dir/cities.cpp.o  -o cities -lboost_graph 

@@ -1,0 +1,2 @@
+"Since both semidefinite constraints are given by 2 × 2 matrices, the moment space
+is the intersection of two circular cones"  (taken from http://www.mit.edu/~parrilo/sdocag/SIAMBookFinalvNov12-2012.pdf, page 124)

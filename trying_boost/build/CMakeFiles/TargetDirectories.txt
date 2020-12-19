@@ -1,0 +1,4 @@
+/home/jtorde/Desktop/trying_boost/build/CMakeFiles/rebuild_cache.dir
+/home/jtorde/Desktop/trying_boost/build/CMakeFiles/edit_cache.dir
+/home/jtorde/Desktop/trying_boost/build/CMakeFiles/cities.dir
+/home/jtorde/Desktop/trying_boost/build/CMakeFiles/tests_splines.dir
