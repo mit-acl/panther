@@ -211,6 +211,13 @@ classdef MyClampedUniformSpline < handle
             interv=obj.timeSpanOfInterval(j);
             result=min(interv)+u*(max(interv)-min(interv));
         end
+        
+        %Converts global time (t) to local time (u) 
+        function u=t2u(obj,t)
+            j=obj.getIndexIntervalforT(t);
+            interv=obj.timeSpanOfInterval(j);
+            u=(t-min(interv))/(max(interv)-min(interv));
+        end
 
         function result = evalDerivativeU(obj,order,u,j) %j>=1 is the index of the interval
                                % u \in [0,1] is the time along that interval    

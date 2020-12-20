@@ -7,11 +7,11 @@
 %  * -------------------------------------------------------------------------- */
 
 %% RESULT for 3D for a given curve
-% close all; clear; clc;
-% 
-% addpath(genpath('./utils')); addpath(genpath('./solutions'));
-% interv=[-1,1];
-% syms t real; T3=[t*t*t t*t t 1]';
+close all; clear; clc;
+addpath(genpath('./../submodules/minvo/src/utils'));
+addpath(genpath('./../submodules/minvo/src/solutions'));
+interv=[-1,1];
+syms t real; T3=[t*t*t t*t t 1]';
 % 
 % view1=30; view2=30; figure;  set(gcf, 'Position',  [500, 500, 3000, 1000])
 % 
@@ -131,3 +131,58 @@ zlabel('z')
 
 %%
 fplot3(pol_x_tmp'*T3,pol_y_tmp'*T3,pol_z_tmp'*T3,interv,'r','LineWidth',3);
+
+
+%%
+
+v0=sym('v0',[3,1], 'real')
+v1=sym('v1',[3,1], 'real')
+v2=sym('v2',[3,1], 'real')
+v3=sym('v3',[3,1], 'real')
+
+
+c1 = (v0+v1+v2)/3.0;
+c2 = (v1+v2+v3)/3.0;
+c3 = (v0+v1+v3)/3.0;
+c4 = (v0+v2+v3)/3.0;
+
+det(generateMatrix1(c1))
+
+C1=generateMatrix1(c1);
+C2=generateMatrix1(c2);
+C3=generateMatrix2(c3);
+C4=generateMatrix2(c4);
+
+disp("Going to solve")
+s=solve([simplify(det(C1))==0, simplify(det(C2))==0, simplify(det(C3))==0, simplify(det(C4))==0], symvar([c1;c2;c3;c4]), 'Real', true  )
+
+subs(c1,s)'
+subs(c2,s)'
+subs(c3,s)'
+subs(c4,s)'
+
+
+function result=generateMatrix1(centroid)
+mu0=1;
+mu1=centroid(1);
+mu2=centroid(2);
+mu3=centroid(3);
+
+result=[mu0+mu1 mu1+mu2;
+   mu1+mu2 mu2+mu3];
+
+end
+
+function result=generateMatrix2(centroid)
+mu0=1;
+mu1=centroid(1);
+mu2=centroid(2);
+mu3=centroid(3);
+
+result=[mu0-mu1 mu1-mu2;
+   mu1-mu2 mu2-mu3];
+
+end
+
+
+

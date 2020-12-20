@@ -185,7 +185,6 @@ for j=1:sy.num_seg
     end
 end
 
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%% OBJECTIVE! %%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -206,17 +205,21 @@ delta_simpson=(t_simpson(2)-t_simpson(1));
 
 
 
-u=opti.variable(1,1); %it must be defined outside the loop (so that then I can use substitute it regardless of the interval
-w_fevar=opti.variable(3,1); %it must be defined outside the loop (so that then I can use substitute it regardless of the interval
+u=MX.sym('u',1,1); %it must be defined outside the loop (so that then I can use substitute it regardless of the interval
+w_fevar=MX.sym('w_fevar',3,1); %it must be defined outside the loop (so that then I can use substitute it regardless of the interval
+yaw= MX.sym('yaw',1,1);  
 simpson_index=1;
 simpson_coeffs=[];
 
+all_target_isInFOV=[];
+
+
 for j=1:sp.num_seg
     
-%     syms u real
-    w_t_b{j} = sp.evalDerivativeU(0,u,j); % sp.getPosU(u,j)
+    w_t_b{j} = sp.getPosU(u,j);
     accel = sp.getAccelU(u,j);
-    yaw= sy.getPosU(u,j);
+%     yaw= sy.getPosU(u,j);%%%%%%%%%%%%
+
     qpsi=[cos(yaw/2), 0, 0, sin(yaw/2)]; %Note that qpsi has norm=1
 
     
@@ -238,8 +241,8 @@ for j=1:sp.num_seg
             qpsi(4)*(norm_t+t(3))];
 
     w_R_b=(1/(2*norm_t*(norm_t+t(3))))*toRotMat(q_tmp);
-    %%%%%%
-    
+    %%%%%%    
+   
     
     w_T_b=[w_R_b w_t_b{j}; zeros(1,3) 1];
    
@@ -250,28 +253,28 @@ for j=1:sp.num_seg
     
     c_P=c_T_b*b_T_w*[w_fevar;1]; %Position of the feature in the camera frame
     s=c_P(1:2)/(c_P(3));  
-  
-    s_dot=jacobian(s,u);
     
+
     % See https://en.wikipedia.org/wiki/Cone#Equation_form:~:text=In%20implicit%20form%2C%20the%20same%20solid%20is%20defined%20by%20the%20inequalities
 
     %%%%%%%%%%%%%%%%%%%
 %     %One possible version:
+%     % See https://en.wikipedia.org/wiki/Cone#Equation_form:~:text=In%20implicit%20form%2C%20the%20same%20solid%20is%20defined%20by%20the%20inequalities
 %       gamma1=100; gamma2=100;
 %     xx{j}=c_P(1); yy{j}=c_P(2); zz{j}=c_P(3);
 %     x=c_P(1);y=c_P(2); z=c_P(3);
 %     is_in_FOV1{j}=-((x^2+y^2)*(cos(theta_half_FOV_deg*pi/180.0))^2 -(z^2)*(sin(theta_half_FOV_deg*pi/180.0))^2); %(if this quantity is >=0)
 %     is_in_FOV2{j}=c_P(3); %(and this quantity is >=0)
 %     isInFOV_smooth=  (   1/(1+exp(-gamma1*is_in_FOV1{j}))  )*(   1/(1+exp(-gamma2*is_in_FOV2{j}))  );
-%     target_isInFOV_im{j}=isInFOV_smooth; %/(0.1+f_vel_im{n})
+%     target_isInFOV{j}=isInFOV_smooth; %/(0.1+f_vel_im{n})
 %     
 %     %Costs (all of them following the convention of "minimize" )
 %     f_vel_im{j}=(s_dot'*s_dot);
 %     f_dist_im{j}=(s'*s); %I wanna minimize the integral of this funcion. Approx. using symp. Rule
-%     f_vel_isInFOV_im{j}=-(target_isInFOV_im{j}) /(offset_vel+f_vel_im{j});
+%     f_vel_isInFOV_im{j}=-(target_isInFOV{j}) /(offset_vel+f_vel_im{j});
 %       %End of one possible version
       %%%%%%%%%%%%%%%%%%%
-
+    
       %%%%%%%%%%%%%%%%%%
     %Simpler version:
     gamma=100;
@@ -279,14 +282,23 @@ for j=1:sp.num_seg
     w_beta=w_beta/norm(w_beta);
     is_in_FOV1=-cos(thetax_half_FOV_deg*pi/180.0)+w_beta'*w_T_c(1:3,3); %This has to be >=0
     isInFOV_smooth=  (   1/(1+exp(-gamma*is_in_FOV1))  );
-    target_isInFOV_im{j}=isInFOV_smooth;
-
+    target_isInFOV{j}=isInFOV_smooth; %This one will be used for the graph search in yaw
+    
+    
+    
+    %I need to substitute it here because s_dot should consider also the velocity caused by the fact that yaw=yaw(t)
+    s=substitute(s, yaw, sy.getPosU(u,j));
+    target_isInFOV_substituted_yawcps{j}=substitute(target_isInFOV{j}, yaw, sy.getPosU(u,j));
+    
+    s_dot=jacobian(s,u)*(1/sp.delta_t); % partial_s_partial_u * partial_u_partial_t
     %Costs (all of them following the convention of "minimize" )
     f_vel_im{j}=(s_dot'*s_dot);
     f_dist_im{j}=(s'*s); %I wanna minimize the integral of this function. Approx. using Sympson's Rule
-    f_vel_isInFOV_im{j}=-(target_isInFOV_im{j}) /(offset_vel+f_vel_im{j});
+    f_vel_isInFOV_im{j}=-(target_isInFOV_substituted_yawcps{j}) /(offset_vel+f_vel_im{j});
     %End of simpler version
       %%%%%%%%%%%%%%%%%%
+     
+
 
 %     %%%%%%%%%%%%%%%%%%%
 %     %%Yet another version
@@ -302,12 +314,12 @@ for j=1:sp.num_seg
 %                                                                                      % Note that  a^2=tan^2(theta_half_x)     b^2=tan^2(theta_half_y)      c=1  
 %     is_in_FOV2{j}=z; %(and this quantity is >=0) 
 %     isInFOV_smooth=  (   1/(1+exp(-gamma*is_in_FOV1{j}))  )*(   1/(1+exp(-gamma*is_in_FOV2{j}))  );
-%     target_isInFOV_im{j}=isInFOV_smooth; 
+%     target_isInFOV{j}=isInFOV_smooth; 
 %     
 %     %Costs (all of them following the convention of "minimize" )
 %     f_vel_im{j}=(s_dot'*s_dot);
 %     f_dist_im{j}=(s'*s); %I wanna minimize the integral of this funcion. Approx. using symp. Rule
-%     f_vel_isInFOV_im{j}=-(target_isInFOV_im{j}) /(offset_vel+f_vel_im{j});
+%     f_vel_isInFOV_im{j}=-(target_isInFOV{j}) /(offset_vel+f_vel_im{j});
 %     %%End of version 3
 %     %%%%%%%%%%%%%%%%%%%
     
@@ -326,17 +338,15 @@ for j=1:sp.num_seg
     
     u_simpson{j}=(tsf-t_init_interval)/delta_interval;
 
-    fun1 = Function('fun1',{u},{f_dist_im{j}});
-
+    
     for u_i=u_simpson{j}
                 
-        
         simpson_coeff=getSimpsonCoeff(simpson_index,num_samples_simpson);
         
+       
+        vel_isInFOV_im_cost=vel_isInFOV_im_cost + (delta_simpson/3.0)*simpson_coeff*substitute( f_vel_isInFOV_im{j},[u;w_fevar],[u_i;w_fe{simpson_index}]); 
 
-        dist_im_cost=dist_im_cost               + (delta_simpson/3.0)*simpson_coeff*substitute(    substitute(f_dist_im{j},u,u_i),     w_fevar, w_fe{simpson_index});
-        vel_im_cost=vel_im_cost                 + (delta_simpson/3.0)*simpson_coeff*substitute(    substitute(f_vel_im{j},u,u_i),     w_fevar, w_fe{simpson_index});
-        vel_isInFOV_im_cost=vel_isInFOV_im_cost + (delta_simpson/3.0)*simpson_coeff*substitute(    substitute(f_vel_isInFOV_im{j},u,u_i),     w_fevar, w_fe{simpson_index});
+        all_target_isInFOV=[all_target_isInFOV  substitute(target_isInFOV{j},[u;w_fevar],[u_i;w_fe{simpson_index}])];
         
         simpson_coeffs=[simpson_coeffs simpson_coeff]; %Store simply for debugging. Should be [1 4 2 4 2 ... 4 2 1]
         
@@ -409,12 +419,22 @@ total_time=10.5;
 thetax_FOV_deg_value=80;
 thetay_FOV_deg_value=80;
 
+y0_value=0.0;
+ydot0_value=0.0;
+ydotf_value=0.0;
+
 for i=1:num_samples_simpson
     w_fe_value{i}=[1 1 1]';
 end
-                           
-sol=my_function(      'guess_CPs_Pos',rand(size(all_pCPs)), ... 
-                      'guess_CPs_Yaw',rand(size(all_yCPs)), ... 
+
+tmp1=[   -4.0000   -4.0000   -4.0000    0.7111    3.9997    3.9997    3.9997;
+         0         0         0   -1.8953   -0.0131   -0.0131   -0.0131;
+         0         0         0    0.6275    0.0052    0.0052    0.0052];
+     
+tmp2=[   -0.0000   -0.0000    0.2754    2.1131    2.6791    2.6791];
+
+sol=my_function(      'guess_CPs_Pos',tmp1, ... 
+                      'guess_CPs_Yaw',tmp2, ... 
                       'thetax_FOV_deg',thetax_FOV_deg_value, ...  
                       'thetay_FOV_deg',thetay_FOV_deg_value, ... 
                       'p0',  [-4;0;0], ... 
@@ -423,9 +443,9 @@ sol=my_function(      'guess_CPs_Pos',rand(size(all_pCPs)), ...
                       'pf',  [4;0;0], ... 
                       'vf',  [0;0;0], ... 
                       'af',  [0;0;0], ... 
-                      'y0',  0.0 ,...
-                      'ydot0',  0.0 ,...
-                      'ydotf',  0.0 ,...
+                      'y0',  y0_value ,...
+                      'ydot0',  ydot0_value ,...
+                      'ydotf',  ydotf_value ,...
                       'v_max', v_max_value,...
                       'a_max', a_max_value,...
                       'ydot_max', ydot_max_value,...
@@ -437,16 +457,11 @@ sol=my_function(      'guess_CPs_Pos',rand(size(all_pCPs)), ...
                       'c_final_pos', 100,...
                       'all_nd',  zeros(4,num_max_of_obst*num_seg));
 
-%                       'c_jerk', 0.0,...
-%                       'c_yaw', 0.0,...
-%                       'c_vel_isInFOV', 1.0,...
-%                       'c_final_pos', 100,...
-
 statistics=get_stats(my_function); %See functions defined below
 full(sol.all_pCPs)
 full(sol.all_yCPs)
 
-my_function.save('my_function.casadi') %The file generated is quite big
+my_function.save('solve_opt_problem.casadi') %The file generated is quite big
 
 %Write param file with the characteristics of the casadi function generated
 my_file=fopen('params_casadi.yaml','w'); %Overwrite content. This will clear its content
@@ -458,69 +473,39 @@ fprintf(my_file,'num_seg: %d\n',num_seg);
 fprintf(my_file,'num_max_of_obst: %d\n',num_max_of_obst);
 fprintf(my_file,'num_samples_simpson: %d\n',num_samples_simpson);
 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%% FUNCTION TO GENERATE VISIBILITY AT EACH POINT  %%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+yaw_samples=MX.sym('yaw_samples',1,10); %TODO: 10 is a hand-coded parameter
+
+all_target_isInFOV_for_different_yaw=[];
+for yaw_sample_i=yaw_samples
+    all_target_isInFOV_for_different_yaw=  [all_target_isInFOV_for_different_yaw;
+                                        substitute(all_target_isInFOV, yaw, yaw_sample_i)];  
+end
+
+
+all_pCPs=sp.getCPsAsMatrix();
+g = Function('g',{all_pCPs, all_w_fe, thetax_FOV_deg, thetay_FOV_deg, yaw_samples},{all_target_isInFOV_for_different_yaw},...
+                 {'all_pCPs', 'all_w_fe', 'thetax_FOV_deg', 'thetay_FOV_deg', 'yaw_samples'},{'result'});
+g=g.expand();
+
+g.save('visibility.casadi') %The file generated is quite big
+
+g_result=g('all_pCPs',full(sol.all_pCPs),...
+                         'all_w_fe', cell2mat(w_fe_value),...
+                         'thetax_FOV_deg',thetax_FOV_deg_value,...  
+                         'thetay_FOV_deg',thetay_FOV_deg_value,...
+                         'yaw_samples', linspace(0,2*pi,numel(yaw_samples)));
+full(g_result.result)
+
+
+
+
 sp.updateCPsWithSolution(full(sol.all_pCPs))
 sy.updateCPsWithSolution(full(sol.all_yCPs))
-
-
-% %% EXAMPLE OF CALLING THE PROBLEM DIRECTLY (WITHOUT FUNCTION)
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% %%%%%%%%%%%%%%%%%%%%%%%%%%% INITIAL GUESSES  %%%%%%%%%%%%%%%%%%%
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% 
-% for i=1:sp.num_cpoints
-%     opti.set_initial(sp.CPoints{i}, zeros(3,1)); %Control points
-% end
-% 
-% for i=1:sy.num_cpoints
-%     opti.set_initial(sy.CPoints{i}, zeros(1,1)); %Control points
-% end
-%                     
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% %%%%%%%%%%%%%%%%%% ASSIGNMENT for the parameters %%%%%%%%%%%%%%%
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% opti.set_value(c_jerk, 0.0);
-% opti.set_value(c_yaw, 0.0);
-% opti.set_value(c_vel_isInFOV, 1.0);
-% opti.set_value(c_final_pos, 100);
-% 
-% opti.set_value(theta_FOV_deg, 80);
-% 
-% opti.set_value(p0, [-4;0;0]);
-% opti.set_value(v0, [0;0;0]);
-% opti.set_value(a0, [0;0;0]);
-% 
-% opti.set_value(pf, [4;0;0]);
-% opti.set_value(vf, [0;0;0]);
-% opti.set_value(af, [0;0;0]);
-% 
-% opti.set_value(y0, 0);
-% opti.set_value(ydot0, 0);
-% 
-% for i=1:(num_max_of_obst*num_seg)
-%     opti.set_value(n{i}, rand(3,1));
-%     opti.set_value(d{i}, rand(1,1));
-% end
-% 
-% %Positions of the feature
-% for i=1:num_samples_simpson
-%     opti.set_value(w_fe{i}, [1 1 1]');
-% end
-% 
-% %Max vel and accel
-% opti.set_value(v_max, 1.6*ones(3,1));
-% opti.set_value(a_max, 5*ones(3,1));
-% 
-% opti.set_value(total_time, 10.5);
-% 
-% %%%%%%%%%%%%%%%%%%%%%%%%%%% SOLVE!
-% sol = opti.solve();
-% sp.updateCPsWithSolution(sol)
-% sy.updateCPsWithSolution(sol)
-% 
-% 
-% figure; hold on;
-% semilogy(sol.stats.iterations.inf_du)
-% semilogy(sol.stats.iterations.inf_pr)
 
 %% 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -587,6 +572,7 @@ for j=1:sp.num_seg
 end
 
 
+
 % figure; hold on; 
 % subplot(3,1,1);hold on; title('isInFOV()')
 % subplot(3,1,2); hold on; title('Cost v')
@@ -596,7 +582,7 @@ end
 %     for u_i=u_simpson{j}
 %         t_i=sp.u2t(u_i,j);
 %         subplot(3,1,1);    ylim([0,1]);        
-%         stem(t_i, sol.value(substitute(     substitute(target_isInFOV_im{j},u,u_i)    ,w_fevar, w_fe{simpson_index}  )),'filled','r')
+%         stem(t_i, sol.value(substitute(     substitute(target_isInFOV{j},u,u_i)    ,w_fevar, w_fe{simpson_index}  )),'filled','r')
 %         subplot(3,1,2);
 %         stem(t_i, sol.value(substitute(     substitute(f_vel_im{j},u,u_i)             ,w_fevar, w_fe{simpson_index}  )),'filled','r')
 %         subplot(3,1,3);
@@ -604,6 +590,60 @@ end
 %         simpson_index=simpson_index+1;
 %     end
 % end
+
+%% 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%    FUNCTION TO FIT A SPLINE TO SAMPLES     %%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+sy_tmp=MyClampedUniformSpline(t0,tf,deg_yaw, dim_yaw, num_seg, opti);  %creating another object to not mess up with sy
+
+all_yaw=MX.sym('lambda1',1,numel(t_simpson));
+cost_function=0;
+for i=1:numel(t_simpson)
+    cost_function = cost_function + (sy_tmp.getPosT(t_simpson(i))-all_yaw(i))^2; 
+end
+
+lambda1=MX.sym('lambda1',1,1);
+lambda2=MX.sym('lambda2',1,1);
+lambda3=MX.sym('lambda3',1,1);
+
+c1= sy_tmp.getPosT(t0) - y0; %==0
+c2= sy_tmp.getVelT(t0) - ydot0; %==0
+c3= sy_tmp.getVelT(tf) - ydotf; %==0
+
+lagrangian = cost_function  +  lambda1*c1 + lambda2*c2 + lambda3*c3;
+
+variables=[sy_tmp.getCPsAsMatrix() lambda1 lambda2  lambda3];
+
+kkt_eqs=jacobian(lagrangian, variables)'; %I want kkt=[0 0 ... 0]'
+
+%Obtain A and b
+b=-casadi.substitute(kkt_eqs, variables, zeros(size(variables))); %Note the - sign
+A=jacobian(kkt_eqs, variables);
+
+solution=A\b;  %Solve the system of equations
+
+f= Function('f', {all_yaw, y0, ydot0, ydotf }, {solution(1:end-3)}, ...
+                 {'all_yaw', 'y0', 'ydot0', 'ydotf'}, {'solution'} );
+% f=f.expand();
+all_yaw_value=linspace(0,pi,numel(t_simpson));
+
+
+solution=f(all_yaw_value, y0_value, ydot0_value, ydotf_value);
+sy_tmp=MyClampedUniformSpline(t0,tf,deg_yaw, dim_yaw, num_seg, opti);  %creating another object to not mess up with sy
+sy_tmp.updateCPsWithSolution(full(solution)');
+sy_tmp.plotPosVelAccelJerk();
+subplot(4,1,1); hold on;
+plot(t_simpson, all_yaw_value, 'o')
+
+
+my_function.save('fit_spline_to_samples.casadi') %The file generated is quite big
+
+% solution=convertMX2Matlab(A)\convertMX2Matlab(b);  %Solve the system of equations
+% sy.updateCPsWithSolution(solution(1:end-3)');
+
+%% Functions
 
 %Taken from https://gist.github.com/jgillis/9d12df1994b6fea08eddd0a3f0b0737f
 %See discussion at https://groups.google.com/g/casadi-users/c/1061E0eVAXM/m/dFHpw1CQBgAJ
@@ -629,6 +669,66 @@ function [stats] = get_stats(f)
     stats = dep.stats(1);
   end
 end
+%% 
+% %% EXAMPLE OF CALLING THE PROBLEM DIRECTLY (WITHOUT FUNCTION)
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%% INITIAL GUESSES  %%%%%%%%%%%%%%%%%%%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 
+% for i=1:sp.num_cpoints
+%     opti.set_initial(sp.CPoints{i}, zeros(3,1)); %Control points
+% end
+% 
+% for i=1:sy.num_cpoints
+%     opti.set_initial(sy.CPoints{i}, zeros(1,1)); %Control points
+% end
+%                     
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% %%%%%%%%%%%%%%%%%% ASSIGNMENT for the parameters %%%%%%%%%%%%%%%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% opti.set_value(c_jerk, 0.0);
+% opti.set_value(c_yaw, 0.0);
+% opti.set_value(c_vel_isInFOV, 1.0);
+% opti.set_value(c_final_pos, 100);
+% 
+% opti.set_value(theta_FOV_deg, 80);
+% 
+% opti.set_value(p0, [-4;0;0]);
+% opti.set_value(v0, [0;0;0]);
+% opti.set_value(a0, [0;0;0]);
+% 
+% opti.set_value(pf, [4;0;0]);
+% opti.set_value(vf, [0;0;0]);
+% opti.set_value(af, [0;0;0]);
+% 
+% opti.set_value(y0, 0);
+% opti.set_value(ydot0, 0);
+% 
+% for i=1:(num_max_of_obst*num_seg)
+%     opti.set_value(n{i}, rand(3,1));
+%     opti.set_value(d{i}, rand(1,1));
+% end
+% 
+% %Positions of the feature
+% for i=1:num_samples_simpson
+%     opti.set_value(w_fe{i}, [1 1 1]');
+% end
+% 
+% %Max vel and accel
+% opti.set_value(v_max, 1.6*ones(3,1));
+% opti.set_value(a_max, 5*ones(3,1));
+% 
+% opti.set_value(total_time, 10.5);
+% 
+% %%%%%%%%%%%%%%%%%%%%%%%%%%% SOLVE!
+% sol = opti.solve();
+% sp.updateCPsWithSolution(sol)
+% sy.updateCPsWithSolution(sol)
+% 
+% 
+% figure; hold on;
+% semilogy(sol.stats.iterations.inf_du)
+% semilogy(sol.stats.iterations.inf_pr)
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
