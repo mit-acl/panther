@@ -8,6 +8,7 @@ En este repo:
 	Impose yaw_max in yaw_guess_generator?
 	Read casadi functions only once!!
 	see TODOs in yaw_guess_generator
+	Include the velocity of the obstacle in the cost function!!!
 
 
 
