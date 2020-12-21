@@ -395,13 +395,12 @@ bool SolverIpopt::optimize()
   }
   map_arguments["guess_CPs_Pos"] = matrix_qp_guess;
 
-  ////////////////////////////////TODO: DELETE THIS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  ////////////////////////////////Generate Yaw Guess!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   casadi::DM matrix_qy_guess =
       generateYawGuess(matrix_qp_guess, all_w_fe_, initial_state_.yaw, initial_state_.dyaw, final_state_.dyaw);
   ////////////////////////////////////////////////////////////////////////////////
 
-  // ///////////////// GUESS FOR YAW CONTROL POINTS
-  // qy_guess_.clear();  // THIS SHOULD GO IN THE OCTOPUS SEARCH?
+  // qy_guess_.clear();
   // for (int i = 0; i < (Ny_ + 1); i++)
   // {
   //   qy_guess_.push_back(initial_state_.yaw);  // rand()

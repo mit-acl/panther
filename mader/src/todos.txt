@@ -4,13 +4,15 @@ En este repo:
 	Improve the way qyaw_guess is generated
 	max_runtime_casadi
 	Install good linear solver Ipopt
+	Check everything in yaw_guess_generator works as expected
+	Impose yaw_max in yaw_guess_generator?
+	Read casadi functions only once!!
+	see TODOs in yaw_guess_generator
 
 
-En el orginial MADER repo:
 
-	Change to Release en el CMakeList.txt
-	namespaces
-	mode()
-	std::unique ptr
-	I think I should use remove
-	update last version separator
+
+
+
+
+
