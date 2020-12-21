@@ -38,20 +38,20 @@
 #define BLACK_TRANS 11
 #define TEAL_NORMAL 12
 
-#define STATE 0
-#define INPUT 1
+// #define STATE 0
+// #define INPUT 1
 
-#define POS 0
-#define VEL 1
-#define ACCEL 2
-#define JERK 3
+// #define POS 0
+// #define VEL 1
+// #define ACCEL 2
+// #define JERK 3
 
-#define WHOLE_TRAJ 0
-#define RESCUE_PATH 1
+// #define WHOLE_TRAJ 0
+// #define RESCUE_PATH 1
 
-#define OCCUPIED_SPACE 1
+// #define OCCUPIED_SPACE 1
 
-#define UNKOWN_AND_OCCUPIED_SPACE 2
+// #define UNKOWN_AND_OCCUPIED_SPACE 2
 
 // TODO: put this in a namespace
 

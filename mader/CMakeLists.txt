@@ -14,6 +14,10 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake_finders")
 find_package(CGAL REQUIRED)
 include(${CGAL_USE_FILE})
 
+
+find_package ( Boost COMPONENTS graph REQUIRED )
+include_directories ( ${Boost_INCLUDE_DIR} )
+
 find_package(CASADI REQUIRED)
 include_directories( ${CASADI_INCLUDE_DIR} )
 
@@ -55,9 +59,9 @@ target_include_directories (octopus_search PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(octopus_search PUBLIC ${catkin_LIBRARIES}) # ${CMAKE_CURRENT_LIST_DIR}/src/solvers/cvxgen/cvxgen/libcvx.so
 
 
-add_library(solver_ipopt STATIC src/solver_ipopt.cpp src/bspline_utils.cpp src/solver_ipopt_utils.cpp src/solver_ipopt_guess.cpp)
-target_include_directories (solver_ipopt PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${DECOMP_UTIL_INCLUDE_DIRS})
-target_link_libraries(solver_ipopt PUBLIC ${CASADI_LIBRARIES} ${DECOMP_UTIL_LIBRARIES} utils octopus_search ${catkin_LIBRARIES} cgal_utils)
+add_library(solver_ipopt STATIC src/solver_ipopt.cpp src/bspline_utils.cpp src/solver_ipopt_utils.cpp src/solver_ipopt_guess.cpp src/yaw_guess_generator.cpp)
+target_include_directories (solver_ipopt PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${DECOMP_UTIL_INCLUDE_DIRS} ${Boost_INCLUDE_DIR})
+target_link_libraries(solver_ipopt PUBLIC ${CASADI_LIBRARIES} ${DECOMP_UTIL_LIBRARIES} utils octopus_search ${catkin_LIBRARIES} cgal_utils ${Boost_LIBRARIES} )
 
 # enable_unity_build(UNITY_BUILD_NAME src/mader_node.cpp)
 add_executable(${PROJECT_NAME}_node src/mader_node.cpp src/mader_ros.cpp src/mader.cpp )

@@ -15,6 +15,7 @@
 #include <iomanip>  //set precision
 #include "mader_types.hpp"
 #include "utils.hpp"
+#include <casadi/casadi.hpp>
 #include "timer.hpp"
 #include <decomp_geometry/polyhedron.h>  //For Polyhedron  and Hyperplane definition
 #include "separator.hpp"
@@ -94,6 +95,8 @@ private:
 
   void findCentroidHull(const Polyhedron_Std &hull, Eigen::Vector3d &centroid);
 
+  casadi::DM generateYawGuess(casadi::DM matrix_qp_guess, casadi::DM all_w_fe, double y0, double ydot0, double ydotf);
+
   std::vector<Eigen::Vector3d> n_;  // Each n_[i] has 3 elements (nx,ny,nz)
   std::vector<double> d_;           // d_[i] has 1 element
 
@@ -155,11 +158,20 @@ private:
   std::unique_ptr<separator::Separator> separator_solver_ptr_;
   std::unique_ptr<OctopusSearch> octopusSolver_ptr_;
 
+  casadi::Function casadi_function_;
+  casadi::DM all_w_fe_;
   // PImpl idiom
   // https://www.geeksforgeeks.org/pimpl-idiom-in-c-with-examples/
-  struct PImpl;
-  std::unique_ptr<PImpl> m_casadi_ptr_;  // Opaque pointer
+  // struct PImpl;
+  // std::unique_ptr<PImpl> m_casadi_ptr_;  // Opaque pointer
 
   // double Ra_ = 1e10;
 };
+
+// struct SolverIpopt::PImpl  // TODO: Not use PImpl
+// {
+//   casadi::Function casadi_function_;
+//   casadi::DM all_w_fe_;
+// };
+
 #endif

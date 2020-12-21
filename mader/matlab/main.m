@@ -489,12 +489,12 @@ end
 
 all_pCPs=sp.getCPsAsMatrix();
 g = Function('g',{all_pCPs, all_w_fe, thetax_FOV_deg, thetay_FOV_deg, yaw_samples},{all_target_isInFOV_for_different_yaw},...
-                 {'all_pCPs', 'all_w_fe', 'thetax_FOV_deg', 'thetay_FOV_deg', 'yaw_samples'},{'result'});
+                 {'guess_CPs_Pos', 'all_w_fe', 'thetax_FOV_deg', 'thetay_FOV_deg', 'yaw_samples'},{'result'});
 g=g.expand();
 
 g.save('visibility.casadi') %The file generated is quite big
 
-g_result=g('all_pCPs',full(sol.all_pCPs),...
+g_result=g('guess_CPs_Pos',full(sol.all_pCPs),...
                          'all_w_fe', cell2mat(w_fe_value),...
                          'thetax_FOV_deg',thetax_FOV_deg_value,...  
                          'thetay_FOV_deg',thetay_FOV_deg_value,...
@@ -625,7 +625,7 @@ A=jacobian(kkt_eqs, variables);
 solution=A\b;  %Solve the system of equations
 
 f= Function('f', {all_yaw, y0, ydot0, ydotf }, {solution(1:end-3)}, ...
-                 {'all_yaw', 'y0', 'ydot0', 'ydotf'}, {'solution'} );
+                 {'all_yaw', 'y0', 'ydot0', 'ydotf'}, {'result'} );
 % f=f.expand();
 all_yaw_value=linspace(0,pi,numel(t_simpson));
 
@@ -638,7 +638,7 @@ subplot(4,1,1); hold on;
 plot(t_simpson, all_yaw_value, 'o')
 
 
-my_function.save('fit_spline_to_samples.casadi') %The file generated is quite big
+f.save('fit_spline_to_samples.casadi') %The file generated is quite big
 
 % solution=convertMX2Matlab(A)\convertMX2Matlab(b);  %Solve the system of equations
 % sy.updateCPsWithSolution(solution(1:end-3)');

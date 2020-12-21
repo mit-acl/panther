@@ -35,12 +35,6 @@ using namespace termcolor;
 //   return ("");
 // }
 
-struct SolverIpopt::PImpl
-{
-  casadi::Function casadi_function_;
-  casadi::DM all_w_fe_;
-};
-
 SolverIpopt::SolverIpopt(mt::parameters &par)
 {
   par_ = par;
@@ -99,12 +93,12 @@ SolverIpopt::SolverIpopt(mt::parameters &par)
   std::cout << "index_instruction_= " << index_instruction_ << std::endl;
   /// end of hack
 
-  m_casadi_ptr_ = std::unique_ptr<PImpl>(new PImpl());
+  // m_casadi_ptr_ = std::unique_ptr<PImpl>(new PImpl());
 
-  m_casadi_ptr_->casadi_function_ = casadi::Function::load(ros::package::getPath("mader") + "/matlab/"
-                                                                                            "my_function.casadi");
+  casadi_function_ = casadi::Function::load(ros::package::getPath("mader") + "/matlab/"
+                                                                             "solve_opt_problem.casadi");
 
-  m_casadi_ptr_->all_w_fe_ = casadi::DM::rand(3, par_.num_samples_simpson);
+  all_w_fe_ = casadi::DM::rand(3, par_.num_samples_simpson);
 }
 
 SolverIpopt::~SolverIpopt()
@@ -148,9 +142,9 @@ void SolverIpopt::setSimpsonFeatureSamples(const std::vector<Eigen::Vector3d> &s
   assert(samples.size() == par_.num_samples_simpson);
   for (int i = 0; i < samples.size(); i++)
   {
-    m_casadi_ptr_->all_w_fe_(0, i) = samples[i].x();
-    m_casadi_ptr_->all_w_fe_(1, i) = samples[i].y();
-    m_casadi_ptr_->all_w_fe_(2, i) = samples[i].z();
+    all_w_fe_(0, i) = samples[i].x();
+    all_w_fe_(1, i) = samples[i].y();
+    all_w_fe_(2, i) = samples[i].z();
   }
 }
 
@@ -363,7 +357,7 @@ bool SolverIpopt::optimize()
   map_arguments["total_time"] = (t_final_ - t_init_);
   // all_w_fe is a matrix whose columns are the positions of the feature (in world frame) in the times [t0,t0+XX,
   // ...,tf-XX, tf] (i.e. uniformly distributed and including t0 and tf)
-  map_arguments["all_w_fe"] = m_casadi_ptr_->all_w_fe_;
+  map_arguments["all_w_fe"] = all_w_fe_;
   map_arguments["c_jerk"] = par_.c_jerk;
   map_arguments["c_yaw"] = par_.c_yaw;
   map_arguments["c_vel_isInFOV"] = par_.c_vel_isInFOV;
@@ -401,30 +395,34 @@ bool SolverIpopt::optimize()
   }
   map_arguments["guess_CPs_Pos"] = matrix_qp_guess;
 
-  ///////////////// GUESS FOR YAW CONTROL POINTS
-  qy_guess_.clear();  // THIS SHOULD GO IN THE OCTOPUS SEARCH?
-  for (int i = 0; i < (Ny_ + 1); i++)
-  {
-    qy_guess_.push_back(initial_state_.yaw);  // rand()
-  }                                           // THIS SHOULD GO IN THE OCTOPUS SEARCH?
+  ////////////////////////////////TODO: DELETE THIS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  casadi::DM matrix_qy_guess =
+      generateYawGuess(matrix_qp_guess, all_w_fe_, initial_state_.yaw, initial_state_.dyaw, final_state_.dyaw);
+  ////////////////////////////////////////////////////////////////////////////////
 
-  std::cout << bold << red << "par_.num_seg= " << par_.num_seg << reset << std::endl;
+  // ///////////////// GUESS FOR YAW CONTROL POINTS
+  // qy_guess_.clear();  // THIS SHOULD GO IN THE OCTOPUS SEARCH?
+  // for (int i = 0; i < (Ny_ + 1); i++)
+  // {
+  //   qy_guess_.push_back(initial_state_.yaw);  // rand()
+  // }                                           // THIS SHOULD GO IN THE OCTOPUS SEARCH?
 
-  casadi::DM matrix_qy_guess(casadi::Sparsity::dense(1, (Ny_ + 1)));  // TODO: do this just once
-  for (int i = 0; i < matrix_qy_guess.columns(); i++)
-  {
-    matrix_qy_guess(0, i) = qy_guess_[i];
-  }
+  // std::cout << bold << red << "par_.num_seg= " << par_.num_seg << reset << std::endl;
+
+  // casadi::DM matrix_qy_guess(casadi::Sparsity::dense(1, (Ny_ + 1)));  // TODO: do this just once
+  // for (int i = 0; i < matrix_qy_guess.columns(); i++)
+  // {
+  //   matrix_qy_guess(0, i) = qy_guess_[i];
+  // }
   map_arguments["guess_CPs_Yaw"] = matrix_qy_guess;
 
   ///////////////// CALL THE SOLVER
-  std::map<std::string, casadi::DM> result = m_casadi_ptr_->casadi_function_(map_arguments);
+  std::map<std::string, casadi::DM> result = casadi_function_(map_arguments);
 
   ///////////////// GET STATUS FROM THE SOLVER
   // Very hacky solution, see discussion at https://groups.google.com/g/casadi-users/c/1061E0eVAXM/m/dFHpw1CQBgAJ
   // Inspired from https://gist.github.com/jgillis/9d12df1994b6fea08eddd0a3f0b0737f
-  auto optimstatus =
-      m_casadi_ptr_->casadi_function_.instruction_MX(index_instruction_).which_function().stats(1)["return_status"];
+  auto optimstatus = casadi_function_.instruction_MX(index_instruction_).which_function().stats(1)["return_status"];
 
   ///////////////// DECIDE ACCORDING TO STATUS OF THE SOLVER
   std::vector<Eigen::Vector3d> qp;  // Solution found (Control points for position)
