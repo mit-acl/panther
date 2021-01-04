@@ -9,7 +9,7 @@ En este repo:
 	Read casadi functions only once!!
 	see TODOs in yaw_guess_generator
 	Include the velocity of the obstacle in the cost function!!!
-	Anadir jerk and spherical constraints
+	Anadir jerk and spherical constraints en C++
 	Uncomment smooth pyramid (instead of cone)
 	
 

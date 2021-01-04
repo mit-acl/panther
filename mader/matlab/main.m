@@ -49,6 +49,7 @@ c_vel_isInFOV=  opti.parameter(1,1);
 c_final_pos = opti.parameter(1,1);
 % c_costs.dist_im_cost=         opti.parameter(1,1);
 
+Ra=opti.parameter(1,1);
 
 thetax_FOV_deg=opti.parameter(1,1);    %total angle of the FOV in the x direction
 thetay_FOV_deg=opti.parameter(1,1);    %total angle of the FOV in the y direction
@@ -125,10 +126,14 @@ opti.subject_to( sp.getVelT(tf)== vf_scaled );
 opti.subject_to( sp.getAccelT(tf)== af_scaled );
 opti.subject_to( sy.getVelT(tf)==ydotf_scaled); % Needed: if not (and if you are minimizing ddyaw), ddyaw=cte --> yaw will explode
 
-%Plane constraints
-% epsilon=1;
 
+% epsilon=1;
 for j=1:(sp.num_seg)
+
+    %Get the MINVO control points of the interval
+    Q_MV=sp.getCPs_MV_Pos_ofInterval(j);
+
+    %Plane constraints
     for obst_index=1:num_max_of_obst
       ip = (obst_index-1) * sp.num_seg + j;  % index plane
        
@@ -143,12 +148,20 @@ for j=1:(sp.num_seg)
 %       end
       
       %and the control points on the other side
-      Q_MV=sp.getCPs_MV_Pos_ofInterval(j);
       for kk=1:size(Q_MV,2)
         opti.subject_to( n{ip}'*Q_MV{kk} + d{ip} <= 0);
       end
-    end   
+    end  
+ 
+    %Sphere constraints
+    for kk=1:size(Q_MV,2) 
+        tmp=(Q_MV{kk}-p0);
+        opti.subject_to( (tmp'*tmp)<=(Ra*Ra) );
+    end
+
 end
+
+%Sphere constraints
 
 
 
@@ -422,8 +435,8 @@ all_pCPs=sp.getCPsAsMatrix();
 all_yCPs=sy.getCPsAsMatrix();
 
 my_function = opti.to_function('mader_casadi_function',...
-    [ {all_pCPs},     {all_yCPs},     {thetax_FOV_deg},{thetay_FOV_deg},{p0},{v0},{a0},{pf},{vf},{af},{y0}, {ydot0}, {ydotf}, {v_max}, {a_max}, {j_max}, {ydot_max}, {total_time}, {all_nd}, {all_w_fe}, {c_jerk}, {c_yaw}, {c_vel_isInFOV}, {c_final_pos}], {all_pCPs,all_yCPs},...
-    {'guess_CPs_Pos','guess_CPs_Yaw', 'thetax_FOV_deg','thetay_FOV_deg','p0','v0','a0','pf','vf','af','y0', 'ydot0', 'ydotf', 'v_max', 'a_max', 'j_max', 'ydot_max', 'total_time', 'all_nd', 'all_w_fe', 'c_jerk', 'c_yaw', 'c_vel_isInFOV', 'c_final_pos'}, {'all_pCPs','all_yCPs'}...
+    [ {all_pCPs},     {all_yCPs},     {thetax_FOV_deg},{thetay_FOV_deg},{Ra},{p0},{v0},{a0},{pf},{vf},{af},{y0}, {ydot0}, {ydotf}, {v_max}, {a_max}, {j_max}, {ydot_max}, {total_time}, {all_nd}, {all_w_fe}, {c_jerk}, {c_yaw}, {c_vel_isInFOV}, {c_final_pos}], {all_pCPs,all_yCPs},...
+    {'guess_CPs_Pos','guess_CPs_Yaw', 'thetax_FOV_deg','thetay_FOV_deg','Ra','p0','v0','a0','pf','vf','af','y0', 'ydot0', 'ydotf', 'v_max', 'a_max', 'j_max', 'ydot_max', 'total_time', 'all_nd', 'all_w_fe', 'c_jerk', 'c_yaw', 'c_vel_isInFOV', 'c_final_pos'}, {'all_pCPs','all_yCPs'}...
                                );
 
 v_max_value=1.6*ones(3,1);
@@ -433,6 +446,8 @@ ydot_max_value=1.0;
 total_time=10.5;
 thetax_FOV_deg_value=80;
 thetay_FOV_deg_value=80;
+
+Ra_value=12.0;
 
 y0_value=0.0;
 ydot0_value=0.0;
@@ -451,7 +466,8 @@ tmp2=[   -0.0000   -0.0000    0.2754    2.1131    2.6791    2.6791];
 sol=my_function(      'guess_CPs_Pos',tmp1, ... 
                       'guess_CPs_Yaw',tmp2, ... 
                       'thetax_FOV_deg',thetax_FOV_deg_value, ...  
-                      'thetay_FOV_deg',thetay_FOV_deg_value, ... 
+                      'thetay_FOV_deg',thetay_FOV_deg_value, ...
+                      'Ra',Ra_value,...
                       'p0',  [-4;0;0], ... 
                       'v0',  [0;0;0], ... 
                       'a0',  [0;0;0], ... 
@@ -572,20 +588,20 @@ grid on; xlabel('x'); ylabel('y'); zlabel('z');
 camlight
 lightangle(gca,45,0)
 
-for j=1:sp.num_seg 
-    
-    for index_obs=1:num_max_of_obst
-        init_int=min(sp.timeSpanOfInterval(j)); 
-        end_int=max(sp.timeSpanOfInterval(j)); 
-        vertexes=getVertexesMovingObstacle(init_int,end_int); %This call should depend on the obstacle itself
-
-        x=vertexes(1,:);     y=vertexes(2,:);    z=vertexes(3,:);
-
-        [k1,av1] = convhull(x,y,z);
-        trisurf(k1,x,y,z,'FaceColor','cyan')
-    end
-    
-end
+% for j=1:sp.num_seg 
+%     
+%     for index_obs=1:num_max_of_obst
+%         init_int=min(sp.timeSpanOfInterval(j)); 
+%         end_int=max(sp.timeSpanOfInterval(j)); 
+%         vertexes=getVertexesMovingObstacle(init_int,end_int); %This call should depend on the obstacle itself
+% 
+%         x=vertexes(1,:);     y=vertexes(2,:);    z=vertexes(3,:);
+% 
+%         [k1,av1] = convhull(x,y,z);
+%         trisurf(k1,x,y,z,'FaceColor','cyan')
+%     end
+%     
+% end
 
 
 
