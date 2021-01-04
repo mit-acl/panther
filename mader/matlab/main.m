@@ -80,6 +80,7 @@ end
 %%% Maximum velocity and acceleration
 v_max=opti.parameter(3,1);
 a_max=opti.parameter(3,1);
+j_max=opti.parameter(3,1);
 ydot_max=opti.parameter(1,1);
 
 total_time=opti.parameter(1,1); %This allows a different t0 and tf than the one above 
@@ -107,6 +108,7 @@ ydotf_scaled=ydotf/scaling;
 
 v_max_scaled=v_max/scaling;
 a_max_scaled=a_max/(scaling^2); %TODO: check if it should be ^2, I think so
+j_max_scaled=j_max/(scaling^3); %TODO: check if it should be ^3, I think so
 
 ydot_max_scaled=ydot_max/scaling; %v_max for yaw
 
@@ -171,6 +173,18 @@ for j=1:sp.num_seg
         for xyz=1:3
             opti.subject_to( minvo_accel_cps{u}(xyz) <= a_max_scaled(xyz)  )
             opti.subject_to( minvo_accel_cps{u}(xyz) >= -a_max_scaled(xyz) )
+        end
+    end
+end
+
+%Max jerk constraints (position)
+for j=1:sp.num_seg
+    minvo_jerk_cps=sp.getCPs_MV_Jerk_ofInterval(j);
+    dim=size(minvo_jerk_cps, 1);
+    for u=1:size(minvo_jerk_cps,2)
+        for xyz=1:3
+            opti.subject_to( minvo_jerk_cps{u}(xyz) <= j_max_scaled(xyz)  )
+            opti.subject_to( minvo_jerk_cps{u}(xyz) >= -j_max_scaled(xyz) )
         end
     end
 end
@@ -408,12 +422,13 @@ all_pCPs=sp.getCPsAsMatrix();
 all_yCPs=sy.getCPsAsMatrix();
 
 my_function = opti.to_function('mader_casadi_function',...
-    [ {all_pCPs},     {all_yCPs},     {thetax_FOV_deg},{thetay_FOV_deg},{p0},{v0},{a0},{pf},{vf},{af},{y0}, {ydot0}, {ydotf}, {v_max}, {a_max}, {ydot_max}, {total_time}, {all_nd}, {all_w_fe}, {c_jerk}, {c_yaw}, {c_vel_isInFOV}, {c_final_pos}], {all_pCPs,all_yCPs},...
-    {'guess_CPs_Pos','guess_CPs_Yaw', 'thetax_FOV_deg','thetay_FOV_deg','p0','v0','a0','pf','vf','af','y0', 'ydot0', 'ydotf', 'v_max', 'a_max', 'ydot_max', 'total_time', 'all_nd', 'all_w_fe', 'c_jerk', 'c_yaw', 'c_vel_isInFOV', 'c_final_pos'}, {'all_pCPs','all_yCPs'}...
+    [ {all_pCPs},     {all_yCPs},     {thetax_FOV_deg},{thetay_FOV_deg},{p0},{v0},{a0},{pf},{vf},{af},{y0}, {ydot0}, {ydotf}, {v_max}, {a_max}, {j_max}, {ydot_max}, {total_time}, {all_nd}, {all_w_fe}, {c_jerk}, {c_yaw}, {c_vel_isInFOV}, {c_final_pos}], {all_pCPs,all_yCPs},...
+    {'guess_CPs_Pos','guess_CPs_Yaw', 'thetax_FOV_deg','thetay_FOV_deg','p0','v0','a0','pf','vf','af','y0', 'ydot0', 'ydotf', 'v_max', 'a_max', 'j_max', 'ydot_max', 'total_time', 'all_nd', 'all_w_fe', 'c_jerk', 'c_yaw', 'c_vel_isInFOV', 'c_final_pos'}, {'all_pCPs','all_yCPs'}...
                                );
 
 v_max_value=1.6*ones(3,1);
 a_max_value=5*ones(3,1);
+j_max_value=50*ones(3,1);
 ydot_max_value=1.0; 
 total_time=10.5;
 thetax_FOV_deg_value=80;
@@ -448,6 +463,7 @@ sol=my_function(      'guess_CPs_Pos',tmp1, ...
                       'ydotf',  ydotf_value ,...
                       'v_max', v_max_value,...
                       'a_max', a_max_value,...
+                      'j_max', j_max_value,...
                       'ydot_max', ydot_max_value,...
                       'total_time', total_time,...
                       'all_w_fe', cell2mat(w_fe_value),...
@@ -512,7 +528,7 @@ sy.updateCPsWithSolution(full(sol.all_yCPs))
 %%%%%%%%%%%%%%%%%%%%%%%%%%% PLOTTING! %%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-sp.plotPosVelAccelJerk(v_max_value, a_max_value)
+sp.plotPosVelAccelJerk(v_max_value, a_max_value, j_max_value)
 % sp.plotPosVelAccelJerkFiniteDifferences();
 sy.plotPosVelAccelJerk(ydot_max_value)
 % sy.plotPosVelAccelJerkFiniteDifferences();

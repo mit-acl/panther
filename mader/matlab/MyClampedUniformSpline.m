@@ -83,6 +83,12 @@ classdef MyClampedUniformSpline < handle
             result=(obj.p-1)*(obj.getCP_BS_Vel(l+1)-obj.getCP_BS_Vel(l))/(obj.knots((l+obj.p+1))-obj.knots((l+2)));
         end
         
+        %returns the l-th BS jerk control point
+        function result=getCP_BS_Jerk(obj,l)
+            assert(l<=(obj.N-2), 'l<=(N-2) not satisfied');
+            result=(obj.p-2)*(obj.getCP_BS_Accel(l+1)-obj.getCP_BS_Accel(l))/(obj.knots((l+obj.p+1))-obj.knots((l+3)));
+        end
+        
         %%%%%%%%%%%%%% BSPLINE (BS)
         %%%%%%%%%%%%%%%%%%%%%%
         %returns the BS position control points of the interval j
@@ -112,6 +118,18 @@ classdef MyClampedUniformSpline < handle
 
             result=obj.convertMatrixCPsToCellArray(Q_Bs_matrix);
         end
+        
+        %returns the BS jerk control points of the interval j
+        function result=getCPs_BS_Jerk_ofInterval(obj,j)
+            deg_jerk=obj.p-3;
+            Q_Bs_matrix=[];
+            
+            for tmp=j:(j+deg_jerk)
+                Q_Bs_matrix=[Q_Bs_matrix obj.getCP_BS_Jerk(tmp)];
+            end
+
+            result=obj.convertMatrixCPsToCellArray(Q_Bs_matrix);
+        end
         %%%%%%%%%%%%%%%%%%%%%%
 
         %%%%%%%%%%%%%% MINVO (MV)
@@ -135,6 +153,13 @@ classdef MyClampedUniformSpline < handle
             Q_Bs_matrix=obj.convertCellArrayCPsToMatrix(obj.getCPs_BS_Accel_ofInterval(j));
                                                    %Q_Bs_matrix*   A_BS*                         inv(A_MV)
             result=obj.convertMatrixCPsToCellArray(Q_Bs_matrix*    obj.getA_BS_Accel_Interval(j)*  inv(getA_MV(obj.p-2, [0,1])));
+        end
+
+        %returns the MV jerk control points of the interval j
+        function result=getCPs_MV_Jerk_ofInterval(obj,j)
+            Q_Bs_matrix=obj.convertCellArrayCPsToMatrix(obj.getCPs_BS_Jerk_ofInterval(j));
+                                                   %Q_Bs_matrix*   A_BS*                         inv(A_MV)
+            result=obj.convertMatrixCPsToCellArray(Q_Bs_matrix*    obj.getA_BS_Jerk_Interval(j)*  inv(getA_MV(obj.p-3, [0,1])));
         end
         %%%%%%%%%%%%%%%%%%%%%%
 
@@ -253,8 +278,12 @@ classdef MyClampedUniformSpline < handle
             ADiffTdelta=simplify(A*diffT*(1/(obj.delta_t^order)));
             
             u_sym=u;
-            ADiffTdelta=eval(char(ADiffTdelta)); %See https://www.mathworks.com/matlabcentral/answers/310042-how-to-convert-symbolic-expressions-to-transfer-functions
-
+            char_tmp=char(ADiffTdelta');
+            char_tmp=strrep(char_tmp,'matrix',''); %This line is needed in Matlab 2019
+            ADiffTdelta=eval(char_tmp); %See https://www.mathworks.com/matlabcentral/answers/310042-how-to-convert-symbolic-expressions-to-transfer-functions
+            
+            ADiffTdelta=ADiffTdelta';
+            
             result=Qj*ADiffTdelta;
             
 %             if(numel(symvar(ADiffT'))==0)
@@ -318,7 +347,7 @@ classdef MyClampedUniformSpline < handle
             for j=1:obj.num_seg
                 interv=obj.timeSpanOfInterval(j);           
                 u=(t-min(interv))/(max(interv)-min(interv));
-                fplot(obj.evalDerivativeU(order,u,j),interv); hold on;
+                fplot(obj.evalDerivativeU(order,u,j),interv,'LineWidth',3); hold on;
             end        
         end
 
@@ -353,7 +382,7 @@ classdef MyClampedUniformSpline < handle
         function A=getA_BS_Derivative_Interval(obj,which_derivative,j) %which_derivative=0 for pos, 1 for vel, 2 for accel
             %the intervals are [0,1,2,...,num_seg-2,num_seg-1]
             
-            assert(which_derivative<=(obj.p-1))
+            assert(which_derivative<=(obj.p))
             assert(j>=1 )
             assert(j<=obj.num_seg)
        
@@ -384,6 +413,10 @@ classdef MyClampedUniformSpline < handle
         
         function result=getA_BS_Accel_Interval(obj,j)
             result=obj.getA_BS_Derivative_Interval(2,j);
+        end
+        
+        function result=getA_BS_Jerk_Interval(obj,j)
+            result=obj.getA_BS_Derivative_Interval(3,j);
         end
         
         %Simply to check the derivatives by doing finite differences
