@@ -630,7 +630,7 @@ lightangle(gca,45,0)
 
 sy_tmp=MyClampedUniformSpline(t0,tf,deg_yaw, dim_yaw, num_seg, opti);  %creating another object to not mess up with sy
 
-all_yaw=MX.sym('lambda1',1,numel(t_simpson));
+all_yaw=MX.sym('all_yaw',1,numel(t_simpson));
 cost_function=0;
 for i=1:numel(t_simpson)
     cost_function = cost_function + (sy_tmp.getPosT(t_simpson(i))-all_yaw(i))^2; 

@@ -15,12 +15,13 @@ classdef MyClampedUniformSpline < handle
         knots
         num_seg
         num_cpoints
-        CPoints %Cell array of size 3\times(N+1)
+        CPoints %Cell array of size dim\times(N+1)
+        dim
     end
     
     methods
         function obj = MyClampedUniformSpline(t0, tf, deg, dim, num_seg, casadi_opti)
-
+            obj.dim=dim;
             obj.t0 = t0;
             obj.tf = tf;
             obj.p = deg;
@@ -378,6 +379,10 @@ classdef MyClampedUniformSpline < handle
         function plotJerk(obj)
             obj.plotDerivative(3)      
         end
+        
+%         function getCoeffPoly01OfInterval(obj,j)
+%             obj.getCPs_BS_Pos_ofInterval
+%         end
 
         function A=getA_BS_Derivative_Interval(obj,which_derivative,j) %which_derivative=0 for pos, 1 for vel, 2 for accel
             %the intervals are [0,1,2,...,num_seg-2,num_seg-1]
@@ -443,6 +448,7 @@ classdef MyClampedUniformSpline < handle
         end
         
         function updateCPsWithSolution(obj, Qsolution_matrix)
+            assert(size(Qsolution_matrix,1)==obj.dim);
             Q={};
             for i=1:obj.num_cpoints
                 Q{i}=Qsolution_matrix(:,i);%sol_casadi.value(obj.CPoints{i}); %Control points
