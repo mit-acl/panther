@@ -68,8 +68,6 @@ vf=sp_tmp.getVelT(tf);
 af=sp_tmp.getAccelT(tf);
 
 %Obtain the coefficients
-% t=MX.sym('t',1,1);
-% poly_predicted=xf+vf*(t-tf) + 0.5*af*(t-tf)^2;
 % xf+vf*(t-tf) + 0.5*af*(t-tf)^2   \equiv 
 % xf+vf*t - vf*tf + 0.5*af*t^2 -af*tf*t + 0.5*af*tf^2;  \equiv 
 % (0.5*af)*t^2 + (vf - af*tf)*t +  (xf+0.5*af*tf^2 - vf*tf )      
@@ -77,8 +75,10 @@ af=sp_tmp.getAccelT(tf);
 a=0.5*af;
 b=vf-af*tf;
 c=xf+0.5*af*tf^2- vf*tf;
-
+    
 %obtain the coefficients (second way to do it, slower)
+% t=MX.sym('t',1,1);
+% poly_predicted=xf+vf*(t-tf) + 0.5*af*(t-tf)^2;
 % c=substitute(poly_predicted, t, 0.0);
 % b=substitute(jacobian(poly_predicted,t), t, 0.0);
 % a=(1/2)*substitute(jacobian(jacobian(poly_predicted,t),t), t, 0.0);
@@ -111,4 +111,4 @@ subplot(4,1,3); hold on;
 fplot(diff(Pt,t,2),[tf,tf+4],'--')
 
 
-f.save('novale.casadi') %The file generated is quite big
+f.save('predictor.casadi') %The file generated is quite big

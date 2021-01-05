@@ -11,12 +11,17 @@ En este repo:
 	Include the velocity of the obstacle in the cost function!!!
 	Anadir jerk and spherical constraints en C++
 	Uncomment smooth pyramid (instead of cone)
-	Circular statistics, circular regression for the yaw angle
+	Circular statistics, circular regression for the yaw 
+	Have a look at https://www.mathworks.com/help/curvefit/fnxtr.html
 	
 Papers to cite in proposal/Paper:
 	https://arxiv.org/pdf/1904.03421.pdf
 	https://www.youtube.com/watch?v=JosFzstiH9U
 	https://www.youtube.com/watch?v=BzykucxFddI
+
+
+En MADER:
+	Try creating a NLOPT object each time. 
 
 
 
