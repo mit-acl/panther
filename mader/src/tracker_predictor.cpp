@@ -94,7 +94,7 @@ void TrackerPredictor::cloud_cb(const sensor_msgs::PointCloud2ConstPtr& input)
 
   for (std::vector<pcl::PointIndices>::const_iterator it = cluster_indices.begin(); it != cluster_indices.end(); ++it)
   {
-    // First option:
+    // First option (slow):
 
     // pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_cluster(new pcl::PointCloud<pcl::PointXYZ>);
     // for (std::vector<int>::const_iterator pit = it->indices.begin(); pit != it->indices.end(); pit++)
@@ -113,14 +113,15 @@ void TrackerPredictor::cloud_cb(const sensor_msgs::PointCloud2ConstPtr& input)
     ////////////////////////
     ////////////////////////
 
-    // Second option, it's faster (see
+    // Second option, it's faster (taken from
     // https://stackoverflow.com/questions/35669182/this-predefined-function-slowing-down-my-programs-performance)
 
-    auto pit0 = it->indices.begin();
-
-    double min_x = input_cloud->points[*pit0].x, min_y = input_cloud->points[*pit0].y,
-           min_z = input_cloud->points[*pit0].z, max_x = input_cloud->points[*pit0].x,
-           max_y = input_cloud->points[*pit0].y, max_z = input_cloud->points[*pit0].z;
+    double min_x = -std::numeric_limits<double>::max();
+    double max_x = std::numeric_limits<double>::max();
+    double min_y = -std::numeric_limits<double>::max();
+    double max_y = std::numeric_limits<double>::max();
+    double min_z = -std::numeric_limits<double>::max();
+    double max_z = std::numeric_limits<double>::max();
 
     for (std::vector<int>::const_iterator pit = it->indices.begin(); pit != it->indices.end(); pit++)
     {
@@ -141,11 +142,53 @@ void TrackerPredictor::cloud_cb(const sensor_msgs::PointCloud2ConstPtr& input)
     ////////////////////////
     ////////////////////////
 
+    std::vector<Eigen::Vector4d> vertexes_bbox(8);
+    vertexes_bbox[0] = Eigen::Vector4d(max_x, max_y, max_z, 1.0);
+    vertexes_bbox[1] = Eigen::Vector4d(max_x, max_y, min_z, 1.0);
+    vertexes_bbox[2] = Eigen::Vector4d(max_x, min_y, max_z, 1.0);
+    vertexes_bbox[3] = Eigen::Vector4d(max_x, min_y, min_z, 1.0);
+    vertexes_bbox[4] = Eigen::Vector4d(min_x, max_y, max_z, 1.0);
+    vertexes_bbox[5] = Eigen::Vector4d(min_x, max_y, min_z, 1.0);
+    vertexes_bbox[6] = Eigen::Vector4d(min_x, min_y, max_z, 1.0);
+    vertexes_bbox[7] = Eigen::Vector4d(min_x, min_y, min_z, 1.0);
+
+    // apply r_T_w to the vertexes of the bbox (this is much faster than transforming the whole point cloud, although a
+    // little bit conservative (because it's the AABB of a AABB))
+    Eigen::Matrix<double, 4, 4> T;  // TODO!!
+    for (size_t i = 0; i < vertexes_bbox.size(); i++)
+    {
+      vertexes_bbox[i] = T * vertexes_bbox[i];
+    }
+
+    min_x = -std::numeric_limits<double>::max();
+    max_x = std::numeric_limits<double>::max();
+    min_y = -std::numeric_limits<double>::max();
+    max_y = std::numeric_limits<double>::max();
+    min_z = -std::numeric_limits<double>::max();
+    max_z = std::numeric_limits<double>::max();
+
+    for (auto& vertex : vertexes_bbox)
+    {
+      if (vertex.x() <= min_x)
+        min_x = vertex.x();
+      else if (vertex.y() <= min_y)
+        min_y = vertex.y();
+      else if (vertex.z() <= min_z)
+        min_z = vertex.z();
+      else if (vertex.x() >= max_x)
+        max_x = vertex.x();
+      else if (vertex.y() >= max_y)
+        max_y = vertex.y();
+      else if (vertex.z() >= max_z)
+        max_z = vertex.z();
+    }
+
     cluster tmp;
     tmp.bbox = Eigen::Vector3d(max_x - min_x, max_y - min_y, max_z - min_z);
     tmp.centroid = Eigen::Vector3d((max_x - min_x) / 2.0, (max_y - min_y) / 2.0,
-                                   (max_z - min_z) / 2.0);  // This is the centroid of the bbox, not the centroid of the
-                                                            // point cloud
+                                   (max_z - min_z) / 2.0);  // This is the centroid of the bbox, not the
+                                                            // centroid of the point cloud
+
     clusters.push_back(tmp);
   }
 

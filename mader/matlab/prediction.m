@@ -64,7 +64,7 @@ solution=reshape(solution,dim_pos,numel(solution)/dim_pos);
 sp_tmp.updateCPsWithSolution(full(solution));
 
 xf=sp_tmp.getPosT(tf);
-vf=sp_tmp.getVelT(tf);
+vf=sp_tmp.getVelT(tf);  
 af=sp_tmp.getAccelT(tf);
 
 %Obtain the coefficients
@@ -74,7 +74,7 @@ af=sp_tmp.getAccelT(tf);
 
 a=0.5*af;
 b=vf-af*tf;
-c=xf+0.5*af*tf^2- vf*tf;
+c=xf+0.5*af*tf^2- vf*tf;    
     
 %obtain the coefficients (second way to do it, slower)
 % t=MX.sym('t',1,1);

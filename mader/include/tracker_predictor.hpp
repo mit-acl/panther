@@ -1,5 +1,5 @@
 /* ----------------------------------------------------------------------------
- * Copyright 2020, Jesus Tordesillas Torres, Aerospace Controls Laboratory
+ * Copyright 2021, Jesus Tordesillas Torres, Aerospace Controls Laboratory
  * Massachusetts Institute of Technology
  * All Rights Reserved
  * Authors: Jesus Tordesillas, et al.
@@ -25,14 +25,14 @@ class track
 public:
   track(int size, const cluster& c)
   {
-    size_sliding_window = size;
-    history = std::deque<cluster>(size_sliding_window, c);  // Constant initialization
+    ssw = size;
+    history = std::deque<cluster>(ssw, c);  // Constant initialization
   }
 
   void addToHistory(const cluster& c)
   {
     history.push_back(c);
-    if (history.size() > size_sliding_window)  // TODO (size of the sliding window)
+    if (history.size() > ssw)  // TODO (size of the sliding window)
     {
       history.pop_front();  // Delete the oldest element
     }
@@ -43,10 +43,10 @@ public:
   mt::PieceWisePol pwp;
 
 private:
-  int size_sliding_window;
+  unsigned int ssw;  // size of the sliding window
   unsigned int id;
 
-  // This deque will ALWAYS have size_sliding_window elements
+  // This deque will ALWAYS have ssw elements
   std::deque<cluster> history;  //[t-N], [t-N+1],...,[t] (i.e. index of the oldest element is 0)
 
   // void print()
