@@ -39,6 +39,8 @@
 #include "Hungarian.h"
 #include "tracker_predictor.hpp"
 
+using namespace termcolor;
+
 TrackerPredictor::TrackerPredictor()
 {
 }
@@ -50,9 +52,7 @@ double TrackerPredictor::getCostRowColum(cluster& a, track& b, double time)
 
 void TrackerPredictor::addNewTrack(const cluster& c, std::vector<track>& all_tracks, double time)
 {
-  track tmp;
-  tmp.centroid = c.centroid;
-  tmp.bbox = c.bbox;
+  track tmp(5, c);
   mt::PieceWisePol pwp;  // will have only one interval
   pwp.times.push_back(time);
   pwp.times.push_back(std::numeric_limits<double>::max());  // infty
@@ -149,8 +149,6 @@ void TrackerPredictor::cloud_cb(const sensor_msgs::PointCloud2ConstPtr& input)
     clusters.push_back(tmp);
   }
 
-  std::cout << "Done with cloud_cb" << std::endl;
-
   std::vector<track> all_tracks;
 
   // rows = clusters
@@ -226,7 +224,12 @@ void TrackerPredictor::cloud_cb(const sensor_msgs::PointCloud2ConstPtr& input)
     {
       addNewTrack(clusters[i], all_tracks, time);
     }
+    else
+    {  // add an element to the history of the track
+      all_tracks[track_assigned_to_cluster[i]].addToHistory(clusters[i]);
+    }
   }
+  std::cout << "\n";
 
   //////////////////////////
   //////////////////////////
@@ -236,6 +239,11 @@ void TrackerPredictor::cloud_cb(const sensor_msgs::PointCloud2ConstPtr& input)
       std::remove_if(all_tracks.begin(), all_tracks.end(),
                      [max_frames_skipped](const track& x) { return x.num_frames_skipped > max_frames_skipped; }),
       all_tracks.end());
+
+  // for (auto track_i : all_tracks)
+  // {
+  //   track_i.print();
+  // }
 }
 
 int main(int argc, char** argv)

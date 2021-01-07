@@ -7,25 +7,54 @@
  * -------------------------------------------------------------------------- */
 
 #include <sensor_msgs/PointCloud2.h>
+#include "termcolor.hpp"
 
 #ifndef TRACKER_PREDICTOR_HPP
 #define TRACKER_PREDICTOR_HPP
 
 // typedef MADER_timers::Timer MyTimer;
 
-struct cluster
+struct cluster  // one observation
 {
   Eigen::Vector3d centroid;
   Eigen::Vector3d bbox;  // Total side x, total side y, total side z;
 };
 
-struct track
+class track
 {
-  unsigned int id;
-  Eigen::Vector3d centroid;
-  Eigen::Vector3d bbox;  // Total side x, total side y, total side z;
-  mt::PieceWisePol pwp;
+public:
+  track(int size, const cluster& c)
+  {
+    size_sliding_window = size;
+    history = std::deque<cluster>(size_sliding_window, c);  // Constant initialization
+  }
+
+  void addToHistory(const cluster& c)
+  {
+    history.push_back(c);
+    if (history.size() > size_sliding_window)  // TODO (size of the sliding window)
+    {
+      history.pop_front();  // Delete the oldest element
+    }
+  }
+
   unsigned int num_frames_skipped = 0;
+
+  mt::PieceWisePol pwp;
+
+private:
+  int size_sliding_window;
+  unsigned int id;
+
+  // This deque will ALWAYS have size_sliding_window elements
+  std::deque<cluster> history;  //[t-N], [t-N+1],...,[t] (i.e. index of the oldest element is 0)
+
+  // void print()
+  // {
+  //   std::cout << termcolor::bold << "Centroid= " << termcolor::reset << centroid.transpose() << ", " <<
+  //   termcolor::bold
+  //             << "bbox= " << termcolor::reset << bbox.transpose() << std::endl;
+  // }
 };
 
 class TrackerPredictor
