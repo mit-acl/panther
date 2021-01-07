@@ -1,0 +1,16 @@
+<launch>
+
+	<arg name="quad" default="SQ01s"/>
+	<arg name="goal_topic" default="goal"/>
+
+
+	<node ns="$(arg quad)" name="tracker_predictor" pkg="mader" type="tracker_predictor" output="screen" clear_params="false"> 
+
+	<remap from="~cloud" to="/JA01/global_mapper_ros/occupancy_grid"/>
+<!-- 			<remap from="~term_goal" to="term_goal" />
+		<remap from="~setpoint" to="setpoint" /> -->
+
+	</node>
+
+
+</launch>

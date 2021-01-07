@@ -35,9 +35,14 @@ find_package(catkin REQUIRED COMPONENTS
 	rviz_visual_tools
 	separator
   jsk_rviz_plugins
+  pcl_ros
+  hungarian
 )
 find_package(decomp_util REQUIRED)
 include_directories(${DECOMP_UTIL_INCLUDE_DIRS})
+
+# find_package(hungarian REQUIRED)
+# include_directories(${HUNGARIAN_INCLUDE_DIRS}) //TODO!!
 
 catkin_package()
 
@@ -81,6 +86,11 @@ target_link_libraries(test_utils ${catkin_LIBRARIES} utils)
 add_executable(test_bspline_utils src/examples/test_bspline_utils.cpp src/bspline_utils.cpp)
 add_dependencies(test_bspline_utils ${catkin_EXPORTED_TARGETS})
 target_link_libraries(test_bspline_utils ${catkin_LIBRARIES})
+
+
+add_executable(tracker_predictor src/tracker_predictor.cpp)
+add_dependencies(tracker_predictor ${catkin_EXPORTED_TARGETS})
+target_link_libraries(tracker_predictor ${catkin_LIBRARIES})
 
 
 # add_executable(solver_ipopt src/solver_ipopt.cpp)
