@@ -264,23 +264,24 @@ classdef MyClampedUniformSpline < handle
             Qj=obj.convertCellArrayCPsToMatrix(Q_j_cell);
             
             %%%%%%%%%%%%%%%%%%%%%%
-            %Option 1 works always, but there seems to be a bug in casadi here: https://groups.google.com/g/casadi-users/c/CBimXBsQ2MA
-%             pto0=obj.p:-1:0;
-%             if(order>obj.p)
-%                 diffT=zeros(obj.p+1,1);
-%             else
-%                 diffT=((factorial(pto0)./factorial(max(pto0-order,0))).*[(u.^[obj.p-order:-1:1]) 1 zeros(1,order)])';
-%             end
-%             ADiffT=A*diffT;
-%             
-%             if(numel(symvar(ADiffT'))==0)
-%                 ADiffT=double(ADiffT);
-%             end
-%            
-%             result=(1/(obj.delta_t^order)) *Qj*ADiffT;
+            %Option 1 works always,
+            %Note that I write [u.^[obj.p-order:-1:1]) 1 ] insstead of [u.^[obj.p-order:-1:0])] because of this bug: https://groups.google.com/g/casadi-users/c/CBimXBsQ2MA
+            pto0=obj.p:-1:0;
+            if(order>obj.p)
+                diffT=zeros(obj.p+1,1);
+            else
+                diffT=((factorial(pto0)./factorial(max(pto0-order,0))).*[(u.^[obj.p-order:-1:1]) 1 zeros(1,order)])';
+            end
+            ADiffT=A*diffT;
+            
+            if(numel(symvar(ADiffT'))==0)
+                ADiffT=double(ADiffT);
+            end
+           
+            result=(1/(obj.delta_t^order)) *Qj*ADiffT;
             %%%%%%%%%%%%%%%%%%%%%%
             
-            %Option 2 (works always)
+            %Option 2 (works as long as t0 and tf are double)
 %             syms u_sym real;
 %             Tmp=(u_sym.^[obj.p:-1:0])';
 %             diffT= diff(Tmp,u_sym,order); 

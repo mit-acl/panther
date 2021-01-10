@@ -90,7 +90,7 @@ subplot(4,1,3); hold on;
 fplot(diff(Pt,t,2),[tf,tf+4],'--')
 
 
-f.save('predictor.casadi') %The file generated is quite big
+% f.save('predictor.casadi') %The file generated is quite big
 
 %Write param file with the characteristics of the casadi function generated
 my_file=fopen('params_casadi_prediction.yaml','w'); %Overwrite content. This will clear its content
@@ -142,24 +142,25 @@ end
 A=convertMX2Matlab(A);
 b=convertMX2Matlab(b);
 
-solution_tmp=A\b;
-solution_tmp=reshape(solution_tmp,3,[]);
+invA_b_solved=A\b;
+reshape(invA_b_solved,3,[])
 
 %%%%%%%%%%%%%%%%%%%%%%%
 
 t0_var=MX.sym('t0',1,1);
 tf_var=MX.sym('tf',1,1);
 sp_tmp=MyClampedUniformSpline(t0_var,tf_var,deg_pos_prediction, dim_pos, num_seg_prediction, opti);
-solution=MX.sym('solution',3,sp_tmp.num_cpoints);
-sp_tmp.updateCPsWithSolution(solution);
+invA_b=MX.sym('invA_b',1,3*sp_tmp.num_cpoints);
+solution_reshaped=reshape(invA_b,3,numel(invA_b)/3);
+sp_tmp.updateCPsWithSolution(solution_reshaped);
 coeff_predicted=getCoeffPredictedPoly(sp_tmp);
 
-g= Function('g', {t0_var, tf_var, solution}, [{coeff_predicted}], ...
-                  {'t0','tf','solution'}, {'coeff_predicted'} );
+g= Function('g', {t0_var, tf_var, invA_b}, [{coeff_predicted}], ...
+                  {'t0','tf','invA_b'}, {'coeff_predicted'} );
 
-g.save(['predictor_coeff_predicted_' num2str(j) '.casadi'])
+g.save(['predictor_coeff_predicted.casadi'])
               
-tmp=g('t0',t0,'tf',tf,'solution',solution_tmp)             
+tmp=g('t0',t0,'tf',tf,'invA_b',invA_b_solved)             
 tmp.coeff_predicted
 
 

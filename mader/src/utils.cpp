@@ -88,20 +88,20 @@ void rescaleCoeffPol(const Eigen::Matrix<double, 4, 1>& coeff_old, Eigen::Matrix
   double delta_2 = delta * delta;
   double delta_3 = delta * delta * delta;
 
-  std::cout << "delta= " << delta << std::endl;
+  // std::cout << "delta= " << delta << std::endl;
 
-  // if (isnan(delta))
-  // {
-  //   std::cout << "tf= " << tf << std::endl;
-  //   std::cout << "t0= " << tf << std::endl;
-  //   std::cout << "delta is NAN" << std::endl;
-  //   abort();
-  // }
+  // // if (isnan(delta))
+  // // {
+  // //   std::cout << "tf= " << tf << std::endl;
+  // //   std::cout << "t0= " << tf << std::endl;
+  // //   std::cout << "delta is NAN" << std::endl;
+  // //   abort();
+  // // }
 
-  std::cout << "a= " << a << std::endl;
-  std::cout << "b= " << b << std::endl;
-  std::cout << "c= " << c << std::endl;
-  std::cout << "d= " << d << std::endl;
+  // std::cout << "a= " << a << std::endl;
+  // std::cout << "b= " << b << std::endl;
+  // std::cout << "c= " << c << std::endl;
+  // std::cout << "d= " << d << std::endl;
 
   double t0_2 = t0 * t0;
   double t0_3 = t0 * t0 * t0;

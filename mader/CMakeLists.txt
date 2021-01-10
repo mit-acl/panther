@@ -90,7 +90,7 @@ target_link_libraries(test_bspline_utils ${catkin_LIBRARIES})
 
 add_executable(tracker_predictor src/tracker_predictor.cpp)
 add_dependencies(tracker_predictor ${catkin_EXPORTED_TARGETS})
-target_link_libraries(tracker_predictor ${catkin_LIBRARIES})
+target_link_libraries(tracker_predictor ${catkin_LIBRARIES} ${CASADI_LIBRARIES} utils)
 
 
 # add_executable(solver_ipopt src/solver_ipopt.cpp)
