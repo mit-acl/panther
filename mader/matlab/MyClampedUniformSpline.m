@@ -20,7 +20,7 @@ classdef MyClampedUniformSpline < handle
     end
     
     methods
-        function obj = MyClampedUniformSpline(t0, tf, deg, dim, num_seg, casadi_opti)
+        function obj = MyClampedUniformSpline(t0, tf, deg, dim, num_seg, casadi_opti, use_sym, name)
             obj.dim=dim;
             obj.t0 = t0;
             obj.tf = tf;
@@ -36,7 +36,11 @@ classdef MyClampedUniformSpline < handle
             %Create the control points
             obj.CPoints={};
             for i=1:obj.num_cpoints
-                obj.CPoints{end+1}=casadi_opti.variable(dim,1); %Control points
+                if(nargin>=7 && use_sym==true)
+                   obj.CPoints{end+1}=sym([name 'cp_' num2str(i) '_%d_%d'], [dim,1],'real'); %Control points sym (TODO: change name)
+                else
+                    obj.CPoints{end+1}=casadi_opti.variable(dim,1); %Control points
+                end
             end
 
         end
@@ -232,6 +236,10 @@ classdef MyClampedUniformSpline < handle
             result=convertCellArrayCPsToMatrix(obj, obj.CPoints);
         end
         
+        function result=getCPsofIntervalAsMatrix(obj,j)
+            result=convertCellArrayCPsToMatrix(obj, obj.getCPsofInterval(j));
+        end
+        
         %Converts local time (u) to global time (t) 
         function result=u2t(obj,u,j)
             interv=obj.timeSpanOfInterval(j);
@@ -256,12 +264,12 @@ classdef MyClampedUniformSpline < handle
             Qj=obj.convertCellArrayCPsToMatrix(Q_j_cell);
             
             %%%%%%%%%%%%%%%%%%%%%%
-            %Option 1 (works always, but there seems to be a bug in casadi here: https://groups.google.com/g/casadi-users/c/CBimXBsQ2MA)
+            %Option 1 works always, but there seems to be a bug in casadi here: https://groups.google.com/g/casadi-users/c/CBimXBsQ2MA
 %             pto0=obj.p:-1:0;
 %             if(order>obj.p)
 %                 diffT=zeros(obj.p+1,1);
 %             else
-%                 diffT=((factorial(pto0)./factorial(max(pto0-order,0))).*[(u.^[obj.p-order:-1:0]) zeros(1,order)])';
+%                 diffT=((factorial(pto0)./factorial(max(pto0-order,0))).*[(u.^[obj.p-order:-1:1]) 1 zeros(1,order)])';
 %             end
 %             ADiffT=A*diffT;
 %             
@@ -273,25 +281,25 @@ classdef MyClampedUniformSpline < handle
             %%%%%%%%%%%%%%%%%%%%%%
             
             %Option 2 (works always)
-            syms u_sym real;
-            Tmp=(u_sym.^[obj.p:-1:0])';
-            diffT= diff(Tmp,u_sym,order); 
-            ADiffTdelta=simplify(A*diffT*(1/(obj.delta_t^order)));
+%             syms u_sym real;
+%             Tmp=(u_sym.^[obj.p:-1:0])';
+%             diffT= diff(Tmp,u_sym,order); 
+%             ADiffTdelta=simplify(A*diffT*(1/(obj.delta_t^order)));
+%             
+%             u_sym=u;
+%             char_tmp=char(ADiffTdelta');
+%             char_tmp=strrep(char_tmp,'matrix',''); %This line is needed in Matlab 2019
+%             ADiffTdelta=eval(char_tmp); %See https://www.mathworks.com/matlabcentral/answers/310042-how-to-convert-symbolic-expressions-to-transfer-functions
+%             
+%             ADiffTdelta=ADiffTdelta';
+%             
+%             result=Qj*ADiffTdelta;
             
-            u_sym=u;
-            char_tmp=char(ADiffTdelta');
-            char_tmp=strrep(char_tmp,'matrix',''); %This line is needed in Matlab 2019
-            ADiffTdelta=eval(char_tmp); %See https://www.mathworks.com/matlabcentral/answers/310042-how-to-convert-symbolic-expressions-to-transfer-functions
-            
-            ADiffTdelta=ADiffTdelta';
-            
-            result=Qj*ADiffTdelta;
-            
-%             if(numel(symvar(ADiffT'))==0)
-%                 ADiffT=double(ADiffT);
-%             end
-%            
-%             result=(1/(obj.delta_t^order)) *Qj*ADiffT;
+% % % %             if(numel(symvar(ADiffT'))==0)
+% % % %                 ADiffT=double(ADiffT);
+% % % %             end
+% % % %            
+% % % %             result=(1/(obj.delta_t^order)) *Qj*ADiffT;
 %             
             
             
