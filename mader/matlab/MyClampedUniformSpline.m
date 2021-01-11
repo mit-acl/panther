@@ -20,7 +20,7 @@ classdef MyClampedUniformSpline < handle
     end
     
     methods
-        function obj = MyClampedUniformSpline(t0, tf, deg, dim, num_seg, casadi_opti, use_sym, name)
+        function obj = MyClampedUniformSpline(t0, tf, deg, dim, num_seg, casadi_opti) %, use_sym, name
             obj.dim=dim;
             obj.t0 = t0;
             obj.tf = tf;
@@ -36,11 +36,12 @@ classdef MyClampedUniformSpline < handle
             %Create the control points
             obj.CPoints={};
             for i=1:obj.num_cpoints
-                if(nargin>=7 && use_sym==true)
-                   obj.CPoints{end+1}=sym([name 'cp_' num2str(i) '_%d_%d'], [dim,1],'real'); %Control points sym (TODO: change name)
-                else
-                    obj.CPoints{end+1}=casadi_opti.variable(dim,1); %Control points
-                end
+%                 if(nargin>=7 && use_sym==true)
+%                    obj.CPoints{end+1}=sym([name 'cp_' num2str(i) '_%d_%d'], [dim,1],'real'); %Control points sym (TODO: change name)
+%                 else
+%                     obj.CPoints{end+1}=casadi_opti.variable(dim,1); %Control points
+%                 end
+                obj.CPoints{end+1}=casadi_opti.variable(dim,1); %Control points
             end
 
         end

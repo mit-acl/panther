@@ -18,6 +18,8 @@ En este repo:
 		and https://github.com/t3nsor/codebook/blob/master/bipartite-mincost.cpp
 	Cuidado que los assert() SOLO funcionan en debug mode, no en release mode. Change this also in Mader original code
 	Schur complement to avoid inverting the whole matrix?
+	Should I leave the planes fixed or as decision variables??
+	Check if the obj function chosen is the best one
 	
 Papers to cite in proposal/Paper:
 	https://arxiv.org/pdf/1904.03421.pdf
