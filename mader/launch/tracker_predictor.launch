@@ -4,7 +4,10 @@
 	<arg name="goal_topic" default="goal"/>
 
 
-	<node ns="$(arg quad)" name="tracker_predictor" pkg="mader" type="tracker_predictor" output="screen" clear_params="false"> 
+	<node ns="$(arg quad)" name="tracker_predictor_node" pkg="mader" type="tracker_predictor_node" output="screen" clear_params="false"  launch-prefix="xterm -e gdb -ex run --args"> 
+
+	<rosparam file="$(find mader)/matlab/params_casadi_prediction.yaml" command="load"/>
+	<rosparam file="$(find mader)/param/predictor.yaml" command="load"/>
 
 	<remap from="~cloud" to="/JA01/global_mapper_ros/occupancy_grid"/>
 <!-- 			<remap from="~term_goal" to="term_goal" />
@@ -12,5 +15,6 @@
 
 	</node>
 
+	<node pkg="rviz" type="rviz" name="rviz" args="-d $(find mader)/rviz_cfgs/mader.rviz"/>
 
 </launch>

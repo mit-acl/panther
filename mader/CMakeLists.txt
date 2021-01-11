@@ -22,7 +22,7 @@ find_package(CASADI REQUIRED)
 include_directories( ${CASADI_INCLUDE_DIR} )
 
 #From terminal: catkin config -DCMAKE_BUILD_TYPE=Release (or RelWithDebInfo) or Debug
-set(CMAKE_BUILD_TYPE Release) 
+set(CMAKE_BUILD_TYPE RelWithDebInfo) 
 
 find_package(catkin REQUIRED COMPONENTS 
 	roscpp
@@ -88,9 +88,13 @@ add_dependencies(test_bspline_utils ${catkin_EXPORTED_TARGETS})
 target_link_libraries(test_bspline_utils ${catkin_LIBRARIES})
 
 
-add_executable(tracker_predictor src/tracker_predictor.cpp)
-add_dependencies(tracker_predictor ${catkin_EXPORTED_TARGETS})
-target_link_libraries(tracker_predictor ${catkin_LIBRARIES} ${CASADI_LIBRARIES} utils)
+add_executable(tracker_predictor_node src/tracker_predictor_node.cpp src/tracker_predictor.cpp)
+add_dependencies(tracker_predictor_node ${catkin_EXPORTED_TARGETS})
+target_link_libraries(tracker_predictor_node ${catkin_LIBRARIES} ${CASADI_LIBRARIES} utils)
+
+add_executable(test_tracker_predictor src/examples/test_tracker_predictor.cpp src/tracker_predictor.cpp)
+add_dependencies(test_tracker_predictor ${catkin_EXPORTED_TARGETS})
+target_link_libraries(test_tracker_predictor ${catkin_LIBRARIES} ${CASADI_LIBRARIES} utils)
 
 
 # add_executable(solver_ipopt src/solver_ipopt.cpp)

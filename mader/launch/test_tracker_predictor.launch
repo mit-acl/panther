@@ -1,0 +1,14 @@
+<launch>
+
+	<arg name="quad" default="SQ01s"/>
+	<arg name="goal_topic" default="goal"/>
+
+
+	<node ns="$(arg quad)" name="test_tracker_predictor" pkg="mader" type="test_tracker_predictor" output="screen" clear_params="false"> 
+
+	<remap from="~cloud" to="/JA01/global_mapper_ros/occupancy_grid"/>
+	</node>
+
+<!-- 	<node pkg="rviz" type="rviz" name="rviz" args="-d $(find mader)/rviz_cfgs/mader.rviz"/> -->
+
+</launch>

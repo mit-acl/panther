@@ -16,6 +16,8 @@ En este repo:
 	Hungarian Algorithm: 
 		See https://github.com/srianant/kalman_filter_multi_object_tracking/blob/master/tracker.py
 		and https://github.com/t3nsor/codebook/blob/master/bipartite-mincost.cpp
+	Cuidado que los assert() SOLO funcionan en debug mode, no en release mode. Change this also in Mader original code
+	Schur complement to avoid inverting the whole matrix?
 	
 Papers to cite in proposal/Paper:
 	https://arxiv.org/pdf/1904.03421.pdf
