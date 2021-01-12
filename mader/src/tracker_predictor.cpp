@@ -272,22 +272,22 @@ void TrackerPredictor::cloud_cb(const sensor_msgs::PointCloud2ConstPtr& input)
         std::minmax_element(vertexes_bbox.begin(), vertexes_bbox.end(),
                             [](const Eigen::Vector4d& lhs, const Eigen::Vector4d& rhs) { return lhs.z() < rhs.z(); });
 
-    min_x = xExtremes.second->x();
-    min_y = yExtremes.second->y();
-    min_z = zExtremes.second->z();
+    max_x = xExtremes.second->x();
+    max_y = yExtremes.second->y();
+    max_z = zExtremes.second->z();
 
-    max_x = xExtremes.first->x();
-    max_y = yExtremes.first->y();
-    max_z = zExtremes.first->z();
+    min_x = xExtremes.first->x();
+    min_y = yExtremes.first->y();
+    min_z = zExtremes.first->z();
 
     std::cout << std::endl;
 
-    // std::cout << "min_x= " << min_x << std::endl;
-    // std::cout << "min_y= " << min_y << std::endl;
-    // std::cout << "min_z= " << min_z << std::endl;
-    // std::cout << "max_x= " << max_x << std::endl;
-    // std::cout << "max_y= " << max_y << std::endl;
-    // std::cout << "max_z= " << max_z << std::endl;
+    std::cout << "min_x= " << min_x << std::endl;
+    std::cout << "min_y= " << min_y << std::endl;
+    std::cout << "min_z= " << min_z << std::endl;
+    std::cout << "max_x= " << max_x << std::endl;
+    std::cout << "max_y= " << max_y << std::endl;
+    std::cout << "max_z= " << max_z << std::endl;
 
     // min_x = std::numeric_limits<double>::max();
     // max_x = -std::numeric_limits<double>::max();
@@ -316,6 +316,13 @@ void TrackerPredictor::cloud_cb(const sensor_msgs::PointCloud2ConstPtr& input)
 
     cluster tmp;
     tmp.bbox = Eigen::Vector3d(max_x - min_x, max_y - min_y, max_z - min_z);
+
+    assert(tmp.bbox.x() >= 0 && "Must hold: tmp.bbox.x() >= 0");
+    assert(tmp.bbox.y() >= 0 && "Must hold: tmp.bbox.y() >= 0");
+    assert(tmp.bbox.z() >= 0 && "Must hold: tmp.bbox.z() >= 0");
+
+    std::cout << bold << magenta << "bbox= " << tmp.bbox << reset << std::endl;
+
     tmp.centroid = Eigen::Vector3d((max_x + min_x) / 2.0, (max_y + min_y) / 2.0,
                                    (max_z + min_z) / 2.0);  // This is the centroid of the bbox, not the
                                                             // centroid of the point cloud
@@ -532,7 +539,23 @@ void TrackerPredictor::generatePredictedPwpForTrack(track& track_j)
   std::cout << "Going to solve the kkt equations" << std::endl;
 
   // std::cout << std::endl;
-  // std::cout << "A= \n" << A << std::endl;
+
+  // std::cout << "Determinant of A= " << casadi::Determinant(A) << std::endl;
+
+  std::cout << "A= \n" << A << std::endl;
+  std::cout << "b= \n" << b << std::endl;
+
+  // A = casadi::full(A);
+
+  // Only for debugging
+  // auto vector_x = static_cast<std::vector<double>>(A);
+  // Eigen::MatrixXd A_eigen(vector_x.data());
+
+  // Only for debugging
+  // auto vector_x = static_cast<std::vector<float>>(A);
+  // Eigen::Matrix<float, 6, 2> A_eigen(vector_x.data());
+
+  /////
 
   casadi::DM invA_b = solve(A, b);  // Equivalent to Matlab A\b, see
                                     // https://web.casadi.org/docs/#id2-sub:~:text=Linear%20system%20solve
@@ -605,7 +628,14 @@ visualization_msgs::MarkerArray TrackerPredictor::getBBoxesAsMarkerArray()
     m.ns = "predictor";
     m.action = visualization_msgs::Marker::ADD;
     m.id = j;
-    m.color = color(BLUE_TRANS_TRANS);
+
+    std_msgs::ColorRGBA color;
+    color.r = track_j.color.x();
+    color.g = track_j.color.y();
+    color.b = track_j.color.z();
+    color.a = 0.6;
+
+    m.color = color;  // color(BLUE_TRANS_TRANS);
 
     Eigen::Vector3d centroid = track_j.getEarliestCentroid();
 
@@ -622,6 +652,23 @@ visualization_msgs::MarkerArray TrackerPredictor::getBBoxesAsMarkerArray()
     m.pose.orientation.w = 1.0;
 
     marker_array.markers.push_back(m);
+
+    j = j + 1;
+
+    // add its text
+    m.id = j;
+    m.scale.x = 0.1;
+    m.scale.y = 0.1;
+    m.scale.z = 0.1;
+
+    m.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
+    m.text = track_j.id_string;
+    m.color.a = 1.0;
+
+    m.pose.position.z = m.pose.position.z + bbox.z();
+
+    marker_array.markers.push_back(m);
+
     j = j + 1;
   }
 

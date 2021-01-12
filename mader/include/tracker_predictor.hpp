@@ -64,6 +64,21 @@ public:
       // std::cout << termcolor::magenta << "i= " << i << "history[i].time= " << history[i].time << termcolor::reset
       //           << std::endl;
     }
+
+    color = Eigen::Vector3d(((double)rand() / (RAND_MAX)),   ////// r
+                            ((double)rand() / (RAND_MAX)),   ////// g
+                            ((double)rand() / (RAND_MAX)));  ////// b
+
+    // use its hex value as the id
+    // https://www.codespeedy.com/convert-rgb-to-hex-color-code-in-cpp/
+    int r = color.x() * 255;
+    int g = color.y() * 255;
+    int b = color.z() * 255;
+
+    std::stringstream ss;
+    ss << "#";
+    ss << std::hex << (r << 16 | g << 8 | b);
+    id_string = ss.str();
   }
 
   void addToHistory(const cluster& c)
@@ -155,6 +170,8 @@ public:
   mt::PieceWisePol pwp;
 
   unsigned int num_frames_skipped = 0;
+  Eigen::Vector3d color;
+  std::string id_string;
 
 private:
   unsigned int ssw;  // size of the sliding window

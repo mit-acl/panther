@@ -1,5 +1,5 @@
 size_sliding_window: 30         
-meters_to_create_new_track: 2.0 
+meters_to_create_new_track: 0.5 
 cluster_tolerance: 0.3
 min_cluster_size: 10
 max_cluster_size: 600

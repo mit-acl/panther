@@ -20,6 +20,9 @@ En este repo:
 	Schur complement to avoid inverting the whole matrix?
 	Should I leave the planes fixed or as decision variables??
 	Check if the obj function chosen is the best one
+	Make yaw compatible with yaw definition in acl-stack
+	Cuidado que guess_yaw doesn't use the constraint yaw_dot_max, while the optimization problem does
+	Cuidado que guess_pos doesn't use the constraint jerk_max, while the optimization problem does
 	
 Papers to cite in proposal/Paper:
 	https://arxiv.org/pdf/1904.03421.pdf

@@ -4,7 +4,7 @@
 	<arg name="goal_topic" default="goal"/>
 
 
-	<node ns="$(arg quad)" name="tracker_predictor_node" pkg="mader" type="tracker_predictor_node" output="screen" clear_params="false"  launch-prefix="xterm -e gdb -ex run --args"> 
+	<node ns="$(arg quad)" name="tracker_predictor_node" pkg="mader" type="tracker_predictor_node" output="screen" clear_params="false" > 
 
 	<rosparam file="$(find mader)/matlab/params_casadi_prediction.yaml" command="load"/>
 	<rosparam file="$(find mader)/param/predictor.yaml" command="load"/>
@@ -18,3 +18,7 @@
 	<node pkg="rviz" type="rviz" name="rviz" args="-d $(find mader)/rviz_cfgs/mader.rviz"/>
 
 </launch>
+
+
+
+<!-- launch-prefix="xterm -e gdb -ex run XXargs" -->
