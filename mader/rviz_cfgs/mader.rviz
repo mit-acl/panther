@@ -31,7 +31,7 @@ Panels:
     Experimental: false
     Name: Time
     SyncMode: 0
-    SyncSource: OccGrid
+    SyncSource: Image
   - Class: rviz/Displays
     Help Height: 0
     Name: Displays
@@ -71,63 +71,13 @@ Visualization Manager:
       Enabled: true
       Frame Timeout: 1000
       Frames:
-        All Enabled: false
-        JA01:
+        4000:
           Value: true
-        JA01/camera:
-          Value: false
-        JA01/camera_color_frame:
-          Value: false
-        JA01/camera_color_optical_frame:
-          Value: false
-        JA01/camera_depth_frame:
-          Value: false
-        JA01/camera_depth_optical_frame:
-          Value: false
-        JA01/camera_infra1_frame:
-          Value: false
-        JA01/camera_infra1_optical_frame:
-          Value: false
-        JA01/camera_infra2_frame:
-          Value: false
-        JA01/camera_infra2_optical_frame:
-          Value: false
-        JA01/camera_link:
-          Value: false
-        JA01/trans:
-          Value: false
-        JA01_base_footprint:
-          Value: false
-        JA01_base_link:
-          Value: false
-        JA01_chassis_link:
-          Value: false
-        JA01_fenders_link:
-          Value: false
-        JA01_front_left_wheel_link:
-          Value: false
-        JA01_front_mount:
-          Value: false
-        JA01_front_right_wheel_link:
-          Value: false
-        JA01_imu_3dm_link:
-          Value: false
-        JA01_imu_link:
-          Value: false
-        JA01_mid_mount:
-          Value: false
-        JA01_navsat_link:
-          Value: false
-        JA01_odom:
-          Value: false
-        JA01_rear_left_wheel_link:
-          Value: false
-        JA01_rear_mount:
-          Value: false
-        JA01_rear_right_wheel_link:
-          Value: false
-        JA01_rplidar:
-          Value: false
+        All Enabled: false
+        SQ01s:
+          Value: true
+        camera1:
+          Value: true
         vicon:
           Value: false
         world:
@@ -139,51 +89,12 @@ Visualization Manager:
       Show Names: true
       Tree:
         world:
-          JA01_odom:
+          4000:
             {}
           vicon:
-            JA01/trans:
-              JA01:
-                JA01/camera:
-                  JA01/camera_link:
-                    JA01/camera_color_frame:
-                      JA01/camera_color_optical_frame:
-                        {}
-                    JA01/camera_depth_frame:
-                      JA01/camera_depth_optical_frame:
-                        {}
-                    JA01/camera_infra1_frame:
-                      JA01/camera_infra1_optical_frame:
-                        {}
-                    JA01/camera_infra2_frame:
-                      JA01/camera_infra2_optical_frame:
-                        {}
-                JA01_base_link:
-                  JA01_base_footprint:
-                    JA01_rplidar:
-                      {}
-                  JA01_chassis_link:
-                    JA01_fenders_link:
-                      {}
-                    JA01_front_left_wheel_link:
-                      {}
-                    JA01_front_right_wheel_link:
-                      {}
-                    JA01_imu_link:
-                      {}
-                    JA01_mid_mount:
-                      JA01_front_mount:
-                        {}
-                      JA01_imu_3dm_link:
-                        {}
-                      JA01_rear_mount:
-                        {}
-                    JA01_navsat_link:
-                      {}
-                    JA01_rear_left_wheel_link:
-                      {}
-                    JA01_rear_right_wheel_link:
-                      {}
+            SQ01s:
+              camera1:
+                {}
       Update Interval: 0
       Value: true
     - Alpha: 1
@@ -278,7 +189,7 @@ Visualization Manager:
       Marker Topic: /SQ01s/mader/fov
       Name: FOV
       Namespaces:
-        {}
+        marker_fov: true
       Queue Size: 100
       Value: true
     - Class: rviz/Marker
@@ -310,7 +221,7 @@ Visualization Manager:
       Marker Topic: /shapes_dynamic_mesh
       Name: Dynamic_Obstacles_Mesh
       Namespaces:
-        {}
+        mesh: true
       Queue Size: 100
       Value: true
     - Class: rviz/MarkerArray
@@ -318,8 +229,7 @@ Visualization Manager:
       Marker Topic: /SQ01s/tracker_predictor_node/marker_predicted_traj
       Name: Predictions
       Namespaces:
-        predicted_traj_0: true
-        predicted_traj_1: true
+        {}
       Queue Size: 100
       Value: true
     - Class: rviz/MarkerArray
@@ -327,7 +237,7 @@ Visualization Manager:
       Marker Topic: /SQ01s/tracker_predictor_node/marker_bbox_obstacles
       Name: bbox_obstacles_predictor
       Namespaces:
-        predictor: true
+        {}
       Queue Size: 100
       Value: true
     - Alpha: 1
@@ -1084,25 +994,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 10.120271682739258
+      Distance: 24.03081512451172
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: -2.8966197967529297
-        Y: 1.0046988725662231
-        Z: 0.4802562892436981
+        X: -1.9483716487884521
+        Y: -1.4228345155715942
+        Z: 3.0349411964416504
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.6947969198226929
+      Pitch: 0.7497968673706055
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 0.32497358322143555
+      Yaw: 3.429974317550659
     Saved: ~
 Window Geometry:
   Displays:
