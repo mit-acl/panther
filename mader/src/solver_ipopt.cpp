@@ -339,6 +339,7 @@ bool SolverIpopt::optimize()
   std::map<std::string, casadi::DM> map_arguments;
   map_arguments["thetax_FOV_deg"] = par_.fov_x_deg;
   map_arguments["thetay_FOV_deg"] = par_.fov_y_deg;
+  map_arguments["Ra"] = par_.Ra;
   map_arguments["p0"] = eigen2std(initial_state_.pos);
   map_arguments["v0"] = eigen2std(initial_state_.vel);
   map_arguments["a0"] = eigen2std(initial_state_.accel);
@@ -353,6 +354,7 @@ bool SolverIpopt::optimize()
   std::cout << bold << blue << "ydot0= " << initial_state_.dyaw << reset << std::endl;
   map_arguments["v_max"] = eigen2std(par_.v_max);
   map_arguments["a_max"] = eigen2std(par_.a_max);
+  map_arguments["j_max"] = eigen2std(par_.j_max);
   map_arguments["ydot_max"] = par_.ydot_max;
   map_arguments["total_time"] = (t_final_ - t_init_);
   // all_w_fe is a matrix whose columns are the positions of the feature (in world frame) in the times [t0,t0+XX,

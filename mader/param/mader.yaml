@@ -25,6 +25,7 @@ z_max: 1000000000.0         #[m] JPS is not allowed to give a solution that goes
 #For single-agent simulations
 v_max: [2.6, 2.6, 2.6]   #[m/s]  7.0
 a_max: [20.0, 20.0, 9.6]   #[m/s2] Note that if a_max.z() > 9.81, the drone may flip
+j_max: [100.0, 100.0, 100.0]   #[m/s2] Note that if a_max.z() > 9.81, the drone may flip
 ydot_max: 4.0           # [rd/s] Maximum angular velocity. 0.4 for Hardware
 
 factor_alpha: 1.5 #[-] DeltaT = factor_alpha*States_took_previous_replan
