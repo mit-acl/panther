@@ -25,6 +25,7 @@
 #include <pcl/kdtree/kdtree.h>
 #include <pcl/segmentation/extract_clusters.h>
 #include <pcl/common/centroid.h>
+#include <string>  // std::string, std::stoi
 
 #ifndef TRACKER_PREDICTOR_HPP
 #define TRACKER_PREDICTOR_HPP
@@ -79,6 +80,10 @@ public:
     ss << "#";
     ss << std::hex << (r << 16 | g << 8 | b);
     id_string = ss.str();
+
+    id_int = stoi(std::to_string(r) + std::to_string(g) + std::to_string(b));  // concatenate r, g, b
+
+    // TODO: The previous approach will **almost** always generate different ids, but not always
   }
 
   void addToHistory(const cluster& c)
@@ -120,7 +125,7 @@ public:
     return (history[i].time - history.front().time);
   }
 
-  double getEarliestTimeSW()
+  double getLatestTimeSW()
   {
     return (history.back().time);
   }
@@ -130,24 +135,24 @@ public:
     return 0.0;
   }
 
-  double getRelativeEarliestTimeSW()
+  double getRelativeLatestTimeSW()
   {
     return (history.back().time - history.front().time);
   }
 
-  Eigen::Vector3d getEarliestCentroid()
+  Eigen::Vector3d getLatestCentroid()
   {
     return history.back().centroid;
   }
 
-  Eigen::Vector3d getEarliestBbox()
+  Eigen::Vector3d getLatestBbox()
   {
     return history.back().bbox;
   }
 
   void printPrediction(double seconds, int samples)
   {
-    double last_time = getEarliestTimeSW();
+    double last_time = getLatestTimeSW();
     double delta = seconds / samples;
 
     std::cout << "Predictions: " << std::endl;
@@ -172,6 +177,7 @@ public:
   unsigned int num_frames_skipped = 0;
   Eigen::Vector3d color;
   std::string id_string;
+  int id_int;
 
 private:
   unsigned int ssw;  // size of the sliding window
@@ -207,6 +213,7 @@ private:
 
   int size_sliding_window_;            // TODO (as a param)
   double meters_to_create_new_track_;  // TODO (as a param)
+  int max_frames_skipped_;
   double cluster_tolerance_;
   int min_cluster_size_;
   int max_cluster_size_;
@@ -216,6 +223,7 @@ private:
 
   ros::Publisher pub_marker_predicted_traj_;
   ros::Publisher pub_marker_bbox_obstacles_;
+  ros::Publisher pub_traj_;
 
   ros::NodeHandle nh_;
 

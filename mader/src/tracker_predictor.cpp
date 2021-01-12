@@ -47,6 +47,8 @@
 
 #include "visualization_msgs/MarkerArray.h"
 
+#include <mader_msgs/DynTraj.h>
+
 using namespace termcolor;
 
 TrackerPredictor::TrackerPredictor(ros::NodeHandle nh) : nh_(nh)
@@ -54,6 +56,7 @@ TrackerPredictor::TrackerPredictor(ros::NodeHandle nh) : nh_(nh)
   safeGetParam(nh_, "num_seg_prediction", num_seg_prediction_);
   safeGetParam(nh_, "size_sliding_window", size_sliding_window_);
   safeGetParam(nh_, "meters_to_create_new_track", meters_to_create_new_track_);
+  safeGetParam(nh_, "max_frames_skipped", max_frames_skipped_);
   safeGetParam(nh_, "cluster_tolerance", cluster_tolerance_);
   safeGetParam(nh_, "min_cluster_size", min_cluster_size_);
   safeGetParam(nh_, "max_cluster_size", max_cluster_size_);
@@ -74,6 +77,7 @@ TrackerPredictor::TrackerPredictor(ros::NodeHandle nh) : nh_(nh)
 
   pub_marker_predicted_traj_ = nh_.advertise<visualization_msgs::MarkerArray>("marker_predicted_traj", 1);
   pub_marker_bbox_obstacles_ = nh_.advertise<visualization_msgs::MarkerArray>("marker_bbox_obstacles", 1);
+  pub_traj_ = nh_.advertise<mader_msgs::DynTraj>("trajs_predicted", 1, true);  // The last boolean is latched or not
 
   tree_ = pcl::search::KdTree<pcl::PointXYZ>::Ptr(new pcl::search::KdTree<pcl::PointXYZ>);
 }
@@ -423,14 +427,14 @@ void TrackerPredictor::cloud_cb(const sensor_msgs::PointCloud2ConstPtr& input)
   //////////////////////////
   //////////////////////////
 
-  int max_frames_skipped = 10;  // TODO (as a param)
+  // int max_frames_skipped = 10;  // TODO (as a param)
 
   int tracks_removed = 0;
   // Erase the tracks that haven't been detected in many frames
   all_tracks_.erase(std::remove_if(all_tracks_.begin(), all_tracks_.end(),
-                                   [max_frames_skipped, tracks_removed](const track& x) mutable {
+                                   [this, tracks_removed](const track& x) mutable {
                                      tracks_removed++;
-                                     return x.num_frames_skipped > max_frames_skipped;
+                                     return x.num_frames_skipped > max_frames_skipped_;
                                    }),
                     all_tracks_.end());
 
@@ -465,7 +469,28 @@ void TrackerPredictor::cloud_cb(const sensor_msgs::PointCloud2ConstPtr& input)
 
     std::string ns = "predicted_traj_" + std::to_string(novale);
     pub_marker_predicted_traj_.publish(
-        pwp2ColoredMarkerArray(track_j.pwp, time_pcloud, time_pcloud + 1.0, samples, ns));
+        pwp2ColoredMarkerArray(track_j.pwp, time_pcloud, time_pcloud + 1.0, samples, ns, track_j.color));
+
+    /////////////////// construct a DynTraj msg. //TODO: use the pwp instead (this will require modifications in the
+    /// mader code, for when it's not an agent)
+
+    mader_msgs::DynTraj dynTraj_msg;
+    dynTraj_msg.header.frame_id = "world";
+    dynTraj_msg.header.stamp = ros::Time::now();
+
+    dynTraj_msg.function = pieceWisePol2String(track_j.pwp);
+
+    std::vector<double> tmp = eigen2std(track_j.getLatestBbox());
+
+    dynTraj_msg.bbox = std::vector<float>(tmp.begin(), tmp.end());  // TODO: Here I'm using the latest Bbox. Should I
+                                                                    // use the biggest one of the whole history?
+    dynTraj_msg.pos = eigen2rosvector(track_j.pwp.eval(ros::Time::now().toSec()));
+    dynTraj_msg.id = track_j.id_int;
+    dynTraj_msg.is_agent = false;
+
+    pub_traj_.publish(dynTraj_msg);
+    //////////////////
+
     novale++;
   }
 
@@ -489,15 +514,14 @@ void TrackerPredictor::printAllTracks()
 void TrackerPredictor::generatePredictedPwpForTrack(track& track_j)
 {
   // Conversion DM <--> Eigen:  https://github.com/casadi/casadi/issues/2563
-  auto eigen2std = [](const Eigen::Vector3d& v) { return std::vector<double>{ v.x(), v.y(), v.z() }; };
 
   std::map<std::string, casadi::DM> map_arguments;
 
   // double t0 = track_j.getOldestTimeSW();
-  // double tf = track_j.getEarliestTimeSW();
+  // double tf = track_j.getLatestTimeSW();
 
   double t0_r = track_j.getRelativeOldestTimeSW();
-  double tf_r = track_j.getRelativeEarliestTimeSW();
+  double tf_r = track_j.getRelativeLatestTimeSW();
   double total_time = tf_r - t0_r;
   double time_per_segment = total_time / num_seg_prediction_;
 
@@ -582,7 +606,7 @@ void TrackerPredictor::generatePredictedPwpForTrack(track& track_j)
   Eigen::Matrix<double, 4, 1> coeff_old_z =
       Eigen::Vector4d(0.0, double(coeffs(2, 0)), double(coeffs(2, 1)), double(coeffs(2, 2)));
 
-  double time_pcloud = track_j.getEarliestTimeSW() - track_j.getOldestTimeSW();
+  double time_pcloud = track_j.getLatestTimeSW() - track_j.getOldestTimeSW();
   Eigen::Vector4d T =
       Eigen::Vector4d(pow(time_pcloud, 2), pow(time_pcloud, 2), pow(time_pcloud, 1), pow(time_pcloud, 0));
   std::cout << magenta << "predicted before= " << coeff_old_x.transpose() * T <<  //////
@@ -599,8 +623,8 @@ void TrackerPredictor::generatePredictedPwpForTrack(track& track_j)
   rescaleCoeffPol(coeff_old_z, coeff_new_z, tf_r, tf_r + prediction_seconds);
 
   mt::PieceWisePol pwp;  // will have only one interval
-  pwp.times.push_back(track_j.getEarliestTimeSW());
-  pwp.times.push_back(track_j.getEarliestTimeSW() + prediction_seconds);
+  pwp.times.push_back(track_j.getLatestTimeSW());
+  pwp.times.push_back(track_j.getLatestTimeSW() + prediction_seconds);
 
   pwp.coeff_x.push_back(coeff_new_x);
   pwp.coeff_y.push_back(coeff_new_y);
@@ -610,7 +634,7 @@ void TrackerPredictor::generatePredictedPwpForTrack(track& track_j)
 
   std::cout << magenta << "predicted after= " << track_j.pwp.eval(time_pcloud + track_j.getOldestTimeSW()).transpose()
             << reset << std::endl;
-  std::cout << magenta << "real= " << track_j.getEarliestCentroid().transpose() << reset << std::endl;
+  std::cout << magenta << "real= " << track_j.getLatestCentroid().transpose() << reset << std::endl;
   std::cout << std::endl;
 }
 
@@ -637,13 +661,13 @@ visualization_msgs::MarkerArray TrackerPredictor::getBBoxesAsMarkerArray()
 
     m.color = color;  // color(BLUE_TRANS_TRANS);
 
-    Eigen::Vector3d centroid = track_j.getEarliestCentroid();
+    Eigen::Vector3d centroid = track_j.getLatestCentroid();
 
     m.pose.position.x = centroid.x();
     m.pose.position.y = centroid.y();
     m.pose.position.z = centroid.z();
 
-    Eigen::Vector3d bbox = track_j.getEarliestBbox();
+    Eigen::Vector3d bbox = track_j.getLatestBbox();
 
     m.scale.x = bbox.x();
     m.scale.y = bbox.y();

@@ -10,7 +10,7 @@
 #include "termcolor.hpp"
 
 visualization_msgs::MarkerArray pwp2ColoredMarkerArray(mt::PieceWisePol& pwp, double t_init, double t_final,
-                                                       int samples, std::string ns)
+                                                       int samples, std::string ns, Eigen::Vector3d& color)
 {
   visualization_msgs::MarkerArray marker_array;
 
@@ -39,7 +39,12 @@ visualization_msgs::MarkerArray pwp2ColoredMarkerArray(mt::PieceWisePol& pwp, do
     m.ns = ns;
     m.action = visualization_msgs::Marker::ADD;
     m.id = j;
-    m.color = color(RED_NORMAL);
+
+    m.color.r = color.x();  // color(RED_NORMAL);
+    m.color.g = color.y();
+    m.color.b = color.z();
+    m.color.a = 1.0;
+
     m.scale.x = 0.1;
     m.scale.y = 0.0000001;  // rviz complains if not
     m.scale.z = 0.0000001;  // rviz complains if not
@@ -702,6 +707,16 @@ geometry_msgs::Vector3 eigen2rosvector(Eigen::Vector3d vector)
   tmp.z = vector(2, 0);
   return tmp;
 }
+
+std::vector<double> eigen2std(const Eigen::Vector3d& v)
+{
+  return std::vector<double>{ v.x(), v.y(), v.z() };
+}
+
+// std::vector<float> eigen2std(const Eigen::Vector3f& v)
+// {
+//   return std::vector<float>{ v.x(), v.y(), v.z() };
+// }
 
 geometry_msgs::Point eigen2point(Eigen::Vector3d vector)
 {

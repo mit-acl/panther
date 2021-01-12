@@ -67,7 +67,7 @@ bool safeGetParam(ros::NodeHandle& nh, std::string const& param_name, T& param_v
 }
 
 visualization_msgs::MarkerArray pwp2ColoredMarkerArray(mt::PieceWisePol& pwp, double t_init, double t_final,
-                                                       int samples, std::string ns);
+                                                       int samples, std::string ns, Eigen::Vector3d& color);
 
 void rescaleCoeffPol(const Eigen::Matrix<double, 4, 1>& coeff_old, Eigen::Matrix<double, 4, 1>& coeff_new, double t0,
                      double tf);
@@ -120,6 +120,8 @@ Eigen::Vector3d vec2eigen(geometry_msgs::Vector3 vector);
 geometry_msgs::Vector3 eigen2rosvector(Eigen::Vector3d vector);
 
 geometry_msgs::Point eigen2point(Eigen::Vector3d vector);
+
+std::vector<double> eigen2std(const Eigen::Vector3d& v);
 
 geometry_msgs::Vector3 vectorNull();
 

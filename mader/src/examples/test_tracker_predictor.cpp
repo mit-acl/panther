@@ -37,7 +37,7 @@ int main(int argc, char** argv)
 
   tracker_predictor.generatePredictedPwpForTrack(my_track);
 
-  double time_test = my_track.getEarliestTimeSW();
+  double time_test = my_track.getLatestTimeSW();
 
   my_track.printPrediction(3.0, 5);
 
