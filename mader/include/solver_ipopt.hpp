@@ -40,7 +40,8 @@ public:
   bool setInitStateFinalStateInitTFinalT(mt::state initial_state, mt::state final_state, double t_init,
                                          double &t_final);
   void setHulls(ConvexHullsOfCurves_Std &hulls);
-  void setSimpsonFeatureSamples(const std::vector<Eigen::Vector3d> &samples);
+  void setSimpsonFeatureSamples(const std::vector<Eigen::Vector3d> &samples,
+                                const std::vector<Eigen::Vector3d> &w_velsampleswrtworld);
 
   mt::trajectory traj_solution_;
 
@@ -161,6 +162,7 @@ private:
   casadi::Function casadi_function_;
   casadi::Function casadi_fit_yaw_function_;
   casadi::DM all_w_fe_;
+  casadi::DM all_w_velfewrtworld_;
   // PImpl idiom
   // https://www.geeksforgeeks.org/pimpl-idiom-in-c-with-examples/
   // struct PImpl;

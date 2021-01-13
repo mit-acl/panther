@@ -458,9 +458,11 @@ ConvexHullsOfCurves Mader::convexHullsOfCurves(double t_start, double t_end)
   return result;
 }
 
-std::vector<Eigen::Vector3d> Mader::sampleFeaturePositions(double t_start, double t_end)
+void Mader::sampleFeaturePosVel(double t_start, double t_end, std::vector<Eigen::Vector3d>& pos,
+                                std::vector<Eigen::Vector3d>& vel)
 {
-  std::vector<Eigen::Vector3d> samples;
+  pos.clear();
+  vel.clear();
 
   // std::cout << red << bold << "in sampleFeaturePositions, waiting to lock mtx_trajs_" << reset << std::endl;
   mtx_trajs_.lock();
@@ -474,22 +476,49 @@ std::vector<Eigen::Vector3d> Mader::sampleFeaturePositions(double t_start, doubl
     t_ = t_start + i * delta;  // which is constant along the trajectory
 
     if (trajs_.size() > 0)
-    {  // take the trajectory of the first obstacle for now
-      samples.push_back(Eigen::Vector3d(trajs_[0].function[0].value(),  ////////////
-                                        trajs_[0].function[1].value(),  ////////////
-                                        trajs_[0].function[2].value()));
+    {
+      size_t wt = 0;  // which traj I should focus on. Take the trajectory of the first obstacle for now
+      pos.push_back(Eigen::Vector3d(trajs_[wt].function[0].value(),  ////////////
+                                    trajs_[wt].function[1].value(),  ////////////
+                                    trajs_[wt].function[2].value()));
+
+      // MyTimer timer(true);
+      // This commented part always returns 0.0. why??
+      // See also
+      // https://github.com/ArashPartow/exprtk/blob/66bed77369557fe1872df4c999c9d9ccb3adc3f6/readme.txt#LC4010:~:text=This%20free%20function%20will%20attempt%20to%20perform%20a%20numerical%20differentiation
+      // Eigen::Vector3d vel_i = Eigen::Vector3d(exprtk::derivative(trajs_[wt].function[0], "t"),  ////////////
+      //                                         exprtk::derivative(trajs_[wt].function[1], "t"),  ////////////
+      //                                         exprtk::derivative(trajs_[wt].function[2], t_));
+      // std::cout << "time to take derivatives= " << timer << std::endl;
+      // std::cout << on_green << bold << "vel= " << vel_i.transpose() << reset << std::endl;
+
+      // std::cout << on_green << bold << "pos= " << pos[i].transpose() << reset << std::endl;
+
+      // Use finite differences to obtain the derivative
+      double epsilon = 1e-6;
+      t_ = t_ + epsilon;
+
+      Eigen::Vector3d pos_i_epsilon = Eigen::Vector3d(trajs_[wt].function[0].value(),  ////////////
+                                                      trajs_[wt].function[1].value(),  ////////////
+                                                      trajs_[wt].function[2].value());
+
+      vel.push_back((pos_i_epsilon - pos[i]) / epsilon);
+
+      // std::cout << bold << "Velocity= " << vel[i].transpose() << reset << std::endl;
+      //////////////////////////////
     }
     else
     {
-      samples.push_back(Eigen::Vector3d::Ones());
+      std::cout << on_red << bold << "ERROR: there is no dynamic obstacle to track!!" << reset << std::endl;
+      std::cout << on_red << bold << "Pushing simply ones vectors" << reset << std::endl;
+      pos.push_back(Eigen::Vector3d::Ones());
+      vel.push_back(Eigen::Vector3d::Zero());
     }
   }
   mtx_t_.unlock();
   // std::cout << red << bold << "in sampleFeaturePositions, mtx_t_ unlocked" << reset << std::endl;
   mtx_trajs_.unlock();
   // std::cout << red << bold << "in sampleFeaturePositions, mtx_trajs_ unlocked" << reset << std::endl;
-
-  return samples;
 }
 
 void Mader::setTerminalGoal(mt::state& term_goal)
@@ -873,7 +902,12 @@ bool Mader::replan(mt::Edges& edges_obstacles_out, std::vector<mt::state>& X_saf
   edges_obstacles_out = vectorGCALPol2edges(hulls);
 
   solver_->setHulls(hulls_std);
-  solver_->setSimpsonFeatureSamples(sampleFeaturePositions(t_start, t_final));
+
+  std::vector<Eigen::Vector3d> w_posfeature;      // velocity of the feature expressed in w
+  std::vector<Eigen::Vector3d> w_velfeaturewrtw;  // velocity of the feature wrt w, expressed in w
+  sampleFeaturePosVel(t_start, t_final, w_posfeature, w_velfeaturewrtw);
+
+  solver_->setSimpsonFeatureSamples(w_posfeature, w_velfeaturewrtw);
 
   //////////////////////
   std::cout << on_cyan << bold << "Solved so far" << solutions_found_ << "/" << total_replannings_ << reset

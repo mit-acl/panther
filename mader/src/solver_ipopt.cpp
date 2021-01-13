@@ -102,6 +102,7 @@ SolverIpopt::SolverIpopt(mt::parameters &par)
                                                                                      "fit_spline_to_samples.casadi");
 
   all_w_fe_ = casadi::DM::rand(3, par_.num_samples_simpson);
+  all_w_velfewrtworld_ = casadi::DM::rand(3, par_.num_samples_simpson);
 }
 
 SolverIpopt::~SolverIpopt()
@@ -140,14 +141,20 @@ void SolverIpopt::setHulls(ConvexHullsOfCurves_Std &hulls)
 
 //////////////////////////////////////////////////////////
 
-void SolverIpopt::setSimpsonFeatureSamples(const std::vector<Eigen::Vector3d> &samples)
+void SolverIpopt::setSimpsonFeatureSamples(const std::vector<Eigen::Vector3d> &samples,
+                                           const std::vector<Eigen::Vector3d> &w_velsampleswrtworld)
 {
   assert(samples.size() == par_.num_samples_simpson);
+  assert(w_velsampleswrtworld.size() == par_.num_samples_simpson);
   for (int i = 0; i < samples.size(); i++)
   {
     all_w_fe_(0, i) = samples[i].x();
     all_w_fe_(1, i) = samples[i].y();
     all_w_fe_(2, i) = samples[i].z();
+
+    all_w_velfewrtworld_(0, i) = w_velsampleswrtworld[i].x();
+    all_w_velfewrtworld_(1, i) = w_velsampleswrtworld[i].y();
+    all_w_velfewrtworld_(2, i) = w_velsampleswrtworld[i].z();
   }
 }
 
@@ -363,6 +370,7 @@ bool SolverIpopt::optimize()
   // all_w_fe is a matrix whose columns are the positions of the feature (in world frame) in the times [t0,t0+XX,
   // ...,tf-XX, tf] (i.e. uniformly distributed and including t0 and tf)
   map_arguments["all_w_fe"] = all_w_fe_;
+  map_arguments["all_w_velfewrtworld"] = all_w_velfewrtworld_;
   map_arguments["c_jerk"] = par_.c_jerk;
   map_arguments["c_yaw"] = par_.c_yaw;
   map_arguments["c_vel_isInFOV"] = par_.c_vel_isInFOV;

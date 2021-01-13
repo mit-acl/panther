@@ -306,7 +306,7 @@ class FakeSim:
         z_string=str(scale_z)+'*(-sin(3 * '+tt +str(offset)+'))' + '+' + str(z);                               #'1.0'        
 
 
-        x_string=str(0.0)+'*(sin('+tt +str(offset)+') + 2 * sin(2 * '+tt +str(offset)+'))' +'+' + str(1.0); #'2*sin(t)' 
+        x_string=str(scale_x)+'*(sin('+tt +str(offset)+') + 2 * sin(2 * '+tt +str(offset)+'))' +'+' + str(1.0); #'2*sin(t)' 
         y_string=str(scale_y)+'*(cos('+tt +str(offset)+') - 2 * cos(2 * '+tt +str(offset)+'))' +'+' + str(1.0); #'2*cos(t)' 
         z_string=str(scale_z)+'*(-sin(3 * '+tt +str(offset)+'))' + '+' + str(1.0);                               #'1.0' 
 

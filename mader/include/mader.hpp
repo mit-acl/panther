@@ -93,7 +93,8 @@ private:
 
   void printDroneStatus();
 
-  std::vector<Eigen::Vector3d> sampleFeaturePositions(double t_start, double t_end);
+  void sampleFeaturePosVel(double t_start, double t_end, std::vector<Eigen::Vector3d>& pos,
+                           std::vector<Eigen::Vector3d>& vel);
 
   mt::parameters par_;
 
