@@ -321,12 +321,12 @@ for j=1:sp.num_seg
     target_isInFOV_substituted_yawcps{j}=substitute(target_isInFOV{j}, yaw, sy.getPosU(u,j));
      
     
-    %TODO: should we include total_time here below?
+    %TODO: should we include the scaling variable here below?
     partial_s_partial_t=jacobian(s,u)*(1/sp.delta_t);% partial_s_partial_u * partial_u_partial_t
     
     %See Eq. 11.3 of https://www2.math.upenn.edu/~pemantle/110-public/notes11.pdf
     partial_s_partial_posfeature=jacobian(s,w_fevar);
-    partial_posfeature_partial_t=w_velfewrtworldvar;
+    partial_posfeature_partial_t=w_velfewrtworldvar/scaling;
     
     s_dot=partial_s_partial_t  + partial_s_partial_posfeature*partial_posfeature_partial_t; % partial_s_partial_u * partial_u_partial_t
     
