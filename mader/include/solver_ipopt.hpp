@@ -159,6 +159,7 @@ private:
   std::unique_ptr<OctopusSearch> octopusSolver_ptr_;
 
   casadi::Function casadi_function_;
+  casadi::Function casadi_fit_yaw_function_;
   casadi::DM all_w_fe_;
   // PImpl idiom
   // https://www.geeksforgeeks.org/pimpl-idiom-in-c-with-examples/

@@ -98,6 +98,9 @@ SolverIpopt::SolverIpopt(mt::parameters &par)
   casadi_function_ = casadi::Function::load(ros::package::getPath("mader") + "/matlab/"
                                                                              "solve_opt_problem.casadi");
 
+  casadi_fit_yaw_function_ = casadi::Function::load(ros::package::getPath("mader") + "/matlab/"
+                                                                                     "fit_spline_to_samples.casadi");
+
   all_w_fe_ = casadi::DM::rand(3, par_.num_samples_simpson);
 }
 

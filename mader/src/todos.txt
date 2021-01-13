@@ -24,7 +24,9 @@ En este repo:
 	Cuidado que guess_yaw doesn't use the constraint yaw_dot_max, while the optimization problem does
 	Cuidado que guess_pos doesn't use the constraint jerk_max, while the optimization problem does
 	Enhacement: The predictor should use the pwp field (instead of the string field) of dynTraj. This will require changes in mader.cpp (how is_agent is used)
-	
+	Enable the -O3 option when compiling all the mader package
+	See what to do when boost() doesn't find a path (end of yaw_guess_generator.cpp)
+
 Papers to cite in proposal/Paper:
 	https://arxiv.org/pdf/1904.03421.pdf
 	https://www.youtube.com/watch?v=JosFzstiH9U

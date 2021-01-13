@@ -266,18 +266,58 @@ casadi::DM SolverIpopt::generateYawGuess(casadi::DM matrix_qp_guess, casadi::DM 
     }
     cout << endl << "\nTotal cost: " << d[fg.get_goal_found()] << endl;
 
+    ////////////////////////////////////////
     // Now fit a spline to the yaws found
     ////////////////////////////////////////
 
-    casadi::Function fit_function = casadi::Function::load(
-        ros::package::getPath("mader") + "/matlab/fit_spline_to_samples.casadi");  // TODO: read this only once
+    // First correct the angles so that the max absolute difference between two adjacent elements is <=pi
+
+    // See "fit_to_angular_data.m"
+    casadi::DM vsp_corrected =
+        vector_shortest_path(casadi::Sparsity::dense(1, vector_shortest_path.columns()));  // TODO: do this just once
+
+    vsp_corrected(0, 0) = vector_shortest_path(0, 0);
+    for (size_t i = 1; i < vsp_corrected.columns(); i++)  // starts in 1, not in 0
+    {
+      double previous_phi = double(vsp_corrected(0, i - 1));
+      double phi_i = double(vsp_corrected(0, i));
+      double difference = previous_phi - phi_i;
+
+      double phi_i_f = phi_i + floor(difference / (2 * M_PI)) * 2 * M_PI;
+      double phi_i_c = phi_i + ceil(difference / (2 * M_PI)) * 2 * M_PI;
+
+      if (fabs(previous_phi - phi_i_f) < fabs(previous_phi - phi_i_c))
+      {
+        vsp_corrected(0, i) = phi_i_f;
+      }
+      else
+      {
+        vsp_corrected(0, i) = phi_i_c;
+      }
+    }
+
+    ////////////////ONLY FOR DEBUGGING
+    for (size_t i = 1; i < vsp_corrected.columns(); i++)
+    {
+      double phi_mi = double(vsp_corrected(0, i - 1));
+      double phi_i = double(vsp_corrected(0, i));
+
+      if (fabs(phi_i - phi_mi) > M_PI)
+      {
+        std::cout << red << bold << "This diff must be <= pi" << reset << std::endl;
+        abort();
+      }
+
+      // assert(fabs(phi_i - phi_mi) <= M_PI && "This diff must be <= pi");
+    }
+    ////////////////END OF ONLY FOR DEBUGGING
 
     std::map<std::string, casadi::DM> map_arg2;
-    map_arg2["all_yaw"] = vector_shortest_path;
+    map_arg2["all_yaw"] = vsp_corrected;
     map_arg2["y0"] = y0;
     map_arg2["ydot0"] = ydot0;
     map_arg2["ydotf"] = ydotf;
-    std::map<std::string, casadi::DM> result2 = fit_function(map_arg2);
+    std::map<std::string, casadi::DM> result2 = casadi_fit_yaw_function_(map_arg2);
     casadi::DM yaw_qps_matrix_casadi = result2["result"];
 
     //////////////////////////////////////
