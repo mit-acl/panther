@@ -104,6 +104,9 @@ target_link_libraries(test_tracker_predictor ${catkin_LIBRARIES} ${CASADI_LIBRAR
 add_library(disable_physics src/disable_physics.cpp)
 target_link_libraries(disable_physics ${catkin_LIBRARIES} ${GAZEBO_LIBRARIES})
 
+add_library(move_model src/move_model.cpp)
+target_link_libraries(move_model ${catkin_LIBRARIES} ${GAZEBO_LIBRARIES})
+
 # add_executable(solver_ipopt src/solver_ipopt.cpp)
 # target_link_libraries(solver_ipopt ${CASADI_LIBRARIES})
 
