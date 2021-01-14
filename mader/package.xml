@@ -28,7 +28,12 @@
   <build_depend>separator</build_depend>  
   <build_depend>jsk_rviz_plugins</build_depend> 
   <build_depend>hungarian</build_depend> 
-  
+
+  <build_depend>gazebo_ros</build_depend>
+  <build_depend>gazebo_plugins</build_depend>
+  <run_depend>gazebo_plugins</run_depend>
+  <run_depend>gazebo_ros</run_depend>
+  <run_depend>robot_state_publisher</run_depend>
  <!--
   <build_depend>decomp_util</build_depend>
   <build_depend>decomp_ros_utils</build_depend>
@@ -39,6 +44,7 @@
 
   <!-- The export tag contains other, unspecified, tags -->
   <export>
+     <gazebo_ros plugin_path="${prefix}/lib" gazebo_media_path="${prefix}" />
     <!-- Other tools can request additional information be placed here -->
 
   </export>

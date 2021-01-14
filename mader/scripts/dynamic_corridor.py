@@ -36,12 +36,16 @@ import tf
 
 from math import sin, cos, tan
 
+import os
 
 import copy 
 import sys
 
+import rospkg
+
 color_static=ColorRGBA(r=0,g=0,b=1,a=1);
 color_dynamic=ColorRGBA(r=1,g=0,b=0,a=1);
+
 
 class MovingCircle:
     def __init__(self):
@@ -57,8 +61,8 @@ class MovingCorridor:
         self.num_of_dyn_objects=int(0.65*total_num_obs);
         self.num_of_stat_objects=total_num_obs-self.num_of_dyn_objects; #They are actually dynamic obstacles
         #HACK
-        self.num_of_dyn_objects=1;
-        self.num_of_stat_objects=0;
+        # self.num_of_dyn_objects=1;
+        # self.num_of_stat_objects=0;
         #END OF HACK
         self.x_min= 2.0
         self.x_max= 75.0
@@ -76,7 +80,7 @@ class MovingCorridor:
         self.bbox_dynamic=[0.8, 0.8, 0.8] #[0.6, 0.6, 0.6]
         self.bbox_static_vert=[0.4, 0.4, 4]
         self.bbox_static_horiz=[0.4, 8, 0.4]
-        self.percentage_vert=0.35;
+        self.percentage_vert=0.0;
 
 
 
@@ -109,6 +113,7 @@ class FakeSim:
         self.meshes=[];
         self.type=[];#"dynamic" or "static"
         self.bboxes=[]; 
+        print "before here"
         for i in range(self.world.num_of_dyn_objects):          
             self.x_all.append(random.uniform(self.world.x_min, self.world.x_max));
             self.y_all.append(random.uniform(self.world.y_min, self.world.y_max));
@@ -118,6 +123,7 @@ class FakeSim:
             self.type.append("dynamic")
             self.meshes.append(random.choice(available_meshes_dynamic));
             self.bboxes.append(self.world.bbox_dynamic);
+
 
         for i in range(self.world.num_of_stat_objects):
             bbox_i=[]; 
@@ -141,16 +147,66 @@ class FakeSim:
             self.bboxes.append(bbox_i)
 
 
+
         self.pubTraj = rospy.Publisher('/trajs', DynTraj, queue_size=1, latch=True)
         self.pubShapes_static = rospy.Publisher('/shapes_static', Marker, queue_size=1, latch=True)
         self.pubShapes_static_mesh = rospy.Publisher('/shapes_static_mesh', MarkerArray, queue_size=1, latch=True)
         self.pubShapes_dynamic_mesh = rospy.Publisher('/shapes_dynamic_mesh', MarkerArray, queue_size=1, latch=True)
         self.pubShapes_dynamic = rospy.Publisher('/shapes_dynamic', Marker, queue_size=1, latch=True)
-        self.pubGazeboState = rospy.Publisher('/gazebo/set_model_state', ModelState, queue_size=1)
+        self.pubGazeboState = rospy.Publisher('/gazebo/set_model_state', ModelState, queue_size=100)
 
         self.already_published_static_shapes=False;
 
+        #Spawn all the objects in Gazebo
+        for i in range(len(self.x_all)):
+            self.spawnGazeboObstacle(i)
+
+
         rospy.sleep(0.5)
+
+    def spawnGazeboObstacle(self, i):
+            x=self.x_all[i];
+            y=self.y_all[i];
+            z=self.z_all[i];
+
+            rospack = rospkg.RosPack();
+            path_mader=rospack.get_path('mader');
+            path_file=path_mader+"/meshes/tmp.urdf"
+
+            f = open(path_file, "w")
+            scale='"'+str(self.bboxes[i][0])+" "+str(self.bboxes[i][1])+" "+str(self.bboxes[i][2])+'"';
+            f.write("""
+<robot name="name_robot">
+  <link name="name_link">
+    <inertial>
+      <mass value="0.200" />
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <inertia ixx="5.8083e-4" ixy="0" ixz="0" iyy="3.0833e-5" iyz="0" izz="5.9083e-4" />
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="""+'"'+self.meshes[i]+'"'+""" scale="""+scale+"""/>
+      </geometry>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <mesh filename="""+'"'+self.meshes[i]+'"'+""" scale="""+scale+"""/>
+      </geometry>
+    </collision>
+  </link>
+  <gazebo>
+    <plugin name="pr2_pose_test" filename="libpr2_pose_test.so">
+    </plugin>
+  </gazebo>
+</robot>
+                """)
+  # <plugin name="pr2_pose_test" filename="libpr2_pose_test.so"/>
+            f.close()
+
+            os.system("rosrun gazebo_ros spawn_model -file `rospack find mader`/meshes/tmp.urdf -urdf -x " + str(x) + " -y " + str(y) + " -z 0 -model "+str(i)); #all_
+            os.remove(path_file)
 
 
     def pubTF(self, timer):
@@ -204,11 +260,12 @@ class FakeSim:
                 [x_string, y_string, z_string] = self.wave_in_z(self.x_all[i], self.y_all[i], self.z_all[i], s, self.offset_all[i], 1.0)
 
 
-
+           
 
             x = eval(x_string)
             y = eval(y_string)
             z = eval(z_string)
+
 
             dynamic_trajectory_msg.is_agent=False;
             dynamic_trajectory_msg.header.stamp= t_ros;
@@ -225,12 +282,43 @@ class FakeSim:
 
             #If you want to move the objets in gazebo
             # gazebo_state = ModelState()
-            # gazebo_state.model_name = str(i)
+            # gazebo_state.model_name = str(i)#"all_"+str(i)
             # gazebo_state.pose.position.x = x
             # gazebo_state.pose.position.y = y
             # gazebo_state.pose.position.z = z
             # gazebo_state.reference_frame = "world" 
-            # self.pubGazeboState.publish(gazebo_state)  
+            # self.pubGazeboState.publish(gazebo_state) 
+
+
+            x=self.x_all[i];
+            y=self.y_all[i];
+            z=self.z_all[i];
+
+            # s="""
+            # rosservice call /gazebo/set_model_state "model_state:
+            #   model_name: '"""+str(i)+"""'
+            #   pose:
+            #     position:
+            #       x: """+str(x)+"""
+            #       y: """+str(y)+"""
+            #       z: """+str(z)+"""
+            #     orientation:
+            #       x: 0.0
+            #       y: 0.0
+            #       z: 0.0
+            #       w: 0.0
+            #   twist:
+            #     linear:
+            #       x: 0.0
+            #       y: 0.0
+            #       z: 0.0
+            #     angular:
+            #       x: 0.0
+            #       y: 0.0
+            #       z: 0.0
+            #   reference_frame: 'world'" 
+            # """
+            # os.system(s) 
 
             #If you want to see the objects in rviz
             point=Point()
@@ -353,7 +441,7 @@ if __name__ == '__main__':
     print(sys.argv)
     if(len(sys.argv)<=1):
         # print("Usage: python dynamic_corridor.py [Num_of_obstacles]")
-        total_num_obs=140; 
+        total_num_obs=5; 
     else:
         total_num_obs=int(sys.argv[1])
 

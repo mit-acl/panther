@@ -1,0 +1,14 @@
+<?xml version="1.0" ?>
+<sdf version="1.5">
+  <world name="default">
+    <plugin name="disable_physics" filename="libdisable_physics.so"/>
+    <!-- A global light source -->
+    <include>
+      <uri>model://sun</uri>
+    </include>
+    <!-- A ground plane -->
+    <include>
+      <uri>model://ground_plane</uri>
+    </include>
+  </world>
+</sdf>

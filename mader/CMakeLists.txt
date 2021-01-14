@@ -38,6 +38,11 @@ find_package(catkin REQUIRED COMPONENTS
   pcl_ros
   hungarian
 )
+
+find_package(gazebo REQUIRED)
+link_directories(${GAZEBO_LIBRARY_DIRS})
+include_directories(${GAZEBO_INCLUDE_DIRS})
+
 find_package(decomp_util REQUIRED)
 include_directories(${DECOMP_UTIL_INCLUDE_DIRS})
 
@@ -96,6 +101,8 @@ add_executable(test_tracker_predictor src/examples/test_tracker_predictor.cpp sr
 add_dependencies(test_tracker_predictor ${catkin_EXPORTED_TARGETS})
 target_link_libraries(test_tracker_predictor ${catkin_LIBRARIES} ${CASADI_LIBRARIES} utils)
 
+add_library(disable_physics src/disable_physics.cpp)
+target_link_libraries(disable_physics ${catkin_LIBRARIES} ${GAZEBO_LIBRARIES})
 
 # add_executable(solver_ipopt src/solver_ipopt.cpp)
 # target_link_libraries(solver_ipopt ${CASADI_LIBRARIES})

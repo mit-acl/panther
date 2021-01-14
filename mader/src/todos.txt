@@ -29,7 +29,10 @@ En este repo:
 	In the graph for the yaw, impose the yaw_dot_max en las conexiones de los yaw angles
 	Asegurarse que el yaw no explota (wrap yaw0)
 	Check la heuristics del graph del yaw
+	Check los weights en la heuristics del graph del yaw
 	See %TODO: should we include total_time here below? in main.m
+	Check that the T matrix in the tracker is the right one (and not its inverse)
+	Add VIO term in the cost function
 
 Papers to cite in proposal/Paper:
 	https://arxiv.org/pdf/1904.03421.pdf

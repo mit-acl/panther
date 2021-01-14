@@ -1,0 +1,35 @@
+<launch>
+	<arg name="quad" default="SQ01s"/>
+	<arg name="world_name" default="$(find mader)/meshes/empty.world"/>
+	
+	<!-- We resume the logic in empty_world.launch, changing only the name of the world to be launched -->
+	<include file="$(find gazebo_ros)/launch/empty_world.launch">
+		<arg name="world_name" value="$(arg world_name)"/>
+	</include>
+
+  <arg name="is_using_gripper" default="true" />
+
+<!--   <arg name="model" default="$(find acl_sim)/urdf/quadrotor.gazebo.xacro"/>
+
+  <param name="robot_description" command="$(find xacro)/xacro inorder
+                       '$(find mader)/meshes/model2.urdf.xacro'
+                       with_gripper:=$(arg is_using_gripper)"/>
+  
+
+  <arg name="x" default="0.0"/>
+  <arg name="y" default="0.0"/>
+  <arg name="z" default="0.3"/>
+  <arg name="yaw" default="0.0"/>
+
+
+  <node name="spawn_robot" pkg="gazebo_ros" type="spawn_model"
+        args="-param robot_description
+           -urdf
+           -x $(arg x)
+           -y $(arg y)
+           -z $(arg z)
+           -Y $(arg yaw)
+           -model $(arg quad)"
+        respawn="false" output="screen"/> -->
+
+</launch>
