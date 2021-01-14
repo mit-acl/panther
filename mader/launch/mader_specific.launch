@@ -11,7 +11,7 @@
 	<!-- Start Perfect tracker -->
 	<include file="$(find mader)/launch/perfect_tracker_and_sim.launch">
   		<arg name="quad" value="$(arg quad)"/>
-  		<arg name="gazebo" value="false"/>
+  		<arg name="gazebo" value="true"/>
         <arg name="x" value="$(arg x)"/>
         <arg name="y" value="$(arg y)"/>
         <arg name="z" value="$(arg z)"/>

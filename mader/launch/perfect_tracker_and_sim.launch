@@ -12,22 +12,22 @@
     
 
     <!-- Spawn vehicle in Gazebo -->
-    <!-- <group if="$(arg gazebo)"> -->
+    <group if="$(arg gazebo)">
 
         <!-- Spawn vehicle in gazebo -->
-<!--         <include file="$(find acl_sim)/launch/spawn_quadrotor_with_asus.launch">
+        <include file="$(find mader_gazebo)/launch/spawn_quadrotor_with_asus.launch">
             <arg name="name" value="$(arg quad)"/>
             <arg name="tf_prefix" default="$(optenv ROS_NAMESPACE)"/>
             <arg name="x" value="$(arg x)"/>
             <arg name="y" value="$(arg y)"/>
             <arg name="z" value="$(arg z)"/>
             <arg name="yaw" default="$(arg yaw)"/>
-        </include> -->
+        </include>
 
          <!-- Camera to body tf -->
-<!--         <node pkg="tf" type="static_transform_publisher" name="camera2body" args="0 0 0 -1.57 0 -1.57 $(arg quad) $(arg quad)/camera 100" />
- -->
-    <!-- </group> -->
+        <node pkg="tf" type="static_transform_publisher" name="camera2body" args="0 0 0 -1.57 0 -1.57 $(arg quad) $(arg quad)/camera 100" />
+
+    </group>
 
        
     <!-- Vicon to world tf -->

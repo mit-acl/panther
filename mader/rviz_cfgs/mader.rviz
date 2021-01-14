@@ -7,12 +7,10 @@ Panels:
         - /Global Options1
         - /TF1
         - /Predictions1
-        - /Console1
         - /CameraPub1
-        - /Image1
         - /Light1/Direction1
       Splitter Ratio: 0.40631580352783203
-    Tree Height: 604
+    Tree Height: 332
   - Class: rviz/Selection
     Name: Selection
   - Class: rviz/Tool Properties
@@ -31,7 +29,7 @@ Panels:
     Experimental: false
     Name: Time
     SyncMode: 0
-    SyncSource: ""
+    SyncSource: Image
   - Class: rviz/Displays
     Help Height: 0
     Name: Displays
@@ -91,77 +89,15 @@ Visualization Manager:
           Value: true
         4009:
           Value: true
-        4010:
-          Value: true
-        4011:
-          Value: true
-        4012:
-          Value: true
-        4013:
-          Value: true
-        4014:
-          Value: true
-        4015:
-          Value: true
-        4016:
-          Value: true
-        4017:
-          Value: true
-        4018:
-          Value: true
-        4019:
-          Value: true
-        4020:
-          Value: true
-        4021:
-          Value: true
-        4022:
-          Value: true
-        4023:
-          Value: true
-        4024:
-          Value: true
-        4025:
-          Value: true
-        4026:
-          Value: true
-        4027:
-          Value: true
-        4028:
-          Value: true
-        4029:
-          Value: true
-        4030:
-          Value: true
-        4031:
-          Value: true
-        4032:
-          Value: true
-        4033:
-          Value: true
-        4034:
-          Value: true
-        4035:
-          Value: true
-        4036:
-          Value: true
-        4037:
-          Value: true
-        4038:
-          Value: true
-        4039:
-          Value: true
-        4040:
-          Value: true
-        4041:
-          Value: true
-        4042:
-          Value: true
-        4043:
-          Value: true
-        4044:
-          Value: true
         All Enabled: false
+        SQ01s:
+          Value: true
+        SQ01s/camera:
+          Value: true
+        camera1:
+          Value: true
+        vicon:
+          Value: true
         world:
           Value: true
       Marker Scale: 2
@@ -191,76 +127,12 @@ Visualization Manager:
             {}
           4009:
             {}
-          4010:
-            {}
-          4011:
-            {}
-          4012:
-            {}
-          4013:
-            {}
-          4014:
-            {}
-          4015:
-            {}
-          4016:
-            {}
-          4017:
-            {}
-          4018:
-            {}
-          4019:
-            {}
-          4020:
-            {}
-          4021:
-            {}
-          4022:
-            {}
-          4023:
-            {}
-          4024:
-            {}
-          4025:
-            {}
-          4026:
-            {}
-          4027:
-            {}
-          4028:
-            {}
-          4029:
-            {}
-          4030:
-            {}
-          4031:
-            {}
-          4032:
-            {}
-          4033:
-            {}
-          4034:
-            {}
-          4035:
-            {}
-          4036:
-            {}
-          4037:
-            {}
-          4038:
-            {}
-          4039:
-            {}
-          4040:
-            {}
-          4041:
-            {}
-          4042:
-            {}
-          4043:
-            {}
-          4044:
-            {}
+          vicon:
+            SQ01s:
+              SQ01s/camera:
+                {}
+              camera1:
+                {}
       Update Interval: 0
       Value: true
     - Alpha: 1
@@ -343,24 +215,16 @@ Visualization Manager:
       VsColor: 0; 255; 0
       VsScale: 1
     - Class: rviz/Marker
-      Enabled: false
-      Marker Topic: /SQ04s/mader/obstacles
-      Name: Obstacles
-      Namespaces:
-        {}
-      Queue Size: 100
-      Value: false
-    - Class: rviz/Marker
       Enabled: true
       Marker Topic: /SQ01s/mader/fov
       Name: FOV
       Namespaces:
-        {}
+        marker_fov: true
       Queue Size: 100
       Value: true
     - Class: rviz/MarkerArray
       Enabled: true
-      Marker Topic: /shapes_dynamic_mesh
+      Marker Topic: /obstacles_mesh
       Name: Obstacles
       Namespaces:
         mesh: true
@@ -381,6 +245,18 @@ Visualization Manager:
       Namespaces:
         {}
       Queue Size: 100
+      Value: true
+    - Class: rviz/Image
+      Enabled: true
+      Image Topic: /SQ01s/camera/depth/image_rect_raw
+      Max Value: 1
+      Median window: 5
+      Min Value: 0
+      Name: DepthImage
+      Normalize Range: true
+      Queue Size: 2
+      Transport Hint: raw
+      Unreliable: false
       Value: true
     - Alpha: 1
       Auto Size:
@@ -521,7 +397,7 @@ Visualization Manager:
       Marker Topic: /SQ01s/mader/traj_safe_colored
       Name: Safe_Color
       Namespaces:
-        {}
+        SQ01s: true
       Queue Size: 100
       Value: true
     - Class: rviz/MarkerArray
@@ -713,7 +589,7 @@ Visualization Manager:
       Marker Topic: /SQ01s/mader/actual_traj
       Name: ActTraj
       Namespaces:
-        {}
+        ActualTraj_SQ01s: true
       Queue Size: 100
       Value: true
     - Class: rviz/Marker
@@ -1052,6 +928,7 @@ Visualization Manager:
         ActTraj: true
         Console: true
         DepthCloud: true
+        DepthImage: true
         FOV: true
         G: true
         GTerm: true
@@ -1075,7 +952,7 @@ Visualization Manager:
         Value: true
         bbox_obstacles_predictor: true
     - Class: rviz/Image
-      Enabled: true
+      Enabled: false
       Image Topic: /rviz1/camera1/image
       Max Value: 1
       Median window: 5
@@ -1085,14 +962,14 @@ Visualization Manager:
       Queue Size: 2
       Transport Hint: raw
       Unreliable: false
-      Value: true
+      Value: false
     - Class: rviz_lighting/Light
       Diffuse Color: 255; 255; 255
       Direction:
         X: 0
         Y: 0
         Z: 1
-      Enabled: true
+      Enabled: false
       Falloff: 1
       Light Type: Directional
       Name: Light
@@ -1103,7 +980,7 @@ Visualization Manager:
         Z: 0
       Reference Frame: camera1
       Specular Color: 255; 255; 255
-      Value: true
+      Value: false
   Enabled: true
   Global Options:
     Background Color: 46; 52; 54
@@ -1132,35 +1009,37 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 20.10536003112793
+      Distance: 17.206241607666016
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 4.861517429351807
-        Y: -6.262610912322998
-        Z: 7.134330749511719
+        X: 3.6895697116851807
+        Y: -3.5535483360290527
+        Z: 2.2678475379943848
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.43479713797569275
+      Pitch: 0.8047971129417419
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 3.439974308013916
+      Yaw: 3.3399760723114014
     Saved: ~
 Window Geometry:
+  DepthImage:
+    collapsed: false
   Displays:
     collapsed: false
-  Height: 1052
+  Height: 780
   Hide Left Dock: false
   Hide Right Dock: true
   Image:
     collapsed: false
-  QMainWindow State: 000000ff00000000fd0000000400000000000001dd0000037efc020000000ffb0000001200530065006c0065006300740069006f006e000000003d000004c20000005c00fffffffb0000001e0054006f006f006c002000500072006f00700065007200740069006500730200000b4b00000293000002b300000152fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261fb0000000c00430061006d0065007200610000000028000003960000000000000000fb000000100044006900730070006c006100790073010000003d00000299000000c900fffffffb0000000a0049006d00610067006501000002dc000000df0000001600fffffffb0000000a0049006d0061006700650000000000ffffffff0000000000000000fb0000000a0049006d00610067006500000002f4000000ca0000000000000000fb0000000a0049006d00610067006501000001530000012c0000000000000000fb0000000c00430061006d0065007200610100000285000001390000000000000000fb0000000a0049006d00610067006501000002dd0000022b0000000000000000000000010000016a00000186fc0200000004fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000000a00560069006500770073000000003d00000186000000a400fffffffb000000100044006900730070006c00610079007300000000db000002e3000000c900fffffffb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e10000019700000003000007800000003efc0100000002fb0000000800540069006d0065010000000000000780000002eb00fffffffb0000000800540069006d006501000000000000045000000000000000000000059d0000037e00000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
+  QMainWindow State: 000000ff00000000fd0000000400000000000001f40000026efc0200000010fb0000001200530065006c0065006300740069006f006e000000003d000004c20000005c00fffffffb0000001e0054006f006f006c002000500072006f00700065007200740069006500730200000b4b00000293000002b300000152fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261fb0000000c00430061006d0065007200610000000028000003960000000000000000fb000000100044006900730070006c006100790073010000003d00000189000000c900fffffffb0000000a0049006d00610067006500000001830000006c0000001600fffffffb0000000a0049006d0061006700650000000000ffffffff0000000000000000fb0000000a0049006d00610067006500000002f4000000ca0000000000000000fb0000000a0049006d00610067006501000001530000012c0000000000000000fb0000000c00430061006d0065007200610100000285000001390000000000000000fb0000000a0049006d00610067006501000002dd0000022b0000000000000000fb00000014004400650070007400680049006d00610067006501000001cc000000df0000001600ffffff000000010000016a00000186fc0200000004fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000000a00560069006500770073000000003d00000186000000a400fffffffb000000100044006900730070006c00610079007300000000db000002e3000000c900fffffffb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e10000019700000003000005a00000003efc0100000002fb0000000800540069006d00650100000000000005a0000002eb00fffffffb0000000800540069006d00650100000000000004500000000000000000000003a60000026e00000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
   Selection:
     collapsed: false
   Time:
@@ -1169,6 +1048,6 @@ Window Geometry:
     collapsed: false
   Views:
     collapsed: true
-  Width: 1920
-  X: 2560
-  Y: 0
+  Width: 1440
+  X: 663
+  Y: 361
