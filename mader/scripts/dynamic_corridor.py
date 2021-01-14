@@ -83,6 +83,7 @@ class FakeSim:
         self.bbox_static_vert=[0.4, 0.4, 4]
         self.bbox_static_horiz=[0.4, 8, 0.4]
         self.percentage_vert=0.0;
+        self.name_obs="obs_"
    
         self.available_meshes_static=["package://mader/meshes/ConcreteDamage01b/model3.dae", "package://mader/meshes/ConcreteDamage01b/model2.dae"]
         self.available_meshes_dynamic=["package://mader/meshes/ConcreteDamage01b/model4.dae"]
@@ -168,7 +169,7 @@ class FakeSim:
             self.all_dyn_traj[i].pos.z=z #Current position
 
             self.pubTraj.publish(self.all_dyn_traj[i])
-            br.sendTransform((x, y, z), (0,0,0,1), t_ros, self.name+str(self.all_dyn_traj[i].id), "world")
+            br.sendTransform((x, y, z), (0,0,0,1), t_ros, self.name_obs+str(self.all_dyn_traj[i].id), "world")
 
 
             self.marker_array.markers[i].pose.position.x=x;
@@ -300,7 +301,7 @@ class FakeSim:
   # <plugin name="pr2_pose_test" filename="libpr2_pose_test.so"/>
             f.close()
 
-            os.system("rosrun gazebo_ros spawn_model -file `rospack find mader`/meshes/tmp.urdf -urdf -x " + str(x) + " -y " + str(y) + " -z " + str(z) + " -model "+str(i)); #all_
+            os.system("rosrun gazebo_ros spawn_model -file `rospack find mader`/meshes/tmp.urdf -urdf -x " + str(x) + " -y " + str(y) + " -z " + str(z) + " -model "+self.name_obs+str(i)); #all_
             os.remove(path_file)
 
              
