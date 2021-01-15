@@ -18,6 +18,9 @@
 #include <jsk_rviz_plugins/OverlayText.h>
 #include <assert.h> /* assert */
 
+#include <tf2_eigen/tf2_eigen.h>
+#include <tf2_ros/transform_listener.h>
+
 typedef MADER_timers::Timer MyTimer;
 
 // this object is created in the mader_ros_node
@@ -96,7 +99,7 @@ MaderRos::MaderRos(ros::NodeHandle nh1, ros::NodeHandle nh2, ros::NodeHandle nh3
 
   safeGetParam(nh1_, "c_jerk", par_.c_jerk);
   safeGetParam(nh1_, "c_yaw", par_.c_yaw);
-  safeGetParam(nh1_, "c_vel_isInFOV", par_.c_vel_isInFOV);
+  safeGetParam(nh1_, "c_fov", par_.c_fov);
   safeGetParam(nh1_, "c_final_pos", par_.c_final_pos);
 
   // CHECK parameters
@@ -104,7 +107,7 @@ MaderRos::MaderRos(ros::NodeHandle nh1, ros::NodeHandle nh2, ros::NodeHandle nh3
 
   assert((par_.c_jerk >= 0) && "par_.c_jerk>=0 must hold");
   assert((par_.c_yaw >= 0) && "par_.c_yaw>=0 must hold");
-  assert((par_.c_vel_isInFOV >= 0) && "par_.c_vel_isInFOV>=0 must hold");
+  assert((par_.c_fov >= 0) && "par_.c_fov>=0 must hold");
   assert((par_.c_final_pos >= 0) && "par_.c_final_pos>=0 must hold");
 
   assert((par_.ydot_max >= 0) && "ydot_max>=0 must hold");
@@ -197,6 +200,32 @@ MaderRos::MaderRos(ros::NodeHandle nh1, ros::NodeHandle nh2, ros::NodeHandle nh3
   // ros::Duration(1.0).sleep();  // TODO
   // bool success_service_call = system("rosservice call /change_mode 'mode: 1'");
   ////
+
+  tf2_ros::Buffer tf_buffer;
+  // tf2_ros::TransformListener* tfListener = new tf2_ros::TransformListener(tf_buffer);  // TODO: use smart pointer
+
+  std::unique_ptr<tf2_ros::TransformListener> tfListener{ new tf2_ros::TransformListener(tf_buffer) };
+
+  geometry_msgs::TransformStamped transform_stamped;
+
+  // wait for body transform to be published before initializing
+  ROS_INFO("Waiting for world to camera transform...");
+  while (true)
+  {
+    try
+    {
+      transform_stamped = tf_buffer.lookupTransform(name_drone_, name_drone_ + "/camera", ros::Time::now(),
+                                                    ros::Duration(0.5));  // TODO: change this duration time?
+
+      par_.b_T_c = tf2::transformToEigen(transform_stamped);
+
+      break;
+    }
+    catch (tf2::TransformException& ex)
+    {
+      // nothing
+    }
+  }
 
   ROS_INFO("Planner initialized");
 }

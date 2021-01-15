@@ -103,6 +103,20 @@ SolverIpopt::SolverIpopt(mt::parameters &par)
 
   all_w_fe_ = casadi::DM::rand(3, par_.num_samples_simpson);
   all_w_velfewrtworld_ = casadi::DM::rand(3, par_.num_samples_simpson);
+
+  Eigen::Matrix<double, 4, 4> b_Tmatrix_c = par_.b_T_c.matrix();
+  b_Tmatrixcasadi_c_ = casadi::DM::rand(4, 4);
+
+  for (int i = 0; i < b_Tmatrix_c.rows(); i++)
+  {
+    for (int j = 0; j < b_Tmatrix_c.cols(); j++)
+    {
+      b_Tmatrixcasadi_c_(i, j) = b_Tmatrix_c(i, j);
+    }
+  }
+
+  std::cout << "b_Tmatrixcasadi_c_= " << b_Tmatrixcasadi_c_ << std::endl;
+  abort();
 }
 
 SolverIpopt::~SolverIpopt()
@@ -349,6 +363,7 @@ bool SolverIpopt::optimize()
   std::map<std::string, casadi::DM> map_arguments;
   map_arguments["thetax_FOV_deg"] = par_.fov_x_deg;
   map_arguments["thetay_FOV_deg"] = par_.fov_y_deg;
+  map_arguments["b_T_c"] = b_Tmatrixcasadi_c_;
   map_arguments["Ra"] = par_.Ra;
   map_arguments["p0"] = eigen2std(initial_state_.pos);
   map_arguments["v0"] = eigen2std(initial_state_.vel);

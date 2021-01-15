@@ -163,6 +163,8 @@ private:
   casadi::Function casadi_fit_yaw_function_;
   casadi::DM all_w_fe_;
   casadi::DM all_w_velfewrtworld_;
+  casadi::DM b_Tmatrixcasadi_c_;
+
   // PImpl idiom
   // https://www.geeksforgeeks.org/pimpl-idiom-in-c-with-examples/
   // struct PImpl;

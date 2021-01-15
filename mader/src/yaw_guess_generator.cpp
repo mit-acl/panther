@@ -143,6 +143,8 @@ casadi::DM SolverIpopt::generateYawGuess(casadi::DM matrix_qp_guess, casadi::DM 
   std::map<std::string, casadi::DM> map_arg;
   map_arg["thetax_FOV_deg"] = par_.fov_x_deg;
   map_arg["thetay_FOV_deg"] = par_.fov_y_deg;
+  map_arg["thetay_FOV_deg"] = par_.fov_y_deg;
+  map_arg["b_T_c"] = b_Tmatrixcasadi_c_;
   map_arg["all_w_fe"] = all_w_fe;
   map_arg["guess_CPs_Pos"] = matrix_qp_guess;
 

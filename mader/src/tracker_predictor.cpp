@@ -160,7 +160,7 @@ void TrackerPredictor::cloud_cb(const sensor_msgs::PointCloud2ConstPtr& pcl2ptr_
 
   std::cout << "Input point cloud has " << input_cloud1->points.size() << " points" << std::endl;
 
-  // Transform to world frame
+  // Transform w_T_b
   Eigen::Affine3d w_T_b;
   geometry_msgs::TransformStamped transform_stamped;
   try

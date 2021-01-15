@@ -653,6 +653,9 @@ struct parameters
   double c_yaw = 0.0;
   double c_fov = 0.0;
   double c_final_pos = 100.0;
+
+  //
+  Eigen::Affine3d b_T_c;
 };
 
 struct committedTrajectory

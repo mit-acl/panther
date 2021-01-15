@@ -33,9 +33,6 @@ dim_yaw=1;
 
 offset_vel=0.1;
 
-%Transformation matrix camera/body b_T_c
-b_T_c=[roty(90)*rotz(-90) zeros(3,1); zeros(1,3) 1];
-
 assert(tf>t0);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%% PARAMETERS! %%%%%%%%%%%%%%%%%%%%%%%
@@ -59,6 +56,9 @@ thetax_half_FOV_rad=thetax_half_FOV_deg*pi/180.0;
 
 thetay_half_FOV_deg=thetay_FOV_deg/2.0; %half of the angle of the cone
 thetay_half_FOV_rad=thetay_half_FOV_deg*pi/180.0;
+
+%%%%% Transformation matrix camera/body b_T_c
+b_T_c=opti.parameter(4,4);
 
 %%%%% Initial and final conditions
 p0=opti.parameter(3,1); v0=opti.parameter(3,1); a0=opti.parameter(3,1);
@@ -485,9 +485,11 @@ Ra_value=12.0;
 y0_value=0.0;
 ydot0_value=0.0;
 ydotf_value=0.0;
+b_T_c_value= [roty(90)*rotz(-90) zeros(3,1); zeros(1,3) 1];
                            
 all_params= [ {createStruct('thetax_FOV_deg', thetax_FOV_deg, thetax_FOV_deg_value)},...
               {createStruct('thetay_FOV_deg', thetay_FOV_deg, thetay_FOV_deg_value)},...
+              {createStruct('b_T_c', b_T_c, b_T_c_value)},...
               {createStruct('Ra', Ra, Ra_value)},...
               {createStruct('p0', p0, [-4;0;0])},...
               {createStruct('v0', v0, [0;0;0])},...
@@ -575,8 +577,8 @@ end
 
 
 all_pCPs=sp.getCPsAsMatrix();
-g = Function('g',{all_pCPs, all_w_fe, thetax_FOV_deg, thetay_FOV_deg, yaw_samples},{all_target_isInFOV_for_different_yaw},...
-                 {'guess_CPs_Pos', 'all_w_fe', 'thetax_FOV_deg', 'thetay_FOV_deg', 'yaw_samples'},{'result'});
+g = Function('g',{all_pCPs,        all_w_fe,    thetax_FOV_deg,  thetay_FOV_deg,  b_T_c,  yaw_samples},{all_target_isInFOV_for_different_yaw},...
+                 {'guess_CPs_Pos', 'all_w_fe', 'thetax_FOV_deg', 'thetay_FOV_deg','b_T_c', 'yaw_samples'},{'result'});
 g=g.expand();
 
 g.save('visibility.casadi') %The file generated is quite big
@@ -585,6 +587,7 @@ g_result=g('guess_CPs_Pos',full(sol.all_pCPs),...
                          'all_w_fe', all_w_fe_value,...
                          'thetax_FOV_deg',thetax_FOV_deg_value,...  
                          'thetay_FOV_deg',thetay_FOV_deg_value,...
+                         'b_T_c',b_T_c_value,...
                          'yaw_samples', linspace(0,2*pi,numel(yaw_samples)));
 full(g_result.result)
 
@@ -628,7 +631,7 @@ for t_i=t_simpson %t0:0.3:tf
     plotAxesArrowsT(0.5,w_T_b)
     
     %Plot the FOV cone
-    w_T_c=w_T_b*b_T_c;
+    w_T_c=w_T_b*b_T_c_value;
     position=w_T_c(1:3,4);
     direction=w_T_c(1:3,3);
     length=1;
