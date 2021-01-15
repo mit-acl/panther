@@ -5,6 +5,8 @@ project(mader)
 add_definitions(-std=c++11)
 #add_definitions(-std=c99)
 
+# set (CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake_cotire")
+# include(cotire)
 
 find_package( Eigen3 REQUIRED )
 include_directories(${EIGEN3_INCLUDE_DIR})
@@ -53,8 +55,12 @@ catkin_package()
 
 include_directories(${catkin_INCLUDE_DIRS} include)
 
+
+
 #For precompile headers see example here
 #https://gitlab.kitware.com/cmake/cmake/tree/375d01c6808713a0cfeef9ea092c8236ba063525/Tests/PrecompileHeaders
+# target_precompile_headers(exprtk PUBLIC exprtk.hpp) #ONLY WORKS FOR CMAKE >=3.16
+
 
 add_library(cgal_utils STATIC src/cgal_utils)
 target_include_directories (cgal_utils PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
@@ -72,6 +78,7 @@ target_link_libraries(octopus_search PUBLIC ${catkin_LIBRARIES}) # ${CMAKE_CURRE
 add_library(solver_ipopt STATIC src/solver_ipopt.cpp src/bspline_utils.cpp src/solver_ipopt_utils.cpp src/solver_ipopt_guess.cpp src/yaw_guess_generator.cpp)
 target_include_directories (solver_ipopt PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${DECOMP_UTIL_INCLUDE_DIRS} ${Boost_INCLUDE_DIR})
 target_link_libraries(solver_ipopt PUBLIC ${CASADI_LIBRARIES} ${DECOMP_UTIL_LIBRARIES} utils octopus_search ${catkin_LIBRARIES} cgal_utils ${Boost_LIBRARIES} )
+# cotire(solver_ipopt)
 
 # enable_unity_build(UNITY_BUILD_NAME src/mader_node.cpp)
 add_executable(${PROJECT_NAME}_node src/mader_node.cpp src/mader_ros.cpp src/mader.cpp )
@@ -85,7 +92,6 @@ target_link_libraries(test_octopus_search ${catkin_LIBRARIES} utils cgal_utils) 
 add_executable(test_utils src/examples/test_utils.cpp)
 add_dependencies(test_utils ${catkin_EXPORTED_TARGETS})
 target_link_libraries(test_utils ${catkin_LIBRARIES} utils)
-
 
 
 add_executable(test_bspline_utils src/examples/test_bspline_utils.cpp src/bspline_utils.cpp)
