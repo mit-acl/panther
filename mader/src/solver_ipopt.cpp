@@ -101,11 +101,13 @@ SolverIpopt::SolverIpopt(mt::parameters &par)
   casadi_fit_yaw_function_ = casadi::Function::load(ros::package::getPath("mader") + "/matlab/"
                                                                                      "fit_spline_to_samples.casadi");
 
-  all_w_fe_ = casadi::DM::rand(3, par_.num_samples_simpson);
-  all_w_velfewrtworld_ = casadi::DM::rand(3, par_.num_samples_simpson);
+  all_w_fe_ = casadi::DM(3, par_.num_samples_simpson);
+  all_w_velfewrtworld_ = casadi::DM(3, par_.num_samples_simpson);
 
   Eigen::Matrix<double, 4, 4> b_Tmatrix_c = par_.b_T_c.matrix();
-  b_Tmatrixcasadi_c_ = casadi::DM::rand(4, 4);
+  b_Tmatrixcasadi_c_ = casadi::DM(4, 4);
+
+  // std::cout << "par_.b_T_c.matrix()= " << par_.b_T_c.matrix() << std::endl;
 
   for (int i = 0; i < b_Tmatrix_c.rows(); i++)
   {
@@ -115,8 +117,8 @@ SolverIpopt::SolverIpopt(mt::parameters &par)
     }
   }
 
-  std::cout << "b_Tmatrixcasadi_c_= " << b_Tmatrixcasadi_c_ << std::endl;
-  abort();
+  // std::cout << "b_Tmatrixcasadi_c_= " << b_Tmatrixcasadi_c_ << std::endl;
+  // abort();
 }
 
 SolverIpopt::~SolverIpopt()

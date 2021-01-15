@@ -26,6 +26,44 @@ typedef MADER_timers::Timer MyTimer;
 // this object is created in the mader_ros_node
 MaderRos::MaderRos(ros::NodeHandle nh1, ros::NodeHandle nh2, ros::NodeHandle nh3) : nh1_(nh1), nh2_(nh2), nh3_(nh3)
 {
+  name_drone_ = ros::this_node::getNamespace();  // This returns also the slashes (2 in Kinetic, 1 in Melodic)
+  name_drone_.erase(std::remove(name_drone_.begin(), name_drone_.end(), '/'), name_drone_.end());  // Remove the slashes
+
+  std::string id = name_drone_;
+  id.erase(0, 2);  // Erase SQ or HX i.e. SQ12 --> 12  HX8621 --> 8621 # TODO Hard-coded for this this convention
+  id_ = std::stoi(id);
+
+  ////////////////////////// This has to be done before creating a new MADER object
+  // wait for body transform to be published before initializing
+  ROS_INFO("Waiting for world to camera transform...");
+  while (true)
+  {
+    tf2_ros::Buffer tf_buffer;
+    std::unique_ptr<tf2_ros::TransformListener> tfListener{ new tf2_ros::TransformListener(tf_buffer) };
+    geometry_msgs::TransformStamped transform_stamped;
+    try
+    {
+      transform_stamped = tf_buffer.lookupTransform(name_drone_, name_drone_ + "/camera", ros::Time::now(),
+                                                    ros::Duration(0.5));  // TODO: change this duration time?
+
+      std::cout << "Transformation found" << std::endl;
+      std::cout << "transform_stamped= " << transform_stamped << std::endl;
+
+      par_.b_T_c = tf2::transformToEigen(transform_stamped);
+
+      std::cout << "par_.b_T_c= " << par_.b_T_c.matrix() << std::endl;
+      abort();
+
+      break;
+    }
+    catch (tf2::TransformException& ex)
+    {
+      // nothing
+    }
+  }
+
+  std::cout << "par_.b_T_c.matrix()= " << par_.b_T_c.matrix() << std::endl;
+
   safeGetParam(nh1_, "use_ff", par_.use_ff);
   safeGetParam(nh1_, "visual", par_.visual);
   safeGetParam(nh1_, "color_type", par_.color_type);
@@ -154,9 +192,9 @@ MaderRos::MaderRos(ros::NodeHandle nh1, ros::NodeHandle nh2, ros::NodeHandle nh3
   sub_goal_ = nh1_.subscribe("term_goal", 1, &MaderRos::terminalGoalCB, this);
   sub_mode_ = nh1_.subscribe("mode", 1, &MaderRos::modeCB, this);
   sub_state_ = nh1_.subscribe("state", 1, &MaderRos::stateCB, this);
-  // sub_traj_ = nh1_.subscribe("/trajs", 20, &MaderRos::trajCB, this);  // The number is the queue size
-  sub_traj_ = nh1_.subscribe("trajs_predicted", 20, &MaderRos::trajCB,
-                             this);  // The number is the queue size
+  sub_traj_ = nh1_.subscribe("/trajs", 20, &MaderRos::trajCB, this);  // The number is the queue size
+  // sub_traj_ = nh1_.subscribe("trajs_predicted", 20, &MaderRos::trajCB,
+  //                            this);  // The number is the queue size
 
   // Timers
   pubCBTimer_ = nh2_.createTimer(ros::Duration(par_.dc), &MaderRos::pubCB, this);
@@ -182,13 +220,6 @@ MaderRos::MaderRos(ros::NodeHandle nh1, ros::NodeHandle nh2, ros::NodeHandle nh3
   // If you want another thread for the replanCB: replanCBTimer_ = nh_.createTimer(ros::Duration(par_.dc),
   // &MaderRos::replanCB, this);
 
-  name_drone_ = ros::this_node::getNamespace();  // This returns also the slashes (2 in Kinetic, 1 in Melodic)
-  name_drone_.erase(std::remove(name_drone_.begin(), name_drone_.end(), '/'), name_drone_.end());  // Remove the slashes
-
-  std::string id = name_drone_;
-  id.erase(0, 2);  // Erase SQ or HX i.e. SQ12 --> 12  HX8621 --> 8621 # TODO Hard-coded for this this convention
-  id_ = std::stoi(id);
-
   timer_stop_.Reset();
 
   clearMarkerActualTraj();
@@ -200,32 +231,6 @@ MaderRos::MaderRos(ros::NodeHandle nh1, ros::NodeHandle nh2, ros::NodeHandle nh3
   // ros::Duration(1.0).sleep();  // TODO
   // bool success_service_call = system("rosservice call /change_mode 'mode: 1'");
   ////
-
-  tf2_ros::Buffer tf_buffer;
-  // tf2_ros::TransformListener* tfListener = new tf2_ros::TransformListener(tf_buffer);  // TODO: use smart pointer
-
-  std::unique_ptr<tf2_ros::TransformListener> tfListener{ new tf2_ros::TransformListener(tf_buffer) };
-
-  geometry_msgs::TransformStamped transform_stamped;
-
-  // wait for body transform to be published before initializing
-  ROS_INFO("Waiting for world to camera transform...");
-  while (true)
-  {
-    try
-    {
-      transform_stamped = tf_buffer.lookupTransform(name_drone_, name_drone_ + "/camera", ros::Time::now(),
-                                                    ros::Duration(0.5));  // TODO: change this duration time?
-
-      par_.b_T_c = tf2::transformToEigen(transform_stamped);
-
-      break;
-    }
-    catch (tf2::TransformException& ex)
-    {
-      // nothing
-    }
-  }
 
   ROS_INFO("Planner initialized");
 }
@@ -249,7 +254,7 @@ void MaderRos::pubObstacles(mt::Edges edges_obstacles)
 
 void MaderRos::trajCB(const mader_msgs::DynTraj& msg)
 {
-  std::cout << on_green << "In trajCB" << reset << std::endl;
+  // std::cout << on_green << "In trajCB" << reset << std::endl;
 
   if (msg.id == id_)
   {  // This is my own trajectory

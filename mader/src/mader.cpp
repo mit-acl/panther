@@ -150,7 +150,7 @@ void Mader::updateTrajObstacles(mt::dynTraj traj)
     have_received_trajectories_while_checking_ = true;
   }
 
-  std::cout << on_blue << bold << "in  updateTrajObstacles(), waiting to lock mtx_trajs_" << reset << std::endl;
+  // std::cout << on_blue << bold << "in  updateTrajObstacles(), waiting to lock mtx_trajs_" << reset << std::endl;
   mtx_trajs_.lock();
 
   std::vector<mt::dynTrajCompiled>::iterator obs_ptr =
