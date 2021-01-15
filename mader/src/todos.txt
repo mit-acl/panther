@@ -18,7 +18,6 @@ En este repo:
 	Cuidado que guess_pos doesn't use the constraint jerk_max, while the optimization problem does
 	Enable the -O3 option when compiling all the mader package
 	See what to do when boost() doesn't find a path (end of yaw_guess_generator.cpp)
-	In the graph for the yaw, impose the yaw_dot_max en las conexiones de los yaw angles
 	Asegurarse que el yaw no explota (wrap yaw0)
 	Check la heuristics del graph del yaw
 	See %TODO: should we include total_time here below? in main.m
@@ -31,7 +30,7 @@ En este repo:
 Future/enhancements:
 	Schur complement to avoid inverting the whole matrix?
 	The predictor should use the pwp field (instead of the string field) of dynTraj. This will require changes in mader.cpp (how is_agent is used)
-
+	Should I create the boost graph only once?? The edges for sure should be created each time (because of the depencende with deltaT)
 
 Novale:
 	Have a look at https://www.mathworks.com/help/curvefit/fnxtr.html
@@ -41,6 +40,9 @@ Novale:
 
 Done: 
 	Circular statistics, circular regression for the yaw 
+
+Decir en el paper:
+	In the graph for the yaw, we are imposing the yaw_dot_max en las conexiones de los yaw angles
 
 Papers to cite in proposal/Paper:
 	https://arxiv.org/pdf/1904.03421.pdf

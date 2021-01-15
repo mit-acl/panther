@@ -426,8 +426,8 @@ bool SolverIpopt::optimize()
   map_arguments["guess_CPs_Pos"] = matrix_qp_guess;
 
   ////////////////////////////////Generate Yaw Guess!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-  casadi::DM matrix_qy_guess =
-      generateYawGuess(matrix_qp_guess, all_w_fe_, initial_state_.yaw, initial_state_.dyaw, final_state_.dyaw);
+  casadi::DM matrix_qy_guess = generateYawGuess(matrix_qp_guess, all_w_fe_, initial_state_.yaw, initial_state_.dyaw,
+                                                final_state_.dyaw, t_init_, t_final_);
   ////////////////////////////////////////////////////////////////////////////////
 
   // qy_guess_.clear();

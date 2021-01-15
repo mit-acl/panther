@@ -132,11 +132,8 @@ double wrapFromMPitoPi(double x)
 }
 
 casadi::DM SolverIpopt::generateYawGuess(casadi::DM matrix_qp_guess, casadi::DM all_w_fe, double y0, double ydot0,
-                                         double ydotf)
+                                         double ydotf, double t0, double tf)
 {
-  size_t num_of_layers = 5;          // Hand coded!!
-  size_t num_of_yaw_per_layer = 10;  // except in the initial layer, that has only one value
-
   casadi::Function vis_function = casadi::Function::load(ros::package::getPath("mader") +
                                                          "/matlab/visibility.casadi");  // TODO: read this only once
 
@@ -148,10 +145,10 @@ casadi::DM SolverIpopt::generateYawGuess(casadi::DM matrix_qp_guess, casadi::DM 
   map_arg["all_w_fe"] = all_w_fe;
   map_arg["guess_CPs_Pos"] = matrix_qp_guess;
 
-  casadi::DM vector_yaw_samples(casadi::DM::zeros(1, num_of_yaw_per_layer));
-  for (int j = 0; j < num_of_yaw_per_layer; j++)
+  casadi::DM vector_yaw_samples(casadi::DM::zeros(1, par_.num_of_yaw_per_layer));
+  for (int j = 0; j < par_.num_of_yaw_per_layer; j++)
   {
-    vector_yaw_samples(0, j) = j * 2 * M_PI / num_of_yaw_per_layer;  // TODO: handle wrapping angle
+    vector_yaw_samples(0, j) = j * 2 * M_PI / par_.num_of_yaw_per_layer;  // TODO: handle wrapping angle
   }
 
   map_arg["yaw_samples"] = vector_yaw_samples;
@@ -173,17 +170,17 @@ casadi::DM SolverIpopt::generateYawGuess(casadi::DM matrix_qp_guess, casadi::DM 
   WeightMap weightmap = get(edge_weight, mygraph);
 
   // create all the vertexes and add them to the graph
-  std::vector<std::vector<vd>> all_vertexes(num_of_layers - 1, std::vector<vd>(num_of_yaw_per_layer));
+  std::vector<std::vector<vd>> all_vertexes(par_.num_of_layers - 1, std::vector<vd>(par_.num_of_yaw_per_layer));
   std::vector<vd> tmp(1);  // first layer only one element
   all_vertexes.insert(all_vertexes.begin(), tmp);
 
   // https://stackoverflow.com/questions/47904550/should-i-keep-track-of-vertex-descriptors-in-boost-graph-library
 
   // add rest of the vertexes
-  for (size_t i = 0; i < num_of_layers; i++)  // i is the number of layers
+  for (size_t i = 0; i < par_.num_of_layers; i++)  // i is the index of each layer
   {
-    size_t num_of_circles_layer_i = (i == 0) ? 1 : num_of_yaw_per_layer;
-    for (size_t j = 0; j < num_of_circles_layer_i; j++)  // j is the number of circles per layer
+    size_t num_of_circles_layer_i = (i == 0) ? 1 : par_.num_of_yaw_per_layer;
+    for (size_t j = 0; j < num_of_circles_layer_i; j++)  // j is the index of each  circle in the layer i
     {
       vd vertex1 = boost::add_vertex(mygraph);
       all_vertexes[i][j] = vertex1;
@@ -194,35 +191,52 @@ casadi::DM SolverIpopt::generateYawGuess(casadi::DM matrix_qp_guess, casadi::DM 
     }
   }
 
-  for (size_t i = 0; i < (num_of_layers - 1); i++)  // i is the number of layers
+  double deltaT = (tf - t0) / (double(par_.num_of_layers));
+
+  for (size_t i = 0; i < (par_.num_of_layers - 1); i++)  // i is the number of layers
   {
-    size_t num_of_circles_layer_i = (i == 0) ? 1 : num_of_yaw_per_layer;
+    size_t num_of_circles_layer_i = (i == 0) ? 1 : par_.num_of_yaw_per_layer;
 
     for (size_t j = 0; j < num_of_circles_layer_i; j++)  // j is the circle index of layer i
     {
-      for (size_t j_next = 0; j_next < num_of_yaw_per_layer; j_next++)
+      for (size_t j_next = 0; j_next < par_.num_of_yaw_per_layer; j_next++)
       {
-        edge_descriptor e;
-        bool inserted;
-
         vd index_vertex1 = all_vertexes[i][j];
-        vd index_vertex2 = all_vertexes[i + 1][j_next];  // TODO: [j_next, i + 1] is more natural
+        vd index_vertex2 = all_vertexes[i + 1][j_next];  // TODO: [j_next, i + 1] would be more natural
 
-        boost::tie(e, inserted) = add_edge(index_vertex1, index_vertex2, mygraph);
+        double distance = abs(wrapFromMPitoPi(mygraph[index_vertex1].yaw - mygraph[index_vertex2].yaw));
 
-        double distance_squared = pow(wrapFromMPitoPi(mygraph[index_vertex1].yaw - mygraph[index_vertex2].yaw), 2.0);
-        double visibility = double(vis_matrix_casadi(j_next, i + 1));  // \in [0,1]
-                                                                       // Note that vis_matrix_casadi has in the rows
-                                                                       // the circles, in the columns the layers.
+        // See if I should create and edge between all_vertexes[i][j] and all_vertexes[i+1][j]:
+        if ((distance / deltaT) <= par_.ydot_max)  // This is a necessary condition (but not sufficient, since it's an
+                                                   // average of yaw_dot between two yaws)
+        {
+          edge_descriptor e;
+          bool inserted;
+          boost::tie(e, inserted) = add_edge(index_vertex1, index_vertex2, mygraph);
+          double distance_squared = pow(distance, 2.0);
+          double visibility = double(vis_matrix_casadi(j_next, i + 1));  // \in [0,1]
+                                                                         // Note that vis_matrix_casadi has in the rows
+                                                                         // the circles, in the columns the layers.
 
-        // std::cout << "edge between [" << i << ", " << j << "] and [" << i + 1 << ", " << j_next
-        //           << "] with cost= " << edge_weight << std::endl;
-
-        weightmap[e] = par_.c_smooth_yaw_search * distance_squared - par_.c_visibility_yaw_search * visibility +
-                       1.5;  //+1.5 to ensure it's >=0
+          // std::cout << "edge between [" << i << ", " << j << "] and [" << i + 1 << ", " << j_next
+          //           << "] with cost= " << edge_weight << std::endl;
+          weightmap[e] = par_.c_smooth_yaw_search * distance_squared - par_.c_visibility_yaw_search * visibility +
+                         1.5;  //+1.5 to ensure it's >=0
+        }
       }
     }
   }
+
+  std::cout << bold << yellow << "num_edges(mygraph)= " << num_edges(mygraph) << reset << std::endl;
+
+  ////DEBUGGING
+  if (num_edges(mygraph) < (par_.num_of_layers - 1))
+  {
+    std::cout << red << bold << "The layers are disconnected for sure, no solution will be found" << reset << std::endl;
+    std::cout << red << bold << "Maybe ydot_max is too small?" << std::endl;
+    abort();
+  }
+  ////END OF DEBUGGING
 
   vd start = all_vertexes[0][0];
 
@@ -234,7 +248,7 @@ casadi::DM SolverIpopt::generateYawGuess(casadi::DM matrix_qp_guess, casadi::DM 
     astar_search_tree(mygraph, start, distance_heuristic<mygraph_t, cost>(),
                       predecessor_map(make_iterator_property_map(p.begin(), get(vertex_index, mygraph)))
                           .distance_map(make_iterator_property_map(d.begin(), get(vertex_index, mygraph)))
-                          .visitor(astar_goal_visitor<vd>(num_of_layers - 1)));
+                          .visitor(astar_goal_visitor<vd>(par_.num_of_layers - 1)));
   }
 
   catch (found_goal<vd> fg)

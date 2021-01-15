@@ -96,7 +96,8 @@ private:
 
   void findCentroidHull(const Polyhedron_Std &hull, Eigen::Vector3d &centroid);
 
-  casadi::DM generateYawGuess(casadi::DM matrix_qp_guess, casadi::DM all_w_fe, double y0, double ydot0, double ydotf);
+  casadi::DM generateYawGuess(casadi::DM matrix_qp_guess, casadi::DM all_w_fe, double y0, double ydot0, double ydotf,
+                              double t0, double tf);
 
   std::vector<Eigen::Vector3d> n_;  // Each n_[i] has 3 elements (nx,ny,nz)
   std::vector<double> d_;           // d_[i] has 1 element

@@ -136,6 +136,8 @@ MaderRos::MaderRos(ros::NodeHandle nh1, ros::NodeHandle nh2, ros::NodeHandle nh3
 
   safeGetParam(nh1_, "c_smooth_yaw_search", par_.c_smooth_yaw_search);
   safeGetParam(nh1_, "c_visibility_yaw_search", par_.c_visibility_yaw_search);
+  safeGetParam(nh1_, "num_of_layers", par_.num_of_layers);
+  safeGetParam(nh1_, "num_of_yaw_per_layer", par_.num_of_yaw_per_layer);
 
   safeGetParam(nh1_, "c_jerk", par_.c_jerk);
   safeGetParam(nh1_, "c_yaw", par_.c_yaw);
@@ -147,6 +149,8 @@ MaderRos::MaderRos(ros::NodeHandle nh1, ros::NodeHandle nh2, ros::NodeHandle nh3
 
   assert((par_.c_smooth_yaw_search >= 0) && "par_.c_smooth_yaw_search>=0 must hold");
   assert((par_.c_visibility_yaw_search >= 0) && "par_.c_visibility_yaw_search>=0 must hold");
+  assert((par_.num_of_yaw_per_layer >= 1) && "par_.num_of_yaw_per_layer>=1 must hold");
+  assert((par_.num_of_layers >= 1) && "par_.num_of_layers>=1 must hold");
 
   assert((par_.c_jerk >= 0) && "par_.c_jerk>=0 must hold");
   assert((par_.c_yaw >= 0) && "par_.c_yaw>=0 must hold");
