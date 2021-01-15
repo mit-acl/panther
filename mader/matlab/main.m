@@ -45,7 +45,7 @@ assert(tf>t0);
 %%%%% factors for the cost
 c_jerk=            opti.parameter(1,1);
 c_yaw=             opti.parameter(1,1);
-c_vel_isInFOV=  opti.parameter(1,1);
+c_fov=  opti.parameter(1,1);
 c_final_pos = opti.parameter(1,1);
 % c_costs.dist_im_cost=         opti.parameter(1,1);
 
@@ -407,7 +407,7 @@ c=c_jerk;
 f=jerk_cost;
 total_cost=        c_jerk*           jerk_cost+...
                     c_yaw*            yaw_cost+... % c_costs.dist_im_cost*        dist_im_cost+...
-           c_vel_isInFOV* fov_cost+...
+           c_fov* fov_cost+...
            c_final_pos*(sp.getPosT(tf)- pf)'*(sp.getPosT(tf)- pf);
 
 opti.minimize(simplify(total_cost));
@@ -429,7 +429,7 @@ opts.jit_options.flags='-O0';  %Takes ~15 seconds to generate if O0 (much more i
 opts.jit_options.verbose=true;  %See example in shallow_water.cpp
 opts.expand=true; %When this option is true, it goes WAY faster!
 opts.print_time=true;
-opts.ipopt.print_level=5; %From 0 (no verbose) to 12 (very verbose), default is 5
+opts.ipopt.print_level=0; %From 0 (no verbose) to 12 (very verbose), default is 5
 opts.ipopt.print_frequency_iter=1;%1e10 %Big if you don't want to print all the iteratons
 % opts.enable_forward=false; %Seems this option doesn't have effect?
 % opts.enable_reverse=false;
@@ -458,8 +458,8 @@ all_pCPs=sp.getCPsAsMatrix();
 all_yCPs=sy.getCPsAsMatrix();
 
 % my_function = opti.to_function('mader_casadi_function',...
-%     [ {all_pCPs},     {all_yCPs},     {thetax_FOV_deg}, {thetay_FOV_deg},{Ra},{p0},{v0},{a0},{pf},{vf},{af},{y0}, {ydot0}, {ydotf}, {v_max}, {a_max}, {j_max}, {ydot_max}, {total_time}, {all_nd}, {all_w_fe}, {all_w_velfewrtworld}, {c_jerk}, {c_yaw}, {c_vel_isInFOV}, {c_final_pos}], {all_pCPs,all_yCPs},...
-%     {'guess_CPs_Pos','guess_CPs_Yaw', 'thetax_FOV_deg','thetay_FOV_deg','Ra','p0','v0','a0','pf','vf','af','y0', 'ydot0', 'ydotf', 'v_max', 'a_max', 'j_max', 'ydot_max', 'total_time', 'all_nd', 'all_w_fe', 'all_w_velfewrtworld', 'c_jerk', 'c_yaw', 'c_vel_isInFOV', 'c_final_pos'}, {'all_pCPs','all_yCPs'}...
+%     [ {all_pCPs},     {all_yCPs},     {thetax_FOV_deg}, {thetay_FOV_deg},{Ra},{p0},{v0},{a0},{pf},{vf},{af},{y0}, {ydot0}, {ydotf}, {v_max}, {a_max}, {j_max}, {ydot_max}, {total_time}, {all_nd}, {all_w_fe}, {all_w_velfewrtworld}, {c_jerk}, {c_yaw}, {c_fov}, {c_final_pos}], {all_pCPs,all_yCPs},...
+%     {'guess_CPs_Pos','guess_CPs_Yaw', 'thetax_FOV_deg','thetay_FOV_deg','Ra','p0','v0','a0','pf','vf','af','y0', 'ydot0', 'ydotf', 'v_max', 'a_max', 'j_max', 'ydot_max', 'total_time', 'all_nd', 'all_w_fe', 'all_w_velfewrtworld', 'c_jerk', 'c_yaw', 'c_fov', 'c_final_pos'}, {'all_pCPs','all_yCPs'}...
 %                                );
 
 for i=1:num_samples_simpson
@@ -508,7 +508,7 @@ all_params= [ {createStruct('thetax_FOV_deg', thetax_FOV_deg, thetax_FOV_deg_val
               {createStruct('all_w_velfewrtworld', all_w_velfewrtworld, all_w_velfewrtworld_value)},...
               {createStruct('c_jerk', c_jerk, 0.0)},...
               {createStruct('c_yaw', c_yaw, 0.0)},...
-              {createStruct('c_vel_isInFOV', c_vel_isInFOV, 1.0)},...
+              {createStruct('c_fov', c_fov, 1.0)},...
               {createStruct('c_final_pos', c_final_pos, 100)}];
 
 
@@ -779,7 +779,7 @@ end
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % opti.set_value(c_jerk, 0.0);
 % opti.set_value(c_yaw, 0.0);
-% opti.set_value(c_vel_isInFOV, 1.0);
+% opti.set_value(c_fov, 1.0);
 % opti.set_value(c_final_pos, 100);
 % 
 % opti.set_value(theta_FOV_deg, 80);

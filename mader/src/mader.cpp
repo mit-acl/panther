@@ -70,7 +70,7 @@ Mader::Mader(mt::parameters par) : par_(par)
 
   // par_for_solver.c_jerk = par_.c_jerk;
   // par_for_solver.c_yaw = par_.c_yaw;
-  // par_for_solver.c_vel_isInFOV = par_.c_vel_isInFOV;
+  // par_for_solver.c_fov = par_.c_fov;
   // par_for_solver.c_final_pos = par_.c_final_pos;
 
   mt::basisConverter basis_converter;
@@ -150,7 +150,7 @@ void Mader::updateTrajObstacles(mt::dynTraj traj)
     have_received_trajectories_while_checking_ = true;
   }
 
-  // std::cout << red << bold << "in  updateTrajObstacles(), waiting to lock mtx_trajs_" << reset << std::endl;
+  std::cout << on_blue << bold << "in  updateTrajObstacles(), waiting to lock mtx_trajs_" << reset << std::endl;
   mtx_trajs_.lock();
 
   std::vector<mt::dynTrajCompiled>::iterator obs_ptr =

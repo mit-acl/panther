@@ -10,9 +10,11 @@
         <!-- Subscriptions -->
 		<remap from="~state" to="state"/>
 		<remap from="~term_goal" to="term_goal" />
+		<remap from="~trajs_predicted" to="tracker_predictor_node/trajs_predicted" />
 
 		<!-- Publications -->
 		<remap from="~traj" to="traj"/>
+		<remap from="~goal" to="$(arg goal_topic)" />
 		<remap from="~goal" to="$(arg goal_topic)" />
 		<remap from="~setpoint" to="setpoint" />
 

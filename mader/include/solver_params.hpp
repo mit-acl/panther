@@ -38,7 +38,7 @@
 //   // weights
 //   double c_jerk;
 //   double c_yaw;
-//   double c_vel_isInFOV;
+//   double c_fov;
 //   double c_final_pos;
 // };
 

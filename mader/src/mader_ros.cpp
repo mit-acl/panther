@@ -151,7 +151,9 @@ MaderRos::MaderRos(ros::NodeHandle nh1, ros::NodeHandle nh2, ros::NodeHandle nh3
   sub_goal_ = nh1_.subscribe("term_goal", 1, &MaderRos::terminalGoalCB, this);
   sub_mode_ = nh1_.subscribe("mode", 1, &MaderRos::modeCB, this);
   sub_state_ = nh1_.subscribe("state", 1, &MaderRos::stateCB, this);
-  sub_traj_ = nh1_.subscribe("/trajs", 20, &MaderRos::trajCB, this);  // The number is the queue size
+  // sub_traj_ = nh1_.subscribe("/trajs", 20, &MaderRos::trajCB, this);  // The number is the queue size
+  sub_traj_ = nh1_.subscribe("trajs_predicted", 20, &MaderRos::trajCB,
+                             this);  // The number is the queue size
 
   // Timers
   pubCBTimer_ = nh2_.createTimer(ros::Duration(par_.dc), &MaderRos::pubCB, this);
@@ -177,7 +179,7 @@ MaderRos::MaderRos(ros::NodeHandle nh1, ros::NodeHandle nh2, ros::NodeHandle nh3
   // If you want another thread for the replanCB: replanCBTimer_ = nh_.createTimer(ros::Duration(par_.dc),
   // &MaderRos::replanCB, this);
 
-  name_drone_ = ros::this_node::getNamespace();  // Return also the slashes (2 in Kinetic, 1 in Melodic)
+  name_drone_ = ros::this_node::getNamespace();  // This returns also the slashes (2 in Kinetic, 1 in Melodic)
   name_drone_.erase(std::remove(name_drone_.begin(), name_drone_.end(), '/'), name_drone_.end());  // Remove the slashes
 
   std::string id = name_drone_;
@@ -208,13 +210,18 @@ MaderRos::~MaderRos()
 
 void MaderRos::pubObstacles(mt::Edges edges_obstacles)
 {
-  pub_obstacles_.publish(edges2Marker(edges_obstacles, color(RED_NORMAL)));
+  if (edges_obstacles.size() > 0)
+  {
+    pub_obstacles_.publish(edges2Marker(edges_obstacles, color(RED_NORMAL)));
+  }
 
   return;
 }
 
 void MaderRos::trajCB(const mader_msgs::DynTraj& msg)
 {
+  std::cout << on_green << "In trajCB" << reset << std::endl;
+
   if (msg.id == id_)
   {  // This is my own trajectory
     return;

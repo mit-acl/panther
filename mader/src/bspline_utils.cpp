@@ -69,7 +69,7 @@ void CPs2TrajAndPwp_cleaner(std::vector<Eigen::Vector3d> &qp, std::vector<double
   /////////////////////////////////////////////////////////////////////
   Eigen::RowVectorXd knots_y = knots_p.block(0, 1, 1, knots_p.size() - 2);  // remove first and last position knot
 
-  std::cout << std::setprecision(15) << "knots_y= " << knots_y << std::endl;
+  // std::cout << std::setprecision(15) << "knots_y= " << knots_y << std::endl;
 
   // Construct now the B-Spline, see https://github.com/libigl/eigen/blob/master/unsupported/test/splines.cpp#L37
   Eigen::Spline<double, 3, Eigen::Dynamic> spline_p(knots_p, qp_matrix);

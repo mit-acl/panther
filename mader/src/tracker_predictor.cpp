@@ -125,6 +125,28 @@ void TrackerPredictor::addNewTrack(const cluster& c)
 
 void TrackerPredictor::cloud_cb(const sensor_msgs::PointCloud2ConstPtr& pcl2ptr_msg)
 {
+  ///////////////////////////
+  ///////////////////////////
+  ///////////////////////////I need to do it here because if input_cloud is empty (after filtering), I return
+
+  // Increase by one the frames skipped on all the tracks
+  std::for_each(all_tracks_.begin(), all_tracks_.end(), [](track& x) { x.num_frames_skipped++; });
+
+  // Erase the tracks that haven't been detected in many frames
+  int tracks_removed = 0;
+  all_tracks_.erase(std::remove_if(all_tracks_.begin(), all_tracks_.end(),
+                                   [this, tracks_removed](const track& x) mutable {
+                                     tracks_removed++;
+                                     return x.num_frames_skipped > max_frames_skipped_;
+                                   }),
+                    all_tracks_.end());
+
+  std::cout << "Removed " << tracks_removed << " tracks because too many frames skipped" << std::endl;
+
+  ///////////////////////////
+  ///////////////////////////
+  ///////////////////////////
+
   std::cout << "-------------------------------" << std::endl;
 
   pcl::PointCloud<pcl::PointXYZ>::Ptr input_cloud1(new pcl::PointCloud<pcl::PointXYZ>);
@@ -143,7 +165,6 @@ void TrackerPredictor::cloud_cb(const sensor_msgs::PointCloud2ConstPtr& pcl2ptr_
   geometry_msgs::TransformStamped transform_stamped;
   try
   {
-    std::cout << "LookupTransform" << pcl2ptr_msg->header.frame_id << std::endl;
     transform_stamped = tf_buffer_.lookupTransform("world", pcl2ptr_msg->header.frame_id, pcl2ptr_msg->header.stamp,
                                                    ros::Duration(0.02));  // TODO: change this duration time?
 
@@ -453,20 +474,6 @@ void TrackerPredictor::cloud_cb(const sensor_msgs::PointCloud2ConstPtr& pcl2ptr_
   //////////////////////////
   ///////////////////////////
 
-  // Increase by one the frames skipped on all the tracks
-  std::for_each(all_tracks_.begin(), all_tracks_.end(), [](track& x) { x.num_frames_skipped++; });
-
-  // Erase the tracks that haven't been detected in many frames
-  int tracks_removed = 0;
-  all_tracks_.erase(std::remove_if(all_tracks_.begin(), all_tracks_.end(),
-                                   [this, tracks_removed](const track& x) mutable {
-                                     tracks_removed++;
-                                     return x.num_frames_skipped > max_frames_skipped_;
-                                   }),
-                    all_tracks_.end());
-
-  std::cout << "Removed " << tracks_removed << " tracks because too many frames skipped" << std::endl;
-
   //////////////////////////
   // Run Hungarian Algorithm
   //////////////////////////
@@ -642,25 +649,6 @@ void TrackerPredictor::generatePredictedPwpForTrack(track& track_j)
   }
 
   std::cout << "Going to solve the kkt equations" << std::endl;
-
-  // std::cout << std::endl;
-
-  // std::cout << "Determinant of A= " << casadi::Determinant(A) << std::endl;
-
-  // std::cout << "A= \n" << A << std::endl;
-  // std::cout << "b= \n" << b << std::endl;
-
-  // A = casadi::full(A);
-
-  // Only for debugging
-  // auto vector_x = static_cast<std::vector<double>>(A);
-  // Eigen::MatrixXd A_eigen(vector_x.data());
-
-  // Only for debugging
-  // auto vector_x = static_cast<std::vector<float>>(A);
-  // Eigen::Matrix<float, 6, 2> A_eigen(vector_x.data());
-
-  /////
 
   casadi::DM invA_b = solve(A, b);  // Equivalent to Matlab A\b, see
                                     // https://web.casadi.org/docs/#id2-sub:~:text=Linear%20system%20solve

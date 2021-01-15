@@ -6,6 +6,7 @@ Panels:
       Expanded:
         - /Global Options1
         - /Predictions1
+        - /CvxPolyObstacles1
         - /CameraPub1
         - /Light1/Direction1
       Splitter Ratio: 0.40631580352783203
@@ -235,6 +236,7 @@ Visualization Manager:
         predicted_traj_0: true
         predicted_traj_1: true
         predicted_traj_2: true
+        predicted_traj_3: true
       Queue Size: 100
       Value: true
     - Class: rviz/MarkerArray
@@ -334,21 +336,13 @@ Visualization Manager:
       Queue Size: 100
       Value: false
     - Class: rviz/Marker
-      Enabled: false
-      Marker Topic: /SQ01s/cvx/point_E
-      Name: PointE
+      Enabled: true
+      Marker Topic: /SQ01s/mader/obstacles
+      Name: CvxPolyObstacles
       Namespaces:
-        {}
+        markertacles: true
       Queue Size: 100
-      Value: false
-    - Class: rviz/Marker
-      Enabled: false
-      Marker Topic: /SQ01s/cvx/point_A
-      Name: PointA
-      Namespaces:
-        {}
-      Queue Size: 100
-      Value: false
+      Value: true
     - Align Bottom: false
       Background Alpha: 0.800000011920929
       Background Color: 0; 0; 0
@@ -396,7 +390,7 @@ Visualization Manager:
       Marker Topic: /SQ01s/mader/traj_safe_colored
       Name: Safe_Color
       Namespaces:
-        {}
+        SQ01s: true
       Queue Size: 100
       Value: true
     - Class: rviz/MarkerArray
@@ -588,7 +582,7 @@ Visualization Manager:
       Marker Topic: /SQ01s/mader/actual_traj
       Name: ActTraj
       Namespaces:
-        {}
+        ActualTraj_SQ01s: true
       Queue Size: 100
       Value: true
     - Class: rviz/Marker
@@ -927,6 +921,7 @@ Visualization Manager:
         ActTraj: true
         Camera: true
         Console: true
+        CvxPolyObstacles: true
         DepthCloud: true
         DepthImage: true
         FOV: true
@@ -941,8 +936,6 @@ Visualization Manager:
         OpsProblemRun: true
         PCFiltered: true
         Planes: true
-        PointA: true
-        PointE: true
         PolySafe: true
         Predictions: true
         RealTrajectory: true
@@ -996,6 +989,7 @@ Visualization Manager:
         ActTraj: true
         CameraPub: true
         Console: true
+        CvxPolyObstacles: true
         DepthCloud: true
         DepthImage: true
         FOV: true
@@ -1010,8 +1004,6 @@ Visualization Manager:
         OpsProblemRun: true
         PCFiltered: true
         Planes: true
-        PointA: true
-        PointE: true
         PolySafe: true
         Predictions: true
         RealTrajectory: true
@@ -1050,25 +1042,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/ThirdPersonFollower
-      Distance: 23.561786651611328
+      Distance: 31.351442337036133
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: -1.0466737747192383
-        Y: -2.105762243270874
-        Z: -1.9073486328125e-6
+        X: -0.7024221420288086
+        Y: 0.46498584747314453
+        Z: 9.5367431640625e-6
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.35479775071144104
+      Pitch: 0.7047978043556213
       Target Frame: <Fixed Frame>
       Value: ThirdPersonFollower (rviz)
-      Yaw: 3.549992799758911
+      Yaw: 3.1899828910827637
     Saved: ~
 Window Geometry:
   Camera:

@@ -36,6 +36,7 @@ En este repo:
 	See https://pointclouds.org/documentation/classpcl_1_1_shadow_points.html#details
 	The FOV of Gazebo should be consistent with fov_x_deg and fov_y_deg
 	Check max_number_of_obstacles (creo que ahora hago abort())
+	b_T_c should be a parameter in main.m
 
 Papers to cite in proposal/Paper:
 	https://arxiv.org/pdf/1904.03421.pdf

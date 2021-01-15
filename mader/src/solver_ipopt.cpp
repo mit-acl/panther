@@ -339,9 +339,9 @@ bool SolverIpopt::optimize()
   ////////////////////////////////////
   //////////////////////////////////// CASADI!
 
-  std::cout << "Casadi!" << std::endl;
-  std::cout << "par_.v_max= " << par_.v_max.transpose() << std::endl;
-  std::cout << "par_.a_max= " << par_.a_max.transpose() << std::endl;
+  // std::cout << "Casadi!" << std::endl;
+  // std::cout << "par_.v_max= " << par_.v_max.transpose() << std::endl;
+  // std::cout << "par_.a_max= " << par_.a_max.transpose() << std::endl;
 
   // Conversion DM <--> Eigen:  https://github.com/casadi/casadi/issues/2563
   auto eigen2std = [](Eigen::Vector3d &v) { return std::vector<double>{ v.x(), v.y(), v.z() }; };
@@ -360,8 +360,8 @@ bool SolverIpopt::optimize()
   map_arguments["ydot0"] = initial_state_.dyaw;
   map_arguments["ydotf"] =
       final_state_.dyaw;  // Needed: if not (and if you are minimizing ddyaw), ddyaw=cte --> yaw will explode
-  std::cout << bold << blue << "y0= " << initial_state_.yaw << reset << std::endl;
-  std::cout << bold << blue << "ydot0= " << initial_state_.dyaw << reset << std::endl;
+  // std::cout << bold << blue << "y0= " << initial_state_.yaw << reset << std::endl;
+  // std::cout << bold << blue << "ydot0= " << initial_state_.dyaw << reset << std::endl;
   map_arguments["v_max"] = eigen2std(par_.v_max);
   map_arguments["a_max"] = eigen2std(par_.a_max);
   map_arguments["j_max"] = eigen2std(par_.j_max);
@@ -373,10 +373,10 @@ bool SolverIpopt::optimize()
   map_arguments["all_w_velfewrtworld"] = all_w_velfewrtworld_;
   map_arguments["c_jerk"] = par_.c_jerk;
   map_arguments["c_yaw"] = par_.c_yaw;
-  map_arguments["c_vel_isInFOV"] = par_.c_vel_isInFOV;
+  map_arguments["c_fov"] = par_.c_fov;
   map_arguments["c_final_pos"] = par_.c_final_pos;
 
-  std::cout << "Total time= " << (t_final_ - t_init_) << std::endl;
+  // std::cout << "Total time= " << (t_final_ - t_init_) << std::endl;
 
   int max_num_of_planes = par_.num_max_of_obst * par_.num_seg;
 
@@ -466,16 +466,16 @@ bool SolverIpopt::optimize()
   }
 
   ///////////////// PRINT SOLUTION
-  std::cout << "Position control Points obtained= " << std::endl;
-  printStd(qp);
+  // std::cout << "Position control Points obtained= " << std::endl;
+  // printStd(qp);
 
-  std::cout << "Yaw control Points obtained= " << std::endl;
-  printStd(qy);
+  // std::cout << "Yaw control Points obtained= " << std::endl;
+  // printStd(qy);
 
   ///////////////// Fill  traj_solution_ and pwp_solution_
   int param_pp = 3;
   int param_py = 2;
-  std::cout << "qy.size()= " << qy.size() << std::endl;
+  // std::cout << "qy.size()= " << qy.size() << std::endl;
   CPs2TrajAndPwp_cleaner(qp, qy, traj_solution_, pwp_solution_, param_pp, param_py, knots_, par_.dc);
 
   std::cout << "Called CPs2TrajAndPwp!" << std::endl;
