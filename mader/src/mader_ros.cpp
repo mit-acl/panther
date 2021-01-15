@@ -52,7 +52,6 @@ MaderRos::MaderRos(ros::NodeHandle nh1, ros::NodeHandle nh2, ros::NodeHandle nh3
       par_.b_T_c = tf2::transformToEigen(transform_stamped);
 
       std::cout << "par_.b_T_c= " << par_.b_T_c.matrix() << std::endl;
-      abort();
 
       break;
     }
@@ -135,6 +134,9 @@ MaderRos::MaderRos(ros::NodeHandle nh1, ros::NodeHandle nh2, ros::NodeHandle nh3
   safeGetParam(nh1_, "fov_y_deg", par_.fov_y_deg);
   safeGetParam(nh1_, "fov_depth", par_.fov_depth);
 
+  safeGetParam(nh1_, "c_smooth_yaw_search", par_.c_smooth_yaw_search);
+  safeGetParam(nh1_, "c_visibility_yaw_search", par_.c_visibility_yaw_search);
+
   safeGetParam(nh1_, "c_jerk", par_.c_jerk);
   safeGetParam(nh1_, "c_yaw", par_.c_yaw);
   safeGetParam(nh1_, "c_fov", par_.c_fov);
@@ -142,6 +144,9 @@ MaderRos::MaderRos(ros::NodeHandle nh1, ros::NodeHandle nh2, ros::NodeHandle nh3
 
   // CHECK parameters
   std::cout << bold << "Parameters obtained, checking them..." << reset << std::endl;
+
+  assert((par_.c_smooth_yaw_search >= 0) && "par_.c_smooth_yaw_search>=0 must hold");
+  assert((par_.c_visibility_yaw_search >= 0) && "par_.c_visibility_yaw_search>=0 must hold");
 
   assert((par_.c_jerk >= 0) && "par_.c_jerk>=0 must hold");
   assert((par_.c_yaw >= 0) && "par_.c_yaw>=0 must hold");

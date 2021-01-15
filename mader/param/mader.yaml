@@ -30,6 +30,10 @@ ydot_max: 4.0           # [rd/s] Maximum angular velocity. 0.4 for Hardware
 
 factor_alpha: 1.5 #[-] DeltaT = factor_alpha*States_took_previous_replan
 
+#Parameters for the yaw search
+c_smooth_yaw_search: 0.0
+c_visibility_yaw_search: 1.0 
+
 #Parameters for Casadi
 c_jerk: 0.0000
 c_yaw: 0.00001

@@ -218,7 +218,8 @@ casadi::DM SolverIpopt::generateYawGuess(casadi::DM matrix_qp_guess, casadi::DM 
         // std::cout << "edge between [" << i << ", " << j << "] and [" << i + 1 << ", " << j_next
         //           << "] with cost= " << edge_weight << std::endl;
 
-        weightmap[e] = 0.0 * distance_squared - visibility + 1.5;  //+1.5 to ensure it's >=0 ()
+        weightmap[e] = par_.c_smooth_yaw_search * distance_squared - par_.c_visibility_yaw_search * visibility +
+                       1.5;  //+1.5 to ensure it's >=0
       }
     }
   }

@@ -649,6 +649,10 @@ struct parameters
   double gamma = 0.5;
 
   // weights
+  double c_smooth_yaw_search = 0.0;
+  double c_visibility_yaw_search = 1.0;
+
+  // weights
   double c_jerk = 1.0;
   double c_yaw = 0.0;
   double c_fov = 0.0;
