@@ -49,6 +49,15 @@
 
 #include <mader_msgs/DynTraj.h>
 
+#include <pcl/filters/voxel_grid.h>
+#include <pcl/filters/approximate_voxel_grid.h>
+
+#include <tf2_ros/transform_listener.h>
+// #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#include <tf2_sensor_msgs/tf2_sensor_msgs.h>
+#include <pcl/filters/passthrough.h>
+#include <pcl/common/transforms.h>
+
 using namespace termcolor;
 
 TrackerPredictor::TrackerPredictor(ros::NodeHandle nh) : nh_(nh)
@@ -60,6 +69,7 @@ TrackerPredictor::TrackerPredictor(ros::NodeHandle nh) : nh_(nh)
   safeGetParam(nh_, "cluster_tolerance", cluster_tolerance_);
   safeGetParam(nh_, "min_cluster_size", min_cluster_size_);
   safeGetParam(nh_, "max_cluster_size", max_cluster_size_);
+  safeGetParam(nh_, "leaf_size_filter", leaf_size_filter_);
 
   for (int j = 0; j < num_seg_prediction_; j++)
   {
@@ -78,6 +88,7 @@ TrackerPredictor::TrackerPredictor(ros::NodeHandle nh) : nh_(nh)
   pub_marker_predicted_traj_ = nh_.advertise<visualization_msgs::MarkerArray>("marker_predicted_traj", 1);
   pub_marker_bbox_obstacles_ = nh_.advertise<visualization_msgs::MarkerArray>("marker_bbox_obstacles", 1);
   pub_traj_ = nh_.advertise<mader_msgs::DynTraj>("trajs_predicted", 1, true);  // The last boolean is latched or not
+  pub_pcloud_filtered_ = nh_.advertise<sensor_msgs::PointCloud2>("pcloud_filtered", 1);
 
   tree_ = pcl::search::KdTree<pcl::PointXYZ>::Ptr(new pcl::search::KdTree<pcl::PointXYZ>);
 }
@@ -107,17 +118,104 @@ void TrackerPredictor::addNewTrack(const cluster& c)
 
   all_tracks_.push_back(tmp);
 
+  std::cout << red << "End of addNewTrack" << reset << std::endl;
+
   // all_tracks_[last_id] = tmp;
 }
 
-void TrackerPredictor::cloud_cb(const sensor_msgs::PointCloud2ConstPtr& input)
+void TrackerPredictor::cloud_cb(const sensor_msgs::PointCloud2ConstPtr& pcl2ptr_msg)
 {
   std::cout << "-------------------------------" << std::endl;
 
+  pcl::PointCloud<pcl::PointXYZ>::Ptr input_cloud1(new pcl::PointCloud<pcl::PointXYZ>);
+  pcl::PointCloud<pcl::PointXYZ>::Ptr input_cloud2(new pcl::PointCloud<pcl::PointXYZ>);
+  pcl::PointCloud<pcl::PointXYZ>::Ptr input_cloud3(new pcl::PointCloud<pcl::PointXYZ>);
+  pcl::PointCloud<pcl::PointXYZ>::Ptr input_cloud4(new pcl::PointCloud<pcl::PointXYZ>);
   pcl::PointCloud<pcl::PointXYZ>::Ptr input_cloud(new pcl::PointCloud<pcl::PointXYZ>);
-  // pcl::search::KdTree<pcl::PointXYZ>::Ptr tree(new pcl::search::KdTree<pcl::PointXYZ>);
 
-  pcl::fromROSMsg(*input, *input_cloud);
+  // Convert to PCL
+  pcl::fromROSMsg(*pcl2ptr_msg, *input_cloud1);
+
+  std::cout << "Input point cloud has " << input_cloud1->points.size() << " points" << std::endl;
+
+  // Transform to world frame
+  Eigen::Affine3d w_T_b;
+  geometry_msgs::TransformStamped transform_stamped;
+  try
+  {
+    std::cout << "LookupTransform" << pcl2ptr_msg->header.frame_id << std::endl;
+    transform_stamped = tf_buffer_.lookupTransform("world", pcl2ptr_msg->header.frame_id, pcl2ptr_msg->header.stamp,
+                                                   ros::Duration(0.02));  // TODO: change this duration time?
+
+    w_T_b = tf2::transformToEigen(transform_stamped);
+  }
+  catch (tf2::TransformException& ex)
+  {
+    ROS_WARN("[world_database_master_ros] OnGetTransform failed with %s", ex.what());
+    return;
+  }
+  pcl::transformPointCloud(*input_cloud1, *input_cloud2, w_T_b);
+
+  // Remove nans
+  std::vector<int> indices;
+  pcl::removeNaNFromPointCloud(*input_cloud2, *input_cloud3, indices);
+
+  // PassThrough Filter (remove the ground)
+  pcl::PassThrough<pcl::PointXYZ> pass;
+  pass.setInputCloud(input_cloud3);
+  pass.setFilterFieldName("z");
+  pass.setFilterLimits(0.2, 1e6);  // TODO: use z_ground
+  pass.filter(*input_cloud4);
+
+  // Voxel grid filter
+  pcl::ApproximateVoxelGrid<pcl::PointXYZ> sor;
+  sor.setInputCloud(input_cloud4);
+  sor.setLeafSize(leaf_size_filter_, leaf_size_filter_, leaf_size_filter_);
+  sor.filter(*input_cloud);
+
+  // Publish filtered point cloud
+  sensor_msgs::PointCloud2 filtered_pcl2_msg;
+  pcl::toROSMsg(*input_cloud, filtered_pcl2_msg);
+  filtered_pcl2_msg.header.frame_id = "world";
+  filtered_pcl2_msg.header.stamp = ros::Time::now();
+  pub_pcloud_filtered_.publish(filtered_pcl2_msg);
+
+  /////Listen to the transform
+
+  // Eigen::Vector3d transform;
+
+  // Eigen::Affine3d w_T_b;
+
+  // sensor_msgs::PointCloud2Ptr pcl2ptr_msg_transformed(new sensor_msgs::PointCloud2());
+
+  // tf2::doTransform(*pcl2ptr_msg, *pcl2ptr_msg_transformed, transform_stamped);
+
+  // pcl::PointCloud<pcl::PointXYZ>::Ptr input_cloud_with_nans(new pcl::PointCloud<pcl::PointXYZ>);
+  // pcl::PointCloud<pcl::PointXYZ>::Ptr input_cloud(new pcl::PointCloud<pcl::PointXYZ>);
+  // // pcl::search::KdTree<pcl::PointXYZ>::Ptr tree(new pcl::search::KdTree<pcl::PointXYZ>);
+
+  // pcl::fromROSMsg(*pcl2ptr_msg_transformed, *input_cloud_with_nans);
+
+  // std::vector<int> indices;
+  // pcl::removeNaNFromPointCloud(*input_cloud_with_nans, *input_cloud, indices);
+
+  // // Difference VoxelGrid vs UniformSampling:
+  // //
+  // http://www.pcl-users.org/Voxelgrid-without-the-weighted-centroid-td3551390.html#message3564880:~:text=One%20is%20part%20of%20the%20filtering,be%20used%20with%20the%20features%20library.
+
+  // // Voxel grid filter
+  // pcl::VoxelGrid<pcl::PointXYZ> sor;
+  // sor.setInputCloud(input_cloud);
+  // sor.setLeafSize(0.1f, 0.1f, 0.1f);
+  // sor.filter(*input_cloud);
+
+  if (input_cloud->points.size() == 0)
+  {
+    std::cout << "Point cloud is empty, doing nothing" << std::endl;
+    return;
+  }
+
+  std::cout << "input_cloud->points.size()= " << input_cloud->points.size() << std::endl;
 
   tree_->setInputCloud(input_cloud);
 
@@ -129,12 +227,14 @@ void TrackerPredictor::cloud_cb(const sensor_msgs::PointCloud2ConstPtr& input)
   ec.setSearchMethod(tree_);
   ec.setInputCloud(input_cloud);
 
+  std::cout << "Doing the clustering..." << std::endl;
   /* Extract the clusters out of pc and save indices in cluster_indices.*/
   ec.extract(cluster_indices);
+  std::cout << "Clustering done!" << std::endl;
 
   std::vector<cluster> clusters;
 
-  double time_pcloud = input->header.stamp.toSec();
+  double time_pcloud = pcl2ptr_msg->header.stamp.toSec();
 
   for (std::vector<pcl::PointIndices>::const_iterator it = cluster_indices.begin(); it != cluster_indices.end(); ++it)
   {
@@ -230,28 +330,6 @@ void TrackerPredictor::cloud_cb(const sensor_msgs::PointCloud2ConstPtr& input)
     // {
     //   // std::cout << "vertex " << i << " = " << vertexes_bbox[i].transpose() << std::endl;
     // }
-    /////Listen to the transform
-    geometry_msgs::TransformStamped transform_stamped;
-    Eigen::Vector3d transform;
-
-    Eigen::Affine3d w_T_b;
-
-    try
-    {
-      transform_stamped = tf_buffer_.lookupTransform("world", input->header.frame_id, input->header.stamp,
-                                                     ros::Duration(0.02));  // TODO: change this duration time?
-
-      // std::cout << "transform_stamped= " << transform_stamped << std::endl;
-      // std::cout << "input->header.frame_id= " << input->header.frame_id << std::endl;
-
-      w_T_b = tf2::transformToEigen(transform_stamped);
-    }
-    catch (tf2::TransformException& ex)
-    {
-      ROS_WARN("[world_database_master_ros] OnGetTransform failed with %s", ex.what());
-      std::cout << red << "ERROR in TransformException" << reset << std::endl;
-      return;
-    }
 
     // std::cout << "w_T_b.translation()= " << w_T_b.translation() << std::endl;
     // std::cout << "w_T_b.rotation()= " << w_T_b.rotation() << std::endl;
@@ -259,10 +337,10 @@ void TrackerPredictor::cloud_cb(const sensor_msgs::PointCloud2ConstPtr& input)
     // apply r_T_w to the vertexes of the bbox (this is much faster than transforming the whole point cloud, although a
     // little bit conservative (because it's the AABB of a AABB))
 
-    for (size_t i = 0; i < vertexes_bbox.size(); i++)
-    {
-      vertexes_bbox[i] = w_T_b * vertexes_bbox[i];
-    }
+    // for (size_t i = 0; i < vertexes_bbox.size(); i++)
+    // {
+    //   vertexes_bbox[i] = w_T_b * vertexes_bbox[i];
+    // }
     // https://stackoverflow.com/questions/9070752/getting-the-bounding-box-of-a-vector-of-points
     auto xExtremes =
         std::minmax_element(vertexes_bbox.begin(), vertexes_bbox.end(),
@@ -286,12 +364,12 @@ void TrackerPredictor::cloud_cb(const sensor_msgs::PointCloud2ConstPtr& input)
 
     std::cout << std::endl;
 
-    std::cout << "min_x= " << min_x << std::endl;
-    std::cout << "min_y= " << min_y << std::endl;
-    std::cout << "min_z= " << min_z << std::endl;
-    std::cout << "max_x= " << max_x << std::endl;
-    std::cout << "max_y= " << max_y << std::endl;
-    std::cout << "max_z= " << max_z << std::endl;
+    // std::cout << "min_x= " << min_x << std::endl;
+    // std::cout << "min_y= " << min_y << std::endl;
+    // std::cout << "min_z= " << min_z << std::endl;
+    // std::cout << "max_x= " << max_x << std::endl;
+    // std::cout << "max_y= " << max_y << std::endl;
+    // std::cout << "max_z= " << max_z << std::endl;
 
     // min_x = std::numeric_limits<double>::max();
     // max_x = -std::numeric_limits<double>::max();
@@ -325,7 +403,7 @@ void TrackerPredictor::cloud_cb(const sensor_msgs::PointCloud2ConstPtr& input)
     assert(tmp.bbox.y() >= 0 && "Must hold: tmp.bbox.y() >= 0");
     assert(tmp.bbox.z() >= 0 && "Must hold: tmp.bbox.z() >= 0");
 
-    std::cout << bold << magenta << "bbox= " << tmp.bbox << reset << std::endl;
+    // std::cout << bold << magenta << "bbox= " << tmp.bbox << reset << std::endl;
 
     tmp.centroid = Eigen::Vector3d((max_x + min_x) / 2.0, (max_y + min_y) / 2.0,
                                    (max_z + min_z) / 2.0);  // This is the centroid of the bbox, not the
@@ -373,64 +451,13 @@ void TrackerPredictor::cloud_cb(const sensor_msgs::PointCloud2ConstPtr& input)
   }
 
   //////////////////////////
-  // Run Hungarian Algorithm
-  //////////////////////////
-
-  // Create the cost matrix
-  std::vector<std::vector<double>> costMatrix;
-
-  for (auto cluster_i : clusters)  // for each of the rows
-  {
-    std::vector<double> costs_cluster_i;
-    for (auto& track_j : all_tracks_)  // for each of the columns
-    {
-      costs_cluster_i.push_back(getCostRowColum(cluster_i, track_j, time_pcloud));
-    }
-
-    costMatrix.push_back(costs_cluster_i);  // Add row to the matrix
-  }
-
-  // Run the Hungarian Algorithm;
-  HungarianAlgorithm HungAlgo;
-  std::vector<int> track_assigned_to_cluster;
-  double cost = HungAlgo.Solve(costMatrix, track_assigned_to_cluster);
-
-  //////////////////////////
-  //////////////////////////
-
   ///////////////////////////
 
   // Increase by one the frames skipped on all the tracks
   std::for_each(all_tracks_.begin(), all_tracks_.end(), [](track& x) { x.num_frames_skipped++; });
 
-  for (unsigned int i = 0; i < costMatrix.size(); i++)  // for each of the rows
-  {
-    std::cout << i << "," << track_assigned_to_cluster[i] << "\t";
-
-    all_tracks_[track_assigned_to_cluster[i]].num_frames_skipped--;
-
-    // If a cluster has been unassigned (can happen if rows>columns), then create a new track for it
-    if (track_assigned_to_cluster[i] == -1)
-    {
-      std::cout << "cluster " << i << " unassigned, creating new track for it" << std::endl;
-      std::cout << clusters[i].centroid.transpose() << std::endl;
-      std::cout << "vamos a ello" << std::endl;
-      addNewTrack(clusters[i]);
-    }
-    else
-    {  // add an element to the history of the track
-      all_tracks_[track_assigned_to_cluster[i]].addToHistory(clusters[i]);
-    }
-  }
-  std::cout << "\n";
-
-  //////////////////////////
-  //////////////////////////
-
-  // int max_frames_skipped = 10;  // TODO (as a param)
-
-  int tracks_removed = 0;
   // Erase the tracks that haven't been detected in many frames
+  int tracks_removed = 0;
   all_tracks_.erase(std::remove_if(all_tracks_.begin(), all_tracks_.end(),
                                    [this, tracks_removed](const track& x) mutable {
                                      tracks_removed++;
@@ -440,7 +467,60 @@ void TrackerPredictor::cloud_cb(const sensor_msgs::PointCloud2ConstPtr& input)
 
   std::cout << "Removed " << tracks_removed << " tracks because too many frames skipped" << std::endl;
 
-  printAllTracks();
+  //////////////////////////
+  // Run Hungarian Algorithm
+  //////////////////////////
+
+  if (clusters.size() > 0)
+  {
+    std::cout << "Going to run Hungarian Algorith" << std::endl;
+
+    // Create the cost matrix
+    std::vector<std::vector<double>> costMatrix;
+
+    for (auto cluster_i : clusters)  // for each of the rows
+    {
+      std::vector<double> costs_cluster_i;
+      for (auto& track_j : all_tracks_)  // for each of the columns
+      {
+        costs_cluster_i.push_back(getCostRowColum(cluster_i, track_j, time_pcloud));
+      }
+
+      costMatrix.push_back(costs_cluster_i);  // Add row to the matrix
+    }
+
+    // Run the Hungarian Algorithm;
+    HungarianAlgorithm HungAlgo;
+    std::vector<int> track_assigned_to_cluster;
+    double cost = HungAlgo.Solve(costMatrix, track_assigned_to_cluster);
+    std::cout << "Called!" << std::endl;
+
+    for (unsigned int i = 0; i < costMatrix.size(); i++)  // for each of the rows
+    {
+      std::cout << i << "," << track_assigned_to_cluster[i] << "\t";
+
+      all_tracks_[track_assigned_to_cluster[i]].num_frames_skipped--;
+
+      // If a cluster has been unassigned (can happen if rows>columns), then create a new track for it
+      if (track_assigned_to_cluster[i] == -1)
+      {
+        std::cout << "cluster " << i << " unassigned, creating new track for it" << std::endl;
+        std::cout << clusters[i].centroid.transpose() << std::endl;
+        std::cout << "vamos a ello" << std::endl;
+        addNewTrack(clusters[i]);
+      }
+      else
+      {  // add an element to the history of the track
+        all_tracks_[track_assigned_to_cluster[i]].addToHistory(clusters[i]);
+      }
+    }
+    std::cout << "\n";
+  }
+  else
+  {
+    std::cout << "No clusters detected" << std::endl;
+  }
+  // printAllTracks();
 
   ////////////////////////////////////
   // Now fit a spline to past history
@@ -462,8 +542,8 @@ void TrackerPredictor::cloud_cb(const sensor_msgs::PointCloud2ConstPtr& input)
   {
     std::cout << "--" << std::endl;
 
-    track_j.printHistory();
-    track_j.printPrediction(3.0, 5);
+    // track_j.printHistory();
+    // track_j.printPrediction(3.0, 5);
 
     // track_j.pwp.print();
 
@@ -496,6 +576,7 @@ void TrackerPredictor::cloud_cb(const sensor_msgs::PointCloud2ConstPtr& input)
 
   std::cout << "Going to get bboxes" << std::endl;
 
+  deleteMarkers();
   pub_marker_bbox_obstacles_.publish(getBBoxesAsMarkerArray());
 
   std::cout << "End of cloud_cb" << std::endl;
@@ -566,8 +647,8 @@ void TrackerPredictor::generatePredictedPwpForTrack(track& track_j)
 
   // std::cout << "Determinant of A= " << casadi::Determinant(A) << std::endl;
 
-  std::cout << "A= \n" << A << std::endl;
-  std::cout << "b= \n" << b << std::endl;
+  // std::cout << "A= \n" << A << std::endl;
+  // std::cout << "b= \n" << b << std::endl;
 
   // A = casadi::full(A);
 
@@ -584,7 +665,8 @@ void TrackerPredictor::generatePredictedPwpForTrack(track& track_j)
   casadi::DM invA_b = solve(A, b);  // Equivalent to Matlab A\b, see
                                     // https://web.casadi.org/docs/#id2-sub:~:text=Linear%20system%20solve
                                     // TODO: use Schur complement to solve only for the last segment of the spline?
-  std::cout << "invA_b= " << invA_b << std::endl;
+  std::cout << "solved" << std::endl;
+  // std::cout << "invA_b= " << invA_b << std::endl;
 
   std::map<std::string, casadi::DM> map_arguments2;
   map_arguments2["t0"] = t0_r;
@@ -594,8 +676,8 @@ void TrackerPredictor::generatePredictedPwpForTrack(track& track_j)
   std::map<std::string, casadi::DM> result = cf_coeff_predicted_(map_arguments2);
 
   casadi::DM coeffs = result["coeff_predicted"];
-  std::cout << "Coeffs: " << std::endl;
-  std::cout << coeffs << std::endl;
+  // std::cout << "Coeffs: " << std::endl;
+  // std::cout << coeffs << std::endl;
 
   //////////////////////////
 
@@ -609,9 +691,9 @@ void TrackerPredictor::generatePredictedPwpForTrack(track& track_j)
   double time_pcloud = track_j.getLatestTimeSW() - track_j.getOldestTimeSW();
   Eigen::Vector4d T =
       Eigen::Vector4d(pow(time_pcloud, 2), pow(time_pcloud, 2), pow(time_pcloud, 1), pow(time_pcloud, 0));
-  std::cout << magenta << "predicted before= " << coeff_old_x.transpose() * T <<  //////
-      ", " << coeff_old_y.transpose() * T <<                                      /////
-      ", " << coeff_old_z.transpose() * T << reset << std::endl;
+  // std::cout << magenta << "predicted before= " << coeff_old_x.transpose() * T <<  //////
+  //     ", " << coeff_old_y.transpose() * T <<                                      /////
+  //     ", " << coeff_old_z.transpose() * T << reset << std::endl;
 
   // Fill pwp;
   double prediction_seconds = 1e6;  // infty TODO
@@ -632,10 +714,29 @@ void TrackerPredictor::generatePredictedPwpForTrack(track& track_j)
 
   track_j.pwp = pwp;
 
-  std::cout << magenta << "predicted after= " << track_j.pwp.eval(time_pcloud + track_j.getOldestTimeSW()).transpose()
-            << reset << std::endl;
-  std::cout << magenta << "real= " << track_j.getLatestCentroid().transpose() << reset << std::endl;
-  std::cout << std::endl;
+  // std::cout << magenta << "predicted after= " << track_j.pwp.eval(time_pcloud +
+  // track_j.getOldestTimeSW()).transpose()
+  //           << reset << std::endl;
+  // std::cout << magenta << "real= " << track_j.getLatestCentroid().transpose() << reset << std::endl;
+  // std::cout << std::endl;
+}
+
+// See issue https://answers.ros.org/question/263031/delete-all-rviz-markers-in-a-specific-namespace/
+void TrackerPredictor::deleteMarkers()
+{
+  visualization_msgs::MarkerArray marker_array;
+  for (auto& j : ids_markers_published_)
+  {
+    visualization_msgs::Marker m;
+    m.action = visualization_msgs::Marker::DELETE;
+    m.id = j;
+    m.ns = namespace_markers;
+    marker_array.markers.push_back(m);
+  }
+
+  pub_marker_bbox_obstacles_.publish(marker_array);
+
+  ids_markers_published_.clear();
 }
 
 visualization_msgs::MarkerArray TrackerPredictor::getBBoxesAsMarkerArray()
@@ -649,9 +750,12 @@ visualization_msgs::MarkerArray TrackerPredictor::getBBoxesAsMarkerArray()
     m.type = visualization_msgs::Marker::CUBE;
     m.header.frame_id = "world";
     m.header.stamp = ros::Time::now();
-    m.ns = "predictor";
+    m.ns = namespace_markers;
     m.action = visualization_msgs::Marker::ADD;
     m.id = j;
+    m.lifetime = ros::Duration(0.0);  // 0.0 means forever
+
+    ids_markers_published_.push_back(m.id);
 
     std_msgs::ColorRGBA color;
     color.r = track_j.color.x();
@@ -686,10 +790,13 @@ visualization_msgs::MarkerArray TrackerPredictor::getBBoxesAsMarkerArray()
     m.scale.z = 0.1;
 
     m.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
+    m.ns = namespace_markers;
     m.text = track_j.id_string;
     m.color.a = 1.0;
 
     m.pose.position.z = m.pose.position.z + bbox.z();
+
+    ids_markers_published_.push_back(m.id);
 
     marker_array.markers.push_back(m);
 

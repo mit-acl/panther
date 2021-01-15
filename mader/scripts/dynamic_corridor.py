@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 # /* ----------------------------------------------------------------------------
-#  * Copyright 2020, Jesus Tordesillas Torres, Aerospace Controls Laboratory
+#  * Copyright 2021, Jesus Tordesillas Torres, Aerospace Controls Laboratory
 #  * Massachusetts Institute of Technology
 #  * All Rights Reserved
 #  * Authors: Jesus Tordesillas, et al.
@@ -66,10 +66,6 @@ class FakeSim:
         print(total_num_obs)
         self.num_of_dyn_objects=int(0.65*total_num_obs);
         self.num_of_stat_objects=total_num_obs-self.num_of_dyn_objects; 
-        #HACK
-        # self.num_of_dyn_objects=1;
-        # self.num_of_stat_objects=0;
-        #END OF HACK
         self.x_min= 2.0
         self.x_max= 75.0
         self.y_min= -3.0 
@@ -85,6 +81,15 @@ class FakeSim:
         self.percentage_vert=0.0;
         self.name_obs="obs_"
    
+        #HACK
+        self.num_of_dyn_objects=2;
+        self.num_of_stat_objects=0;
+        self.x_min= 2.0
+        self.x_max= 3.0
+        self.y_min= -2.0 
+        self.y_max= 2.0
+        #END OF HACK
+
         self.available_meshes_static=["package://mader/meshes/ConcreteDamage01b/model3.dae", "package://mader/meshes/ConcreteDamage01b/model2.dae"]
         self.available_meshes_dynamic=["package://mader/meshes/ConcreteDamage01b/model4.dae"]
 
@@ -178,7 +183,7 @@ class FakeSim:
 
 
 
-            #If you want to move the objets in gazebo
+            #If you want to move the objets in gazebo. BETTER WITH THE PLUGIN
             # gazebo_state = ModelState()
             # gazebo_state.model_name = str(i)#"all_"+str(i)
             # gazebo_state.pose.position.x = x

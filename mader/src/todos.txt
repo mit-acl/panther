@@ -33,6 +33,9 @@ En este repo:
 	See %TODO: should we include total_time here below? in main.m
 	Check that the T matrix in the tracker is the right one (and not its inverse)
 	Add VIO term in the cost function
+	See https://pointclouds.org/documentation/classpcl_1_1_shadow_points.html#details
+	The FOV of Gazebo should be consistent with fov_x_deg and fov_y_deg
+	Check max_number_of_obstacles (creo que ahora hago abort())
 
 Papers to cite in proposal/Paper:
 	https://arxiv.org/pdf/1904.03421.pdf

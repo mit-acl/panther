@@ -201,6 +201,7 @@ protected:
 private:
   double getCostRowColum(cluster& a, track& b, double time);
   void addNewTrack(const cluster& c);
+  void deleteMarkers();
 
   visualization_msgs::MarkerArray getBBoxesAsMarkerArray();
 
@@ -217,6 +218,7 @@ private:
   double cluster_tolerance_;
   int min_cluster_size_;
   int max_cluster_size_;
+  double leaf_size_filter_;
 
   std::unique_ptr<tf2_ros::TransformListener> tf_listener_ptr_;
   tf2_ros::Buffer tf_buffer_;
@@ -224,10 +226,15 @@ private:
   ros::Publisher pub_marker_predicted_traj_;
   ros::Publisher pub_marker_bbox_obstacles_;
   ros::Publisher pub_traj_;
+  ros::Publisher pub_pcloud_filtered_;
 
   ros::NodeHandle nh_;
 
   pcl::search::KdTree<pcl::PointXYZ>::Ptr tree_;
+
+  std::string namespace_markers = "predictor";
+
+  std::vector<int> ids_markers_published_;
 };
 
 #endif
