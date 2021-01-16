@@ -651,7 +651,6 @@ struct parameters
   // weights
   double c_smooth_yaw_search = 0.0;
   double c_visibility_yaw_search = 1.0;
-  int num_of_layers = 5;
   int num_of_yaw_per_layer = 10;
 
   // weights

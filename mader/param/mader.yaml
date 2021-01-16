@@ -33,8 +33,8 @@ factor_alpha: 1.5 #[-] DeltaT = factor_alpha*States_took_previous_replan
 #Parameters for the yaw search
 c_smooth_yaw_search: 0.0
 c_visibility_yaw_search: 1.0 
-num_of_layers: 5
-num_of_yaw_per_layer: 10 # except in the initial layer, that has only one value
+# num_of_layers --> this one comes from Matlab, it's = num_samples_simpson 
+# num_of_yaw_per_layer --> this one comes from Matlab
 
 #Parameters for Casadi
 c_jerk: 0.0000

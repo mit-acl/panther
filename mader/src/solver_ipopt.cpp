@@ -418,7 +418,7 @@ bool SolverIpopt::optimize()
   map_arguments["all_nd"] = all_nd;  // casadi::DM::rand(4, 0);
 
   ///////////////// GUESS FOR POSITION CONTROL POINTS
-  casadi::DM matrix_qp_guess(casadi::Sparsity::dense(3, (N_ + 1)));  // TODO: do this just once
+  casadi::DM matrix_qp_guess(3, (N_ + 1));  // TODO: do this just once?
   for (int i = 0; i < matrix_qp_guess.columns(); i++)
   {
     matrix_qp_guess(0, i) = qp_guess_[i].x();

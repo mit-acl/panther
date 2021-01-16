@@ -137,21 +137,24 @@ casadi::DM SolverIpopt::generateYawGuess(casadi::DM matrix_qp_guess, casadi::DM 
   std::map<std::string, casadi::DM> map_arg;
   map_arg["thetax_FOV_deg"] = par_.fov_x_deg;
   map_arg["thetay_FOV_deg"] = par_.fov_y_deg;
-  map_arg["thetay_FOV_deg"] = par_.fov_y_deg;
   map_arg["b_T_c"] = b_Tmatrixcasadi_c_;
   map_arg["all_w_fe"] = all_w_fe;
   map_arg["guess_CPs_Pos"] = matrix_qp_guess;
 
-  casadi::DM vector_yaw_samples(casadi::DM::zeros(1, par_.num_of_yaw_per_layer));
-  for (int j = 0; j < par_.num_of_yaw_per_layer; j++)
+  double num_of_yaw_per_layer = par_.num_of_yaw_per_layer;
+  double num_of_layers = par_.num_samples_simpson;
+
+  casadi::DM vector_yaw_samples(casadi::DM::zeros(1, num_of_yaw_per_layer));
+  for (int j = 0; j < num_of_yaw_per_layer; j++)
   {
-    vector_yaw_samples(0, j) = j * 2 * M_PI / par_.num_of_yaw_per_layer;  // TODO: handle wrapping angle
+    vector_yaw_samples(0, j) = j * 2 * M_PI / num_of_yaw_per_layer;  // TODO: handle wrapping angle
   }
 
   map_arg["yaw_samples"] = vector_yaw_samples;
 
   std::map<std::string, casadi::DM> result = casadi_visibility_function_(map_arg);
   casadi::DM vis_matrix_casadi = result["result"];  // Its values are in [0.1]
+                                                    // It's a matrix of size (num_of_yaw_per_layer)x(num_of_layers)
                                                     // we won't use its 1st col  (since y0 is given)
 
   // specify some types
@@ -167,16 +170,16 @@ casadi::DM SolverIpopt::generateYawGuess(casadi::DM matrix_qp_guess, casadi::DM 
   WeightMap weightmap = get(edge_weight, mygraph);
 
   // create all the vertexes and add them to the graph
-  std::vector<std::vector<vd>> all_vertexes(par_.num_of_layers - 1, std::vector<vd>(par_.num_of_yaw_per_layer));
+  std::vector<std::vector<vd>> all_vertexes(num_of_layers - 1, std::vector<vd>(num_of_yaw_per_layer));
   std::vector<vd> tmp(1);  // first layer only one element
   all_vertexes.insert(all_vertexes.begin(), tmp);
 
   // https://stackoverflow.com/questions/47904550/should-i-keep-track-of-vertex-descriptors-in-boost-graph-library
 
   // add rest of the vertexes
-  for (size_t i = 0; i < par_.num_of_layers; i++)  // i is the index of each layer
+  for (size_t i = 0; i < num_of_layers; i++)  // i is the index of each layer
   {
-    size_t num_of_circles_layer_i = (i == 0) ? 1 : par_.num_of_yaw_per_layer;
+    size_t num_of_circles_layer_i = (i == 0) ? 1 : num_of_yaw_per_layer;
     for (size_t j = 0; j < num_of_circles_layer_i; j++)  // j is the index of each  circle in the layer i
     {
       vd vertex1 = boost::add_vertex(mygraph);
@@ -188,15 +191,15 @@ casadi::DM SolverIpopt::generateYawGuess(casadi::DM matrix_qp_guess, casadi::DM 
     }
   }
 
-  double deltaT = (tf - t0) / (double(par_.num_of_layers));
+  double deltaT = (tf - t0) / (double(num_of_layers));
 
-  for (size_t i = 0; i < (par_.num_of_layers - 1); i++)  // i is the number of layers
+  for (size_t i = 0; i < (num_of_layers - 1); i++)  // i is the number of layers
   {
-    size_t num_of_circles_layer_i = (i == 0) ? 1 : par_.num_of_yaw_per_layer;
+    size_t num_of_circles_layer_i = (i == 0) ? 1 : num_of_yaw_per_layer;
 
     for (size_t j = 0; j < num_of_circles_layer_i; j++)  // j is the circle index of layer i
     {
-      for (size_t j_next = 0; j_next < par_.num_of_yaw_per_layer; j_next++)
+      for (size_t j_next = 0; j_next < num_of_yaw_per_layer; j_next++)
       {
         vd index_vertex1 = all_vertexes[i][j];
         vd index_vertex2 = all_vertexes[i + 1][j_next];  // TODO: [j_next, i + 1] would be more natural
@@ -227,7 +230,7 @@ casadi::DM SolverIpopt::generateYawGuess(casadi::DM matrix_qp_guess, casadi::DM 
   std::cout << bold << yellow << "num_edges(mygraph)= " << num_edges(mygraph) << reset << std::endl;
 
   ////DEBUGGING
-  if (num_edges(mygraph) < (par_.num_of_layers - 1))
+  if (num_edges(mygraph) < (num_of_layers - 1))
   {
     std::cout << red << bold << "The layers are disconnected for sure, no solution will be found" << reset << std::endl;
     std::cout << red << bold << "Maybe ydot_max is too small?" << std::endl;
@@ -245,7 +248,7 @@ casadi::DM SolverIpopt::generateYawGuess(casadi::DM matrix_qp_guess, casadi::DM 
     astar_search_tree(mygraph, start, distance_heuristic<mygraph_t, cost>(),
                       predecessor_map(make_iterator_property_map(p.begin(), get(vertex_index, mygraph)))
                           .distance_map(make_iterator_property_map(d.begin(), get(vertex_index, mygraph)))
-                          .visitor(astar_goal_visitor<vd>(par_.num_of_layers - 1)));
+                          .visitor(astar_goal_visitor<vd>(num_of_layers - 1)));
   }
 
   catch (found_goal<vd> fg)

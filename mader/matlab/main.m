@@ -23,7 +23,9 @@ deg_pos=3;
 deg_yaw=2;
 num_seg =4; %number of segments
 num_max_of_obst=10; %This is the maximum num of the obstacles 
-num_samples_simpson=15;
+num_samples_simpson=15;  %This will also be the num_of_layers in the graph yaw search of C++
+num_of_yaw_per_layer=10; %This will be used in the graph yaw search of C++
+                         %Note that the initial layer will have only one yaw (which is given) 
 
 t0=0;
 tf=10.5;
@@ -380,7 +382,6 @@ for j=1:sp.num_seg
     else
         tsf=tsf(tsf<max(t_final_interval));
     end
-    
     u_simpson{j}=(tsf-t_init_interval)/delta_interval;
 
     
@@ -561,13 +562,14 @@ fprintf(my_file,'deg_yaw: %d\n',deg_yaw);
 fprintf(my_file,'num_seg: %d\n',num_seg);
 fprintf(my_file,'num_max_of_obst: %d\n',num_max_of_obst);
 fprintf(my_file,'num_samples_simpson: %d\n',num_samples_simpson);
+fprintf(my_file,'num_of_yaw_per_layer: %d\n',num_of_yaw_per_layer); % except in the initial layer, that has only one value
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%% FUNCTION TO GENERATE VISIBILITY AT EACH POINT  %%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-yaw_samples=MX.sym('yaw_samples',1,10); %TODO: 10 is a hand-coded parameter
+yaw_samples=MX.sym('yaw_samples',1,num_of_yaw_per_layer); 
 
 all_target_isInFOV_for_different_yaw=[];
 for yaw_sample_i=yaw_samples
