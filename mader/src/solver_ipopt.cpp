@@ -101,6 +101,8 @@ SolverIpopt::SolverIpopt(mt::parameters &par)
   casadi_fit_yaw_function_ = casadi::Function::load(ros::package::getPath("mader") + "/matlab/"
                                                                                      "fit_spline_to_samples.casadi");
 
+  casadi_visibility_function_ = casadi::Function::load(ros::package::getPath("mader") + "/matlab/visibility.casadi");
+
   all_w_fe_ = casadi::DM(3, par_.num_samples_simpson);
   all_w_velfewrtworld_ = casadi::DM(3, par_.num_samples_simpson);
 

@@ -134,9 +134,6 @@ double wrapFromMPitoPi(double x)
 casadi::DM SolverIpopt::generateYawGuess(casadi::DM matrix_qp_guess, casadi::DM all_w_fe, double y0, double ydot0,
                                          double ydotf, double t0, double tf)
 {
-  casadi::Function vis_function = casadi::Function::load(ros::package::getPath("mader") +
-                                                         "/matlab/visibility.casadi");  // TODO: read this only once
-
   std::map<std::string, casadi::DM> map_arg;
   map_arg["thetax_FOV_deg"] = par_.fov_x_deg;
   map_arg["thetay_FOV_deg"] = par_.fov_y_deg;
@@ -153,7 +150,7 @@ casadi::DM SolverIpopt::generateYawGuess(casadi::DM matrix_qp_guess, casadi::DM 
 
   map_arg["yaw_samples"] = vector_yaw_samples;
 
-  std::map<std::string, casadi::DM> result = vis_function(map_arg);
+  std::map<std::string, casadi::DM> result = casadi_visibility_function_(map_arg);
   casadi::DM vis_matrix_casadi = result["result"];  // Its values are in [0.1]
                                                     // we won't use its 1st col  (since y0 is given)
 

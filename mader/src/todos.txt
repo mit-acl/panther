@@ -6,7 +6,6 @@ En este repo:
 	Install good linear solver Ipopt
 	Check everything in yaw_guess_generator works as expected
 	Impose yaw_max in yaw_guess_generator?
-	Read casadi functions only once!!
 	see TODOs in yaw_guess_generator
 	Check the partial derivatives of velocity of the obstacle in the cost function is right
 	Uncomment smooth pyramid (instead of cone)
@@ -26,6 +25,7 @@ En este repo:
 	See https://pointclouds.org/documentation/classpcl_1_1_shadow_points.html#details
 	The FOV of Gazebo should be consistent with fov_x_deg and fov_y_deg
 	Check max_number_of_obstacles (creo que ahora hago abort())
+	wait duration for looking up transform in tracker
 
 Future/enhancements:
 	Schur complement to avoid inverting the whole matrix?

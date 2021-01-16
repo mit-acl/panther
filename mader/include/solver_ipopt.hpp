@@ -162,6 +162,7 @@ private:
 
   casadi::Function casadi_function_;
   casadi::Function casadi_fit_yaw_function_;
+  casadi::Function casadi_visibility_function_;
   casadi::DM all_w_fe_;
   casadi::DM all_w_velfewrtworld_;
   casadi::DM b_Tmatrixcasadi_c_;
