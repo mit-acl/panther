@@ -23,8 +23,8 @@ deg_pos=3;
 deg_yaw=2;
 num_seg =4; %number of segments
 num_max_of_obst=10; %This is the maximum num of the obstacles 
-num_samples_simpson=15;  %This will also be the num_of_layers in the graph yaw search of C++
-num_of_yaw_per_layer=10; %This will be used in the graph yaw search of C++
+num_samples_simpson=7;  %This will also be the num_of_layers in the graph yaw search of C++
+num_of_yaw_per_layer=6; %This will be used in the graph yaw search of C++
                          %Note that the initial layer will have only one yaw (which is given) 
 
 t0=0;
@@ -576,7 +576,7 @@ for yaw_sample_i=yaw_samples
     all_target_isInFOV_for_different_yaw=  [all_target_isInFOV_for_different_yaw;
                                         substitute(all_target_isInFOV, yaw, yaw_sample_i)];  
 end
-
+all_target_isInFOV_for_different_yaw=all_target_isInFOV_for_different_yaw'; % Each row will be a layer. Each column will have yaw=constat
 
 all_pCPs=sp.getCPsAsMatrix();
 g = Function('g',{all_pCPs,        all_w_fe,    thetax_FOV_deg,  thetay_FOV_deg,  b_T_c,  yaw_samples},{all_target_isInFOV_for_different_yaw},...

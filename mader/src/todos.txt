@@ -26,11 +26,13 @@ En este repo:
 	The FOV of Gazebo should be consistent with fov_x_deg and fov_y_deg
 	Check max_number_of_obstacles (creo que ahora hago abort())
 	wait duration for looking up transform in tracker
+	Predict the uncertainty and apply it to the polyhedra
 
 Future/enhancements:
 	Schur complement to avoid inverting the whole matrix?
 	The predictor should use the pwp field (instead of the string field) of dynTraj. This will require changes in mader.cpp (how is_agent is used)
 	Should I create the boost graph only once?? The edges for sure should be created each time (because of the depencende with deltaT)
+	Yaw generator should go to a different class
 
 Novale:
 	Have a look at https://www.mathworks.com/help/curvefit/fnxtr.html

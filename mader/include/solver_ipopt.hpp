@@ -24,6 +24,12 @@
 
 #include <iostream>
 
+// Things for the yaw search
+#include <boost/graph/astar_search.hpp>
+#include <boost/graph/adjacency_list.hpp>
+#include <boost/graph/random.hpp>
+#include <boost/random.hpp>
+
 typedef MADER_timers::Timer MyTimer;
 
 class SolverIpopt
@@ -166,6 +172,48 @@ private:
   casadi::DM all_w_fe_;
   casadi::DM all_w_velfewrtworld_;
   casadi::DM b_Tmatrixcasadi_c_;
+
+  // auxiliary types
+  // struct location
+  // {
+  //   float y, x;  // lat, long
+  // };
+
+  struct data
+  {
+    float yaw;
+    size_t layer;
+    size_t circle;
+
+    void print()
+    {
+      std::cout << "yaw= " << yaw << ", layer= " << layer << std::endl;
+    }
+  };
+
+  typedef float cost_graph;
+
+  ///////////////////////////////// Things for the yaw search
+  // specify some types
+  // typedef adjacency_list<listS, vecS, undirectedS, no_property, property<edge_weight_t, cost_graph>> mygraph_t;
+  typedef boost::adjacency_list<boost::listS, boost::vecS, boost::undirectedS, data,
+                                boost::property<boost::edge_weight_t, cost_graph>>
+      mygraph_t;
+  typedef boost::property_map<mygraph_t, boost::edge_weight_t>::type WeightMap;
+  typedef mygraph_t::vertex_descriptor vd;
+  typedef mygraph_t::edge_descriptor edge_descriptor;
+  // typedef std::pair<int, int> edge;
+
+  mygraph_t mygraph_;
+
+  double num_of_yaw_per_layer_;  // = par_.num_of_yaw_per_layer;
+  double num_of_layers_;         // = par_.num_samples_simpson;
+  // WeightMap weightmap_;
+  std::vector<std::vector<vd>> all_vertexes_;
+  casadi::DM vector_yaw_samples_;
+
+  // std::unique_ptr<mygraph_t> mygraph_ptr;
+  //////////////////////////////////
 
   // PImpl idiom
   // https://www.geeksforgeeks.org/pimpl-idiom-in-c-with-examples/

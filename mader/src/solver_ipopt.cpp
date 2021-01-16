@@ -119,6 +119,72 @@ SolverIpopt::SolverIpopt(mt::parameters &par)
     }
   }
 
+  //////////////////////////////////////// CONSTRUCT THE GRAPH FOR THE YAW SEARCH
+  ////////////////////////////////////////////////////////////////////////////////
+
+  num_of_yaw_per_layer_ = par_.num_of_yaw_per_layer;
+  num_of_layers_ = par_.num_samples_simpson;
+
+  vector_yaw_samples_ = casadi::DM::zeros(1, num_of_yaw_per_layer_);
+  for (int j = 0; j < num_of_yaw_per_layer_; j++)
+  {
+    vector_yaw_samples_(j) = -M_PI + j * 2 * M_PI / num_of_yaw_per_layer_;  // \in [-pi, pi]
+  }
+
+  // mygraph_t mygraph_(0);  // start a graph with 0 vertices
+  mygraph_.clear();
+
+  // create all the vertexes and add them to the graph
+  std::vector<std::vector<vd>> all_vertexes_tmp(num_of_layers_ - 1, std::vector<vd>(num_of_yaw_per_layer_));  // TODO
+  all_vertexes_ = all_vertexes_tmp;
+  std::vector<vd> tmp(1);  // first layer only one element
+  all_vertexes_.insert(all_vertexes_.begin(), tmp);
+
+  // https://stackoverflow.com/questions/47904550/should-i-keep-track-of-vertex-descriptors-in-boost-graph-library
+
+  double y0_tmp = 0.0;  // this value will be updated at the start of each iteration
+
+  // add rest of the vertexes
+  for (size_t i = 0; i < num_of_layers_; i++)  // i is the index of each layer
+  {
+    size_t num_of_circles_layer_i = (i == 0) ? 1 : num_of_yaw_per_layer_;
+    for (size_t j = 0; j < num_of_circles_layer_i; j++)  // j is the index of each  circle in the layer i
+    {
+      vd vertex1 = boost::add_vertex(mygraph_);
+      all_vertexes_[i][j] = vertex1;
+      mygraph_[vertex1].yaw = (i == 0) ? y0_tmp : double(vector_yaw_samples_(j));
+      mygraph_[vertex1].layer = i;
+      mygraph_[vertex1].circle = j;
+      // mygraph_[vertex1].print();
+      // std::cout << "So far, the graph has " << num_vertices(mygraph_) << "vertices" << std::endl;
+    }
+  }
+
+  for (size_t i = 0; i < (num_of_layers_ - 1); i++)  // i is the number of layers
+  {
+    size_t num_of_circles_layer_i = (i == 0) ? 1 : num_of_yaw_per_layer_;
+
+    for (size_t j = 0; j < num_of_circles_layer_i; j++)  // j is the circle index of layer i
+    {
+      for (size_t j_next = 0; j_next < num_of_yaw_per_layer_; j_next++)
+      {
+        vd index_vertex1 = all_vertexes_[i][j];
+        vd index_vertex2 = all_vertexes_[i + 1][j_next];
+
+        // std::cout << "This should say " << mygraph_[index_vertex2].layer << ", " << mygraph_[index_vertex2].circle
+        //           << std::endl;
+        // std::cout << "It says " << i + 1 << ", " << j_next << std::endl;
+
+        edge_descriptor e;
+        bool inserted;
+        boost::tie(e, inserted) = add_edge(index_vertex1, index_vertex2, mygraph_);
+      }
+    }
+  }
+
+  ////////////////////////////////////////
+  ////////////////////////////////////////
+
   // std::cout << "b_Tmatrixcasadi_c_= " << b_Tmatrixcasadi_c_ << std::endl;
   // abort();
 }
