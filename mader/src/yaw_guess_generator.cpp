@@ -206,36 +206,37 @@ casadi::DM SolverIpopt::generateYawGuess(casadi::DM matrix_qp_guess, casadi::DM 
 
         double distance = abs(wrapFromMPitoPi(mygraph[index_vertex1].yaw - mygraph[index_vertex2].yaw));
 
-        // See if I should create and edge between all_vertexes[i][j] and all_vertexes[i+1][j]:
-        if ((distance / deltaT) <= par_.ydot_max)  // This is a necessary condition (but not sufficient, since it's an
-                                                   // average of yaw_dot between two yaws)
-        {
-          edge_descriptor e;
-          bool inserted;
-          boost::tie(e, inserted) = add_edge(index_vertex1, index_vertex2, mygraph);
-          double distance_squared = pow(distance, 2.0);
-          double visibility = double(vis_matrix_casadi(j_next, i + 1));  // \in [0,1]
-                                                                         // Note that vis_matrix_casadi has in the rows
-                                                                         // the circles, in the columns the layers.
+        edge_descriptor e;
+        bool inserted;
+        boost::tie(e, inserted) = add_edge(index_vertex1, index_vertex2, mygraph);
+        double distance_squared = pow(distance, 2.0);
+        double visibility = double(vis_matrix_casadi(j_next, i + 1));  // \in [0,1]
+                                                                       // Note that vis_matrix_casadi has in the rows
+                                                                       // the circles, in the columns the layers.
 
-          // std::cout << "edge between [" << i << ", " << j << "] and [" << i + 1 << ", " << j_next
-          //           << "] with cost= " << edge_weight << std::endl;
-          weightmap[e] = par_.c_smooth_yaw_search * distance_squared - par_.c_visibility_yaw_search * visibility +
-                         1.5;  //+1.5 to ensure it's >=0
+        weightmap[e] = par_.c_smooth_yaw_search * distance_squared - par_.c_visibility_yaw_search * visibility +
+                       1.5;  //+1.5 to ensure it's >=0
+
+        if ((distance / deltaT) > par_.ydot_max)  // doesn't satisfy the constraint --> very expensive edge
+                                                  // Note that with this option (instead of the option of NOT creating
+                                                  // an edge) there will always be a solution in the graph
+        {
+          weightmap[e] = weightmap[e] + 1e6;
         }
+        // std::cout << "edge between [" << j << ", " << i << "] and [" << j_next << ", " << i + 1
+        //           << "] with cost= " << weightmap[e] << std::endl;
       }
     }
   }
 
-  std::cout << bold << yellow << "num_edges(mygraph)= " << num_edges(mygraph) << reset << std::endl;
+  // std::cout << bold << yellow << "num_edges(mygraph)= " << num_edges(mygraph) << reset << std::endl;
 
   ////DEBUGGING
-  if (num_edges(mygraph) < (num_of_layers - 1))
-  {
-    std::cout << red << bold << "The layers are disconnected for sure, no solution will be found" << reset << std::endl;
-    std::cout << red << bold << "Maybe ydot_max is too small?" << std::endl;
-    abort();
-  }
+  // if (num_edges(mygraph) < (num_of_layers - 1))
+  // {
+  //   std::cout << red << bold << "The layers are disconnected for sure, no solution will be found" << reset <<
+  //   std::endl; std::cout << red << bold << "Maybe ydot_max is too small?" << std::endl; abort();
+  // }
   ////END OF DEBUGGING
 
   vd start = all_vertexes[0][0];
@@ -345,6 +346,11 @@ casadi::DM SolverIpopt::generateYawGuess(casadi::DM matrix_qp_guess, casadi::DM 
     // return 0;
   }
   std::cout << red << bold << "Boost A* Didn't find a path!! " << std::endl;
+  // This should never happen
+
+  // For debugging
+  abort();
+  // End of for debugging
 
   casadi::DM constant_yaw_matrix_casadi = y0 * casadi::DM::ones(1, Ny_ + 1);
 
