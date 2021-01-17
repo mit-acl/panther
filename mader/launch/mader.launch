@@ -1,12 +1,17 @@
 <launch>
 
 	<arg name="quad" default="SQ01s"/>
+	<arg name="gui_mission" default="true"/>
 	<arg name="goal_topic" default="goal"/>
 
 
 	<node ns="$(arg quad)" name="mader" pkg="mader" type="mader_node" output="screen" clear_params="false"> 
-    <rosparam file="$(find mader)/param/mader.yaml" command="load"/>
-    <rosparam file="$(find mader)/matlab/params_casadi.yaml" command="load"/>
+
+		<!-- Parameters -->
+	    <rosparam file="$(find mader)/param/mader.yaml" command="load"/>
+	    <rosparam file="$(find mader)/matlab/params_casadi.yaml" command="load"/>
+	    <param name="gui_mission" value="$(arg gui_mission)" /> <!--Names of the nodes whose ros output is going to pipe to RViz -->
+
         <!-- Subscriptions -->
 		<remap from="~state" to="state"/>
 		<remap from="~term_goal" to="term_goal" />
@@ -14,7 +19,6 @@
 
 		<!-- Publications -->
 		<remap from="~traj" to="traj"/>
-		<remap from="~goal" to="$(arg goal_topic)" />
 		<remap from="~goal" to="$(arg goal_topic)" />
 		<remap from="~setpoint" to="setpoint" />
 

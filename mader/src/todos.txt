@@ -26,6 +26,7 @@ En este repo:
 	Como decidir entre varios obstaculos (ahora cojo traj_0 creo)
 	Predict the uncertainty and apply it to the polyhedra
 	param 'basis' in mader.yaml is not used in the MATLAB files. Move it to MATLAB and store it in *casadi.yaml. But then I have to include the Bezier control points
+	Create a dataset of the moving objects from the experiments??
 
 Future/enhancements:
 	Schur complement to avoid inverting the whole matrix?
@@ -51,6 +52,7 @@ Papers to cite in proposal/Paper:
 	https://arxiv.org/pdf/1904.03421.pdf
 	https://www.youtube.com/watch?v=JosFzstiH9U
 	https://www.youtube.com/watch?v=BzykucxFddI
+	http://asl.stanford.edu/wp-content/papercite-data/pdf/Allen.Pavone.RAS18.pdf
 
 
 En MADER:

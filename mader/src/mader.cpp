@@ -523,6 +523,12 @@ void Mader::sampleFeaturePosVel(double t_start, double t_end, std::vector<Eigen:
 
 void Mader::setTerminalGoal(mt::state& term_goal)
 {
+  if (state_initialized_ == false)  // because I need plan_size()>=1
+  {
+    std::cout << "[Mader::setTerminalGoal] State not initized yet, doing nothing" << std::endl;
+  }
+
+  std::cout << "Setting Terminal Goal" << std::endl;
   mtx_G_term.lock();
   mtx_G.lock();
   mtx_state.lock();
@@ -551,14 +557,14 @@ void Mader::setTerminalGoal(mt::state& term_goal)
 
     assert((plan_.size() >= 1) && "plan_.size() must be >=1");
 
-    std::cout << "num_of_el= " << num_of_el << std::endl;
-    std::cout << "diff= " << diff << std::endl;
-    std::cout << "par_.ydot_max= " << par_.ydot_max << std::endl;
-    std::cout << "par_.dc= " << par_.dc << std::endl;
+    // std::cout << "num_of_el= " << num_of_el << std::endl;
+    // std::cout << "diff= " << diff << std::endl;
+    // std::cout << "par_.ydot_max= " << par_.ydot_max << std::endl;
+    // std::cout << "par_.dc= " << par_.dc << std::endl;
 
     for (int i = 1; i < (num_of_el + 1); i++)
     {
-      std::cout << "Introducing Element " << i << " out of " << num_of_el << std::endl;
+      // std::cout << "Introducing Element " << i << " out of " << num_of_el << std::endl;
       mt::state state_i = plan_.get(i - 1);
       state_i.yaw = state_i.yaw + dyaw * par_.dc;
       if (i == num_of_el)
@@ -610,6 +616,7 @@ void Mader::updateState(mt::state data)
 
   if (state_initialized_ == false)
   {
+    plan_.clear();  // just in case, (actually not needed because done in resetInitialization()
     mt::state tmp;
     tmp.pos = data.pos;
     tmp.yaw = data.yaw;
@@ -1042,6 +1049,7 @@ void Mader::resetInitialization()
   state_initialized_ = false;
 
   terminal_goal_initialized_ = false;
+  plan_.clear();
 }
 
 bool Mader::getNextGoal(mt::state& next_goal)

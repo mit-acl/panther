@@ -197,8 +197,8 @@ MaderRos::MaderRos(ros::NodeHandle nh1, ros::NodeHandle nh2, ros::NodeHandle nh3
   pub_obstacles_ = nh1_.advertise<visualization_msgs::Marker>("obstacles", 1);
 
   // Subscribers
-  sub_goal_ = nh1_.subscribe("term_goal", 1, &MaderRos::terminalGoalCB, this);
-  sub_mode_ = nh1_.subscribe("mode", 1, &MaderRos::modeCB, this);
+  sub_term_goal_ = nh1_.subscribe("term_goal", 1, &MaderRos::terminalGoalCB, this);
+  sub_whoplans_ = nh1_.subscribe("who_plans", 1, &MaderRos::whoPlansCB, this);
   sub_state_ = nh1_.subscribe("state", 1, &MaderRos::stateCB, this);
   sub_traj_ = nh1_.subscribe("/trajs", 20, &MaderRos::trajCB, this);  // The number is the queue size
   // sub_traj_ = nh1_.subscribe("trajs_predicted", 20, &MaderRos::trajCB,
@@ -209,13 +209,14 @@ MaderRos::MaderRos(ros::NodeHandle nh1, ros::NodeHandle nh2, ros::NodeHandle nh3
   replanCBTimer_ = nh3_.createTimer(ros::Duration(par_.dc), &MaderRos::replanCB, this);
 
   // For now stop all these subscribers/timers until we receive GO
-  // sub_state_.shutdown();
+  sub_state_.shutdown();
+  sub_term_goal_.shutdown();
   pubCBTimer_.stop();
   replanCBTimer_.stop();
 
   // Rviz_Visual_Tools
   visual_tools_.reset(new rvt::RvizVisualTools("world", "/rviz_visual_tools"));
-  visual_tools_->loadMarkerPub();  // create publisher before waitin
+  visual_tools_->loadMarkerPub();  // create publisher before waiting
   ros::Duration(0.5).sleep();
   visual_tools_->deleteAllMarkers();
   visual_tools_->enableBatchPublishing();
@@ -232,12 +233,19 @@ MaderRos::MaderRos(ros::NodeHandle nh1, ros::NodeHandle nh2, ros::NodeHandle nh3
 
   clearMarkerActualTraj();
 
+  bool gui_mission;
+  safeGetParam(nh1_, "gui_mission", gui_mission);
+
+  std::cout << yellow << bold << "gui_mission" << gui_mission << reset << std::endl;
   ////// to avoid having to click on the GUI (TODO)
-  mader_msgs::Mode tmp;
-  tmp.mode = 1;
-  modeCB(tmp);
-  // ros::Duration(1.0).sleep();  // TODO
-  // bool success_service_call = system("rosservice call /change_mode 'mode: 1'");
+  if (gui_mission == false)
+  {
+    mader_msgs::WhoPlans tmp;
+    tmp.value = mader_msgs::WhoPlans::MADER;
+    whoPlansCB(tmp);
+  }
+  ////// ros::Duration(1.0).sleep();  // TODO
+  ////// bool success_service_call = system("rosservice call /change_mode 'mode: 1'");
   ////
 
   ROS_INFO("Planner initialized");
@@ -246,6 +254,7 @@ MaderRos::MaderRos(ros::NodeHandle nh1, ros::NodeHandle nh2, ros::NodeHandle nh3
 MaderRos::~MaderRos()
 {
   sub_state_.shutdown();
+  sub_term_goal_.shutdown();
   pubCBTimer_.stop();
   replanCBTimer_.stop();
 }
@@ -473,10 +482,13 @@ void MaderRos::stateCB(const snapstack_msgs::State& msg)
   // END OF TODO
   state_ = state_tmp;
   // std::cout << bold << red << "STATE_YAW= " << state_.yaw << reset << std::endl;
+
+  std::cout << bold << yellow << "MADER_ROS state= " << reset;
+  state_tmp.print();
   mader_ptr_->updateState(state_tmp);
 
-  W_T_B_ = Eigen::Translation3d(msg.pos.x, msg.pos.y, msg.pos.z) *
-           Eigen::Quaterniond(msg.quat.w, msg.quat.x, msg.quat.y, msg.quat.z);
+  // W_T_B_ = Eigen::Translation3d(msg.pos.x, msg.pos.y, msg.pos.z) *
+  //          Eigen::Quaterniond(msg.quat.w, msg.quat.x, msg.quat.y, msg.quat.z);
 
   if (published_initial_position_ == false)
   {
@@ -492,24 +504,24 @@ void MaderRos::stateCB(const snapstack_msgs::State& msg)
   publishFOV();
 }
 
-void MaderRos::modeCB(const mader_msgs::Mode& msg)
+void MaderRos::whoPlansCB(const mader_msgs::WhoPlans& msg)
 {
-  // mader_ptr_->changeMode(msg.mode);
-
-  if (msg.mode != msg.GO)
+  if (msg.value != msg.MADER)
   {  // MADER DOES NOTHING
-    // sub_state_.shutdown();
+    sub_state_.shutdown();
+    sub_term_goal_.shutdown();
     pubCBTimer_.stop();
     replanCBTimer_.stop();
-    std::cout << on_blue << "**************stopping replanCBTimer" << reset << std::endl;
     mader_ptr_->resetInitialization();
+    std::cout << on_blue << "**************MADER STOPPED" << reset << std::endl;
   }
   else
-  {  // The mode changed to GO (the mode changes to go when takeoff is finished)
-    // sub_state_ = nh_.subscribe("state", 1, &MaderRos::stateCB, this);  // TODO duplicated from above
-    std::cout << on_blue << "**************starting replanCBTimer" << reset << std::endl;
+  {  // MADER is the one who plans now (this happens when the take-off is finished)
+    sub_term_goal_ = nh1_.subscribe("term_goal", 1, &MaderRos::terminalGoalCB, this);  // TODO duplicated from above
+    sub_state_ = nh1_.subscribe("state", 1, &MaderRos::stateCB, this);                 // TODO duplicated from above
     pubCBTimer_.start();
     replanCBTimer_.start();
+    std::cout << on_blue << "**************MADER STARTED" << reset << std::endl;
   }
 }
 
@@ -518,23 +530,25 @@ void MaderRos::pubCB(const ros::TimerEvent& e)
   mt::state next_goal;
   if (mader_ptr_->getNextGoal(next_goal))
   {
-    snapstack_msgs::Goal quadGoal;
+    snapstack_msgs::Goal goal;
 
-    quadGoal.p = eigen2rosvector(next_goal.pos);
-    quadGoal.v = eigen2rosvector(next_goal.vel);
-    quadGoal.a = eigen2rosvector(next_goal.accel);
-    quadGoal.j = eigen2rosvector(next_goal.jerk);
-    quadGoal.dyaw = next_goal.dyaw;
-    quadGoal.yaw = next_goal.yaw;
-    quadGoal.header.stamp = ros::Time::now();
-    quadGoal.header.frame_id = world_name_;
+    goal.p = eigen2rosvector(next_goal.pos);
+    goal.v = eigen2rosvector(next_goal.vel);
+    goal.a = eigen2rosvector(next_goal.accel);
+    goal.j = eigen2rosvector(next_goal.jerk);
+    goal.dyaw = next_goal.dyaw;
+    goal.yaw = next_goal.yaw;
+    goal.header.stamp = ros::Time::now();
+    goal.header.frame_id = world_name_;
+    goal.power = true;  // don't kill the motors
 
-    pub_goal_.publish(quadGoal);
+    std::cout << red << bold << "Publishing goal.z= " << goal.p.z << reset << std::endl;
+    pub_goal_.publish(goal);
 
     setpoint_.header.stamp = ros::Time::now();
-    setpoint_.pose.position.x = quadGoal.p.x;
-    setpoint_.pose.position.y = quadGoal.p.y;
-    setpoint_.pose.position.z = quadGoal.p.z;
+    setpoint_.pose.position.x = goal.p.x;
+    setpoint_.pose.position.y = goal.p.y;
+    setpoint_.pose.position.z = goal.p.z;
 
     pub_setpoint_.publish(setpoint_);
   }

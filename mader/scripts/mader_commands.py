@@ -9,26 +9,27 @@
 #  * -------------------------------------------------------------------------- */
 
 import rospy
-from mader_msgs.msg import Mode
+from mader_msgs.msg import WhoPlans
 from snapstack_msgs.msg import Goal, State
 from geometry_msgs.msg import Pose, PoseStamped
 from snapstack_msgs.msg import QuadFlightMode
 #from behavior_selector.srv import MissionModeChange
 import math
+import sys
 
 def quat2yaw(q):
     yaw = math.atan2(2 * (q.w * q.z + q.x * q.y),
                      1 - 2 * (q.y * q.y + q.z * q.z))
     return yaw
 
-class Behavior_Selector:
+class Mader_Commands:
 
     def __init__(self):
-        self.mode=Mode();
+        self.whoplans=WhoPlans();
         self.pose = Pose();
-        self.mode.mode=self.mode.ON_GROUND
+        self.whoplans.value=self.whoplans.OTHER
         self.pubGoal = rospy.Publisher('goal', Goal, queue_size=1)
-        self.pubMode = rospy.Publisher("mader/mode",Mode,queue_size=1,latch=True) #TODO Namespace
+        self.pubWhoPlans = rospy.Publisher("mader/who_plans",WhoPlans,queue_size=1,latch=True) #TODO Namespace
         self.pubClickedPoint = rospy.Publisher("/move_base_simple/goal",PoseStamped,queue_size=1,latch=True)
         
 
@@ -44,7 +45,7 @@ class Behavior_Selector:
         self.pose.orientation = data.quat
 
         if(self.initialized==False):
-            self.pubFirstGoal()
+            self.pubFirstTerminalGoal()
             self.initialized=True
             #self.takeOff() #hack to take off directly
 
@@ -54,7 +55,7 @@ class Behavior_Selector:
             print "Not initialized yet"
             return
 
-        if req.mode == req.GO and self.mode.mode==self.mode.ON_GROUND:
+        if req.mode == req.GO and self.whoplans.value==self.whoplans.OTHER:
             print "Taking off"
             self.takeOff()
             print "Take off done"
@@ -62,16 +63,17 @@ class Behavior_Selector:
         if req.mode == req.KILL:
             print "Killing"
             self.kill()
+            print "Killed done"
 
-        if req.mode == req.LAND and self.mode.mode==self.mode.GO:
+        if req.mode == req.LAND and self.whoplans.value==self.whoplans.MADER:
             print "Landing"
             self.land()
             print "Landing done"
 
 
-    def sendMode(self):
-        self.mode.header.stamp = rospy.get_rostime()
-        self.pubMode.publish(self.mode)
+    def sendWhoPlans(self):
+        self.whoplans.header.stamp = rospy.get_rostime()
+        self.pubWhoPlans.publish(self.whoplans)
 
 
     def takeOff(self):
@@ -80,41 +82,48 @@ class Behavior_Selector:
         goal.p.y = self.pose.position.y;
         goal.p.z = self.pose.position.z;
         goal.yaw = quat2yaw(self.pose.orientation)
+        goal.power= True; #Turn on the motors
         #Note that self.pose.position is being updated in the parallel callback
 
         ######## Commented for simulations
-        # while(  abs(self.pose.position.z-self.alt_taken_off)>0.1  ): 
-        #     goal.pos.z = min(goal.pos.z+0.0035, self.alt_taken_off);
-        #     #rospy.sleep(0.004) 
-        #     self.sendGoal(goal)
+        while(  abs(self.pose.position.z-self.alt_taken_off)>0.1  ): 
+            goal.p.z = min(goal.p.z+0.0035, self.alt_taken_off);
+            #rospy.sleep(0.004) 
+            self.sendGoal(goal)
         ######## 
         rospy.sleep(0.1) 
-        self.mode.mode=self.mode.GO
-        self.sendMode();
+        self.whoplans.value=self.whoplans.MADER
+        self.sendWhoPlans();
 
     def land(self):
+        self.whoplans.value=self.whoplans.OTHER
+        self.sendWhoPlans();
         goal=Goal();
-        goal.pos.x = self.pose.position.x;
-        goal.pos.y = self.pose.position.y;
-        goal.pos.z = self.pose.position.z;
+        goal.p.x = self.pose.position.x;
+        goal.p.y = self.pose.position.y;
+        goal.p.z = self.pose.position.z;
+        print "self.pose.orientation= ", self.pose.orientation
         goal.yaw = quat2yaw(self.pose.orientation)
+        print "goal.yaw= ", goal.yaw
+
 
         #Note that self.pose.position is being updated in the parallel callback
         while(abs(self.pose.position.z-self.alt_ground)>0.1):
-            goal.pos.z = max(goal.pos.z-0.0035, self.alt_ground);
+            goal.p.z = max(goal.p.z-0.0035, self.alt_ground);
             self.sendGoal(goal)
         #Kill motors once we are on the ground
         self.kill()
 
     def kill(self):
         goal=Goal();
-        goal.pos.x = self.pose.position.x;
-        goal.pos.y = self.pose.position.y;
-        goal.pos.z = self.pose.position.z;
-        goal.cut_power=True
+        goal.p.x = self.pose.position.x;
+        goal.p.y = self.pose.position.y;
+        goal.p.z = self.pose.position.z;
+        goal.yaw = quat2yaw(self.pose.orientation)
+        goal.power=False #Turn off the motors
         self.sendGoal(goal)
-        self.mode.mode=self.mode.ON_GROUND
-        self.sendMode()
+        self.whoplans.value=self.whoplans.OTHER
+        self.sendWhoPlans()
 
     def sendGoal(self, goal):
         # goal.yaw = quat2yaw(self.pose.orientation)
@@ -122,7 +131,7 @@ class Behavior_Selector:
         # print("[mader_cmds.py] Sending goal.yaw=",goal.yaw);
         self.pubGoal.publish(goal)
 
-    def pubFirstGoal(self):
+    def pubFirstTerminalGoal(self):
         msg=PoseStamped()
         msg.pose.position.x=self.pose.position.x
         msg.pose.position.y=self.pose.position.y
@@ -134,13 +143,13 @@ class Behavior_Selector:
 
                   
 def startNode():
-    c = Behavior_Selector()
+    c = Mader_Commands()
     #s = rospy.Service("/change_mode",MissionModeChange,c.srvCB)
     rospy.Subscriber("state", State, c.stateCB)
     rospy.Subscriber("/globalflightmode", QuadFlightMode, c.globalflightmodeCB)
     rospy.spin()
 
 if __name__ == '__main__':
-    rospy.init_node('behavior_selector')  
+    rospy.init_node('mader_commands')  
     startNode()
     print "Behavior selector started" 

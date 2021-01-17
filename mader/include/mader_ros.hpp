@@ -19,7 +19,7 @@
 #include <snapstack_msgs/State.h>
 #include <snapstack_msgs/Goal.h>
 
-#include <mader_msgs/Mode.h>
+#include <mader_msgs/WhoPlans.h>
 #include <mader_msgs/DynTraj.h>
 
 #include "utils.hpp"
@@ -50,7 +50,7 @@ private:
   void terminalGoalCB(const geometry_msgs::PoseStamped& msg);
   void pubState(const mt::state& msg, const ros::Publisher pub);
   void stateCB(const snapstack_msgs::State& msg);
-  void modeCB(const mader_msgs::Mode& msg);
+  void whoPlansCB(const mader_msgs::WhoPlans& msg);
   void pubCB(const ros::TimerEvent& e);
   void replanCB(const ros::TimerEvent& e);
   void trajCB(const mader_msgs::DynTraj& msg);
@@ -107,8 +107,8 @@ private:
   ros::Publisher pub_fov_;
   ros::Publisher pub_obstacles_;
 
-  ros::Subscriber sub_goal_;
-  ros::Subscriber sub_mode_;
+  ros::Subscriber sub_term_goal_;
+  ros::Subscriber sub_whoplans_;
   ros::Subscriber sub_state_;
   ros::Subscriber sub_traj_;
 
@@ -132,7 +132,7 @@ private:
 
   bool published_initial_position_ = false;
 
-  Eigen::Affine3d W_T_B_;
+  // Eigen::Affine3d W_T_B_;
 
   mt::PieceWisePol pwp_last_;
 

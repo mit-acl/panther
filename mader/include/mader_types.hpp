@@ -681,6 +681,11 @@ struct committedTrajectory
     return content.size();
   }
 
+  void clear()
+  {
+    content.clear();
+  }
+
   void push_back(mt::state tmp)
   {
     content.push_back(tmp);
