@@ -212,7 +212,7 @@ casadi::DM SolverIpopt::generateYawGuess(casadi::DM matrix_qp_guess, casadi::DM 
       i = i + 1;
     }
 
-    std::cout << "vector_yaw_samples_=\n" << vector_yaw_samples_ << std::endl;
+    // std::cout << "vector_yaw_samples_=\n" << vector_yaw_samples_ << std::endl;
     // std::cout << "vis_matrix_casadi=\n" << vis_matrix_casadi << std::endl;
 
     for (int j = 0; j < vector_yaw_samples_.numel(); j++)

@@ -290,7 +290,7 @@ for j=1:sp.num_seg
     % See https://en.wikipedia.org/wiki/Cone#Equation_form:~:text=In%20implicit%20form%2C%20the%20same%20solid%20is%20defined%20by%20the%20inequalities
 
     %%%%%%%%%%%%%%%%%%%
-%     %One possible version:
+%     %One possible version [cone]:
 %     % See https://en.wikipedia.org/wiki/Cone#Equation_form:~:text=In%20implicit%20form%2C%20the%20same%20solid%20is%20defined%20by%20the%20inequalities
 %       gamma1=100; gamma2=100;
 %     xx{j}=c_P(1); yy{j}=c_P(2); zz{j}=c_P(3);
@@ -308,30 +308,41 @@ for j=1:sp.num_seg
       %%%%%%%%%%%%%%%%%%%
     
       %%%%%%%%%%%%%%%%%%
-    %Simpler version:
+    %Simpler version [cone]:
     gamma=100;
     w_beta=w_fevar(1:3)-w_T_c(1:3,4);
     w_beta=w_beta/norm(w_beta);
     is_in_FOV1=-cos(thetax_half_FOV_deg*pi/180.0)+w_beta'*w_T_c(1:3,3); %This has to be >=0
     isInFOV_smooth=  (   1/(1+exp(-gamma*is_in_FOV1))  );
+
+    
+    %     %%%%%%%%%%%%%%%%%%%
+    %%[Squicular cone]
+%     gamma=0.6; %If too big, the warning "solver:nlp_grad_f failed: NaN detected for output grad_f_x" will appear
+%     tthx2=(tan(thetax_half_FOV_rad))^2;
+%     tthy2=(tan(thetay_half_FOV_rad))^2;
+%     
+%     x=c_P(1);y=c_P(2); z=c_P(3);  ss=0.95;
+% %%%     is_in_FOV1=-(    (x^2)*(z^2)/tthx2  +  (y^2)*(z^2)/tthy2   -(ss^2)*(x^2)*(y^2) -(z^4)     ); %(if this quantity is >=0). See https://en.wikipedia.org/wiki/Squircle, Note that  a^2=tan^2(theta_half_x)     b^2=tan^2(theta_half_y)   
+%     is_in_FOV1= -(    (x^4)/tthx2  +  (y^4)/tthy2   -(z^4)     ); %(if this quantity is >=0). See https://en.wikipedia.org/wiki/Squircle, , Note that  a^2=tan^2(theta_half_x)     b^2=tan^2(theta_half_y)   
+%     is_in_FOV2=z; %(and this quantity is >=0) 
+%     isInFOV_smooth=  (   1/(1+exp(-gamma*is_in_FOV1))  )*(   1/(1+exp(-gamma*is_in_FOV2))  );
+%     %%%%%%%%%%%%%%%%%%%
+    
+
     target_isInFOV{j}=isInFOV_smooth; %This one will be used for the graph search in yaw
-    
-    
     
     %I need to substitute it here because s_dot should consider also the velocity caused by the fact that yaw=yaw(t)
     s=substitute(s, yaw, sy.getPosU(u,j));
     target_isInFOV_substituted_yawcps{j}=substitute(target_isInFOV{j}, yaw, sy.getPosU(u,j));
      
-    
     %TODO: should we include the scaling variable here below?
     partial_s_partial_t=jacobian(s,u)*(1/sp.delta_t);% partial_s_partial_u * partial_u_partial_t
     
     %See Eq. 11.3 of https://www2.math.upenn.edu/~pemantle/110-public/notes11.pdf
     partial_s_partial_posfeature=jacobian(s,w_fevar);
     partial_posfeature_partial_t=w_velfewrtworldvar/scaling;
-    
     s_dot=partial_s_partial_t  + partial_s_partial_posfeature*partial_posfeature_partial_t; % partial_s_partial_u * partial_u_partial_t
-    
     s_dot2=s_dot'*s_dot;
     s2=(s'*s);
     
@@ -347,28 +358,7 @@ for j=1:sp.num_seg
      
 
 
-%     %%%%%%%%%%%%%%%%%%%
-%     %%Squicular cone
-%     gamma=20;
-% %     sth2=(sin(theta_half_FOV_rad))^2;
-% %     cth2=(cos(theta_half_FOV_rad))^2;
-%     tthx2=(tan(thetax_half_FOV_rad))^2;
-%     tthy2=(tan(thetay_half_FOV_rad))^2;
-%     
-%     xx{j}=c_P(1); yy{j}=c_P(2); zz{j}=c_P(3);
-%     x=c_P(1);y=c_P(2); z=c_P(3);  s=0.95;
-%     is_in_FOV1{j}=-(    (x^2)*(z^2)/tthx2  +  (y^2)*(z^2)/tthy2   -(s^2)*(x^2)*(y^2) -(z^4)     ); %(if this quantity is >=0). Squicular cone, see section 15.4 of https://arxiv.org/pdf/1604.02174.pdf 
-%                                                                                      % Note that  a^2=tan^2(theta_half_x)     b^2=tan^2(theta_half_y)      c=1  
-%     is_in_FOV2{j}=z; %(and this quantity is >=0) 
-%     isInFOV_smooth=  (   1/(1+exp(-gamma*is_in_FOV1{j}))  )*(   1/(1+exp(-gamma*is_in_FOV2{j}))  );
-%     target_isInFOV{j}=isInFOV_smooth; 
-%     
-%     %Costs (all of them following the convention of "minimize" )
-%     f_vel_im{j}=(s_dot'*s_dot);
-%     f_dist_im{j}=(s'*s); %I wanna minimize the integral of this funcion. Approx. using symp. Rule
-%     f_vel_isInFOV_im{j}=-(target_isInFOV{j}) /(offset_vel+f_vel_im{j});
-%     %%End of version 3
-%     %%%%%%%%%%%%%%%%%%%
+
     
     span_interval=sp.timeSpanOfInterval(j);
     t_init_interval=min(span_interval);   

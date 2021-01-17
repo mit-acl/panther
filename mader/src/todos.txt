@@ -1,14 +1,13 @@
 
 En este repo:
 	Make sure qyaw_guess is feasible (because I commit to it when ipopt doesn't find a solution)
-	Improve the way qyaw_guess is generated
 	max_runtime_casadi
 	Install good linear solver Ipopt
 	Check everything in yaw_guess_generator works as expected
 	Impose yaw_max in yaw_guess_generator?
 	see TODOs in yaw_guess_generator
 	Check the partial derivatives of velocity of the obstacle in the cost function is right
-	Uncomment smooth pyramid (instead of cone)
+	Uncomment smooth pyramid (instead of cone) [DONE, but it's commented out]
 	Cuidado que los assert() SOLO funcionan en debug mode, no en release mode. Change this also in Mader original code
 	Should I leave the planes fixed or as decision variables??
 	Check if the obj function chosen is the best one
@@ -16,23 +15,25 @@ En este repo:
 	Cuidado que guess_yaw doesn't use the constraint yaw_dot_max, while the optimization problem does
 	Cuidado que guess_pos doesn't use the constraint jerk_max, while the optimization problem does
 	Enable the -O3 option when compiling all the mader package
-	See what to do when boost() doesn't find a path (end of yaw_guess_generator.cpp)
 	Asegurarse que el yaw no explota (wrap yaw0)
 	Check la heuristics del graph del yaw
 	See %TODO: should we include total_time here below? in main.m
 	Check that the T matrix in the tracker is the right one (and not its inverse)
 	Add VIO term in the cost function
-	See https://pointclouds.org/documentation/classpcl_1_1_shadow_points.html#details
 	The FOV of Gazebo should be consistent with fov_x_deg and fov_y_deg
 	Check max_number_of_obstacles (creo que ahora hago abort())
 	wait duration for looking up transform in tracker
+	Como decidir entre varios obstaculos (ahora cojo traj_0 creo)
 	Predict the uncertainty and apply it to the polyhedra
+	param 'basis' in mader.yaml is not used in the MATLAB files. Move it to MATLAB and store it in *casadi.yaml. But then I have to include the Bezier control points
 
 Future/enhancements:
 	Schur complement to avoid inverting the whole matrix?
 	The predictor should use the pwp field (instead of the string field) of dynTraj. This will require changes in mader.cpp (how is_agent is used)
-	Should I create the boost graph only once?? The edges for sure should be created each time (because of the depencende with deltaT)
 	Yaw generator should go to a different class
+	See what to do when boost() doesn't find a path (end of yaw_guess_generator.cpp) [right now there is an abort(), since it should never happen]
+	See https://pointclouds.org/documentation/classpcl_1_1_shadow_points.html#details
+
 
 Novale:
 	Have a look at https://www.mathworks.com/help/curvefit/fnxtr.html
@@ -44,7 +45,7 @@ Done:
 	Circular statistics, circular regression for the yaw 
 
 Decir en el paper:
-	In the graph for the yaw, we are imposing the yaw_dot_max en las conexiones de los yaw angles
+	In the graph for the yaw, we are imposing the yaw_dot_max en las conexiones de los yaw angles (with very high cost)
 
 Papers to cite in proposal/Paper:
 	https://arxiv.org/pdf/1904.03421.pdf
