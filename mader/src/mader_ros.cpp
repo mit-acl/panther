@@ -233,12 +233,12 @@ MaderRos::MaderRos(ros::NodeHandle nh1, ros::NodeHandle nh2, ros::NodeHandle nh3
 
   clearMarkerActualTraj();
 
-  bool gui_mission;
-  safeGetParam(nh1_, "gui_mission", gui_mission);
+  bool use_gui_mission;
+  safeGetParam(nh1_, "use_gui_mission", use_gui_mission);
 
-  std::cout << yellow << bold << "gui_mission" << gui_mission << reset << std::endl;
+  std::cout << yellow << bold << "use_gui_mission" << use_gui_mission << reset << std::endl;
   ////// to avoid having to click on the GUI (TODO)
-  if (gui_mission == false)
+  if (use_gui_mission == false)
   {
     mader_msgs::WhoPlans tmp;
     tmp.value = mader_msgs::WhoPlans::MADER;
@@ -483,8 +483,8 @@ void MaderRos::stateCB(const snapstack_msgs::State& msg)
   state_ = state_tmp;
   // std::cout << bold << red << "STATE_YAW= " << state_.yaw << reset << std::endl;
 
-  std::cout << bold << yellow << "MADER_ROS state= " << reset;
-  state_tmp.print();
+  // std::cout << bold << yellow << "MADER_ROS state= " << reset;
+  // state_tmp.print();
   mader_ptr_->updateState(state_tmp);
 
   // W_T_B_ = Eigen::Translation3d(msg.pos.x, msg.pos.y, msg.pos.z) *
@@ -542,7 +542,7 @@ void MaderRos::pubCB(const ros::TimerEvent& e)
     goal.header.frame_id = world_name_;
     goal.power = true;  // don't kill the motors
 
-    std::cout << red << bold << "Publishing goal.z= " << goal.p.z << reset << std::endl;
+    // std::cout << red << bold << "Publishing goal.z= " << goal.p.z << reset << std::endl;
     pub_goal_.publish(goal);
 
     setpoint_.header.stamp = ros::Time::now();
