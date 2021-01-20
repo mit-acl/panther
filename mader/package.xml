@@ -26,7 +26,7 @@
   <build_depend>decomp_util</build_depend>
   <build_depend>decomp_ros_utils</build_depend>
   <build_depend>separator</build_depend>  
-  <build_depend>jsk_rviz_plugins</build_depend> 
+  <!--<build_depend>jsk_rviz_plugins</build_depend> -->
   <build_depend>hungarian</build_depend> 
 
   <build_depend>gazebo_ros</build_depend>
