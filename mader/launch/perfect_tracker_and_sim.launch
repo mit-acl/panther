@@ -4,6 +4,7 @@
     <!-- Arguments -->
     <!--<arg name="joy" default="false"/>-->
     <arg name="gazebo" default="true"/>
+    <arg name="perfect_tracker" default="true"/>
 
     <arg name="x" default="0" />
     <arg name="y" default="0" />
@@ -24,22 +25,30 @@
             <arg name="yaw" default="$(arg yaw)"/>
         </include>
 
-         <!-- Camera to body tf -->
-        <node pkg="tf" type="static_transform_publisher" name="camera2body" args="0 0 0 -1.57 0 -1.57 $(arg quad) $(arg quad)/camera 100" />
-
     </group>
+
+     <!-- Camera to body tf -->
+    <node pkg="tf" type="static_transform_publisher" name="camera2body" args="0 0 0 -1.57 0 -1.57 $(arg quad) $(arg quad)/camera 100" />
 
        
     <!-- Vicon to world tf -->
     <!-- The namespace is needed only for the multi-agent simulations. If not, each agent kills the node of the other one-->
     <node ns="$(arg quad)" pkg="tf" type="static_transform_publisher" name="vicon2world" args="0 0 0 0 0 0 /world /vicon 100" />
 
-    <!-- Start Perfect Tracker -->
-	<node ns="$(arg quad)" name="perfect_tracker" pkg="mader" type="perfect_tracker.py" output="screen">
-        <param name="x" value="$(arg x)"/>
-        <param name="y" value="$(arg y)"/>
-        <param name="z" value="$(arg z)"/>
-        <param name="yaw" value="$(arg yaw)"/>
-    </node>
+    <group if="$(arg perfect_tracker)">
+        <!-- Start Perfect Tracker -->
+    	<node ns="$(arg quad)" name="perfect_tracker" pkg="mader" type="perfect_tracker.py" output="screen">
+            <param name="x" value="$(arg x)"/>
+            <param name="y" value="$(arg y)"/>
+            <param name="z" value="$(arg z)"/>
+            <param name="yaw" value="$(arg yaw)"/>
+        </node>
+    </group>
+
+        <!-- Start Simulation -->
+    <group unless="$(arg perfect_tracker)">
+        <include file="$(find snap_sim)/launch/sim.launch">
+         </include> 
+    </group>
 
 </launch>

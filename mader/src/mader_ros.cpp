@@ -35,7 +35,9 @@ MaderRos::MaderRos(ros::NodeHandle nh1, ros::NodeHandle nh2, ros::NodeHandle nh3
 
   ////////////////////////// This has to be done before creating a new MADER object
   // wait for body transform to be published before initializing
-  ROS_INFO("Waiting for world to camera transform...");
+
+  std::string name_camera_tf = name_drone_ + "/camera";
+
   while (true)
   {
     tf2_ros::Buffer tf_buffer;
@@ -43,24 +45,24 @@ MaderRos::MaderRos(ros::NodeHandle nh1, ros::NodeHandle nh2, ros::NodeHandle nh3
     geometry_msgs::TransformStamped transform_stamped;
     try
     {
-      transform_stamped = tf_buffer.lookupTransform(name_drone_, name_drone_ + "/camera", ros::Time::now(),
+      transform_stamped = tf_buffer.lookupTransform(name_drone_, name_camera_tf, ros::Time(0),
                                                     ros::Duration(0.5));  // TODO: change this duration time?
+                                                                          // Note that ros::Time(0) will just get us the
+                                                                          // latest available transform.
 
-      std::cout << "Transformation found" << std::endl;
-      std::cout << "transform_stamped= " << transform_stamped << std::endl;
+      // std::cout << "Transformation found" << std::endl;
+      // std::cout << "transform_stamped= " << transform_stamped << std::endl;
 
       par_.b_T_c = tf2::transformToEigen(transform_stamped);
-
-      std::cout << "par_.b_T_c= " << par_.b_T_c.matrix() << std::endl;
 
       break;
     }
     catch (tf2::TransformException& ex)
     {
-      // nothing
+      ROS_WARN_THROTTLE(1.0, "Trying to find transform %s --> %s", name_drone_.c_str(), name_camera_tf.c_str());
     }
   }
-
+  ROS_INFO("Found transform");
   std::cout << "par_.b_T_c.matrix()= " << par_.b_T_c.matrix() << std::endl;
 
   safeGetParam(nh1_, "use_ff", par_.use_ff);
@@ -193,7 +195,7 @@ MaderRos::MaderRos(ros::NodeHandle nh1, ros::NodeHandle nh2, ros::NodeHandle nh3
   pub_traj_safe_colored_ = nh1_.advertise<visualization_msgs::MarkerArray>("traj_safe_colored", 1);
   pub_traj_ = nh1_.advertise<mader_msgs::DynTraj>("/trajs", 1, true);  // The last boolean is latched or not
   pub_text_ = nh1_.advertise<jsk_rviz_plugins::OverlayText>("text", 1);
-  pub_fov_ = nh1_.advertise<visualization_msgs::Marker>("fov", 1);
+  pub_fov_ = nh1_.advertise<visualization_msgs::Marker>("fov", 1, true);
   pub_obstacles_ = nh1_.advertise<visualization_msgs::Marker>("obstacles", 1);
 
   // Subscribers
@@ -248,7 +250,11 @@ MaderRos::MaderRos(ros::NodeHandle nh1, ros::NodeHandle nh2, ros::NodeHandle nh3
   ////// bool success_service_call = system("rosservice call /change_mode 'mode: 1'");
   ////
 
+  constructFOVMarker(); //only needed once
+
   ROS_INFO("Planner initialized");
+
+
 }
 
 MaderRos::~MaderRos()
@@ -501,7 +507,7 @@ void MaderRos::stateCB(const snapstack_msgs::State& msg)
     pubActualTraj();
   }
 
-  publishFOV();
+  
 }
 
 void MaderRos::whoPlansCB(const mader_msgs::WhoPlans& msg)
@@ -534,13 +540,13 @@ void MaderRos::pubCB(const ros::TimerEvent& e)
 
     goal.p = eigen2rosvector(next_goal.pos);
     goal.v = eigen2rosvector(next_goal.vel);
-    goal.a = eigen2rosvector(next_goal.accel);
-    goal.j = eigen2rosvector(next_goal.jerk);
-    goal.dyaw = next_goal.dyaw;
-    goal.yaw = next_goal.yaw;
+    goal.a = eigen2rosvector( (par_.use_ff) * next_goal.accel);
+    goal.j = eigen2rosvector((par_.use_ff) * next_goal.jerk);
+    goal.dyaw =  next_goal.dyaw;
+    goal.yaw =  next_goal.yaw;
     goal.header.stamp = ros::Time::now();
     goal.header.frame_id = world_name_;
-    goal.power = true;  // don't kill the motors
+    goal.power = true;  // allow the outer loop to send low-level autopilot commands
 
     // std::cout << red << bold << "Publishing goal.z= " << goal.p.z << reset << std::endl;
     pub_goal_.publish(goal);
@@ -552,6 +558,8 @@ void MaderRos::pubCB(const ros::TimerEvent& e)
 
     pub_setpoint_.publish(setpoint_);
   }
+
+  publishFOV();
 }
 
 void MaderRos::clearMarkerArray(visualization_msgs::MarkerArray* tmp, ros::Publisher* publisher)
@@ -723,16 +731,16 @@ void MaderRos::terminalGoalCB(const geometry_msgs::PoseStamped& msg)
   clearMarkerActualTraj();
 }
 
-void MaderRos::publishFOV()
-{
-  visualization_msgs::Marker marker_fov;
-  marker_fov.header.frame_id = name_drone_;
-  marker_fov.header.stamp = ros::Time::now();
-  marker_fov.ns = "marker_fov";
-  marker_fov.id = 0;
-  marker_fov.type = marker_fov.LINE_LIST;
-  marker_fov.action = marker_fov.ADD;
-  marker_fov.pose = identityGeometryMsgsPose();
+void MaderRos::constructFOVMarker(){
+  
+  marker_fov_.header.frame_id = name_drone_;
+  marker_fov_.header.stamp = ros::Time::now();
+  marker_fov_.ns = "marker_fov";
+  marker_fov_.id = 0;
+  marker_fov_.frame_locked = true;
+  marker_fov_.type = marker_fov_.LINE_LIST;
+  marker_fov_.action = marker_fov_.ADD;
+  marker_fov_.pose = identityGeometryMsgsPose();
 
   double delta_y = par_.fov_depth * fabs(tan((par_.fov_x_deg * M_PI / 180) / 2.0));
   double delta_z = par_.fov_depth * fabs(tan((par_.fov_y_deg * M_PI / 180) / 2.0));
@@ -743,52 +751,54 @@ void MaderRos::publishFOV()
   geometry_msgs::Point v3 = eigen2point(Eigen::Vector3d(par_.fov_depth, -delta_y, delta_z));
   geometry_msgs::Point v4 = eigen2point(Eigen::Vector3d(par_.fov_depth, delta_y, delta_z));
 
-  marker_fov.points.clear();
+  marker_fov_.points.clear();
 
   // Line
-  marker_fov.points.push_back(v0);
-  marker_fov.points.push_back(v1);
+  marker_fov_.points.push_back(v0);
+  marker_fov_.points.push_back(v1);
 
   // Line
-  marker_fov.points.push_back(v0);
-  marker_fov.points.push_back(v2);
+  marker_fov_.points.push_back(v0);
+  marker_fov_.points.push_back(v2);
 
   // Line
-  marker_fov.points.push_back(v0);
-  marker_fov.points.push_back(v3);
+  marker_fov_.points.push_back(v0);
+  marker_fov_.points.push_back(v3);
 
   // Line
-  marker_fov.points.push_back(v0);
-  marker_fov.points.push_back(v4);
+  marker_fov_.points.push_back(v0);
+  marker_fov_.points.push_back(v4);
 
   // Line
-  marker_fov.points.push_back(v1);
-  marker_fov.points.push_back(v2);
+  marker_fov_.points.push_back(v1);
+  marker_fov_.points.push_back(v2);
 
   // Line
-  marker_fov.points.push_back(v2);
-  marker_fov.points.push_back(v3);
+  marker_fov_.points.push_back(v2);
+  marker_fov_.points.push_back(v3);
 
   // Line
-  marker_fov.points.push_back(v3);
-  marker_fov.points.push_back(v4);
+  marker_fov_.points.push_back(v3);
+  marker_fov_.points.push_back(v4);
 
   // Line
-  marker_fov.points.push_back(v4);
-  marker_fov.points.push_back(v1);
+  marker_fov_.points.push_back(v4);
+  marker_fov_.points.push_back(v1);
 
-  marker_fov.scale.x = 0.03;
-  marker_fov.scale.y = 0.00001;
-  marker_fov.scale.z = 0.00001;
-  marker_fov.color.a = 1.0;
-  marker_fov.color.r = 0.0;
-  marker_fov.color.g = 1.0;
-  marker_fov.color.b = 0.0;
+  marker_fov_.scale.x = 0.03;
+  marker_fov_.scale.y = 0.00001;
+  marker_fov_.scale.z = 0.00001;
+  marker_fov_.color.a = 1.0;
+  marker_fov_.color.r = 0.0;
+  marker_fov_.color.g = 1.0;
+  marker_fov_.color.b = 0.0;
 
-  pub_fov_.publish(marker_fov);
+}
 
-  ////
-  /// https://github.com/PickNikRobotics/rviz_visual_tools/blob/80212659be877f221cf23528b4e4887eaf0c08a4/src/rviz_visual_tools.cpp#L957
+void MaderRos::publishFOV()
+{
 
+  marker_fov_.header.stamp = ros::Time::now();
+  pub_fov_.publish(marker_fov_);
   return;
 }

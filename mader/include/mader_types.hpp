@@ -659,6 +659,11 @@ struct parameters
   double c_fov = 0.0;
   double c_final_pos = 100.0;
 
+  // double c_jerk2 = 1.0;
+  // double c_yaw2 = 0.0;
+  // double c_fov2 = 0.0;
+  // double c_final_pos2 = 100.0;
+
   //
   Eigen::Affine3d b_T_c;
 };

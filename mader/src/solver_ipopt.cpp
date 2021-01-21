@@ -242,6 +242,7 @@ void SolverIpopt::setSimpsonFeatureSamples(const std::vector<Eigen::Vector3d> &s
   }
 }
 
+
 // Note that t_final will be updated in case the saturation in deltaT_ has had effect
 bool SolverIpopt::setInitStateFinalStateInitTFinalT(mt::state initial_state, mt::state final_state, double t_init,
                                                     double &t_final)
@@ -264,6 +265,9 @@ bool SolverIpopt::setInitStateFinalStateInitTFinalT(mt::state initial_state, mt:
 
   initial_state_ = initial_state;
   final_state_ = final_state;
+
+  initial_state_.yaw = wrapFromMPitoPi(initial_state_.yaw);
+
 
   std::cout << "initial_state= " << std::endl;
   initial_state.printHorizontal();
@@ -459,7 +463,7 @@ bool SolverIpopt::optimize()
   map_arguments["c_jerk"] = par_.c_jerk;
   map_arguments["c_yaw"] = par_.c_yaw;
   map_arguments["c_fov"] = par_.c_fov;
-  map_arguments["c_final_pos"] = par_.c_final_pos;
+  map_arguments["c_final_pos"] = par_.c_final_pos;  // / pow((final_state_.pos - initial_state_.pos).norm(), 4);
 
   // std::cout << "Total time= " << (t_final_ - t_init_) << std::endl;
 
@@ -545,8 +549,8 @@ bool SolverIpopt::optimize()
     std::cout << red << "IPOPT failed to find a solution" << reset
               << std::endl;  //, using initial guess (which is feasible)
     qp = qp_guess_;
-    qy = qy_guess_;  // TODO: I need to make sure that this is feasible as well!! (both in position, in velocity and in
-                     // initial/final conditions). For now, let's return false until I fix this.
+    qy = qy_guess_;  // TODO: If I want to commit to the guesses, they need to be feasible (right now they aren't because of j_max and yaw_dot_max)
+                     // For now, let's not commit to them and return false
     return false;
   }
 

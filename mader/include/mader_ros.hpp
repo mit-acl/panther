@@ -74,6 +74,8 @@ private:
 
   void pubObstacles(mt::Edges edges_obstacles);
 
+  void constructFOVMarker();
+
   mt::state state_;
 
   std::string world_name_ = "world";
@@ -137,4 +139,7 @@ private:
   mt::PieceWisePol pwp_last_;
 
   MADER_timers::Timer timer_stop_;
+
+  visualization_msgs::Marker marker_fov_;
+
 };

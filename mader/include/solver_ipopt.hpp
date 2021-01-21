@@ -64,8 +64,21 @@ public:
 
   bool checkGradientsUsingFiniteDiff();
 
+  mt::parameters par_;
+
 protected:
 private:
+
+  // https://stackoverflow.com/a/11498248/6057617
+  double wrapFromMPitoPi(double x)
+  {
+    x = fmod(x + M_PI, 2 * M_PI);
+    if (x < 0)
+      x += 2 * M_PI;
+    return x - M_PI;
+  }
+
+
   bool getIntersectionWithPlane(const Eigen::Vector3d &P1, const Eigen::Vector3d &P2, const Eigen::Vector4d &coeff,
                                 Eigen::Vector3d &intersection);
 
@@ -107,8 +120,6 @@ private:
 
   std::vector<Eigen::Vector3d> n_;  // Each n_[i] has 3 elements (nx,ny,nz)
   std::vector<double> d_;           // d_[i] has 1 element
-
-  mt::parameters par_;
 
   mt::PieceWisePol pwp_solution_;
 

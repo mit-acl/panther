@@ -52,11 +52,11 @@ class Mader_Commands:
     #Called when buttom pressed in the interface
     def globalflightmodeCB(self,req):
         if(self.initialized==False):
-            print "Not initialized yet"
+            print "Not initialized yet. Is DRONE_NAME/state being published?"
             return
 
         if req.mode == req.GO and self.whoplans.value==self.whoplans.OTHER:
-            print "Taking off"
+            print "Starting taking off"
             self.takeOff()
             print "Take off done"
 
@@ -86,9 +86,10 @@ class Mader_Commands:
         #Note that self.pose.position is being updated in the parallel callback
 
         ######## Commented for simulations
-        while(  abs(self.pose.position.z-self.alt_taken_off)>0.1  ): 
+        while(  abs(self.pose.position.z-self.alt_taken_off)>0.2  ):  
             goal.p.z = min(goal.p.z+0.0035, self.alt_taken_off);
             #rospy.sleep(0.004) 
+            rospy.loginfo_throttle(0.5, "Taking off..., error={}".format(self.pose.position.z-self.alt_taken_off) )
             self.sendGoal(goal)
         ######## 
         rospy.sleep(0.1) 

@@ -1,26 +1,23 @@
 
 En este repo:
-	Make sure qyaw_guess is feasible (because I commit to it when ipopt doesn't find a solution)
+	
 	max_runtime_casadi
-	Install good linear solver Ipopt
-	Check everything in yaw_guess_generator works as expected
-	Impose yaw_max in yaw_guess_generator?
-	see TODOs in yaw_guess_generator
+	Install good linear solver Ipopt [check email]
+
 	Check the partial derivatives of velocity of the obstacle in the cost function is right
 	Uncomment smooth pyramid (instead of cone) [DONE, but it's commented out]
-	Cuidado que los assert() SOLO funcionan en debug mode, no en release mode. Change this also in Mader original code
+	Cuidado que los assert() SOLO funcionan en debug mode, no en release mode.
 	Should I leave the planes fixed or as decision variables??
 	Check if the obj function chosen is the best one
-	Make yaw compatible with yaw definition in acl-stack
-	Cuidado que guess_yaw doesn't use the constraint yaw_dot_max, while the optimization problem does
-	Cuidado que guess_pos doesn't use the constraint jerk_max, while the optimization problem does
-	Enable the -O3 option when compiling all the mader package
-	Asegurarse que el yaw no explota (wrap yaw0)
+
+	Enable the -O3 option when compiling all the mader package (and change to release mode, not release with info)
 	Check la heuristics del graph del yaw
 	See %TODO: should we include total_time here below? in main.m
 	Check that the T matrix in the tracker is the right one (and not its inverse)
 	Add VIO term in the cost function
 	The FOV of Gazebo should be consistent with fov_x_deg and fov_y_deg
+	Change depth_max of Gazebo to infinity?
+
 	Check max_number_of_obstacles (creo que ahora hago abort())
 	wait duration for looking up transform in tracker
 	Como decidir entre varios obstaculos (ahora cojo traj_0 creo)
@@ -28,12 +25,19 @@ En este repo:
 	param 'basis' in mader.yaml is not used in the MATLAB files. Move it to MATLAB and store it in *casadi.yaml. But then I have to include the Bezier control points
 	Create a dataset of the moving objects from the experiments??
 
+	If I want the guesses to be feasible (right now I'm not committing to them):
+		Cuidado que guess_yaw doesn't use the constraint yaw_dot_max, while the optimization problem does
+		Cuidado que guess_pos doesn't use the constraint jerk_max, while the optimization problem does
+		Make sure qyaw_guess is feasible (in case I commit to it when ipopt doesn't find a solution)
+
+
 Future/enhancements:
 	Schur complement to avoid inverting the whole matrix?
 	The predictor should use the pwp field (instead of the string field) of dynTraj. This will require changes in mader.cpp (how is_agent is used)
 	Yaw generator should go to a different class
 	See what to do when boost() doesn't find a path (end of yaw_guess_generator.cpp) [right now there is an abort(), since it should never happen]
 	See https://pointclouds.org/documentation/classpcl_1_1_shadow_points.html#details
+	Rename all the yaws to phi
 
 
 Novale:
@@ -57,6 +61,7 @@ Papers to cite in proposal/Paper:
 
 En MADER:
 	Try creating a NLOPT object each time. 
+	Cuidado que los assert() SOLO funcionan en debug mode, no en release mode.
 
 
 

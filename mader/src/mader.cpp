@@ -875,9 +875,14 @@ bool Mader::replan(mt::Edges& edges_obstacles_out, std::vector<mt::state>& X_saf
   double factor_v_max_tmp = par_.factor_v_max;
 
   // when it's near the terminal goal --> use a small factor_v_max (if not it will oscillate)
-  if (distA2TermGoal < 1.5)  // TODO: Put this as a param
+  if (distA2TermGoal < 3.0)  // TODO: Put this as a param
   {
     factor_v_max_tmp = 0.4;  // TODO: Put this as a param
+    solver_->par_.c_final_pos = 1000.0;
+  }
+  else
+  {
+    solver_->par_.c_final_pos = par_.c_final_pos;
   }
 
   double t_final = t_start + (initial.pos - final.pos).array().abs().maxCoeff() /

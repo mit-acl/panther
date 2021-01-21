@@ -100,14 +100,7 @@ private:
 ////////////////////////////////////////
 ////////////////////////////////////////
 
-// https://stackoverflow.com/a/11498248/6057617
-double wrapFromMPitoPi(double x)
-{
-  x = fmod(x + M_PI, 2 * M_PI);
-  if (x < 0)
-    x += 2 * M_PI;
-  return x - M_PI;
-}
+
 
 casadi::DM SolverIpopt::generateYawGuess(casadi::DM matrix_qp_guess, casadi::DM all_w_fe, double y0, double ydot0,
                                          double ydotf, double t0, double tf)
@@ -127,10 +120,9 @@ casadi::DM SolverIpopt::generateYawGuess(casadi::DM matrix_qp_guess, casadi::DM 
                                                     // It's a matrix of size (num_of_layers_)x(num_of_yaw_per_layer_)
                                                     // we won't use its 1st col  (since y0 is given)
 
-  double y0wrapped = wrapFromMPitoPi(y0);
-  std::cout << bold << yellow << "y0wrapped= " << y0wrapped << reset << std::endl;
+  std::cout << bold << yellow << "y0= " << y0 << reset << std::endl;
   // Set the value of the first node (initial yaw)
-  mygraph_[all_vertexes_[0][0]].yaw = y0wrapped;
+  mygraph_[all_vertexes_[0][0]].yaw = y0;
 
   double deltaT = (tf - t0) / (double(num_of_layers_));
 
@@ -268,7 +260,6 @@ casadi::DM SolverIpopt::generateYawGuess(casadi::DM matrix_qp_guess, casadi::DM 
 
     // See "fit_to_angular_data.m"
     casadi::DM vsp_corrected = vector_shortest_path;
-    // vector_shortest_path(casadi::Sparsity::dense(1, vector_shortest_path.columns()));  // TODO: do this just once
 
     vsp_corrected(0) = vector_shortest_path(0);
     for (size_t i = 1; i < vsp_corrected.columns(); i++)  // starts in 1, not in 0
