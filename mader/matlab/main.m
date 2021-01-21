@@ -26,8 +26,8 @@ num_max_of_obst=10; %This is the maximum num of the obstacles
 num_samples_simpson=7;  %This will also be the num_of_layers in the graph yaw search of C++
 num_of_yaw_per_layer=6; %This will be used in the graph yaw search of C++
                          %Note that the initial layer will have only one yaw (which is given) 
-
-t0=0;
+basis="MINVO"; %MINVO OR B_SPLINE or BEZIER. This is the basis used for collision checking (in position, velocity, accel and jerk space), both in Matlab and in C++
+t0=0; 
 tf=10.5;
 
 dim_pos=3;
@@ -133,8 +133,8 @@ opti.subject_to( sy.getVelT(tf)==ydotf_scaled); % Needed: if not (and if you are
 % epsilon=1;
 for j=1:(sp.num_seg)
 
-    %Get the MINVO control points of the interval
-    Q_MV=sp.getCPs_MV_Pos_ofInterval(j);
+    %Get the control points of the interval
+    Q=sp.getCPs_XX_Pos_ofInterval(basis, j);
 
     %Plane constraints
     for obst_index=1:num_max_of_obst
@@ -151,14 +151,14 @@ for j=1:(sp.num_seg)
 %       end
       
       %and the control points on the other side
-      for kk=1:size(Q_MV,2)
-        opti.subject_to( n{ip}'*Q_MV{kk} + d{ip} <= 0);
+      for kk=1:size(Q,2)
+        opti.subject_to( n{ip}'*Q{kk} + d{ip} <= 0);
       end
     end  
  
     %Sphere constraints
-    for kk=1:size(Q_MV,2) 
-        tmp=(Q_MV{kk}-p0);
+    for kk=1:size(Q,2) 
+        tmp=(Q{kk}-p0);
         opti.subject_to( (tmp'*tmp)<=(Ra*Ra) );
     end
 
@@ -171,36 +171,36 @@ end
 
 %Max vel constraints (position)
 for j=1:sp.num_seg
-    minvo_vel_cps=sp.getCPs_MV_Vel_ofInterval(j);
-    dim=size(minvo_vel_cps, 1);
-    for u=1:size(minvo_vel_cps,2)
+    vel_cps=sp.getCPs_XX_Vel_ofInterval(basis, j);
+    dim=size(vel_cps, 1);
+    for u=1:size(vel_cps,2)
         for xyz=1:3
-            opti.subject_to( minvo_vel_cps{u}(xyz) <= v_max_scaled(xyz)  )
-            opti.subject_to( minvo_vel_cps{u}(xyz) >= -v_max_scaled(xyz) )
+            opti.subject_to( vel_cps{u}(xyz) <= v_max_scaled(xyz)  )
+            opti.subject_to( vel_cps{u}(xyz) >= -v_max_scaled(xyz) )
         end
     end
 end
 
 %Max accel constraints (position)
 for j=1:sp.num_seg
-    minvo_accel_cps=sp.getCPs_MV_Accel_ofInterval(j);
-    dim=size(minvo_accel_cps, 1);
-    for u=1:size(minvo_accel_cps,2)
+    accel_cps=sp.getCPs_XX_Accel_ofInterval(basis, j);
+    dim=size(accel_cps, 1);
+    for u=1:size(accel_cps,2)
         for xyz=1:3
-            opti.subject_to( minvo_accel_cps{u}(xyz) <= a_max_scaled(xyz)  )
-            opti.subject_to( minvo_accel_cps{u}(xyz) >= -a_max_scaled(xyz) )
+            opti.subject_to( accel_cps{u}(xyz) <= a_max_scaled(xyz)  )
+            opti.subject_to( accel_cps{u}(xyz) >= -a_max_scaled(xyz) )
         end
     end
 end
 
 %Max jerk constraints (position)
 for j=1:sp.num_seg
-    minvo_jerk_cps=sp.getCPs_MV_Jerk_ofInterval(j);
-    dim=size(minvo_jerk_cps, 1);
-    for u=1:size(minvo_jerk_cps,2)
+    jerk_cps=sp.getCPs_MV_Jerk_ofInterval(j);
+    dim=size(jerk_cps, 1);
+    for u=1:size(jerk_cps,2)
         for xyz=1:3
-            opti.subject_to( minvo_jerk_cps{u}(xyz) <= j_max_scaled(xyz)  )
-            opti.subject_to( minvo_jerk_cps{u}(xyz) >= -j_max_scaled(xyz) )
+            opti.subject_to( jerk_cps{u}(xyz) <= j_max_scaled(xyz)  )
+            opti.subject_to( jerk_cps{u}(xyz) >= -j_max_scaled(xyz) )
         end
     end
 end
@@ -553,7 +553,7 @@ fprintf(my_file,'num_seg: %d\n',num_seg);
 fprintf(my_file,'num_max_of_obst: %d\n',num_max_of_obst);
 fprintf(my_file,'num_samples_simpson: %d\n',num_samples_simpson);
 fprintf(my_file,'num_of_yaw_per_layer: %d\n',num_of_yaw_per_layer); % except in the initial layer, that has only one value
-
+fprintf(my_file,'basis: "%s"\n',basis);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%% FUNCTION TO GENERATE VISIBILITY AT EACH POINT  %%%%%%%%%

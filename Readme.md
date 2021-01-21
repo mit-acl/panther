@@ -1,3 +1,6 @@
+roslaunch mader single_agent_simulation.launch gazebo:=false perfect_tracker:=false use_gui_mission:=true
+
+----
 Sim without gui: `roslaunch mader single_agent_simulation.launch use_gui_mission:=false`
 Sim with gui: `roslaunch mader single_agent_simulation.launch use_gui_mission:=true`. You can also the z value of `mader_specific.launch` to set the initial position of the drone
 

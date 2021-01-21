@@ -169,6 +169,95 @@ classdef MyClampedUniformSpline < handle
         end
         %%%%%%%%%%%%%%%%%%%%%%
 
+        %%%%%%%%%%%%%% Bezier (Be)
+        %%%%%%%%%%%%%%%%%%%%%%
+        %returns the Be position control points of the interval j
+        function result=getCPs_Be_Pos_ofInterval(obj,j)
+            Q_Bs_matrix=obj.convertCellArrayCPsToMatrix(obj.getCPs_BS_Pos_ofInterval(j));
+                                                   %Q_Bs_matrix*   A_BS*                         inv(A_MV)
+            result=obj.convertMatrixCPsToCellArray(Q_Bs_matrix*    obj.getA_BS_Pos_Interval(j)*  inv(getA_Be(obj.p, [0,1])));
+        end
+        
+        %returns the Be velocity control points of the interval j
+        function result=getCPs_Be_Vel_ofInterval(obj,j)
+            Q_Bs_matrix=obj.convertCellArrayCPsToMatrix(obj.getCPs_BS_Vel_ofInterval(j));
+                                                   %Q_Bs_matrix*   A_BS*                         inv(A_MV)
+            result=obj.convertMatrixCPsToCellArray(Q_Bs_matrix*    obj.getA_BS_Vel_Interval(j)*  inv(getA_Be(obj.p-1, [0,1])));
+        end
+        
+        %returns the Be acceleration control points of the interval j
+        function result=getCPs_Be_Accel_ofInterval(obj,j)
+            Q_Bs_matrix=obj.convertCellArrayCPsToMatrix(obj.getCPs_BS_Accel_ofInterval(j));
+                                                   %Q_Bs_matrix*   A_BS*                         inv(A_MV)
+            result=obj.convertMatrixCPsToCellArray(Q_Bs_matrix*    obj.getA_BS_Accel_Interval(j)*  inv(getA_Be(obj.p-2, [0,1])));
+        end
+
+        %returns the Be jerk control points of the interval j
+        function result=getCPs_Be_Jerk_ofInterval(obj,j)
+            Q_Bs_matrix=obj.convertCellArrayCPsToMatrix(obj.getCPs_BS_Jerk_ofInterval(j));
+                                                   %Q_Bs_matrix*   A_BS*                         inv(A_MV)
+            result=obj.convertMatrixCPsToCellArray(Q_Bs_matrix*    obj.getA_BS_Jerk_Interval(j)*  inv(getA_Be(obj.p-3, [0,1])));
+        end
+        %%%%%%%%%%%%%%%%%%%%%%
+        
+        %%%%%%%%%%%%%% BEZIER, MINVO or B_SPLINE
+        %%%%%%%%%%%%%%%%%%%%%%
+        %returns the xx position control points of the interval j
+        function result=getCPs_XX_Pos_ofInterval(obj,xx,j)
+            switch(xx)
+                case "B_SPLINE"
+                    result=obj.getCPs_BS_Pos_ofInterval(j);
+                case "BEZIER"
+                    result=obj.getCPs_Be_Pos_ofInterval(j);
+                case "MINVO"  
+                    result=obj.getCPs_MV_Pos_ofInterval(j);
+                otherwise
+                    error("Basis not implemented yet")
+            end
+        end
+        
+        %returns the xx velocity control points of the interval j
+        function result=getCPs_XX_Vel_ofInterval(obj,xx,j)
+            switch(xx)
+                case "B_SPLINE"
+                    result=obj.getCPs_BS_Vel_ofInterval(j);
+                case "BEZIER"
+                    result=obj.getCPs_Be_Vel_ofInterval(j);
+                case "MINVO"  
+                    result=obj.getCPs_MV_Vel_ofInterval(j);
+                otherwise
+                    error("Basis not implemented yet")
+            end
+        end
+        
+        %returns the xx acceleration control points of the interval j
+        function result=getCPs_XX_Accel_ofInterval(obj,xx,j)
+            switch(xx)
+                case "B_SPLINE"
+                    result=obj.getCPs_BS_Accel_ofInterval(j);
+                case "BEZIER"
+                    result=obj.getCPs_Be_Accel_ofInterval(j);
+                case "MINVO"  
+                    result=obj.getCPs_MV_Accel_ofInterval(j);
+                otherwise
+                    error("Basis not implemented yet")
+            end
+        end
+
+        %returns the xx jerk control points of the interval j
+        function result=getCPs_XX_Jerk_ofInterval(obj,xx,j)
+            switch(xx)
+                case "B_SPLINE"
+                    result=obj.getCPs_BS_Jerk_ofInterval(j);
+                case "BEZIER"
+                    result=obj.getCPs_Be_Jerk_ofInterval(j);
+                case "MINVO"  
+                    result=obj.getCPs_MV_Jerk_ofInterval(j);
+                otherwise
+                    error("Basis not implemented yet")
+            end
+        end
+        %%%%%%%%%%%%%%%%%%%%%%
 
         %j>=0 is the index of the interval
         % u \in [0,1] is the time along that interval

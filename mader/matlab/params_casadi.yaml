@@ -6,3 +6,4 @@ num_seg: 4
 num_max_of_obst: 10
 num_samples_simpson: 7
 num_of_yaw_per_layer: 6
+basis: "MINVO"

@@ -57,8 +57,6 @@ allow_infeasible_guess: true  #whether allow infeasible guesses to be used for t
 
 a_star_bias: 1.0 #Bias (cost=g+bias*h) in the A* search 
 
-basis: "MINVO"  #MINVO OR B_SPLINE or BEZIER This is the basis used only for collision checking
-
 res_plot_traj: 15.0  #Higher --> More resolution when plotting the trajectory 
 factor_v_max: 1.0 #\in [0,1]. Used to find the total duration of a given trajectory.
 alpha_shrink: 0.95 #\in [0,1] Only used for MINVO/Bezier

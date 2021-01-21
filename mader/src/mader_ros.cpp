@@ -146,6 +146,15 @@ MaderRos::MaderRos(ros::NodeHandle nh1, ros::NodeHandle nh2, ros::NodeHandle nh3
   safeGetParam(nh1_, "c_fov", par_.c_fov);
   safeGetParam(nh1_, "c_final_pos", par_.c_final_pos);
 
+
+ if( (par_.basis!="B_SPLINE" || par_.basis!="BEZIER" || par_.basis!="MINVO" )==false ){
+  std::cout<<red<<bold<<"Basis "<<par_.basis<<" not implemented yet, aborting"<<reset<<std::endl;
+  abort();
+ }
+ else{
+  std::cout<<bold<<green<<"Basis chosen: "<<par_.basis<<reset<<std::endl;
+ }
+ 
   // CHECK parameters
   std::cout << bold << "Parameters obtained, checking them..." << reset << std::endl;
 
