@@ -15,7 +15,7 @@
 #include <decomp_geometry/polyhedron.h>       //For hyperplane
 #include <Eigen/Geometry>
 
-#include <jsk_rviz_plugins/OverlayText.h>
+//#include <jsk_rviz_plugins/OverlayText.h>
 #include <assert.h> /* assert */
 
 #include <tf2_eigen/tf2_eigen.h>
@@ -191,11 +191,11 @@ MaderRos::MaderRos(ros::NodeHandle nh1, ros::NodeHandle nh2, ros::NodeHandle nh3
   pub_point_A_ = nh1_.advertise<visualization_msgs::Marker>("point_A", 1);
   pub_actual_traj_ = nh1_.advertise<visualization_msgs::Marker>("actual_traj", 1);
   poly_safe_pub_ = nh1_.advertise<decomp_ros_msgs::PolyhedronArray>("poly_safe", 1, true);
-  pub_text_ = nh1_.advertise<jsk_rviz_plugins::OverlayText>("text", 1);
+  //pub_text_ = nh1_.advertise<jsk_rviz_plugins::OverlayText>("text", 1);
   pub_traj_safe_colored_ = nh1_.advertise<visualization_msgs::MarkerArray>("traj_safe_colored", 1);
   pub_traj_ = nh1_.advertise<mader_msgs::DynTraj>("/trajs", 1, true);  // The last boolean is latched or not
-  pub_text_ = nh1_.advertise<jsk_rviz_plugins::OverlayText>("text", 1);
-  pub_fov_ = nh1_.advertise<visualization_msgs::Marker>("fov", 1, true);
+  //pub_text_ = nh1_.advertise<jsk_rviz_plugins::OverlayText>("text", 1);
+  pub_fov_ = nh1_.advertise<visualization_msgs::Marker>("fov", 1);
   pub_obstacles_ = nh1_.advertise<visualization_msgs::Marker>("obstacles", 1);
 
   // Subscribers
@@ -385,7 +385,7 @@ void MaderRos::replanCB(const ros::TimerEvent& e)
       pubObstacles(edges_obstacles);
       pubTraj(X_safe);
       publishPlanes(planes);
-      publishText();
+      //publishText();
     }
 
     if (replanned)
@@ -412,6 +412,7 @@ void MaderRos::replanCB(const ros::TimerEvent& e)
   }
 }
 
+/*
 void MaderRos::publishText()
 {
   jsk_rviz_plugins::OverlayText text;
@@ -430,6 +431,7 @@ void MaderRos::publishText()
 
   pub_text_.publish(text);
 }
+*/
 
 void MaderRos::publishPlanes(std::vector<Hyperplane3D>& planes)
 {

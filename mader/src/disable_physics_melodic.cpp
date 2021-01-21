@@ -33,3 +33,4 @@ public:
 };
 GZ_REGISTER_WORLD_PLUGIN(WorldPluginTutorial)
 }  // namespace gazebo
+
