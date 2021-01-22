@@ -35,11 +35,11 @@ struct log
   MADER_timers::Timer tim_guess_yaw_fit_poly;      //
   MADER_timers::Timer tim_total_replan;            //
 
-  double cost_jerk = 0.0;
-  double cost_FOV = 0.0;
-  double cost_vel = 0.0;
-  double cost_yaw = 0.0;
-  double cost_final_pos = 0.0;
+  double pos_smooth_cost = 0.0;
+  double fov_cost = 0.0;
+  double yaw_smooth_cost = 0.0;
+  double final_pos_cost = 0.0;
+  double final_yaw_cost = 0.0;
 
   bool success_guess_pos = false;   //
   bool success_guess_yaw = false;   //
@@ -678,17 +678,12 @@ struct parameters
   int num_of_yaw_per_layer = 10;
 
   // weights
-  double c_jerk = 1.0;
-  double c_yaw = 0.0;
+  double c_pos_smooth = 1.0;
+  double c_yaw_smooth = 0.0;
   double c_fov = 0.0;
   double c_final_pos = 100.0;
+  double c_final_yaw = 0.0;
 
-  // double c_jerk2 = 1.0;
-  // double c_yaw2 = 0.0;
-  // double c_fov2 = 0.0;
-  // double c_final_pos2 = 100.0;
-
-  //
   Eigen::Affine3d b_T_c;
 };
 

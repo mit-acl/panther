@@ -36,8 +36,8 @@
 //   double alpha_shrink;
 
 //   // weights
-//   double c_jerk;
-//   double c_yaw;
+//   double c_pos_smooth;
+//   double c_yaw_smooth;
 //   double c_fov;
 //   double c_final_pos;
 // };

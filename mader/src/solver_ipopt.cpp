@@ -445,6 +445,14 @@ bool SolverIpopt::optimize()
   map_arguments["vf"] = eigen2std(final_state_.vel);
   map_arguments["af"] = eigen2std(final_state_.accel);
   map_arguments["y0"] = initial_state_.yaw;
+  map_arguments["yf"] = final_state_.yaw;
+
+  if (fabs(final_state_.yaw) > 1e-5 || par_.c_final_yaw > 0.0)
+  {
+    std::cout << red << bold << "Implement this!" << std::endl;
+    abort();
+  }
+
   map_arguments["ydot0"] = initial_state_.dyaw;
   map_arguments["ydotf"] =
       final_state_.dyaw;  // Needed: if not (and if you are minimizing ddyaw), ddyaw=cte --> yaw will explode
@@ -459,10 +467,11 @@ bool SolverIpopt::optimize()
   // ...,tf-XX, tf] (i.e. uniformly distributed and including t0 and tf)
   map_arguments["all_w_fe"] = all_w_fe_;
   map_arguments["all_w_velfewrtworld"] = all_w_velfewrtworld_;
-  map_arguments["c_jerk"] = par_.c_jerk;
-  map_arguments["c_yaw"] = par_.c_yaw;
+  map_arguments["c_pos_smooth"] = par_.c_pos_smooth;
+  map_arguments["c_yaw_smooth"] = par_.c_yaw_smooth;
   map_arguments["c_fov"] = par_.c_fov;
   map_arguments["c_final_pos"] = par_.c_final_pos;  // / pow((final_state_.pos - initial_state_.pos).norm(), 4);
+  map_arguments["c_final_yaw"] = par_.c_final_yaw;
 
   // std::cout << "Total time= " << (t_final_ - t_init_) << std::endl;
 
@@ -496,27 +505,12 @@ bool SolverIpopt::optimize()
   }
   map_arguments["guess_CPs_Pos"] = matrix_qp_guess;
 
-  ////////////////////////////////Generate Yaw Guess!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  ////////////////////////////////Generate Yaw Guess
   casadi::DM matrix_qy_guess = generateYawGuess(matrix_qp_guess, all_w_fe_, initial_state_.yaw, initial_state_.dyaw,
                                                 final_state_.dyaw, t_init_, t_final_);
-  ////////////////////////////////////////////////////////////////////////////////
-
-  // qy_guess_.clear();
-  // for (int i = 0; i < (Ny_ + 1); i++)
-  // {
-  //   qy_guess_.push_back(initial_state_.yaw);  // rand()
-  // }                                           // THIS SHOULD GO IN THE OCTOPUS SEARCH?
-
-  // std::cout << bold << red << "par_.num_seg= " << par_.num_seg << reset << std::endl;
-
-  // casadi::DM matrix_qy_guess(casadi::Sparsity::dense(1, (Ny_ + 1)));  // TODO: do this just once
-  // for (int i = 0; i < matrix_qy_guess.columns(); i++)
-  // {
-  //   matrix_qy_guess(0, i) = qy_guess_[i];
-  // }
   map_arguments["guess_CPs_Yaw"] = matrix_qy_guess;
 
-  ///////////////// CALL THE SOLVER
+  ////////////////////////// CALL THE SOLVER
   log_ptr_->tim_opt.tic();
   std::map<std::string, casadi::DM> result = casadi_function_(map_arguments);
   log_ptr_->tim_opt.toc();
@@ -525,6 +519,13 @@ bool SolverIpopt::optimize()
   // Very hacky solution, see discussion at https://groups.google.com/g/casadi-users/c/1061E0eVAXM/m/dFHpw1CQBgAJ
   // Inspired from https://gist.github.com/jgillis/9d12df1994b6fea08eddd0a3f0b0737f
   auto optimstatus = casadi_function_.instruction_MX(index_instruction_).which_function().stats(1)["return_status"];
+
+  //////////////// LOG COSTS OBTAINED
+  log_ptr_->pos_smooth_cost = double(result["pos_smooth_cost"]);
+  log_ptr_->yaw_smooth_cost = double(result["yaw_smooth_cost"]);
+  log_ptr_->fov_cost = double(result["fov_cost"]);
+  log_ptr_->final_pos_cost = double(result["final_pos_cost"]);
+  log_ptr_->final_yaw_cost = double(result["final_yaw_cost"]);
 
   ///////////////// DECIDE ACCORDING TO STATUS OF THE SOLVER
   std::vector<Eigen::Vector3d> qp;  // Solution found (Control points for position)

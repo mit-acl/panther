@@ -19,11 +19,11 @@ mader_msgs::Log log2LogMsg(mt::log log)
   log_msg.ms_guess_yaw_fit_poly = log.tim_guess_yaw_fit_poly.getMsSaved();
   log_msg.ms_total_replan = log.tim_total_replan.getMsSaved();
 
-  log_msg.cost_jerk = log.cost_jerk;
-  log_msg.cost_FOV = log.cost_FOV;
-  log_msg.cost_vel = log.cost_vel;
-  log_msg.cost_yaw = log.cost_yaw;
-  log_msg.cost_final_pos = log.cost_final_pos;
+  log_msg.pos_smooth_cost = log.pos_smooth_cost;
+  log_msg.yaw_smooth_cost = log.yaw_smooth_cost;
+  log_msg.fov_cost = log.fov_cost;
+  log_msg.final_pos_cost = log.final_pos_cost;
+  log_msg.final_yaw_cost = log.final_yaw_cost;
 
   log_msg.success_guess_pos = log.success_guess_pos;
   log_msg.success_guess_yaw = log.success_guess_yaw;
@@ -31,6 +31,7 @@ mader_msgs::Log log2LogMsg(mt::log log)
   log_msg.success_replanning = log.success_replanning;
 
   log_msg.info_replan = log.info_replan;
+  log_msg.header.stamp = ros::Time::now();
 
   return log_msg;
 }

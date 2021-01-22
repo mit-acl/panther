@@ -42,10 +42,11 @@ assert(tf>t0);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%% DEFINITION
 %%%%% factors for the cost
-c_jerk=            opti.parameter(1,1);
-c_yaw=             opti.parameter(1,1);
+c_pos_smooth=            opti.parameter(1,1);
+c_yaw_smooth=             opti.parameter(1,1);
 c_fov=  opti.parameter(1,1);
 c_final_pos = opti.parameter(1,1);
+c_final_yaw = opti.parameter(1,1);
 % c_costs.dist_im_cost=         opti.parameter(1,1);
 
 Ra=opti.parameter(1,1);
@@ -66,7 +67,7 @@ b_T_c=opti.parameter(4,4);
 p0=opti.parameter(3,1); v0=opti.parameter(3,1); a0=opti.parameter(3,1);
 pf=opti.parameter(3,1); vf=opti.parameter(3,1); af=opti.parameter(3,1);
 y0=opti.parameter(1,1); ydot0=opti.parameter(1,1); 
-ydotf=opti.parameter(1,1);
+yf=opti.parameter(1,1); ydotf=opti.parameter(1,1);
 
 %%%%% Planes
 n={}; d={};
@@ -219,9 +220,7 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%% OBJECTIVE! %%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%Cost
-jerk_cost=sp.getControlCost();
-yaw_cost=sy.getControlCost();
+
 
 g=9.81;
 %Compute perception cost
@@ -352,7 +351,7 @@ for j=1:sp.num_seg
     fov_cost_j=-isInFOV /(offset_vel+s_dot2);
 %     fov_cost_j=-isInFOV + 1500000*(isInFOV)*s_dot2;
 %     fov_cost_j=100000*s_dot2/(isInFOV);
-%     fov_cost_j=-isInFOV+1000000*(1-isInFOV)*s_dot2;
+%      fov_cost_j=-isInFOV+1000000000000000000*(1-isInFOV)*s_dot2;
     
     %End of simpler version
       %%%%%%%%%%%%%%%%%%
@@ -395,12 +394,18 @@ for j=1:sp.num_seg
     end
 end
 
-c=c_jerk;
-f=jerk_cost;
-total_cost=        c_jerk*           jerk_cost+...
-                    c_yaw*            yaw_cost+... % c_costs.dist_im_cost*        dist_im_cost+...
-           c_fov* fov_cost+...
-           c_final_pos*(sp.getPosT(tf)- pf)'*(sp.getPosT(tf)- pf);
+%Cost
+pos_smooth_cost=sp.getControlCost();
+yaw_smooth_cost=sy.getControlCost();
+
+final_pos_cost=(sp.getPosT(tf)- pf)'*(sp.getPosT(tf)- pf);
+final_yaw_cost=(sy.getPosT(tf)- yf)^2;
+
+total_cost=c_pos_smooth*pos_smooth_cost+...
+           c_yaw_smooth*yaw_smooth_cost+... 
+           c_fov*fov_cost+...
+           c_final_pos*final_pos_cost+...
+           c_final_yaw*final_yaw_cost;
 
 opti.minimize(simplify(total_cost));
 
@@ -450,8 +455,8 @@ all_pCPs=sp.getCPsAsMatrix();
 all_yCPs=sy.getCPsAsMatrix();
 
 % my_function = opti.to_function('mader_casadi_function',...
-%     [ {all_pCPs},     {all_yCPs},     {thetax_FOV_deg}, {thetay_FOV_deg},{Ra},{p0},{v0},{a0},{pf},{vf},{af},{y0}, {ydot0}, {ydotf}, {v_max}, {a_max}, {j_max}, {ydot_max}, {total_time}, {all_nd}, {all_w_fe}, {all_w_velfewrtworld}, {c_jerk}, {c_yaw}, {c_fov}, {c_final_pos}], {all_pCPs,all_yCPs},...
-%     {'guess_CPs_Pos','guess_CPs_Yaw', 'thetax_FOV_deg','thetay_FOV_deg','Ra','p0','v0','a0','pf','vf','af','y0', 'ydot0', 'ydotf', 'v_max', 'a_max', 'j_max', 'ydot_max', 'total_time', 'all_nd', 'all_w_fe', 'all_w_velfewrtworld', 'c_jerk', 'c_yaw', 'c_fov', 'c_final_pos'}, {'all_pCPs','all_yCPs'}...
+%     [ {all_pCPs},     {all_yCPs},     {thetax_FOV_deg}, {thetay_FOV_deg},{Ra},{p0},{v0},{a0},{pf},{vf},{af},{y0}, {ydot0}, {ydotf}, {v_max}, {a_max}, {j_max}, {ydot_max}, {total_time}, {all_nd}, {all_w_fe}, {all_w_velfewrtworld}, {c_pos_smooth}, {c_yaw_smooth}, {c_fov}, {c_final_pos}], {all_pCPs,all_yCPs},...
+%     {'guess_CPs_Pos','guess_CPs_Yaw', 'thetax_FOV_deg','thetay_FOV_deg','Ra','p0','v0','a0','pf','vf','af','y0', 'ydot0', 'ydotf', 'v_max', 'a_max', 'j_max', 'ydot_max', 'total_time', 'all_nd', 'all_w_fe', 'all_w_velfewrtworld', 'c_pos_smooth', 'c_yaw_smooth', 'c_fov', 'c_final_pos'}, {'all_pCPs','all_yCPs'}...
 %                                );
 
 for i=1:num_samples_simpson
@@ -475,6 +480,7 @@ thetax_FOV_deg_value=80;
 thetay_FOV_deg_value=80;
 Ra_value=12.0;
 y0_value=0.0;
+yf_value=0.0;
 ydot0_value=0.0;
 ydotf_value=0.0;
 b_T_c_value= [roty(90)*rotz(-90) zeros(3,1); zeros(1,3) 1];
@@ -491,6 +497,7 @@ all_params= [ {createStruct('thetax_FOV_deg', thetax_FOV_deg, thetax_FOV_deg_val
               {createStruct('af', af, [0;0;0])},...
               {createStruct('y0', y0, y0_value)},...
               {createStruct('ydot0', ydot0, ydot0_value)},...
+              {createStruct('yf', yf, yf_value)},...
               {createStruct('ydotf', ydotf, ydotf_value)},...
               {createStruct('v_max', v_max, v_max_value)},...
               {createStruct('a_max', a_max, a_max_value)},...
@@ -500,10 +507,11 @@ all_params= [ {createStruct('thetax_FOV_deg', thetax_FOV_deg, thetax_FOV_deg_val
               {createStruct('all_nd', all_nd, zeros(4,num_max_of_obst*num_seg))},...
               {createStruct('all_w_fe', all_w_fe, all_w_fe_value)},...
               {createStruct('all_w_velfewrtworld', all_w_velfewrtworld, all_w_velfewrtworld_value)},...
-              {createStruct('c_jerk', c_jerk, 0.0)},...
-              {createStruct('c_yaw', c_yaw, 0.0)},...
+              {createStruct('c_pos_smooth', c_pos_smooth, 0.0)},...
+              {createStruct('c_yaw_smooth', c_yaw_smooth, 0.0)},...
               {createStruct('c_fov', c_fov, 1.0)},...
-              {createStruct('c_final_pos', c_final_pos, 100)}];
+              {createStruct('c_final_pos', c_final_pos, 100)},...
+              {createStruct('c_final_yaw', c_final_yaw, 0.0)}];
 
 
 tmp1=[   -4.0000   -4.0000   -4.0000    0.7111    3.9997    3.9997    3.9997;
@@ -530,8 +538,8 @@ for i=1:numel(all_params_and_init_guesses)
 end
 
 
-my_function = opti.to_function('mader_casadi_function', vars, {all_pCPs,all_yCPs},...
-                                                        names, {'all_pCPs','all_yCPs'});
+my_function = opti.to_function('mader_casadi_function', vars, {all_pCPs,all_yCPs, pos_smooth_cost, yaw_smooth_cost, fov_cost, final_pos_cost, final_yaw_cost},...
+                                                        names, {'all_pCPs','all_yCPs','pos_smooth_cost','yaw_smooth_cost','fov_cost','final_pos_cost','final_yaw_cost'});
                                                     
 % my_function=my_function.expand();
 
@@ -773,8 +781,8 @@ end
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % %%%%%%%%%%%%%%%%%% ASSIGNMENT for the parameters %%%%%%%%%%%%%%%
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% opti.set_value(c_jerk, 0.0);
-% opti.set_value(c_yaw, 0.0);
+% opti.set_value(c_pos_smooth, 0.0);
+% opti.set_value(c_yaw_smooth, 0.0);
 % opti.set_value(c_fov, 1.0);
 % opti.set_value(c_final_pos, 100);
 % 

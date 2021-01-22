@@ -143,10 +143,11 @@ MaderRos::MaderRos(ros::NodeHandle nh1, ros::NodeHandle nh2, ros::NodeHandle nh3
   // safeGetParam(nh1_, "num_of_layers", par_.num_of_layers); //This one is the same as num_samples_simpson
   safeGetParam(nh1_, "num_of_yaw_per_layer", par_.num_of_yaw_per_layer);
 
-  safeGetParam(nh1_, "c_jerk", par_.c_jerk);
-  safeGetParam(nh1_, "c_yaw", par_.c_yaw);
+  safeGetParam(nh1_, "c_pos_smooth", par_.c_pos_smooth);
+  safeGetParam(nh1_, "c_yaw_smooth", par_.c_yaw_smooth);
   safeGetParam(nh1_, "c_fov", par_.c_fov);
   safeGetParam(nh1_, "c_final_pos", par_.c_final_pos);
+  safeGetParam(nh1_, "c_final_yaw", par_.c_final_yaw);
 
   if ((par_.basis != "B_SPLINE" || par_.basis != "BEZIER" || par_.basis != "MINVO") == false)
   {
@@ -165,10 +166,11 @@ MaderRos::MaderRos(ros::NodeHandle nh1, ros::NodeHandle nh2, ros::NodeHandle nh3
   assert((par_.c_visibility_yaw_search >= 0) && "par_.c_visibility_yaw_search>=0 must hold");
   assert((par_.num_of_yaw_per_layer >= 1) && "par_.num_of_yaw_per_layer>=1 must hold");
 
-  assert((par_.c_jerk >= 0) && "par_.c_jerk>=0 must hold");
-  assert((par_.c_yaw >= 0) && "par_.c_yaw>=0 must hold");
+  assert((par_.c_pos_smooth >= 0) && "par_.c_pos_smooth>=0 must hold");
+  assert((par_.c_yaw_smooth >= 0) && "par_.c_yaw_smooth>=0 must hold");
   assert((par_.c_fov >= 0) && "par_.c_fov>=0 must hold");
   assert((par_.c_final_pos >= 0) && "par_.c_final_pos>=0 must hold");
+  assert((par_.c_final_yaw >= 0) && "par_.c_final_yaw>=0 must hold");
 
   assert((par_.ydot_max >= 0) && "ydot_max>=0 must hold");
   assert((par_.gamma <= 0) && "par_.gamma <= 0 must hold");

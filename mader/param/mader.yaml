@@ -37,10 +37,11 @@ c_visibility_yaw_search: 1.0
 # num_of_yaw_per_layer --> this one comes from Matlab
 
 #Parameters for Casadi
-c_jerk: 0.0000
-c_yaw: 0.00001
+c_pos_smooth: 0.0000
+c_yaw_smooth: 0.00001
 c_fov: 1.0
 c_final_pos: 20.0
+c_final_yaw: 0.0
 
 # kappa + mu <=1 Ideally kappa + mu<1 (so that there is time for other stuff)
 upper_bound_runtime_snlopt: 0.35 #[seconds] snlopt (init guess + solver) will never take longer than this amount of seconds
