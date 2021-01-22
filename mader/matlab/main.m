@@ -318,7 +318,8 @@ for j=1:sp.num_seg
     
     %     %%%%%%%%%%%%%%%%%%%
     %%[Squicular cone]
-%     gamma=0.6; %If too big, the warning "solver:nlp_grad_f failed: NaN detected for output grad_f_x" will appear
+%     gamma1=0.6; %If too big, the warning "solver:nlp_grad_f failed: NaN detected for output grad_f_x" will appear
+%     gamma2=1.0;
 %     tthx2=(tan(thetax_half_FOV_rad))^2;
 %     tthy2=(tan(thetay_half_FOV_rad))^2;
 %     
@@ -326,7 +327,7 @@ for j=1:sp.num_seg
 % %%%     is_in_FOV1=-(    (x^2)*(z^2)/tthx2  +  (y^2)*(z^2)/tthy2   -(ss^2)*(x^2)*(y^2) -(z^4)     ); %(if this quantity is >=0). See https://en.wikipedia.org/wiki/Squircle, Note that  a^2=tan^2(theta_half_x)     b^2=tan^2(theta_half_y)   
 %     is_in_FOV1= -(    (x^4)/tthx2  +  (y^4)/tthy2   -(z^4)     ); %(if this quantity is >=0). See https://en.wikipedia.org/wiki/Squircle, , Note that  a^2=tan^2(theta_half_x)     b^2=tan^2(theta_half_y)   
 %     is_in_FOV2=z; %(and this quantity is >=0) 
-%     isInFOV_smooth=  (   1/(1+exp(-gamma*is_in_FOV1))  )*(   1/(1+exp(-gamma*is_in_FOV2))  );
+%     isInFOV_smooth=  (   1/(1+exp(-gamma1*is_in_FOV1))  )*(   1/(1+exp(-gamma2*is_in_FOV2))  );
 %     %%%%%%%%%%%%%%%%%%%
     
 

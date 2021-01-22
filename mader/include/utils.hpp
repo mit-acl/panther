@@ -22,6 +22,7 @@
 
 #include <mader_msgs/PieceWisePolTraj.h>
 #include <mader_msgs/CoeffPoly3.h>
+#include <mader_msgs/Log.h>
 
 #include "ros/ros.h"
 
@@ -66,6 +67,7 @@ bool safeGetParam(ros::NodeHandle& nh, std::string const& param_name, T& param_v
   return true;
 }
 
+mader_msgs::Log log2LogMsg(mt::log log);
 visualization_msgs::MarkerArray pwp2ColoredMarkerArray(mt::PieceWisePol& pwp, double t_init, double t_final,
                                                        int samples, std::string ns, Eigen::Vector3d& color);
 

@@ -39,40 +39,6 @@ Mader::Mader(mt::parameters par) : par_(par)
   changeDroneStatus(DroneStatus::GOAL_REACHED);
   resetInitialization();
 
-  // par_solver par_for_solver;
-
-  // par_for_solver.x_min = par_.x_min;
-  // par_for_solver.x_max = par_.x_max;
-
-  // par_for_solver.y_min = par_.y_min;
-  // par_for_solver.y_max = par_.y_max;
-
-  // par_for_solver.z_min = par_.z_min;
-  // par_for_solver.z_max = par_.z_max;
-
-  // par_for_solver.Ra = par_.Ra;
-  // par_for_solver.v_max = par_.v_max;
-  // par_for_solver.a_max = par_.a_max;
-  // par_for_solver.ydot_max = par_.ydot_max;
-  // par_for_solver.dc = par_.dc;
-  // par_for_solver.dist_to_use_straight_guess = par_.goal_radius;
-  // par_for_solver.a_star_samp_x = par_.a_star_samp_x;
-  // par_for_solver.a_star_samp_y = par_.a_star_samp_y;
-  // par_for_solver.a_star_samp_z = par_.a_star_samp_z;
-  // par_for_solver.a_star_fraction_voxel_size = par_.a_star_fraction_voxel_size;
-  // par_for_solver.num_seg = par_.num_seg;
-  // par_for_solver.deg_pos = par_.deg_pos;
-
-  // par_for_solver.basis = par_.basis;
-  // par_for_solver.a_star_bias = par_.a_star_bias;
-  // par_for_solver.allow_infeasible_guess = par_.allow_infeasible_guess;
-  // par_for_solver.alpha_shrink = par_.alpha_shrink;
-
-  // par_for_solver.c_jerk = par_.c_jerk;
-  // par_for_solver.c_yaw = par_.c_yaw;
-  // par_for_solver.c_fov = par_.c_fov;
-  // par_for_solver.c_final_pos = par_.c_final_pos;
-
   mt::basisConverter basis_converter;
 
   if (par.basis == "MINVO")
@@ -98,7 +64,10 @@ Mader::Mader(mt::parameters par) : par_(par)
 
   // solver_ = new SolverNlopt(par_for_solver);
   // solver_ = new SolverGurobi(par_for_solver);
-  solver_ = new SolverIpopt(par_);
+
+  log_ptr_ = std::shared_ptr<mt::log>(new mt::log);
+
+  solver_ = new SolverIpopt(par_, log_ptr_);
 
   separator_solver_ = new separator::Separator();
 }
@@ -530,7 +499,6 @@ void Mader::setTerminalGoal(mt::state& term_goal)
 
   std::cout << "Setting Terminal Goal" << std::endl;
   mtx_G_term.lock();
-  mtx_G.lock();
   mtx_state.lock();
   mtx_planner_status_.lock();
 
@@ -593,7 +561,6 @@ void Mader::setTerminalGoal(mt::state& term_goal)
   // std::cout << bold << red << "[FA] Received Proj Goal=" << G_.pos.transpose() << reset << std::endl;
 
   mtx_state.unlock();
-  mtx_G.unlock();
   mtx_G_term.unlock();
   mtx_planner_status_.unlock();
 }
@@ -726,35 +693,24 @@ bool Mader::safetyCheckAfterOpt(mt::PieceWisePol pwp_optimized)
   return result;
 }
 
-bool Mader::replan(mt::Edges& edges_obstacles_out, std::vector<mt::state>& X_safe_out,
-                   std::vector<Hyperplane3D>& planes, int& num_of_LPs_run, int& num_of_QCQPs_run,
-                   mt::PieceWisePol& pwp_out)
+bool Mader::isReplanningNeeded()
 {
-  MyTimer replanCB_t(true);
-
   if (initializedStateAndTermGoal() == false)
   {
     // std::cout << "Not Replanning" << std::endl;
-    return false;
+    return false;  // Note that log is not modified --> will keep its default values
   }
-
-  // std::cout << "Replanning" << std::endl;
 
   //////////////////////////////////////////////////////////////////////////
   ///////////////////////// G <-- Project GTerm ////////////////////////////
   //////////////////////////////////////////////////////////////////////////
 
   mtx_state.lock();
-  mtx_G.lock();
   mtx_G_term.lock();
 
   mt::state state_local = state_;
-
   mt::state G_term = G_term_;  // Local copy of the terminal terminal goal
 
-  mt::state G = G_term;
-
-  mtx_G.unlock();
   mtx_G_term.unlock();
   mtx_state.unlock();
 
@@ -785,12 +741,31 @@ bool Mader::replan(mt::Edges& edges_obstacles_out, std::vector<mt::state>& X_saf
     // printDroneStatus();
     return false;
   }
+}
+
+bool Mader::replan(mt::Edges& edges_obstacles_out, std::vector<mt::state>& X_safe_out,
+                   std::vector<Hyperplane3D>& planes, int& num_of_LPs_run, int& num_of_QCQPs_run,
+                   mt::PieceWisePol& pwp_out, mt::log& log)
+{
+  (*log_ptr_) = {};  // Reset the struct with the default values
+  if (isReplanningNeeded() == false)
+  {
+    log_ptr_->replanning_was_needed = false;
+    log = (*log_ptr_);
+    return false;
+  }
 
   std::cout << bold << on_white << "**********************IN REPLAN CB*******************" << reset << std::endl;
 
+  log_ptr_->replanning_was_needed = true;
+  log_ptr_->tim_total_replan.tic();
   //////////////////////////////////////////////////////////////////////////
   ///////////////////////// Select mt::state A /////////////////////////////////
   //////////////////////////////////////////////////////////////////////////
+
+  mtx_G_term.lock();
+  mt::state G_term = G_term_;  // Local copy of the terminal terminal goal
+  mtx_G_term.unlock();
 
   mt::state A;
   int k_index_end, k_index;
@@ -838,7 +813,7 @@ bool Mader::replan(mt::Edges& edges_obstacles_out, std::vector<mt::state>& X_saf
 
   std::vector<Eigen::Vector3d> global_plan;
   global_plan.push_back(A.pos);
-  global_plan.push_back(G.pos);
+  global_plan.push_back(G_term.pos);
 
   //////////////////////////////////////////////////////////////////////////
   ///////////////////////// Get point E ////////////////////////////////////
@@ -853,9 +828,9 @@ bool Mader::replan(mt::Edges& edges_obstacles_out, std::vector<mt::state>& X_saf
   // std::cout << "G= " << G.pos.transpose() << std::endl;
   // std::cout << "ra= " << ra << std::endl;
   E.pos = getFirstIntersectionWithSphere(global_plan, ra, global_plan[0], &li1, &noPointsOutsideS);
-  if (noPointsOutsideS == true)  // if G is inside the sphere
+  if (noPointsOutsideS == true)  // if G_term is inside the sphere
   {
-    E.pos = G.pos;
+    E.pos = G_term.pos;
   }
 
   mt::state initial = A;
@@ -894,7 +869,7 @@ bool Mader::replan(mt::Edges& edges_obstacles_out, std::vector<mt::state>& X_saf
 
   if (correctInitialCond == false)
   {
-    std::cout << bold << red << "The solver cannot guarantee feasibility for v1" << reset << std::endl;
+    logAndTimeReplan("Solver cannot guarantee feasibility for v1", false, log);
     return false;
   }
 
@@ -935,11 +910,7 @@ bool Mader::replan(mt::Edges& edges_obstacles_out, std::vector<mt::state>& X_saf
   total_replannings_++;
   if (result == false)
   {
-    int states_last_replan = ceil(replanCB_t.ElapsedMs() / (par_.dc * 1000));  // Number of states that
-                                                                               // would have been needed for
-                                                                               // the last replan
-    deltaT_ = std::max(par_.factor_alpha * states_last_replan, 1.0);
-    deltaT_ = std::min(1.0 * deltaT_, 2.0 / par_.dc);
+    logAndTimeReplan("Solver failed", false, log);
     return false;
   }
 
@@ -947,28 +918,18 @@ bool Mader::replan(mt::Edges& edges_obstacles_out, std::vector<mt::state>& X_saf
 
   solutions_found_++;
 
-  // av_improvement_nlopt_ = ((solutions_found_ - 1) * av_improvement_nlopt_ + solver_->improvement_) /
-  // solutions_found_;
-
-  // std::cout << blue << "Average improvement so far" << std::setprecision(5) << av_improvement_nlopt_ << reset
-  //          << std::endl;
-
   mt::PieceWisePol pwp_now;
   solver_->getSolution(pwp_now);
 
   MyTimer check_t(true);
 
-  // std::cout << red << bold << "before safetyCheckAfterOpt(), waiting to lock mtx_trajs_" << reset << std::endl;
   mtx_trajs_.lock();
   bool is_safe_after_opt = safetyCheckAfterOpt(pwp_now);
   mtx_trajs_.unlock();
-  // std::cout << red << bold << "before safetyCheckAfterOpt(), mtx_trajs_ unlocked" << reset << std::endl;
-
-  // std::cout << bold << "Check Timer=" << check_t << std::endl;
 
   if (is_safe_after_opt == false)
   {
-    ROS_ERROR_STREAM("safetyCheckAfterOpt is not satisfied, returning");
+    logAndTimeReplan("SafetyCheckAfterOpt not satisfied", false, log);
     return false;
   }
 
@@ -983,10 +944,11 @@ bool Mader::replan(mt::Edges& edges_obstacles_out, std::vector<mt::state>& X_saf
 
   if ((plan_size - 1 - k_index_end) < 0)
   {
-    std::cout << bold << red << "Already published the point A" << reset << std::endl;
     // std::cout << "plan_size= " << plan_size << std::endl;
     // std::cout << "k_index_end= " << k_index_end << std::endl;
     mtx_plan_.unlock();
+    log_ptr_->info_replan = "Point A already published";
+    logAndTimeReplan("Point A already published", false, log);
     return false;
   }
   else
@@ -1027,25 +989,48 @@ bool Mader::replan(mt::Edges& edges_obstacles_out, std::vector<mt::state>& X_saf
   //////////////////////////////////////////////////////////
 
   // Check if we have planned until G_term
-  mt::state F = plan_.back();  // Final point of the safe path (\equiv final point of the comitted path)
-  double dist = (G_term_.pos - F.pos).norm();
+  // mt::state F = plan_.back();  // Final point of the safe path (\equiv final point of the comitted path)
+  double dist = (G_term_.pos - plan_.back().pos).norm();
 
   if (dist < par_.goal_radius)
   {
     changeDroneStatus(DroneStatus::GOAL_SEEN);
   }
 
-  mtx_offsets.lock();
-
-  int states_last_replan = ceil(replanCB_t.ElapsedMs() / (par_.dc * 1000));  // Number of states that
-                                                                             // would have been needed for
-                                                                             // the last replan
-  deltaT_ = std::max(par_.factor_alpha * states_last_replan, 1.0);
-  mtx_offsets.unlock();
-
   planner_initialized_ = true;
 
+  logAndTimeReplan("Success", true, log);
   return true;
+}
+
+void Mader::logAndTimeReplan(const std::string& info, const bool& success, mt::log& log)
+{
+  log_ptr_->info_replan = info;
+  log_ptr_->tim_total_replan.toc();
+  log_ptr_->success_replanning = success;
+
+  double total_time_ms = log_ptr_->tim_total_replan.getMsSaved();
+
+  mtx_offsets.lock();
+  if (success == false)
+  {
+    std::cout << bold << red << log_ptr_->info_replan << reset << std::endl;
+    int states_last_replan = ceil(total_time_ms / (par_.dc * 1000));  // Number of states that
+                                                                      // would have been needed for
+                                                                      // the last replan
+    deltaT_ = std::max(par_.factor_alpha * states_last_replan, 1.0);
+    deltaT_ = std::min(1.0 * deltaT_, 2.0 / par_.dc);
+  }
+  else
+  {
+    int states_last_replan = ceil(total_time_ms / (par_.dc * 1000));  // Number of states that
+                                                                      // would have been needed for
+                                                                      // the last replan
+    deltaT_ = std::max(par_.factor_alpha * states_last_replan, 1.0);
+  }
+  mtx_offsets.unlock();
+
+  log = (*log_ptr_);
 }
 
 void Mader::resetInitialization()

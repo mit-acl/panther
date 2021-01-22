@@ -11,34 +11,50 @@ class Timer
   typedef std::chrono::high_resolution_clock high_resolution_clock;
   typedef std::chrono::milliseconds milliseconds;
   typedef std::chrono::microseconds microseconds;
+  typedef std::chrono::nanoseconds nanoseconds;
 
 public:
   explicit Timer(bool run = false)
   {
     if (run)
-      Reset();
+    {
+      tic();
+    }
   }
-  void Reset()
+  void tic()
   {
-    _start = high_resolution_clock::now();
+    start_ = high_resolution_clock::now();
   }
-  double ElapsedMs() const
+  double elapsedSoFarMs() const
   {
-    return (std::chrono::duration_cast<milliseconds>(high_resolution_clock::now() - _start)).count();
+    return (std::chrono::duration_cast<nanoseconds>(high_resolution_clock::now() - start_)).count() / (1e6);
   }
-
-  double ElapsedUs() const
+  void toc()
   {
-    return (std::chrono::duration_cast<microseconds>(high_resolution_clock::now() - _start)).count();
+    end_ = high_resolution_clock::now();
   }
+  double getMsSaved()
+  {
+    return (std::chrono::duration_cast<nanoseconds>(end_ - start_)).count() / (1e6);
+  }
+  void reset()
+  {
+    start_ = high_resolution_clock::now();
+    // end_ = high_resolution_clock::now();
+  }
+  // double elapsedUs() const
+  // {
+  //   return (std::chrono::duration_cast<microseconds>(high_resolution_clock::now() - start_)).count();
+  // }
   template <typename T, typename Traits>
   friend std::basic_ostream<T, Traits>& operator<<(std::basic_ostream<T, Traits>& out, const Timer& timer)
   {
-    return out << " " << timer.ElapsedMs() << " ms ";
+    return out << " " << timer.elapsedSoFarMs() << " ms ";
   }
 
 private:
-  high_resolution_clock::time_point _start;
+  high_resolution_clock::time_point start_;
+  high_resolution_clock::time_point end_;
 };
 
 class ROSTimer
@@ -47,24 +63,24 @@ public:
   ROSTimer(bool run = false)
   {
     if (run)
-      Reset();
+      tic();
   }
-  void Reset()
+  void tic()
   {
-    _start = ros::Time::now().toSec();
+    start_ = ros::Time::now().toSec();
   }
-  double ElapsedMs() const
+  double elapsedSoFarMs() const
   {
-    return 1000 * (ros::Time::now().toSec() - _start);
+    return 1000 * (ros::Time::now().toSec() - start_);
   }
   template <typename T, typename Traits>
   friend std::basic_ostream<T, Traits>& operator<<(std::basic_ostream<T, Traits>& out, const ROSTimer& timer)
   {
-    return out << timer.ElapsedMs();
+    return out << timer.elapsedSoFarMs();
   }
 
 private:
-  double _start;
+  double start_;
 };
 
 class ROSWallTimer
@@ -73,24 +89,24 @@ public:
   ROSWallTimer(bool run = false)
   {
     if (run)
-      Reset();
+      tic();
   }
-  void Reset()
+  void tic()
   {
-    _start = ros::WallTime::now().toSec();
+    start_ = ros::WallTime::now().toSec();
   }
-  double ElapsedMs() const
+  double elapsedSoFarMs() const
   {
-    return 1000 * (ros::WallTime::now().toSec() - _start);
+    return 1000 * (ros::WallTime::now().toSec() - start_);
   }
   template <typename T, typename Traits>
   friend std::basic_ostream<T, Traits>& operator<<(std::basic_ostream<T, Traits>& out, const ROSWallTimer& timer)
   {
-    return out << timer.ElapsedMs();
+    return out << timer.elapsedSoFarMs();
   }
 
 private:
-  double _start;
+  double start_;
 };
 }  // namespace MADER_timers
 

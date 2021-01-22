@@ -108,6 +108,7 @@ private:
 
   ros::Publisher pub_fov_;
   ros::Publisher pub_obstacles_;
+  ros::Publisher pub_log_;
 
   ros::Subscriber sub_term_goal_;
   ros::Subscriber sub_whoplans_;
@@ -141,5 +142,4 @@ private:
   MADER_timers::Timer timer_stop_;
 
   visualization_msgs::Marker marker_fov_;
-
 };

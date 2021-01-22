@@ -44,7 +44,7 @@ class Mader
 public:
   Mader(mt::parameters par);
   bool replan(mt::Edges& edges_obstacles_out, std::vector<mt::state>& X_safe_out, std::vector<Hyperplane3D>& planes,
-              int& num_of_LPs_run, int& num_of_QCQPs_run, mt::PieceWisePol& pwp_out);
+              int& num_of_LPs_run, int& num_of_QCQPs_run, mt::PieceWisePol& pwp_out, mt::log& log);
   void updateState(mt::state data);
 
   bool getNextGoal(mt::state& next_goal);
@@ -59,6 +59,10 @@ public:
 private:
   mt::state M_;
   mt::committedTrajectory plan_;
+
+  bool isReplanningNeeded();
+
+  void logAndTimeReplan(const std::string& info, const bool& success, mt::log& log);
 
   void dynTraj2dynTrajCompiled(const mt::dynTraj& traj, mt::dynTrajCompiled& traj_compiled);
 
@@ -124,7 +128,6 @@ private:
   std::mutex mtx_plan_;
   // std::mutex mtx_factors;
 
-  std::mutex mtx_G;
   std::mutex mtx_G_term;
   std::mutex mtx_t_;
 
@@ -157,6 +160,8 @@ private:
   Eigen::Matrix<double, 4, 4> A_rest_pos_basis_inverse_;
 
   separator::Separator* separator_solver_;
+
+  std::shared_ptr<mt::log> log_ptr_;
 };
 
 #endif

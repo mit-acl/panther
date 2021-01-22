@@ -4,8 +4,6 @@ En este repo:
 	max_runtime_casadi
 	Install good linear solver Ipopt [check email]
 
-	It's weird, but the asserts are workign in release mode?? Make sure mader is being compiled in release mode
-
 	Check the partial derivatives of velocity of the obstacle in the cost function is right
 	Uncomment smooth pyramid (instead of cone) [DONE, but it's commented out]
 	Cuidado que los assert() SOLO funcionan en debug mode, no en release mode.
@@ -62,6 +60,7 @@ Papers to cite in proposal/Paper:
 	https://www.youtube.com/watch?v=JosFzstiH9U
 	https://www.youtube.com/watch?v=BzykucxFddI
 	http://asl.stanford.edu/wp-content/papercite-data/pdf/Allen.Pavone.RAS18.pdf
+	Camera active rotation (Andrea's paper)
 
 
 En MADER:

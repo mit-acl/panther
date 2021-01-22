@@ -15,6 +15,8 @@
 #include <decomp_geometry/polyhedron.h>       //For hyperplane
 #include <Eigen/Geometry>
 
+#include <mader_msgs/Log.h>
+
 //#include <jsk_rviz_plugins/OverlayText.h>
 #include <assert.h> /* assert */
 
@@ -146,15 +148,16 @@ MaderRos::MaderRos(ros::NodeHandle nh1, ros::NodeHandle nh2, ros::NodeHandle nh3
   safeGetParam(nh1_, "c_fov", par_.c_fov);
   safeGetParam(nh1_, "c_final_pos", par_.c_final_pos);
 
+  if ((par_.basis != "B_SPLINE" || par_.basis != "BEZIER" || par_.basis != "MINVO") == false)
+  {
+    std::cout << red << bold << "Basis " << par_.basis << " not implemented yet, aborting" << reset << std::endl;
+    abort();
+  }
+  else
+  {
+    std::cout << bold << green << "Basis chosen: " << par_.basis << reset << std::endl;
+  }
 
- if( (par_.basis!="B_SPLINE" || par_.basis!="BEZIER" || par_.basis!="MINVO" )==false ){
-  std::cout<<red<<bold<<"Basis "<<par_.basis<<" not implemented yet, aborting"<<reset<<std::endl;
-  abort();
- }
- else{
-  std::cout<<bold<<green<<"Basis chosen: "<<par_.basis<<reset<<std::endl;
- }
- 
   // CHECK parameters
   std::cout << bold << "Parameters obtained, checking them..." << reset << std::endl;
 
@@ -200,12 +203,13 @@ MaderRos::MaderRos(ros::NodeHandle nh1, ros::NodeHandle nh2, ros::NodeHandle nh3
   pub_point_A_ = nh1_.advertise<visualization_msgs::Marker>("point_A", 1);
   pub_actual_traj_ = nh1_.advertise<visualization_msgs::Marker>("actual_traj", 1);
   poly_safe_pub_ = nh1_.advertise<decomp_ros_msgs::PolyhedronArray>("poly_safe", 1, true);
-  //pub_text_ = nh1_.advertise<jsk_rviz_plugins::OverlayText>("text", 1);
+  // pub_text_ = nh1_.advertise<jsk_rviz_plugins::OverlayText>("text", 1);
   pub_traj_safe_colored_ = nh1_.advertise<visualization_msgs::MarkerArray>("traj_safe_colored", 1);
   pub_traj_ = nh1_.advertise<mader_msgs::DynTraj>("/trajs", 1, true);  // The last boolean is latched or not
-  //pub_text_ = nh1_.advertise<jsk_rviz_plugins::OverlayText>("text", 1);
+  // pub_text_ = nh1_.advertise<jsk_rviz_plugins::OverlayText>("text", 1);
   pub_fov_ = nh1_.advertise<visualization_msgs::Marker>("fov", 1);
   pub_obstacles_ = nh1_.advertise<visualization_msgs::Marker>("obstacles", 1);
+  pub_log_ = nh1_.advertise<mader_msgs::Log>("log", 1);
 
   // Subscribers
   sub_term_goal_ = nh1_.subscribe("term_goal", 1, &MaderRos::terminalGoalCB, this);
@@ -240,7 +244,7 @@ MaderRos::MaderRos(ros::NodeHandle nh1, ros::NodeHandle nh2, ros::NodeHandle nh3
   // If you want another thread for the replanCB: replanCBTimer_ = nh_.createTimer(ros::Duration(par_.dc),
   // &MaderRos::replanCB, this);
 
-  timer_stop_.Reset();
+  timer_stop_.reset();
 
   clearMarkerActualTraj();
 
@@ -259,11 +263,9 @@ MaderRos::MaderRos(ros::NodeHandle nh1, ros::NodeHandle nh2, ros::NodeHandle nh3
   ////// bool success_service_call = system("rosservice call /change_mode 'mode: 1'");
   ////
 
-  constructFOVMarker(); //only needed once
+  constructFOVMarker();  // only needed once
 
   ROS_INFO("Planner initialized");
-
-
 }
 
 MaderRos::~MaderRos()
@@ -382,8 +384,14 @@ void MaderRos::replanCB(const ros::TimerEvent& e)
 
     std::vector<Hyperplane3D> planes;
     mt::PieceWisePol pwp;
+    mt::log log;
 
-    bool replanned = mader_ptr_->replan(edges_obstacles, X_safe, planes, num_of_LPs_run_, num_of_QCQPs_run_, pwp);
+    bool replanned = mader_ptr_->replan(edges_obstacles, X_safe, planes, num_of_LPs_run_, num_of_QCQPs_run_, pwp, log);
+
+    if (log.replanning_was_needed)
+    {
+      pub_log_.publish(log2LogMsg(log));
+    }
 
     if (par_.visual)
     {
@@ -394,7 +402,7 @@ void MaderRos::replanCB(const ros::TimerEvent& e)
       pubObstacles(edges_obstacles);
       pubTraj(X_safe);
       publishPlanes(planes);
-      //publishText();
+      // publishText();
     }
 
     if (replanned)
@@ -406,14 +414,14 @@ void MaderRos::replanCB(const ros::TimerEvent& e)
     {
       int time_ms = int(ros::Time::now().toSec() * 1000);
 
-      if (timer_stop_.ElapsedMs() > 500.0)  // publish every half a second. TODO set as param
+      if (timer_stop_.elapsedSoFarMs() > 500.0)  // publish every half a second. TODO set as param
       {
         publishOwnTraj(pwp_last_);  // This is needed because is drone DRONE1 stops, it needs to keep publishing his
                                     // last planned trajectory, so that other drones can avoid it (even if DRONE1 was
                                     // very far from the other drones with it last successfully planned a trajectory).
                                     // Note that these trajectories are time-indexed, and the last position is taken if
                                     // t>times.back(). See eval() function in the pwp struct
-        timer_stop_.Reset();
+        timer_stop_.reset();
       }
     }
 
@@ -517,8 +525,6 @@ void MaderRos::stateCB(const snapstack_msgs::State& msg)
   {
     pubActualTraj();
   }
-
-  
 }
 
 void MaderRos::whoPlansCB(const mader_msgs::WhoPlans& msg)
@@ -551,10 +557,10 @@ void MaderRos::pubCB(const ros::TimerEvent& e)
 
     goal.p = eigen2rosvector(next_goal.pos);
     goal.v = eigen2rosvector(next_goal.vel);
-    goal.a = eigen2rosvector( (par_.use_ff) * next_goal.accel);
+    goal.a = eigen2rosvector((par_.use_ff) * next_goal.accel);
     goal.j = eigen2rosvector((par_.use_ff) * next_goal.jerk);
-    goal.dyaw =  next_goal.dyaw;
-    goal.yaw =  next_goal.yaw;
+    goal.dyaw = next_goal.dyaw;
+    goal.yaw = next_goal.yaw;
     goal.header.stamp = ros::Time::now();
     goal.header.frame_id = world_name_;
     goal.power = true;  // allow the outer loop to send low-level autopilot commands
@@ -742,8 +748,8 @@ void MaderRos::terminalGoalCB(const geometry_msgs::PoseStamped& msg)
   clearMarkerActualTraj();
 }
 
-void MaderRos::constructFOVMarker(){
-  
+void MaderRos::constructFOVMarker()
+{
   marker_fov_.header.frame_id = name_drone_;
   marker_fov_.header.stamp = ros::Time::now();
   marker_fov_.ns = "marker_fov";
@@ -803,12 +809,10 @@ void MaderRos::constructFOVMarker(){
   marker_fov_.color.r = 0.0;
   marker_fov_.color.g = 1.0;
   marker_fov_.color.b = 0.0;
-
 }
 
 void MaderRos::publishFOV()
 {
-
   marker_fov_.header.stamp = ros::Time::now();
   pub_fov_.publish(marker_fov_);
   return;

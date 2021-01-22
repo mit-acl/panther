@@ -53,6 +53,7 @@ add_message_files(
   DynTraj.msg
   PieceWisePolTraj.msg
   CoeffPoly3.msg
+  Log.msg
 )
 
 ## Generate services in the 'srv' folder

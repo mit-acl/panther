@@ -35,9 +35,10 @@ using namespace termcolor;
 //   return ("");
 // }
 
-SolverIpopt::SolverIpopt(mt::parameters &par)
+SolverIpopt::SolverIpopt(mt::parameters &par, std::shared_ptr<mt::log> log_ptr)
 {
   par_ = par;
+  log_ptr_ = log_ptr;
 
   // All these values are for the position spline
   p_ = par_.deg_pos;
@@ -242,7 +243,6 @@ void SolverIpopt::setSimpsonFeatureSamples(const std::vector<Eigen::Vector3d> &s
   }
 }
 
-
 // Note that t_final will be updated in case the saturation in deltaT_ has had effect
 bool SolverIpopt::setInitStateFinalStateInitTFinalT(mt::state initial_state, mt::state final_state, double t_init,
                                                     double &t_final)
@@ -267,7 +267,6 @@ bool SolverIpopt::setInitStateFinalStateInitTFinalT(mt::state initial_state, mt:
   final_state_ = final_state;
 
   initial_state_.yaw = wrapFromMPitoPi(initial_state_.yaw);
-
 
   std::cout << "initial_state= " << std::endl;
   initial_state.printHorizontal();
@@ -518,7 +517,9 @@ bool SolverIpopt::optimize()
   map_arguments["guess_CPs_Yaw"] = matrix_qy_guess;
 
   ///////////////// CALL THE SOLVER
+  log_ptr_->tim_opt.tic();
   std::map<std::string, casadi::DM> result = casadi_function_(map_arguments);
+  log_ptr_->tim_opt.toc();
 
   ///////////////// GET STATUS FROM THE SOLVER
   // Very hacky solution, see discussion at https://groups.google.com/g/casadi-users/c/1061E0eVAXM/m/dFHpw1CQBgAJ
@@ -534,7 +535,7 @@ bool SolverIpopt::optimize()
   if (optimstatus == "Solve_Succeeded" || optimstatus == "Solved_To_Acceptable_Level")
   {
     std::cout << green << "IPOPT found a solution!" << reset << std::endl;
-
+    log_ptr_->success_opt = true;
     // copy the solution
     auto qp_casadi = result["all_pCPs"];
     for (int i = 0; i < qp_casadi.columns(); i++)
@@ -546,11 +547,11 @@ bool SolverIpopt::optimize()
   }
   else
   {
-    std::cout << red << "IPOPT failed to find a solution" << reset
-              << std::endl;  //, using initial guess (which is feasible)
+    std::cout << red << "IPOPT failed to find a solution" << reset << std::endl;
+    log_ptr_->success_opt = false;
     qp = qp_guess_;
-    qy = qy_guess_;  // TODO: If I want to commit to the guesses, they need to be feasible (right now they aren't because of j_max and yaw_dot_max)
-                     // For now, let's not commit to them and return false
+    qy = qy_guess_;  // TODO: If I want to commit to the guesses, they need to be feasible (right now they aren't
+                     // because of j_max and yaw_dot_max) For now, let's not commit to them and return false
     return false;
   }
 

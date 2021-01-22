@@ -9,6 +9,32 @@
 
 #include "termcolor.hpp"
 
+mader_msgs::Log log2LogMsg(mt::log log)
+{
+  mader_msgs::Log log_msg;
+
+  log_msg.ms_opt = log.tim_opt.getMsSaved();
+  log_msg.ms_guess_pos = log.tim_guess_pos.getMsSaved();
+  log_msg.ms_guess_yaw_search_graph = log.tim_guess_yaw_search_graph.getMsSaved();
+  log_msg.ms_guess_yaw_fit_poly = log.tim_guess_yaw_fit_poly.getMsSaved();
+  log_msg.ms_total_replan = log.tim_total_replan.getMsSaved();
+
+  log_msg.cost_jerk = log.cost_jerk;
+  log_msg.cost_FOV = log.cost_FOV;
+  log_msg.cost_vel = log.cost_vel;
+  log_msg.cost_yaw = log.cost_yaw;
+  log_msg.cost_final_pos = log.cost_final_pos;
+
+  log_msg.success_guess_pos = log.success_guess_pos;
+  log_msg.success_guess_yaw = log.success_guess_yaw;
+  log_msg.success_opt = log.success_opt;
+  log_msg.success_replanning = log.success_replanning;
+
+  log_msg.info_replan = log.info_replan;
+
+  return log_msg;
+}
+
 visualization_msgs::MarkerArray pwp2ColoredMarkerArray(mt::PieceWisePol& pwp, double t_init, double t_final,
                                                        int samples, std::string ns, Eigen::Vector3d& color)
 {

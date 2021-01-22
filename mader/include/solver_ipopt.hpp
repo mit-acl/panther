@@ -35,7 +35,7 @@ typedef MADER_timers::Timer MyTimer;
 class SolverIpopt
 {
 public:
-  SolverIpopt(mt::parameters &par);
+  SolverIpopt(mt::parameters &par, std::shared_ptr<mt::log> log_ptr);
 
   ~SolverIpopt();
 
@@ -68,7 +68,6 @@ public:
 
 protected:
 private:
-
   // https://stackoverflow.com/a/11498248/6057617
   double wrapFromMPitoPi(double x)
   {
@@ -77,7 +76,6 @@ private:
       x += 2 * M_PI;
     return x - M_PI;
   }
-
 
   bool getIntersectionWithPlane(const Eigen::Vector3d &P1, const Eigen::Vector3d &P2, const Eigen::Vector4d &coeff,
                                 Eigen::Vector3d &intersection);
@@ -222,6 +220,8 @@ private:
   // WeightMap weightmap_;
   std::vector<std::vector<vd>> all_vertexes_;
   casadi::DM vector_yaw_samples_;
+
+  std::shared_ptr<mt::log> log_ptr_;
 
   // std::unique_ptr<mygraph_t> mygraph_ptr;
   //////////////////////////////////

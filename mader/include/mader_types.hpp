@@ -14,6 +14,7 @@
 #include "exprtk.hpp"
 #include "termcolor.hpp"
 #include <Eigen/Dense>
+#include "timer.hpp"
 
 typedef Eigen::Matrix<double, 3, Eigen::Dynamic> Polyhedron_Std;
 typedef std::vector<Polyhedron_Std> ConvexHullsOfCurve_Std;
@@ -23,6 +24,29 @@ namespace mt  // mader_types
 {
 typedef std::pair<Eigen::Vector3d, Eigen::Vector3d> Edge;
 typedef std::vector<Edge> Edges;
+
+struct log
+{
+  bool replanning_was_needed = false;
+
+  MADER_timers::Timer tim_opt;                     //
+  MADER_timers::Timer tim_guess_pos;               //
+  MADER_timers::Timer tim_guess_yaw_search_graph;  //
+  MADER_timers::Timer tim_guess_yaw_fit_poly;      //
+  MADER_timers::Timer tim_total_replan;            //
+
+  double cost_jerk = 0.0;
+  double cost_FOV = 0.0;
+  double cost_vel = 0.0;
+  double cost_yaw = 0.0;
+  double cost_final_pos = 0.0;
+
+  bool success_guess_pos = false;   //
+  bool success_guess_yaw = false;   //
+  bool success_opt = false;         //
+  bool success_replanning = false;  //
+  std::string info_replan = "";     //
+};
 
 struct state
 {

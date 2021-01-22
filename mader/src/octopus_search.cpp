@@ -995,7 +995,7 @@ void OctopusSearch::expandAndAddToQueue(Node& current, double constraint_xL, dou
 
   //  time_solving_lps_ = 0.0;
 
-  // time_expanding_ += timer_expand.ElapsedMs();
+  // time_expanding_ += timer_expand.elapsedSoFarMs();
   // std::cout << "End of expand Function" << std::endl;
 }
 
@@ -1075,7 +1075,7 @@ bool OctopusSearch::run(std::vector<Eigen::Vector3d>& result, std::vector<Eigen:
   while (openList_.size() > 0)
   {
     // Check if runtime is over
-    if (timer_astar.ElapsedMs() > (max_runtime_ * 1000))
+    if (timer_astar.elapsedSoFarMs() > (max_runtime_ * 1000))
     {
       std::cout << "[A*] Max Runtime was reached" << std::endl;
       status = RUNTIME_REACHED;

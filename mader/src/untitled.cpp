@@ -912,7 +912,7 @@ void SolverGurobi::assignValueToGradConstraints(int var_gindex, const double &tm
 double SolverGurobi::computeObjFunctionJerk(unsigned nn, double *grad, std::vector<Eigen::Vector3d> &q,
                                             std::vector<Eigen::Vector3d> &n, std::vector<double> &d)
 {
-  // std::cout << "[Ineq] Time so far= " << (opt_timer_.ElapsedMs() / 1000) << std::endl;
+  // std::cout << "[Ineq] Time so far= " << (opt_timer_.elapsedSoFarMs() / 1000) << std::endl;
 
   // Cost. See Lyx derivation (notes.lyx)
   double cost = 0.0;
@@ -1673,9 +1673,9 @@ void SolverGurobi::myIneqConstraints(unsigned m, double *constraints, unsigned n
 {
   SolverGurobi *opt = reinterpret_cast<SolverGurobi *>(f_data);
 
-  // std::cout << "[Ineq] Time so far= " << (opt->opt_timer_.ElapsedMs() / 1000) << std::endl;
+  // std::cout << "[Ineq] Time so far= " << (opt->opt_timer_.elapsedSoFarMs() / 1000) << std::endl;
   // sometimes max_runtime in nlopt doesn't work --> force stop execution
-  // if ((opt->opt_timer_.ElapsedMs() / 1000) > (opt->mu_ * opt->max_runtime_))
+  // if ((opt->opt_timer_.elapsedSoFarMs() / 1000) > (opt->mu_ * opt->max_runtime_))
   // {
   //   //nlopt::set_force_stop();
   //   // try
@@ -1915,7 +1915,7 @@ bool SolverGurobi::optimize()
   }
   // std::cout << "[NL] Finished optimizing " << std::endl;
 
-  time_needed_ = opt_timer_.ElapsedMs() / 1000;
+  time_needed_ = opt_timer_.elapsedSoFarMs() / 1000;
 
   num_of_QCQPs_run_++;
 

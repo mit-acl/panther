@@ -100,8 +100,6 @@ private:
 ////////////////////////////////////////
 ////////////////////////////////////////
 
-
-
 casadi::DM SolverIpopt::generateYawGuess(casadi::DM matrix_qp_guess, casadi::DM all_w_fe, double y0, double ydot0,
                                          double ydotf, double t0, double tf)
 {
@@ -169,6 +167,8 @@ casadi::DM SolverIpopt::generateYawGuess(casadi::DM matrix_qp_guess, casadi::DM 
 
   vector<vd> p(num_vertices(mygraph_));
   vector<cost_graph> d(num_vertices(mygraph_));
+
+  log_ptr_->tim_guess_yaw_search_graph.tic();
   try
   {
     // call astar named parameter interface
@@ -179,7 +179,10 @@ casadi::DM SolverIpopt::generateYawGuess(casadi::DM matrix_qp_guess, casadi::DM 
   }
 
   catch (found_goal<vd> fg)
-  {  // found a path to the goal
+  {
+    log_ptr_->tim_guess_yaw_search_graph.toc();
+
+    // found a path to the goal
     std::list<vd> shortest_path_vd;
     for (vd v = fg.get_goal_found();; v = p[v])
     {
@@ -207,6 +210,9 @@ casadi::DM SolverIpopt::generateYawGuess(casadi::DM matrix_qp_guess, casadi::DM 
     // std::cout << "vector_yaw_samples_=\n" << vector_yaw_samples_ << std::endl;
     // std::cout << "vis_matrix_casadi=\n" << vis_matrix_casadi << std::endl;
 
+    //////////////////////////////////////////////////////////////////////////////
+    /////////////////////PRINT SHORTEST PATH AND VISIBILITY MATRIX////////////////
+    //////////////////////////////////////////////////////////////////////////////
     for (int j = 0; j < vector_yaw_samples_.numel(); j++)
     {
       std::cout << right << std::fixed << std::setw(8) << std::setfill(' ') << "[" << j << "]" << reset;
@@ -252,9 +258,9 @@ casadi::DM SolverIpopt::generateYawGuess(casadi::DM matrix_qp_guess, casadi::DM 
     }
     cout << endl << "\nTotal cost: " << d[fg.get_goal_found()] << endl;
 
-    ////////////////////////////////////////
+    ///////////////////////////////////////////////////////////////
     // Now fit a spline to the yaws found
-    ////////////////////////////////////////
+    /////////////////////////////////////////////////////////////
 
     // First correct the angles so that the max absolute difference between two adjacent elements is <=pi
 
@@ -302,20 +308,26 @@ casadi::DM SolverIpopt::generateYawGuess(casadi::DM matrix_qp_guess, casadi::DM 
     map_arg2["y0"] = y0;
     map_arg2["ydot0"] = ydot0;
     map_arg2["ydotf"] = ydotf;
+    log_ptr_->tim_guess_yaw_fit_poly.tic();
     std::map<std::string, casadi::DM> result2 = casadi_fit_yaw_function_(map_arg2);
+    log_ptr_->tim_guess_yaw_fit_poly.toc();
     casadi::DM yaw_qps_matrix_casadi = result2["result"];
 
     //////////////////////////////////////
     //////////////////////////////////////
+    log_ptr_->success_guess_yaw = true;
 
     return yaw_qps_matrix_casadi;
 
     // return 0;
   }
+  log_ptr_->tim_guess_yaw_search_graph.toc();
+  log_ptr_->success_guess_yaw = false;
+
   std::cout << red << bold << "Boost A* Didn't find a path!! " << std::endl;
   // This should never happen
 
-  // For debugging
+  // Only for debugging
   abort();
   // End of for debugging
 
