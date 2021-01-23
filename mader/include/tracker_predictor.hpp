@@ -213,7 +213,8 @@ class TrackerPredictor
 public:
   TrackerPredictor(ros::NodeHandle nh);
 
-  void cloud_cb(const sensor_msgs::PointCloud2ConstPtr& input);
+  // void cloud_cb(const sensor_msgs::PointCloud2ConstPtr& input);
+  void cloud_cb(const pcl::PointCloud<pcl::PointXYZ>::ConstPtr& input_cloud1);
   void printAllTracks();
 
   void generatePredictedPwpForTrack(tp::track& track_j);

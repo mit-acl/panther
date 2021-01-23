@@ -124,7 +124,8 @@ void TrackerPredictor::addNewTrack(const tp::cluster& c)
   // all_tracks_[last_id] = tmp;
 }
 
-void TrackerPredictor::cloud_cb(const sensor_msgs::PointCloud2ConstPtr& pcl2ptr_msg)
+// void TrackerPredictor::cloud_cb(const sensor_msgs::PointCloud2ConstPtr& pcl2ptr_msg)
+void TrackerPredictor::cloud_cb(const pcl::PointCloud<pcl::PointXYZ>::ConstPtr& input_cloud1)
 {
   // log_ = {};
   log_.tim_total_tp.tic();
@@ -152,16 +153,16 @@ void TrackerPredictor::cloud_cb(const sensor_msgs::PointCloud2ConstPtr& pcl2ptr_
 
   std::cout << "-------------------------------" << std::endl;
 
-  pcl::PointCloud<pcl::PointXYZ>::Ptr input_cloud1(new pcl::PointCloud<pcl::PointXYZ>);
+  // pcl::PointCloud<pcl::PointXYZ>::Ptr input_cloud1(new pcl::PointCloud<pcl::PointXYZ>);
   pcl::PointCloud<pcl::PointXYZ>::Ptr input_cloud2(new pcl::PointCloud<pcl::PointXYZ>);
   pcl::PointCloud<pcl::PointXYZ>::Ptr input_cloud3(new pcl::PointCloud<pcl::PointXYZ>);
   pcl::PointCloud<pcl::PointXYZ>::Ptr input_cloud4(new pcl::PointCloud<pcl::PointXYZ>);
   pcl::PointCloud<pcl::PointXYZ>::Ptr input_cloud(new pcl::PointCloud<pcl::PointXYZ>);
 
   // Convert to PCL
-  log_.tim_conversion_pcl.tic();
-  pcl::fromROSMsg(*pcl2ptr_msg, *input_cloud1);
-  log_.tim_conversion_pcl.toc();
+  // log_.tim_conversion_pcl.tic();
+  // pcl::fromROSMsg(*pcl2ptr_msg, *input_cloud1);
+  // log_.tim_conversion_pcl.toc();
 
   std::cout << "Input point cloud has " << input_cloud1->points.size() << " points" << std::endl;
 
@@ -171,7 +172,7 @@ void TrackerPredictor::cloud_cb(const sensor_msgs::PointCloud2ConstPtr& pcl2ptr_
   geometry_msgs::TransformStamped transform_stamped;
   try
   {
-    transform_stamped = tf_buffer_.lookupTransform("world", pcl2ptr_msg->header.frame_id, pcl2ptr_msg->header.stamp,
+    transform_stamped = tf_buffer_.lookupTransform("world", "SQ01s/camera", ros::Time::now(),
                                                    ros::Duration(0.02));  // TODO: change this duration time?
 
     w_T_b = tf2::transformToEigen(transform_stamped);
@@ -275,7 +276,7 @@ void TrackerPredictor::cloud_cb(const sensor_msgs::PointCloud2ConstPtr& pcl2ptr_
 
   std::vector<tp::cluster> clusters;
 
-  double time_pcloud = pcl2ptr_msg->header.stamp.toSec();
+  double time_pcloud = ros::Time::now().toSec();  // pcl2ptr_msg->header.stamp.toSec();
 
   log_.tim_bbox.tic();
   for (std::vector<pcl::PointIndices>::const_iterator it = cluster_indices.begin(); it != cluster_indices.end(); ++it)
