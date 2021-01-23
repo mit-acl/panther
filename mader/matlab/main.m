@@ -2,6 +2,7 @@
 %Everything here is 1-based indexing (first element is one)
 
 close all; clc;clear;
+setenv('LD_LIBRARY_PATH', '/home/jtorde/Desktop/ws/devel/lib:/opt/ros/melodic/lib:/opt/gurobi910/linux64/lib:/opt/gurobi910/linux64/lib:/opt/gurobi910/linux64/lib:/opt/gurobi910/linux64/lib:/opt/gurobi910/linux64/lib:/opt/gurobi910/linux64/lib:/usr/local/lib:/usr/local/MATLAB/R2020b/sys/os/glnxa64:/usr/local/MATLAB/R2020b/bin/glnxa64:/usr/local/MATLAB/R2020b/extern/lib/glnxa64:/usr/local/MATLAB/R2020b/cefclient/sys/os/glnxa64:/usr/local/MATLAB/R2020b/runtime/glnxa64:/usr/local/MATLAB/R2020b/sys/java/jre/glnxa64/jre/lib/amd64/native_threads:/usr/local/MATLAB/R2020b/sys/java/jre/glnxa64/jre/lib/amd64/server:/home/jtorde/Desktop/ws/devel/lib:/opt/ros/melodic/lib:/opt/gurobi910/linux64/lib:/opt/gurobi910/linux64/lib:/opt/gurobi910/linux64/lib:/usr/local/lib:/usr/local/lib')
 set(0,'DefaultFigureWindowStyle','docked') %'normal' 'docked'
 set(0,'defaulttextInterpreter','latex');
 set(groot, 'defaultAxesTickLabelInterpreter','latex'); set(groot, 'defaultLegendInterpreter','latex');
@@ -12,7 +13,6 @@ import casadi.*
 addpath(genpath('./../../submodules/minvo/src/utils'));
 addpath(genpath('./../../submodules/minvo/src/solutions'));
 addpath(genpath('./more_utils'));
-
 
 opti = casadi.Opti();
 
@@ -27,6 +27,8 @@ num_samples_simpson=7;  %This will also be the num_of_layers in the graph yaw se
 num_of_yaw_per_layer=6; %This will be used in the graph yaw search of C++
                          %Note that the initial layer will have only one yaw (which is given) 
 basis="MINVO"; %MINVO OR B_SPLINE or BEZIER. This is the basis used for collision checking (in position, velocity, accel and jerk space), both in Matlab and in C++
+linear_solver_name='ma57'; %mumps [default, comes when installing casadi], ma27, ma57, ma77, ma86, ma97 
+print_level=5; %From 0 (no verbose) to 12 (very verbose), default is 5
 t0=0; 
 tf=10.5;
 
@@ -426,8 +428,12 @@ opts.jit_options.flags='-O0';  %Takes ~15 seconds to generate if O0 (much more i
 opts.jit_options.verbose=true;  %See example in shallow_water.cpp
 opts.expand=true; %When this option is true, it goes WAY faster!
 opts.print_time=true;
-opts.ipopt.print_level=0; %From 0 (no verbose) to 12 (very verbose), default is 5
+opts.ipopt.print_level=print_level; 
 opts.ipopt.print_frequency_iter=1;%1e10 %Big if you don't want to print all the iteratons
+opts.ipopt.linear_solver=linear_solver_name;
+% if(strcmp(linear_solver_name,'ma57'))
+%    opts.ipopt.ma57_automatic_scaling='no';
+% end
 % opts.enable_forward=false; %Seems this option doesn't have effect?
 % opts.enable_reverse=false;
 % opts.enable_jacobian=false;
@@ -542,9 +548,9 @@ my_function = opti.to_function('mader_casadi_function', vars, {all_pCPs,all_yCPs
                                                         names, {'all_pCPs','all_yCPs','pos_smooth_cost','yaw_smooth_cost','fov_cost','final_pos_cost','final_yaw_cost'});
                                                     
 % my_function=my_function.expand();
-
+tic();
 sol=my_function( names_value{:});
-
+toc();
 
 statistics=get_stats(my_function); %See functions defined below
 full(sol.all_pCPs)

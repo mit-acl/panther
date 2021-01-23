@@ -26,11 +26,31 @@
 #include <pcl/segmentation/extract_clusters.h>
 #include <pcl/common/centroid.h>
 #include <string>  // std::string, std::stoi
+#include <mader_msgs/Logtp.h>
 
 #ifndef TRACKER_PREDICTOR_HPP
 #define TRACKER_PREDICTOR_HPP
 
 // typedef MADER_timers::Timer MyTimer;
+
+namespace tp  // Tracker and predictor
+{
+struct logtp
+{
+  MADER_timers::Timer tim_total_tp;        //
+  MADER_timers::Timer tim_conversion_pcl;  //
+  MADER_timers::Timer tim_tf_transform;    //
+  MADER_timers::Timer tim_remove_nans;     //
+  MADER_timers::Timer tim_passthrough;     //
+  MADER_timers::Timer tim_voxel_grid;      //
+  MADER_timers::Timer tim_pub_filtered;    //
+  MADER_timers::Timer tim_tree;            //
+  MADER_timers::Timer tim_clustering;      //
+  MADER_timers::Timer tim_bbox;            //
+  MADER_timers::Timer tim_hungarian;       //
+  MADER_timers::Timer tim_fitting;         //
+  MADER_timers::Timer tim_pub;             //
+};
 
 struct cluster  // one observation
 {
@@ -50,11 +70,11 @@ struct cluster  // one observation
 class track
 {
 public:
-  track(int size, const cluster& c)
+  track(int size, const tp::cluster& c)
   {
     ssw = size;
 
-    history = std::deque<cluster>(ssw, c);  // Constant initialization
+    history = std::deque<tp::cluster>(ssw, c);  // Constant initialization
 
     // We have only one observation --> we assume the obstacle has always been there
     // std::cout << termcolor::magenta << "c.time= " << c.time << termcolor::reset << std::endl;
@@ -86,7 +106,7 @@ public:
     // TODO: The previous approach will **almost** always generate different ids, but not always
   }
 
-  void addToHistory(const cluster& c)
+  void addToHistory(const tp::cluster& c)
   {
     history.push_back(c);
     if (history.size() > ssw)  // TODO (size of the sliding window)
@@ -184,9 +204,10 @@ private:
   unsigned int id;
 
   // This deque will ALWAYS have ssw elements
-  std::deque<cluster> history;  //[t-N], [t-N+1],...,[t] (i.e. index of the oldest element is 0)
-};
+  std::deque<tp::cluster> history;  //[t-N], [t-N+1],...,[t] (i.e. index of the oldest element is 0)
+};                                  // namespace tp
 
+};  // namespace tp
 class TrackerPredictor
 {
 public:
@@ -195,17 +216,19 @@ public:
   void cloud_cb(const sensor_msgs::PointCloud2ConstPtr& input);
   void printAllTracks();
 
-  void generatePredictedPwpForTrack(track& track_j);
+  void generatePredictedPwpForTrack(tp::track& track_j);
 
 protected:
 private:
-  double getCostRowColum(cluster& a, track& b, double time);
-  void addNewTrack(const cluster& c);
+  double getCostRowColum(tp::cluster& a, tp::track& b, double time);
+  void addNewTrack(const tp::cluster& c);
   void deleteMarkers();
+
+  mader_msgs::Logtp logtp2LogtpMsg(tp::logtp log);
 
   visualization_msgs::MarkerArray getBBoxesAsMarkerArray();
 
-  std::vector<track> all_tracks_;
+  std::vector<tp::track> all_tracks_;
 
   std::vector<casadi::Function> cfs_kkt_Ab_;
   casadi::Function cf_coeff_predicted_;
@@ -227,6 +250,7 @@ private:
   ros::Publisher pub_marker_bbox_obstacles_;
   ros::Publisher pub_traj_;
   ros::Publisher pub_pcloud_filtered_;
+  ros::Publisher pub_log_;
 
   ros::NodeHandle nh_;
 
@@ -235,6 +259,8 @@ private:
   std::string namespace_markers = "predictor";
 
   std::vector<int> ids_markers_published_;
+
+  tp::logtp log_;
 };
 
 #endif

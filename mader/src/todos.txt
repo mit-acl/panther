@@ -2,12 +2,10 @@
 En este repo:
 	
 	max_runtime_casadi
-	Install good linear solver Ipopt [check email]
 
 	Check the partial derivatives of velocity of the obstacle in the cost function is right
 	Uncomment smooth pyramid (instead of cone) [DONE, but it's commented out]
 	Cuidado que los assert() SOLO funcionan en debug mode, no en release mode.
-	Should I leave the planes fixed or as decision variables??
 	Check if the obj function chosen is the best one
 
 	Enable the -O3 option when compiling all the mader package (and change to release mode, not release with info)
@@ -17,12 +15,20 @@ En este repo:
 	Add VIO term in the cost function
 	The FOV of Gazebo should be consistent with fov_x_deg and fov_y_deg
 	Change depth_max of Gazebo to infinity?
+	max_cpu in jetson
 
 	Check max_number_of_obstacles (creo que ahora hago abort())
 	Wait duration for looking up transform in tracker
 	Como decidir entre varios obstaculos (ahora cojo traj_0 creo)
 	Predict the uncertainty and apply it to the polyhedra
 	Create a dataset of the moving objects from the experiments??
+
+	Why do I have to run matlab from the terminal (https://github.com/casadi/casadi/issues/2032)? If not (and I use the opts.ipopt.linear_solver option) I get the error
+					Exception of type: OPTION_INVALID in file "../../../../Ipopt/src/Algorithm/IpAlgBuilder.cpp" at line 321:
+					 Exception message: Selected linear solver MA27 not available.
+					Tried to obtain MA27 from shared library "libhsl.so", but the following error occured:
+					libhsl.so: cannot open shared object file: No such file or directory
+	I've already tried adding setenv('LD_LIBRARY_PATH', ':/usr/local/lib') in startup.m
 
 	Limit visualization stuff when timing Algorithm
 	Log times
@@ -41,6 +47,10 @@ Future/enhancements:
 	See https://pointclouds.org/documentation/classpcl_1_1_shadow_points.html#details
 	Rename all the yaws to phi
 	Improve the way new obstacles are added (instead of creating the file tmp.urdf and then deleting it)
+	Play more with other linear solvers for Ipopt (hsl ones, like ma57, ma27,...) [check email]
+	Should I leave the planes fixed or as decision variables??
+
+
 
 
 Novale:
@@ -61,6 +71,9 @@ Papers to cite in proposal/Paper:
 	https://www.youtube.com/watch?v=BzykucxFddI
 	http://asl.stanford.edu/wp-content/papercite-data/pdf/Allen.Pavone.RAS18.pdf
 	Camera active rotation (Andrea's paper)
+	Cite HSL (AS A CONDITION OF THE LICENCE, ALL USE SHOULD BE CITED AS:
+	"HSL(2013). A collection of Fortran codes for large scale scientific
+	 computation. http://www.hsl.rl.ac.uk")
 
 
 En MADER:

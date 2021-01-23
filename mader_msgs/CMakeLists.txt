@@ -54,6 +54,7 @@ add_message_files(
   PieceWisePolTraj.msg
   CoeffPoly3.msg
   Log.msg
+  Logtp.msg
 )
 
 ## Generate services in the 'srv' folder

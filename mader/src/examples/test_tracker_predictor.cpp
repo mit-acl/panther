@@ -13,12 +13,12 @@ int main(int argc, char** argv)
 
   TrackerPredictor tracker_predictor(nh);
 
-  cluster c;
+  tp::cluster c;
   c.centroid = Eigen::Vector3d::Ones();
   c.bbox = Eigen::Vector3d(1.0, 1.0, 1.0);
   c.time = ros::Time::now().toSec();
 
-  track my_track(10, c);
+  tp::track my_track(10, c);
 
   tracker_predictor.generatePredictedPwpForTrack(my_track);
 
@@ -26,7 +26,7 @@ int main(int argc, char** argv)
 
   for (int i = 0; i < 10; i++)
   {
-    cluster c;
+    tp::cluster c;
     c.centroid = pow(i, 2) * Eigen::Vector3d::Ones();
     c.bbox = Eigen::Vector3d(1.0, 1.0, 1.0);
     c.time = time + i;

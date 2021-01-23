@@ -3,6 +3,59 @@ roslaunch mader single_agent_simulation.launch gazebo:=false perfect_tracker:=fa
 ----
 Sim without gui: `roslaunch mader single_agent_simulation.launch use_gui_mission:=false`
 Sim with gui: `roslaunch mader single_agent_simulation.launch use_gui_mission:=true`. You can also the z value of `mader_specific.launch` to set the initial position of the drone
+----
+
+Make sure you have BLAS installed: run this command to make sure
+	locate libblas.so
+
+
+Note: The part below follows essentially https://github.com/casadi/casadi/wiki/Obtaining-HSL
+(but I put -O3 instead)
+
+Go to http://www.hsl.rl.ac.uk/ipopt/ and click on "Coin-HSL Full(Stable)". Note: I think I could also select RC
+Fill the form, and wait one day, and download the link in the email you receive
+Extract it
+cd coinhsl-XXXX
+Note the name of a subfolder called 'metis-XXXX'. 
+Download metis-XXXX.tar.gz from http://glaros.dtc.umn.edu/gkhome/metis/metis/download, extract it, and place it inside the folder `coinhsl-XXXX`
+
+[
+You can also use the MKL libraries:
+1.- Make sure you have an Intel processor (run `lscpu`), and if so, install the Intel MLK libraries using the script of the section "installing the Intel MKL" of https://csantill.github.io/RPerformanceWBLAS/
+
+2.- adding this to the bashrc
+source /opt/intel/parallel_studio_xe_2018.2.046/psxevars.sh intel64
+
+3.- and then, in the command below, use this flag
+--with-blas=' -L${MKLROOT}/lib/intel64 -lmkl_intel_ilp64 -lmkl_core -lmkl_intel_thread -lpthread -lm -ldl'
+But right now Matlab crashes when doing that
+]
+
+cd coinhsl-XXXX
+`sudo make uninstall`
+`sudo make clean`
+`./configure LIBS="-llapack" --with-blas="-L/usr/lib -lblas" CXXFLAGS="-g -O3 -fopenmp" FCFLAGS="-g -O3 -fopenmp" CFLAGS="-g -O3 -fopenmp"` (make sure the output says `checking for metis to compile... yes`)
+`sudo make install` (the files will go to /usr/local/lib)
+cd /usr/local/lib
+`sudo ln -s libcoinhsl.so libhsl.so` (This creates a symbolic link `libhsl.so` pointing to `libcoinhsl.so`). It's needed because Casadi expects to find `libhsl.so`, see https://github.com/casadi/casadi/issues/1437
+
+And at the end of your `~/.bashrc`, add `export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:/usr/local/lib"`
+
+(note that you could also run simply `sudo make` (without install), then create the symbolic link, in the folder that contains the `libhsl.so` and then export LD_LIBRARY_PATH=path_to_that_folder)
+
+
+--------------NOT NEEDED
+Download metis-5.1.0.tar.gz from http://glaros.dtc.umn.edu/gkhome/metis/metis/download
+Extract it
+[Move it if you want to, for example, the installation folder that I usually use]
+cd metis-5.1.0
+make config shared=1
+sudo make install  //File now availble at /usr/local/lib/libmetis.so
+-----------END OF NOT NEEDED
+
+
+
+----
 
 # MADER: Trajectory Planner in Multi-Agent and Dynamic Environments #
 
