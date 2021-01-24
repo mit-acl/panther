@@ -1,7 +1,11 @@
 
 En este repo:
 	
+	Behaviour look ahead when obstacle is done
+	Prepare HW experiment trajectories obstacles
 	max_runtime_casadi
+	Predict the uncertainty and apply it to the polyhedra
+	
 
 	Check the partial derivatives of velocity of the obstacle in the cost function is right
 	Uncomment smooth pyramid (instead of cone) [DONE, but it's commented out]
@@ -14,13 +18,11 @@ En este repo:
 	Check that the T matrix in the tracker is the right one (and not its inverse)
 	Add VIO term in the cost function
 	The FOV of Gazebo should be consistent with fov_x_deg and fov_y_deg
-	Change depth_max of Gazebo to infinity?
 	max_cpu in jetson
 
 	Check max_number_of_obstacles (creo que ahora hago abort())
 	Wait duration for looking up transform in tracker
 	Como decidir entre varios obstaculos (ahora cojo traj_0 creo)
-	Predict the uncertainty and apply it to the polyhedra
 	Create a dataset of the moving objects from the experiments??
 
 	Why do I have to run matlab from the terminal (https://github.com/casadi/casadi/issues/2032)? If not (and I use the opts.ipopt.linear_solver option) I get the error
@@ -31,7 +33,6 @@ En este repo:
 	I've already tried adding setenv('LD_LIBRARY_PATH', ':/usr/local/lib') in startup.m
 
 	Limit visualization stuff when timing Algorithm
-	Log times
 
 	If I want the guesses to be feasible (right now I'm not committing to them):
 		Cuidado que guess_yaw doesn't use the constraint yaw_dot_max, while the optimization problem does

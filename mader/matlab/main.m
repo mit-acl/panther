@@ -27,7 +27,7 @@ num_samples_simpson=7;  %This will also be the num_of_layers in the graph yaw se
 num_of_yaw_per_layer=6; %This will be used in the graph yaw search of C++
                          %Note that the initial layer will have only one yaw (which is given) 
 basis="MINVO"; %MINVO OR B_SPLINE or BEZIER. This is the basis used for collision checking (in position, velocity, accel and jerk space), both in Matlab and in C++
-linear_solver_name='ma57'; %mumps [default, comes when installing casadi], ma27, ma57, ma77, ma86, ma97 
+linear_solver_name='mumps'; %mumps [default, comes when installing casadi], ma27, ma57, ma77, ma86, ma97 
 print_level=5; %From 0 (no verbose) to 12 (very verbose), default is 5
 t0=0; 
 tf=10.5;
@@ -256,14 +256,14 @@ for j=1:sp.num_seg
     qpsi=[cos(yaw/2), 0, 0, sin(yaw/2)]; %Note that qpsi has norm=1
 
     
-      %%%%% Option 1
+      %%%%% Option A
 %     qabc=qabcFromAccel(accel,g);
 %     q=multquat(qabc,qpsi); %Note that q is guaranteed to have norm=1
 %     w_R_b=toRotMat(q);
 %     %%%%% 
     
     
-    %%%%% Option 2 (same as option 1, but this saves ~0.2 seconds of computation (ONLY IF expand=FALSE) (due to the fact that Casadi doesn't simplify, and simply keeps concatenating operations)     
+    %%%%% Option B (same as option 1, but this saves ~0.2 seconds of computation (ONLY IF expand=FALSE) (due to the fact that Casadi doesn't simplify, and simply keeps concatenating operations)     
     %if expand=true, option 1 and two give very similar comp. time
     t=[accel(1); accel(2); accel(3)+9.81];
     norm_t=sqrt(t(1)^2+t(2)^2+t(3)^2);
@@ -285,13 +285,13 @@ for j=1:sp.num_seg
     b_T_w=invPose(w_T_b);
     
     c_P=c_T_b*b_T_w*[w_fevar;1]; %Position of the feature in the camera frame
-    s=c_P(1:2)/(c_P(3));  
+    s=c_P(1:2)/(c_P(3));  %Note that here we are not using f (the focal length in meters) because it will simply add a constant factor in ||s|| and in ||s_dot||
     
 
     % See https://en.wikipedia.org/wiki/Cone#Equation_form:~:text=In%20implicit%20form%2C%20the%20same%20solid%20is%20defined%20by%20the%20inequalities
 
     %%%%%%%%%%%%%%%%%%%
-%     %One possible version [cone]:
+%     %FOV version 1 (cone):
 %     % See https://en.wikipedia.org/wiki/Cone#Equation_form:~:text=In%20implicit%20form%2C%20the%20same%20solid%20is%20defined%20by%20the%20inequalities
 %       gamma1=100; gamma2=100;
 %     xx{j}=c_P(1); yy{j}=c_P(2); zz{j}=c_P(3);
@@ -307,18 +307,36 @@ for j=1:sp.num_seg
 %     f_vel_isInFOV_im{j}=-(target_isInFOV{j}) /(offset_vel+f_vel_im{j});
 %       %End of one possible version
       %%%%%%%%%%%%%%%%%%%
-    
+      
+      %FOV version 2: (the four planes of the FOV + sigmoid to smooth)
+      %See also Mathematica notebook
+      gamma=30;
+      tthx=tan(thetax_half_FOV_rad);
+      tthy=tan(thetay_half_FOV_rad);
+      v0h=[0.0, 0.0, 0.0, 1.0]';
+      v1h=[-tthx, -tthy, 1.0, 1.0]';
+      v2h=[-tthx, tthy, 1.0, 1.0]';
+      v3h=[tthx, tthy, 1.0, 1.0]';
+      v4h=[tthx, -tthy, 1.0, 1.0]';
+      x=c_P(1);y=c_P(2); z=c_P(3);
+      xyzh=[x, y, z, 1.0]';
+      dA21=computeDet([xyzh'; v0h'; v2h'; v1h'] );%This has to be >=0
+      dA32=computeDet([xyzh'; v0h'; v3h'; v2h'] );%This has to be >=0
+      dA43=computeDet([xyzh'; v0h'; v4h'; v3h'] );%This has to be >=0
+      dA14=computeDet([xyzh'; v0h'; v1h'; v4h'] );%This has to be >=0
+      isInFOV_smooth=(mySig(gamma, dA21)*mySig(gamma, dA32)*mySig(gamma, dA43)*mySig(gamma, dA14));
+      
       %%%%%%%%%%%%%%%%%%
-    %Simpler version [cone]:
-    gamma=100;
-    w_beta=w_fevar(1:3)-w_T_c(1:3,4);
-    w_beta=w_beta/norm(w_beta);
-    is_in_FOV1=-cos(thetax_half_FOV_deg*pi/180.0)+w_beta'*w_T_c(1:3,3); %This has to be >=0
-    isInFOV_smooth=  (   1/(1+exp(-gamma*is_in_FOV1))  );
+     %Simpler version of version 1 (cone):
+%     gamma=100;
+%     w_beta=w_fevar(1:3)-w_T_c(1:3,4);
+%     w_beta=w_beta/norm(w_beta);
+%     is_in_FOV1=-cos(thetax_half_FOV_deg*pi/180.0)+w_beta'*w_T_c(1:3,3); %This has to be >=0
+%     isInFOV_smooth=  (   1/(1+exp(-gamma*is_in_FOV1))  );
 
     
     %     %%%%%%%%%%%%%%%%%%%
-    %%[Squicular cone]
+      %FOV version 3: [Squicular cone]
 %     gamma1=0.6; %If too big, the warning "solver:nlp_grad_f failed: NaN detected for output grad_f_x" will appear
 %     gamma2=1.0;
 %     tthx2=(tan(thetax_half_FOV_rad))^2;
@@ -769,6 +787,10 @@ function a=createStruct(name,param,value)
     a.name=name;
     a.param=param;
     a.value=value;
+end
+
+function result=mySig(gamma,x)
+    result=(1/(1+exp(-gamma*x)));
 end
 %% 
 % %% EXAMPLE OF CALLING THE PROBLEM DIRECTLY (WITHOUT FUNCTION)
