@@ -101,7 +101,7 @@
             </image>
             <clip>
               <near>0.06</near>
-              <far>10.0</far>  <!--this is the clipping distance for the RGB image. But somehow the depth image is clipped at 5 meters??-->
+              <far>100.0</far>  <!--this is the clipping distance for the RGB image-->
             </clip>
           </camera>
           <plugin name="${name}_camera_controller" filename="libgazebo_ros_openni_kinect.so">
@@ -111,6 +111,8 @@
             <depthImageCameraInfoTopicName>${name}/depth/camera_info</depthImageCameraInfoTopicName>
             <pointCloudTopicName>${name}/cloud</pointCloudTopicName>
             <frameName>${name}</frameName>
+            <pointCloudCutoff>0.06</pointCloudCutoff>
+            <pointCloudCutoffMax>100.0</pointCloudCutoffMax> <!--this is the clipping distance for the Depth image and Point Cloud-->
           </plugin>
         </sensor>
       </gazebo>
