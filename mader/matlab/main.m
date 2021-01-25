@@ -313,11 +313,11 @@ for j=1:sp.num_seg
       gamma=30;
       tthx=tan(thetax_half_FOV_rad);
       tthy=tan(thetay_half_FOV_rad);
-      v0h=[0.0, 0.0, 0.0, 1.0]';
-      v1h=[-tthx, -tthy, 1.0, 1.0]';
-      v2h=[-tthx, tthy, 1.0, 1.0]';
-      v3h=[tthx, tthy, 1.0, 1.0]';
-      v4h=[tthx, -tthy, 1.0, 1.0]';
+      v0h=[0.0, 0.0, 0.0, 1.0]';     %Vertex of the pyramid
+      v1h=[-tthx, -tthy, 1.0, 1.0]'; %Point in the base of the pyramid
+      v2h=[-tthx, tthy, 1.0, 1.0]';  %Point in the base of the pyramid
+      v3h=[tthx, tthy, 1.0, 1.0]';   %Point in the base of the pyramid
+      v4h=[tthx, -tthy, 1.0, 1.0]';  %Point in the base of the pyramid
       x=c_P(1);y=c_P(2); z=c_P(3);
       xyzh=[x, y, z, 1.0]';
       dA21=computeDet([xyzh'; v0h'; v2h'; v1h'] );%This has to be >=0
