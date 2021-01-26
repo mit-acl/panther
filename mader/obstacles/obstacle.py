@@ -9,7 +9,7 @@
 #  * -------------------------------------------------------------------------- */
 
 import rospy
-from mader_msgs.msg import WhoPlans
+from mader_msgs.msg import WhoPlans, DynTraj
 from snapstack_msgs.msg import Goal, State
 from geometry_msgs.msg import Pose, PoseStamped
 from snapstack_msgs.msg import QuadFlightMode
@@ -19,27 +19,78 @@ from sympy.parsing.sympy_parser import parse_expr
 import sys
 import numpy as np
 from sympy import Piecewise
+from math import sin, cos, tan #To make sure eval('sin(5)') works
+from visualization_msgs.msg import Marker
 
 import time
+import string
 
 
 class Mader_Commands:
 
     def __init__(self):
+ 
+        tmp=rospy.get_namespace();
+        #https://stackoverflow.com/questions/1450897/remove-characters-except-digits-from-string-using-python
+        all=string.maketrans('','')
+        tmp=tmp.translate(all, all.translate(all, string.digits))
+        self.id=  4000+ int(tmp)  #Current id 4000 to avoid interference with ids from agents #TODO
+
         self.whoplans=WhoPlans();
-        self.pose = Pose();
         self.whoplans.value=self.whoplans.OTHER
-        self.pubGoal = rospy.Publisher('goal', Goal, queue_size=1)
-        self.pubGoalTimer=rospy.Timer(rospy.Duration(0.01), self.pubCB)
-        self.pubGoalTimer.shutdown()
+
 
         self.traj_x = parse_expr(self.safeGetParam('~traj_x'))
         self.traj_y = parse_expr(self.safeGetParam('~traj_y'))
         self.traj_z = parse_expr(self.safeGetParam('~traj_z'))
+        self.bbox = self.safeGetParam('~bbox')
 
         self.traj=np.array([self.traj_x, self.traj_y, self.traj_z])
 
+        self.dyn_traj_msg=DynTraj(); 
+        self.dyn_traj_msg.is_agent=False;
+        self.dyn_traj_msg.function = [str(self.traj[0]), str(self.traj[1]), str(self.traj[2]-self.bbox[2]/2.0)] #Two notes here:
+                                                                                                                   #dyn_traj_msg will not be accurate in the line/polynomial segments, but don't care about them (initialization) 
+                                                                                                                   #I'm substracting self.bbox[2]/2.0 because in the obstacles-drones, the drone is on top of the cylinder that makes the obstacle 
+        self.dyn_traj_msg.bbox = self.bbox;# [bbox[0], bbox[1], bbox[2]]; 
+        self.dyn_traj_msg.id = self.id
+
+        self.marker=self.generateMarker(self.bbox, self.id)
+        self.pubMesh=rospy.Publisher('obstacle_mesh', Marker, queue_size=1, latch=True)
+
         self.state_initialized=False;
+
+        self.pubGoal = rospy.Publisher('goal', Goal, queue_size=1)
+        self.pubGoalTimer=rospy.Timer(rospy.Duration(0.01), self.pubCB)
+        self.pubGoalTimer.shutdown()
+
+        self.pubTraj = rospy.Publisher('/trajs', DynTraj, queue_size=1, latch=True)
+        self.pubTrajTimer=rospy.Timer(rospy.Duration(0.05), self.pubTrajCB)
+
+
+    def generateMarker(self, bbox, i):
+        marker=Marker();
+        marker.id=i;
+        marker.ns="mesh";
+        marker.header.frame_id="world"
+        marker.type=marker.MESH_RESOURCE;
+        marker.action=marker.ADD;
+
+        marker.pose.position.x=0.0 #Will be updated later
+        marker.pose.position.y=0.0 #Will be updated later
+        marker.pose.position.z=0.0 #Will be updated later
+        marker.pose.orientation.x=0.0;
+        marker.pose.orientation.y=0.0;
+        marker.pose.orientation.z=0.0;
+        marker.pose.orientation.w=1.0;
+        marker.lifetime = rospy.Duration.from_sec(0.0);
+        marker.mesh_use_embedded_materials=True
+        marker.mesh_resource="package://mader/meshes/ConcreteDamage01b/model3.dae"
+
+        marker.scale.x=bbox[0];
+        marker.scale.y=bbox[1];
+        marker.scale.z=bbox[2];
+        return marker
 
     def safeGetParam(self, param):
         result=""
@@ -98,7 +149,6 @@ class Mader_Commands:
 
     def initializePlanner(self):
 
-        
         upper_bound_time_s = 2.0; #This simply takes into account the time spent on this function (so tha)
 
         t_init_function=rospy.get_time();
@@ -114,7 +164,7 @@ class Mader_Commands:
         t=sp.symbols('t'); #ros time
 
         delta01=7.0;
-        delta12=7.0;
+        delta12=3.0;
 
         t1=t0+delta01;
         t2=t1+delta12;
@@ -147,6 +197,7 @@ class Mader_Commands:
         # self.pubGoalTimer.run()
         self.pubGoalTimer=rospy.Timer(rospy.Duration(0.01), self.pubCB)
 
+
         print "End of initializePlanner"
 
     def abortPlanner(self):
@@ -164,7 +215,7 @@ class Mader_Commands:
             self.abortPlanner()
             self.whoplans=data;
 
-    def pubCB(self, goal):
+    def pubCB(self, timer):
         goal=Goal()
         goal.header.stamp=rospy.Time.now();
         ti=rospy.get_time(); #Same as before, but it's float
@@ -199,6 +250,22 @@ class Mader_Commands:
         else:
             #This case should only happen when I've entered whoplansCB while I was at the same time in pubCB. See comment in comands.py about race conditions.
             pass 
+
+    def pubTrajCB(self, timer):
+        t=rospy.get_time();
+        self.dyn_traj_msg.pos.x=eval(self.dyn_traj_msg.function[0])
+        self.dyn_traj_msg.pos.y=eval(self.dyn_traj_msg.function[1])
+        self.dyn_traj_msg.pos.z=eval(self.dyn_traj_msg.function[2])
+        self.dyn_traj_msg.header.stamp= rospy.Time.now();
+        self.pubTraj.publish(self.dyn_traj_msg);
+
+
+        self.marker.pose.position=self.dyn_traj_msg.pos;
+        self.marker.header.stamp=self.dyn_traj_msg.header.stamp;
+        self.pubMesh.publish(self.marker)
+
+
+
 
                   
 def startNode():

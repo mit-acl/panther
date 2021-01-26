@@ -19,11 +19,12 @@ def getTrefoil(tt,offset,slower,lim_x, lim_y, lim_z):
 
     return [x, y, z]
 
-Drone = collections.namedtuple('Drone', ["name","slower", "offset", "lim_x", "lim_y", "lim_z"])
+#bbox has three elements: [hx, hy, hz] (bbox of size hx x hy x hz)
+Drone = collections.namedtuple('Drone', ["name","bbox", "slower", "offset", "lim_x", "lim_y", "lim_z"])
 
 all_drones=[
-            Drone("SQ01s",  3.0, 0.0, [-3.0,3.0], [-3.0,3.0], [1.0,3.0]),
-            Drone("SQ02s",  3.0, 0.0, [-3.0,3.0], [-3.0,3.0], [1.0,3.0])
+            Drone("SQ01s", [0.5, 0.5, 2.5], 3.0, 0.0, [-3.0,3.0], [-3.0,3.0], [1.0,3.0]),
+            Drone("SQ02s", [1.5, 1.5, 1.5],  3.0, 0.0, [-3.0,3.0], [-3.0,3.0], [1.0,3.0])
             ]
 
 
@@ -37,9 +38,11 @@ for i in range(len(all_drones)):
     traj=getTrefoil(t, drone_i.offset, drone_i.slower, drone_i.lim_x, drone_i.lim_y, drone_i.lim_z)
     print traj
     f = open(pwd_package+"/obstacles/"+drone_i.name+".yaml", "w")
+    f.write("# DO NOT EDIT. RUN THE PYTHON FILE INSTEAD TO GENERATE THIS .yaml FILE \n")
     f.write("traj_x: "+str(traj[0])+"\n")
     f.write("traj_y: "+str(traj[1])+"\n")
     f.write("traj_z: "+str(traj[2])+"\n")
+    f.write("bbox: "+str(drone_i.bbox)+"\n")
     f.close()
 
 # import matplotlib.pyplot as plt

@@ -29,7 +29,7 @@ Panels:
     Experimental: false
     Name: Time
     SyncMode: 0
-    SyncSource: DepthImage
+    SyncSource: ""
   - Class: rviz/Displays
     Help Height: 0
     Name: Displays
@@ -72,16 +72,6 @@ Visualization Manager:
         All Enabled: false
         SQ01s:
           Value: true
-        SQ01s/camera:
-          Value: true
-        camera1:
-          Value: true
-        obs_4000:
-          Value: true
-        obs_4001:
-          Value: true
-        vicon:
-          Value: true
         world:
           Value: true
       Marker Scale: 2
@@ -91,16 +81,8 @@ Visualization Manager:
       Show Names: true
       Tree:
         world:
-          obs_4000:
+          SQ01s:
             {}
-          obs_4001:
-            {}
-          vicon:
-            SQ01s:
-              SQ01s/camera:
-                {}
-              camera1:
-                {}
       Update Interval: 0
       Value: true
     - Alpha: 1
@@ -217,7 +199,7 @@ Visualization Manager:
       Marker Topic: /SQ01s/mader/fov
       Name: FOV
       Namespaces:
-        marker_fov: true
+        {}
       Queue Size: 100
       Value: true
     - Class: rviz/MarkerArray
@@ -225,7 +207,7 @@ Visualization Manager:
       Marker Topic: /obstacles_mesh
       Name: Obstacles
       Namespaces:
-        mesh: true
+        {}
       Queue Size: 100
       Value: true
     - Class: rviz/MarkerArray
@@ -233,10 +215,7 @@ Visualization Manager:
       Marker Topic: /SQ01s/tracker_predictor_node/marker_predicted_traj
       Name: Predictions
       Namespaces:
-        predicted_traj_0: true
-        predicted_traj_1: true
-        predicted_traj_2: true
-        predicted_traj_3: true
+        {}
       Queue Size: 100
       Value: true
     - Class: rviz/MarkerArray
@@ -244,7 +223,7 @@ Visualization Manager:
       Marker Topic: /SQ01s/tracker_predictor_node/marker_bbox_obstacles
       Name: bbox_obstacles_predictor
       Namespaces:
-        predictor: true
+        {}
       Queue Size: 100
       Value: true
     - Class: rviz/Image
@@ -340,7 +319,7 @@ Visualization Manager:
       Marker Topic: /SQ01s/mader/obstacles
       Name: CvxPolyObstacles
       Namespaces:
-        markertacles: true
+        {}
       Queue Size: 100
       Value: true
     - Align Bottom: false
@@ -390,7 +369,7 @@ Visualization Manager:
       Marker Topic: /SQ01s/mader/traj_safe_colored
       Name: Safe_Color
       Namespaces:
-        SQ01s: true
+        {}
       Queue Size: 100
       Value: true
     - Class: rviz/MarkerArray
@@ -582,7 +561,7 @@ Visualization Manager:
       Marker Topic: /SQ01s/mader/actual_traj
       Name: ActTraj
       Namespaces:
-        ActualTraj_SQ01s: true
+        {}
       Queue Size: 100
       Value: true
     - Class: rviz/Marker
@@ -986,6 +965,7 @@ Visualization Manager:
       Unreliable: false
       Value: false
       Visibility:
+        "": true
         ActTraj: true
         CameraPub: true
         Console: true
@@ -1014,6 +994,14 @@ Visualization Manager:
         Value: true
         bbox_obstacles_predictor: true
       Zoom Factor: 1
+    - Class: rviz/Marker
+      Enabled: true
+      Marker Topic: /SQ01s/obstacle_mesh
+      Name: Marker
+      Namespaces:
+        mesh: true
+      Queue Size: 100
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 46; 52; 54
@@ -1042,7 +1030,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/ThirdPersonFollower
-      Distance: 31.351442337036133
+      Distance: 17.22612953186035
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -1057,10 +1045,10 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.7047978043556213
+      Pitch: 0.4497981071472168
       Target Frame: <Fixed Frame>
       Value: ThirdPersonFollower (rviz)
-      Yaw: 3.1899828910827637
+      Yaw: 1.4399915933609009
     Saved: ~
 Window Geometry:
   Camera:
