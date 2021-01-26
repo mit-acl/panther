@@ -2,7 +2,7 @@
 	<arg name="quad" default="SQ01s"/>
 
     <node ns="$(arg quad)" name="obstacle" pkg="mader" type="obstacle.py" output="screen" clear_params="true">
-        <rosparam file="$(find mader)/param/$(arg quad).yaml" command="load"/>
+        <rosparam file="$(find mader)/obstacles/$(arg quad).yaml" command="load"/>
     </node>
 
     <node ns="$(arg quad)" name="commands" pkg="mader" type="commands.py" output="screen"/>

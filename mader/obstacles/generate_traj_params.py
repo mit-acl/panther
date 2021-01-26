@@ -36,7 +36,7 @@ for i in range(len(all_drones)):
     drone_i=all_drones[i];
     traj=getTrefoil(t, drone_i.offset, drone_i.slower, drone_i.lim_x, drone_i.lim_y, drone_i.lim_z)
     print traj
-    f = open(pwd_package+"/param/"+drone_i.name+".yaml", "w")
+    f = open(pwd_package+"/obstacles/"+drone_i.name+".yaml", "w")
     f.write("traj_x: "+str(traj[0])+"\n")
     f.write("traj_y: "+str(traj[1])+"\n")
     f.write("traj_z: "+str(traj[2])+"\n")
