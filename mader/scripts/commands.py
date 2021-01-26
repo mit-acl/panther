@@ -88,7 +88,7 @@ class Mader_Commands:
         ######## Commented for simulations
         while(  abs(self.pose.position.z-self.alt_taken_off)>0.2  ):  
             goal.p.z = min(goal.p.z+0.0035, self.alt_taken_off);
-            #rospy.sleep(0.004) 
+            rospy.sleep(0.004) 
             rospy.loginfo_throttle(0.5, "Taking off..., error={}".format(self.pose.position.z-self.alt_taken_off) )
             self.sendGoal(goal)
         ######## 
@@ -116,15 +116,17 @@ class Mader_Commands:
         self.kill()
 
     def kill(self):
+        self.whoplans.value=self.whoplans.OTHER
+        self.sendWhoPlans()
         goal=Goal();
         goal.p.x = self.pose.position.x;
         goal.p.y = self.pose.position.y;
         goal.p.z = self.pose.position.z;
         goal.yaw = quat2yaw(self.pose.orientation)
-        goal.power=False #Turn off the motors
-        self.sendGoal(goal)
-        self.whoplans.value=self.whoplans.OTHER
-        self.sendWhoPlans()
+        goal.power=False #Turn off the motors 
+        self.sendGoal(goal) #TODO: due to race conditions, publishing whoplans.OTHER and then goal.power=False does NOT guarantee that the external planner doesn't publish a goal with power=true
+                            #The easy workaround is to click several times in the 'kill' button of the GUI
+
 
     def sendGoal(self, goal):
         # goal.yaw = quat2yaw(self.pose.orientation)
