@@ -308,7 +308,7 @@ for j=1:sp.num_seg
 %       %End of one possible version
       %%%%%%%%%%%%%%%%%%%
       
-      %FOV version 2: (the four planes of the FOV + sigmoid to smooth)
+      %FOV version 2: (the four planes of the FOV (i.e. a pyramid) + sigmoid to smooth)
       %See also Mathematica notebook
       gamma=30;
       tthx=tan(thetax_half_FOV_rad);

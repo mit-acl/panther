@@ -25,7 +25,7 @@ bool SolverIpopt::generateAStarGuess()
   d_guess_.clear();
   planes_.clear();
 
-  generateStraightLineGuess();  // If A* doesn't succeed --> use straight lineGuess
+  // generateStraightLineGuess();
   /*  generateRandomN(n_guess_);
     generateRandomD(d_guess_);
     generateRandomQ(qp_guess_);*/
@@ -55,14 +55,14 @@ bool SolverIpopt::generateAStarGuess()
   std::vector<Eigen::Vector3d> n;
   std::vector<double> d;
   log_ptr_->tim_guess_pos.tic();
-  bool is_feasible = octopusSolver_ptr_->run(q, n, d);
+  bool success = octopusSolver_ptr_->run(q, n, d);
   log_ptr_->tim_guess_pos.toc();
 
   // num_of_LPs_run_ = octopusSolver_ptr_->getNumOfLPsRun();
 
   // fillPlanesFromNDQ(n_guess_, d_guess_, qp_guess_);
 
-  if (is_feasible)
+  if (success)
   {
     log_ptr_->success_guess_pos = true;
     ROS_INFO_STREAM("[NL] A* found a feasible solution!");
@@ -112,8 +112,6 @@ bool SolverIpopt::generateAStarGuess()
   else
   {
     log_ptr_->success_guess_pos = false;
-
-    ROS_ERROR_STREAM("[NL] A* didn't find a feasible solution, using straight line guess");
     return false;
   }
 }

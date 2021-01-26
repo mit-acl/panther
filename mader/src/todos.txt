@@ -7,11 +7,10 @@ En este repo:
 	Predict the uncertainty and apply it to the polyhedra
 	Check isInFOV_smooth in main (pyramid)
 	mu and kappa delta_t for initial guess?
-	WHen using the cost (\phi-phi_tf)^2, include that on the yaw graph search?
+	WHen using the cost (\phi-phi_tf)^2, include that on the yaw graph search (and in its heuristics)?
 	
 
 	Check the partial derivatives of velocity of the obstacle in the cost function is right
-	Uncomment smooth pyramid (instead of cone) [DONE, but it's commented out]
 	Cuidado que los assert() SOLO funcionan en debug mode, no en release mode.
 	Check if the obj function chosen is the best one
 
