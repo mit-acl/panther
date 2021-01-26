@@ -14,6 +14,7 @@
 
         <!-- Subscriptions -->
 		<remap from="~state" to="state"/>
+		<remap from="~who_plans" to="who_plans"/>
 		<remap from="~term_goal" to="term_goal" />
 		<remap from="~trajs_predicted" to="tracker_predictor_node/trajs_predicted" />
 

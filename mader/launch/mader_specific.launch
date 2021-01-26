@@ -8,7 +8,7 @@
 	<arg name="gazebo" default="true"/>
 
 	<!-- Start mader commands -->
-	<node ns="$(arg quad)" name="mader_commands" pkg="mader" type="mader_commands.py" output="screen"/>
+	<node ns="$(arg quad)" name="commands" pkg="mader" type="commands.py" output="screen"/>
 
 	<!-- Start Perfect tracker -->
 	<include file="$(find mader)/launch/perfect_tracker_and_sim.launch">
