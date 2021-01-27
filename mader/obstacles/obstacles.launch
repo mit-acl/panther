@@ -1,0 +1,46 @@
+<launch>
+<!-- <arg name="quad" default="SQ01s"/> -->
+
+	 <include file="$(find mader)/obstacles/obstacle.launch">
+	      <arg name="quad" value="SQ01s"/>
+	  </include> 
+
+	 <include file="$(find mader)/obstacles/obstacle.launch">
+	      <arg name="quad" value="SQ02s"/>
+	  </include> 
+
+	 <include file="$(find mader)/obstacles/obstacle.launch">
+	      <arg name="quad" value="SQ03s"/>
+	  </include> 
+
+	 <include file="$(find mader)/obstacles/obstacle.launch">
+	      <arg name="quad" value="SQ04s"/>
+	  </include> 
+
+	 <include file="$(find snap_sim)/launch/sim.launch">
+	      <arg name="veh" value="SQ"/>
+	      <arg name="num" value="01"/>
+	  </include> 
+
+	 <include file="$(find snap_sim)/launch/sim.launch">
+	      <arg name="veh" value="SQ"/>
+	      <arg name="num" value="02"/>
+	  </include> 
+
+	 <include file="$(find snap_sim)/launch/sim.launch">
+	      <arg name="veh" value="SQ"/>
+	      <arg name="num" value="03"/>
+	  </include> 
+
+	 <include file="$(find snap_sim)/launch/sim.launch">
+	      <arg name="veh" value="SQ"/>
+	      <arg name="num" value="04"/>
+	  </include> 
+
+    <node pkg="rqt_gui" type="rqt_gui" name="rqt_gui" args="--perspective-file $(find mader)/rqt_cfgs/demo_interface.perspective"/>
+
+    <node pkg="behavior_selector" type="behavior_selector_node.py" name="behavior_selector" output="screen" />
+
+    <node pkg="rviz" type="rviz" name="rviz" args="-d $(find mader)/rviz_cfgs/mader.rviz"/>
+
+</launch>

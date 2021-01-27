@@ -7,10 +7,6 @@
 
     <node ns="$(arg quad)" name="commands" pkg="mader" type="commands.py" output="screen"/>
 
-    <node pkg="rqt_gui" type="rqt_gui" name="rqt_gui" args="--perspective-file $(find mader)/rqt_cfgs/demo_interface.perspective"/>
 
-    <node pkg="behavior_selector" type="behavior_selector_node.py" name="behavior_selector" output="screen" />
-
-    <node pkg="rviz" type="rviz" name="rviz" args="-d $(find mader)/rviz_cfgs/mader.rviz"/>
 
 </launch>
