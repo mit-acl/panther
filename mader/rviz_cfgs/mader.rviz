@@ -29,7 +29,7 @@ Panels:
     Experimental: false
     Name: Time
     SyncMode: 0
-    SyncSource: ""
+    SyncSource: DepthImage
   - Class: rviz/Displays
     Help Height: 0
     Name: Displays
@@ -72,11 +72,13 @@ Visualization Manager:
         All Enabled: false
         SQ01s:
           Value: true
-        SQ02s:
+        SQ01s/camera:
           Value: true
-        SQ03s:
+        obs_4000:
           Value: true
-        SQ04s:
+        obs_4001:
+          Value: true
+        vicon:
           Value: true
         world:
           Value: true
@@ -87,14 +89,14 @@ Visualization Manager:
       Show Names: true
       Tree:
         world:
-          SQ01s:
+          obs_4000:
             {}
-          SQ02s:
+          obs_4001:
             {}
-          SQ03s:
-            {}
-          SQ04s:
-            {}
+          vicon:
+            SQ01s:
+              SQ01s/camera:
+                {}
       Update Interval: 0
       Value: true
     - Alpha: 1
@@ -211,7 +213,7 @@ Visualization Manager:
       Marker Topic: /SQ01s/mader/fov
       Name: FOV
       Namespaces:
-        {}
+        marker_fov: true
       Queue Size: 100
       Value: true
     - Class: rviz/MarkerArray
@@ -219,7 +221,7 @@ Visualization Manager:
       Marker Topic: /obstacles_mesh
       Name: Obstacles
       Namespaces:
-        {}
+        mesh: true
       Queue Size: 100
       Value: true
     - Class: rviz/MarkerArray
@@ -978,13 +980,13 @@ Visualization Manager:
       Unreliable: false
       Value: false
       Visibility:
-        "": true
         ActTraj: true
         CameraPub: true
         Console: true
         CvxPolyObstacles: true
         DepthCloud: true
         DepthImage: true
+        DroneObs: true
         FOV: true
         G: true
         GTerm: true
@@ -1012,7 +1014,7 @@ Visualization Manager:
       Marker Topic: /SQ01s/obstacle_mesh
       Name: DroneObs
       Namespaces:
-        mesh: true
+        {}
       Queue Size: 100
       Value: true
     - Class: rviz/Marker
@@ -1020,7 +1022,7 @@ Visualization Manager:
       Marker Topic: /SQ02s/obstacle_mesh
       Name: DroneObs
       Namespaces:
-        mesh: true
+        {}
       Queue Size: 100
       Value: true
     - Class: rviz/Marker
@@ -1028,7 +1030,7 @@ Visualization Manager:
       Marker Topic: /SQ03s/obstacle_mesh
       Name: DroneObs
       Namespaces:
-        mesh: true
+        {}
       Queue Size: 100
       Value: true
     - Class: rviz/Marker
@@ -1036,7 +1038,7 @@ Visualization Manager:
       Marker Topic: /SQ04s/obstacle_mesh
       Name: DroneObs
       Namespaces:
-        mesh: true
+        {}
       Queue Size: 100
       Value: true
   Enabled: true
@@ -1074,18 +1076,18 @@ Visualization Manager:
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: -0.7024221420288086
-        Y: 0.46498584747314453
-        Z: 9.5367431640625e-6
+        X: 1.9486455917358398
+        Y: -1.5951335430145264
+        Z: 1.1444091796875e-5
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.1997983306646347
+      Pitch: 0.5647980570793152
       Target Frame: <Fixed Frame>
       Value: ThirdPersonFollower (rviz)
-      Yaw: 0.6899927854537964
+      Yaw: 3.354994773864746
     Saved: ~
 Window Geometry:
   Camera:
