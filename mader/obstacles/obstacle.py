@@ -26,7 +26,7 @@ import time
 import string
 
 
-class Mader_Commands:
+class Obstacle_Planner:
 
     def __init__(self):
  
@@ -269,13 +269,13 @@ class Mader_Commands:
 
                   
 def startNode():
-    c = Mader_Commands()
+    c = Obstacle_Planner()
     rospy.Subscriber("state", State, c.stateCB)
     rospy.Subscriber("who_plans",WhoPlans,c.whoplansCB) 
     rospy.spin()
 
 if __name__ == '__main__':
-    rospy.init_node('mader_commands')  
+    rospy.init_node('Obstacle_Planner')  
     startNode()
     print "started!" 
 

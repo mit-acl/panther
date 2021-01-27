@@ -9,6 +9,7 @@ En este repo:
 	Check isInFOV_smooth in main (pyramid)
 	mu and kappa delta_t for initial guess?
 	WHen using the cost (\phi-phi_tf)^2, include that on the yaw graph search (and in its heuristics)?
+	What happens at the end of the trajectory (weird)
 	
 
 	Check the partial derivatives of velocity of the obstacle in the cost function is right
@@ -78,6 +79,8 @@ Papers to cite in proposal/Paper:
 	Cite HSL (AS A CONDITION OF THE LICENCE, ALL USE SHOULD BE CITED AS:
 	"HSL(2013). A collection of Fortran codes for large scale scientific
 	 computation. http://www.hsl.rl.ac.uk")
+
+	https://arxiv.org/pdf/2003.05138.pdf
 
 
 En MADER:
