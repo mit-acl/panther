@@ -22,7 +22,9 @@ int main(int argc, char** argv)
 
   tracker_predictor.generatePredictedPwpForTrack(my_track);
 
-  double time = ros::Time::now().toSec();
+  double time = 0.0;  // ros::Time::now().toSec();
+
+  std::cout << " ============================= " << std::endl;
 
   for (int i = 0; i < 10; i++)
   {

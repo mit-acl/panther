@@ -2,6 +2,7 @@
 
 	<arg name="quad" default="SQ01s"/>
 	<arg name="use_gui_mission" default="true"/>
+	<arg name="perfect_prediction" default="false"/>
 	<arg name="goal_topic" default="goal"/>
 
 
@@ -10,7 +11,8 @@
 		<!-- Parameters -->
 	    <rosparam file="$(find mader)/param/mader.yaml" command="load"/>
 	    <rosparam file="$(find mader)/matlab/params_casadi.yaml" command="load"/>
-	    <param name="use_gui_mission" value="$(arg use_gui_mission)" /> <!--Names of the nodes whose ros output is going to pipe to RViz -->
+	    <param name="use_gui_mission" value="$(arg use_gui_mission)" /> 
+	    <param name="perfect_prediction" value="$(arg perfect_prediction)" /> 
 
         <!-- Subscriptions -->
 		<remap from="~state" to="state"/>
@@ -25,15 +27,15 @@
 
 	</node>
 
-	 <node ns="$(arg quad)" pkg="jsk_rviz_plugins"
+<!-- 	 <node ns="$(arg quad)" pkg="jsk_rviz_plugins"
         type="rosconsole_overlay_text.py"
         respawn="false"
         name="rosconsole_overlay_text">
 
-        <param name="nodes" value="/$(arg quad)/mader" /> <!--Names of the nodes whose ros output is going to pipe to RViz -->
-        <param name="reverse_lines" value="false" /> <!--Names of the nodes whose ros output is going to pipe to RViz -->
+        <param name="nodes" value="/$(arg quad)/mader" /> 
+        <param name="reverse_lines" value="false" /> 
 
-  </node>
+      </node> -->
 
 </launch>
 

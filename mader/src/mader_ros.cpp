@@ -149,6 +149,9 @@ MaderRos::MaderRos(ros::NodeHandle nh1, ros::NodeHandle nh2, ros::NodeHandle nh3
   safeGetParam(nh1_, "c_final_pos", par_.c_final_pos);
   safeGetParam(nh1_, "c_final_yaw", par_.c_final_yaw);
 
+  bool perfect_prediction;  // use_ground_truth_prediction
+  safeGetParam(nh1_, "perfect_prediction", perfect_prediction);
+
   if ((par_.basis != "B_SPLINE" || par_.basis != "BEZIER" || par_.basis != "MINVO") == false)
   {
     std::cout << red << bold << "Basis " << par_.basis << " not implemented yet, aborting" << reset << std::endl;
@@ -217,9 +220,23 @@ MaderRos::MaderRos(ros::NodeHandle nh1, ros::NodeHandle nh2, ros::NodeHandle nh3
   sub_term_goal_ = nh1_.subscribe("term_goal", 1, &MaderRos::terminalGoalCB, this);
   sub_whoplans_ = nh1_.subscribe("who_plans", 1, &MaderRos::whoPlansCB, this);
   sub_state_ = nh1_.subscribe("state", 1, &MaderRos::stateCB, this);
-  sub_traj_ = nh1_.subscribe("/trajs", 20, &MaderRos::trajCB, this);  // The number is the queue size
-  // sub_traj_ = nh1_.subscribe("trajs_predicted", 20, &MaderRos::trajCB,
-  //                            this);  // The number is the queue size
+
+  ///
+  if (perfect_prediction == false)
+  {
+    sub_traj_ = nh1_.subscribe("trajs_predicted", 20, &MaderRos::trajCB, this);  // number is queue size
+
+    // obstacles --> topic trajs_predicted
+    // agents -->  //TODO: how to solve the common frame problem?
+  }
+  else
+  {
+    sub_traj_ = nh1_.subscribe("/trajs", 20, &MaderRos::trajCB, this);  // The number is the queue size
+    // obstacles --> topic /trajs
+    // agents --> topic /trajs
+    // Everything in the same world frame
+  }
+  //
 
   // Timers
   pubCBTimer_ = nh2_.createTimer(ros::Duration(par_.dc), &MaderRos::pubCB, this);
@@ -253,7 +270,8 @@ MaderRos::MaderRos(ros::NodeHandle nh1, ros::NodeHandle nh2, ros::NodeHandle nh3
   bool use_gui_mission;
   safeGetParam(nh1_, "use_gui_mission", use_gui_mission);
 
-  std::cout << yellow << bold << "use_gui_mission" << use_gui_mission << reset << std::endl;
+  std::cout << yellow << bold << "use_gui_mission= " << use_gui_mission << reset << std::endl;
+  std::cout << yellow << bold << "perfect_prediction= " << perfect_prediction << reset << std::endl;
   ////// to avoid having to click on the GUI (TODO)
   if (use_gui_mission == false)
   {

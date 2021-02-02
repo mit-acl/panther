@@ -178,7 +178,7 @@ public:
     std::cout << "Predictions: " << std::endl;
     for (double t = last_time; t < (last_time + seconds); t = t + delta)
     {
-      std::cout << "    t_to_the_future=" << t - last_time << " = " << pwp.eval(t).transpose() << std::endl;
+      std::cout << "    t_to_the_future=" << t - last_time << " = " << pwp_mean.eval(t).transpose() << std::endl;
     }
   }
 
@@ -192,7 +192,8 @@ public:
     }
   }
 
-  mt::PieceWisePol pwp;
+  mt::PieceWisePol pwp_mean;
+  mt::PieceWisePol pwp_var;
 
   unsigned int num_frames_skipped = 0;
   Eigen::Vector3d color;
@@ -230,11 +231,11 @@ private:
 
   std::vector<tp::track> all_tracks_;
 
-  std::vector<casadi::Function> cfs_kkt_Ab_;
-  casadi::Function cf_coeff_predicted_;
+  casadi::Function cf_get_mean_variance_pred_;
 
   int num_seg_prediction_;  // Comes from Matlab
 
+  double z_ground_;
   int size_sliding_window_;            // TODO (as a param)
   double meters_to_create_new_track_;  // TODO (as a param)
   int max_frames_skipped_;

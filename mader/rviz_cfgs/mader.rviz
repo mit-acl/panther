@@ -5,8 +5,6 @@ Panels:
     Property Tree Widget:
       Expanded:
         - /Global Options1
-        - /PolySafe1
-        - /PolyWhole1
         - /Predictions1
         - /CvxPolyObstacles1
         - /CameraPub1
@@ -31,7 +29,7 @@ Panels:
     Experimental: false
     Name: Time
     SyncMode: 0
-    SyncSource: ""
+    SyncSource: DepthImage
   - Class: rviz/Displays
     Help Height: 0
     Name: Displays
@@ -76,7 +74,9 @@ Visualization Manager:
           Value: true
         SQ01s/camera:
           Value: true
-        SQ01s/trans:
+        obs_4000:
+          Value: true
+        obs_4001:
           Value: true
         vicon:
           Value: true
@@ -89,11 +89,14 @@ Visualization Manager:
       Show Names: true
       Tree:
         world:
+          obs_4000:
+            {}
+          obs_4001:
+            {}
           vicon:
-            SQ01s/trans:
-              SQ01s:
-                SQ01s/camera:
-                  {}
+            SQ01s:
+              SQ01s/camera:
+                {}
       Update Interval: 0
       Value: true
     - Alpha: 1
@@ -223,7 +226,7 @@ Visualization Manager:
       Marker Topic: /SQ01s/mader/fov
       Name: FOV
       Namespaces:
-        {}
+        marker_fov: true
       Queue Size: 100
       Value: true
     - Class: rviz/MarkerArray
@@ -231,7 +234,7 @@ Visualization Manager:
       Marker Topic: /obstacles_mesh
       Name: Obstacles
       Namespaces:
-        {}
+        mesh: true
       Queue Size: 100
       Value: true
     - Class: rviz/MarkerArray
@@ -239,7 +242,115 @@ Visualization Manager:
       Marker Topic: /SQ01s/tracker_predictor_node/marker_predicted_traj
       Name: Predictions
       Namespaces:
-        {}
+        predicted_traj_0: true
+        predicted_traj_1: true
+        predicted_traj_10: true
+        predicted_traj_100: true
+        predicted_traj_101: true
+        predicted_traj_102: true
+        predicted_traj_103: true
+        predicted_traj_104: true
+        predicted_traj_105: true
+        predicted_traj_106: true
+        predicted_traj_107: true
+        predicted_traj_108: true
+        predicted_traj_11: true
+        predicted_traj_12: true
+        predicted_traj_13: true
+        predicted_traj_14: true
+        predicted_traj_15: true
+        predicted_traj_16: true
+        predicted_traj_17: true
+        predicted_traj_18: true
+        predicted_traj_19: true
+        predicted_traj_2: true
+        predicted_traj_20: true
+        predicted_traj_21: true
+        predicted_traj_22: true
+        predicted_traj_23: true
+        predicted_traj_24: true
+        predicted_traj_25: true
+        predicted_traj_26: true
+        predicted_traj_27: true
+        predicted_traj_28: true
+        predicted_traj_29: true
+        predicted_traj_3: true
+        predicted_traj_30: true
+        predicted_traj_31: true
+        predicted_traj_32: true
+        predicted_traj_33: true
+        predicted_traj_34: true
+        predicted_traj_35: true
+        predicted_traj_36: true
+        predicted_traj_37: true
+        predicted_traj_38: true
+        predicted_traj_39: true
+        predicted_traj_4: true
+        predicted_traj_40: true
+        predicted_traj_41: true
+        predicted_traj_42: true
+        predicted_traj_43: true
+        predicted_traj_44: true
+        predicted_traj_45: true
+        predicted_traj_46: true
+        predicted_traj_47: true
+        predicted_traj_48: true
+        predicted_traj_49: true
+        predicted_traj_5: true
+        predicted_traj_50: true
+        predicted_traj_51: true
+        predicted_traj_52: true
+        predicted_traj_53: true
+        predicted_traj_54: true
+        predicted_traj_55: true
+        predicted_traj_56: true
+        predicted_traj_57: true
+        predicted_traj_58: true
+        predicted_traj_59: true
+        predicted_traj_6: true
+        predicted_traj_60: true
+        predicted_traj_61: true
+        predicted_traj_62: true
+        predicted_traj_63: true
+        predicted_traj_64: true
+        predicted_traj_65: true
+        predicted_traj_66: true
+        predicted_traj_67: true
+        predicted_traj_68: true
+        predicted_traj_69: true
+        predicted_traj_7: true
+        predicted_traj_70: true
+        predicted_traj_71: true
+        predicted_traj_72: true
+        predicted_traj_73: true
+        predicted_traj_74: true
+        predicted_traj_75: true
+        predicted_traj_76: true
+        predicted_traj_77: true
+        predicted_traj_78: true
+        predicted_traj_79: true
+        predicted_traj_8: true
+        predicted_traj_80: true
+        predicted_traj_81: true
+        predicted_traj_82: true
+        predicted_traj_83: true
+        predicted_traj_84: true
+        predicted_traj_85: true
+        predicted_traj_86: true
+        predicted_traj_87: true
+        predicted_traj_88: true
+        predicted_traj_89: true
+        predicted_traj_9: true
+        predicted_traj_90: true
+        predicted_traj_91: true
+        predicted_traj_92: true
+        predicted_traj_93: true
+        predicted_traj_94: true
+        predicted_traj_95: true
+        predicted_traj_96: true
+        predicted_traj_97: true
+        predicted_traj_98: true
+        predicted_traj_99: true
       Queue Size: 100
       Value: true
     - Class: rviz/MarkerArray
@@ -247,7 +358,7 @@ Visualization Manager:
       Marker Topic: /SQ01s/tracker_predictor_node/marker_bbox_obstacles
       Name: bbox_obstacles_predictor
       Namespaces:
-        {}
+        predictor: true
       Queue Size: 100
       Value: true
     - Class: rviz/Image
@@ -318,14 +429,14 @@ Visualization Manager:
       Max Intensity: -0.5
       Min Color: 0; 0; 0
       Min Intensity: -6.699999809265137
-      Name: OccGrid
+      Name: PCloudFiltered
       Position Transformer: XYZ
       Queue Size: 10
       Selectable: true
       Size (Pixels): 3
       Size (m): 0.10000000149011612
       Style: Boxes
-      Topic: /JA01/global_mapper_ros/occupancy_grid
+      Topic: /SQ01s/tracker_predictor_node/pcloud_filtered
       Unreliable: false
       Use Fixed Frame: true
       Use rainbow: true
@@ -343,7 +454,7 @@ Visualization Manager:
       Marker Topic: /SQ01s/mader/obstacles
       Name: CvxPolyObstacles
       Namespaces:
-        {}
+        markertacles: true
       Queue Size: 100
       Value: true
     - Align Bottom: false
@@ -393,7 +504,7 @@ Visualization Manager:
       Marker Topic: /SQ01s/mader/traj_safe_colored
       Name: Safe_Color
       Namespaces:
-        {}
+        SQ01s: true
       Queue Size: 100
       Value: true
     - Class: rviz/MarkerArray
@@ -585,7 +696,7 @@ Visualization Manager:
       Marker Topic: /SQ01s/mader/actual_traj
       Name: ActTraj
       Namespaces:
-        {}
+        ActualTraj_SQ01s: true
       Queue Size: 100
       Value: true
     - Class: rviz/Marker
@@ -936,9 +1047,9 @@ Visualization Manager:
         Light: true
         Marker: true
         Obstacles: true
-        OccGrid: true
         OpsProblemRun: true
         PCFiltered: true
+        PCloudFiltered: true
         Planes: true
         PolySafe: true
         PolyWhole: true
@@ -1011,6 +1122,7 @@ Visualization Manager:
         PCFiltered: true
         Planes: true
         PolySafe: true
+        PolyWhole: true
         Predictions: true
         RealTrajectory: true
         Safe_Color: true
@@ -1080,25 +1192,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/ThirdPersonFollower
-      Distance: 15.546382904052734
+      Distance: 27.45043182373047
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 9.122418403625488
-        Y: 14.020979881286621
-        Z: 8.401558261539321e-6
+        X: 1.6535534858703613
+        Y: 2.0520832538604736
+        Z: 5.540535312320571e-6
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.1497976779937744
+      Pitch: 0.9697967767715454
       Target Frame: <Fixed Frame>
       Value: ThirdPersonFollower (rviz)
-      Yaw: 3.699988842010498
+      Yaw: 2.664976119995117
     Saved: ~
 Window Geometry:
   Camera:

@@ -59,9 +59,9 @@ void CPs2TrajAndPwp_cleaner(std::vector<Eigen::Vector3d> &qp, std::vector<double
     Eigen::Matrix<double, 4, 1> cps_y = (qp_matrix.block(1, j, 1, 4).transpose());
     Eigen::Matrix<double, 4, 1> cps_z = (qp_matrix.block(2, j, 1, 4).transpose());
 
-    pwp_p.coeff_x.push_back((M * cps_x).reverse());  // at^3 + bt^2 + ct + d --> [a b c d]'
-    pwp_p.coeff_y.push_back((M * cps_y).reverse());  // at^3 + bt^2 + ct + d --> [a b c d]'
-    pwp_p.coeff_z.push_back((M * cps_z).reverse());  // at^3 + bt^2 + ct + d --> [a b c d]'
+    pwp_p.all_coeff_x.push_back((M * cps_x).reverse());  // at^3 + bt^2 + ct + d --> [a b c d]'
+    pwp_p.all_coeff_y.push_back((M * cps_y).reverse());  // at^3 + bt^2 + ct + d --> [a b c d]'
+    pwp_p.all_coeff_z.push_back((M * cps_z).reverse());  // at^3 + bt^2 + ct + d --> [a b c d]'
   }
 
   /////////////////////////////////////////////////////////////////////
@@ -172,9 +172,9 @@ void CPs2TrajAndPwp(std::vector<Eigen::Vector3d> &q, std::vector<mt::state> &tra
     Eigen::Matrix<double, 4, 1> cps_y = (control_points.block(1, j, 1, 4).transpose());
     Eigen::Matrix<double, 4, 1> cps_z = (control_points.block(2, j, 1, 4).transpose());
 
-    pwp.coeff_x.push_back((M * cps_x).reverse());  // at^3 + bt^2 + ct + d --> [a b c d]'
-    pwp.coeff_y.push_back((M * cps_y).reverse());  // at^3 + bt^2 + ct + d --> [a b c d]'
-    pwp.coeff_z.push_back((M * cps_z).reverse());  // at^3 + bt^2 + ct + d --> [a b c d]'
+    pwp.all_coeff_x.push_back((M * cps_x).reverse());  // at^3 + bt^2 + ct + d --> [a b c d]'
+    pwp.all_coeff_y.push_back((M * cps_y).reverse());  // at^3 + bt^2 + ct + d --> [a b c d]'
+    pwp.all_coeff_z.push_back((M * cps_z).reverse());  // at^3 + bt^2 + ct + d --> [a b c d]'
   }
 
   // std::cout << "polynomials in pwp=" << pwp.coeff_x.size() << std::endl;

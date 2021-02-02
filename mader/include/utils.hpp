@@ -21,7 +21,7 @@
 #include <deque>
 
 #include <mader_msgs/PieceWisePolTraj.h>
-#include <mader_msgs/CoeffPoly3.h>
+#include <mader_msgs/CoeffPoly.h>
 #include <mader_msgs/Log.h>
 
 #include "ros/ros.h"

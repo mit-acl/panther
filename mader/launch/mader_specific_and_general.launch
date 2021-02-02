@@ -2,6 +2,7 @@
 
 	<arg name="quad" default="SQ01s"/>
   <arg name="use_gui_mission" default="false"/>
+  <arg name="perfect_prediction" default="false"/>
   <arg name="perfect_tracker" default="true"/>
   <arg name="gazebo" default="true"/>
   <arg name="rviz" default="true"/>
@@ -10,6 +11,7 @@
  <include file="$(find mader)/launch/mader_specific.launch" >
       <arg name="quad" value="$(arg quad)"/>
       <arg name="perfect_tracker" value="$(arg perfect_tracker)"/>
+      <arg name="perfect_prediction" value="$(arg perfect_prediction)"/>
       <arg name="gazebo" default="$(arg gazebo)"/>
   </include> 
  

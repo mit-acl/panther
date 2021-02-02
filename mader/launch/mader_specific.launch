@@ -5,10 +5,17 @@
 	<arg name="z" default="0.0" />
 	<arg name="yaw" default="0.0" />
 	<arg name="perfect_tracker" default="true"/>
+    <arg name="perfect_prediction" default="false"/>
 	<arg name="gazebo" default="true"/>
 
 	<!-- Start mader commands -->
 	<node ns="$(arg quad)" name="commands" pkg="mader_other" type="commands.py" output="screen"/>
+
+	<group unless="$(arg perfect_prediction)">
+		<include file="$(find mader)/launch/tracker_predictor.launch">
+	  		<arg name="quad" value="$(arg quad)"/>
+	 	 </include> 
+	</group>
 
 	<!-- Start Perfect tracker -->
 	<include file="$(find mader)/launch/perfect_tracker_and_sim.launch">

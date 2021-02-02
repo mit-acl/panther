@@ -214,8 +214,8 @@ std::vector<Eigen::Vector3d> Mader::vertexesOfInterval(mt::PieceWisePol& pwp, do
   int index_first_interval = low - pwp.times.begin() - 1;  // index of the interval [1,2]
   int index_last_interval = up - pwp.times.begin() - 1;    // index of the interval [5,6]
 
-  saturate(index_first_interval, 0, (int)(pwp.coeff_x.size() - 1));
-  saturate(index_last_interval, 0, (int)(pwp.coeff_x.size() - 1));
+  saturate(index_first_interval, 0, (int)(pwp.all_coeff_x.size() - 1));
+  saturate(index_last_interval, 0, (int)(pwp.all_coeff_x.size() - 1));
 
   Eigen::Matrix<double, 3, 4> P;
   Eigen::Matrix<double, 3, 4> V;
@@ -223,9 +223,9 @@ std::vector<Eigen::Vector3d> Mader::vertexesOfInterval(mt::PieceWisePol& pwp, do
   // push all the complete intervals
   for (int i = index_first_interval; i <= index_last_interval; i++)
   {
-    P.row(0) = pwp.coeff_x[i];
-    P.row(1) = pwp.coeff_y[i];
-    P.row(2) = pwp.coeff_z[i];
+    P.row(0) = pwp.all_coeff_x[i];
+    P.row(1) = pwp.all_coeff_y[i];
+    P.row(2) = pwp.all_coeff_z[i];
 
     V = P * A_rest_pos_basis_inverse_;
 

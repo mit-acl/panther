@@ -21,7 +21,7 @@
 #include <snapstack_msgs/State.h>
 #include <mader_msgs/DynTraj.h>
 #include <mader_msgs/mt::PieceWisePolTraj.h>
-#include <mader_msgs/CoeffPoly3.h>
+#include <mader_msgs/CoeffPoly.h>
 
 using namespace termcolor;
 

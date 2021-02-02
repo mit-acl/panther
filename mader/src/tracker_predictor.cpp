@@ -62,7 +62,7 @@ using namespace termcolor;
 
 TrackerPredictor::TrackerPredictor(ros::NodeHandle nh) : nh_(nh)
 {
-  safeGetParam(nh_, "num_seg_prediction", num_seg_prediction_);
+  safeGetParam(nh_, "z_ground", z_ground_);
   safeGetParam(nh_, "size_sliding_window", size_sliding_window_);
   safeGetParam(nh_, "meters_to_create_new_track", meters_to_create_new_track_);
   safeGetParam(nh_, "max_frames_skipped", max_frames_skipped_);
@@ -71,16 +71,8 @@ TrackerPredictor::TrackerPredictor(ros::NodeHandle nh) : nh_(nh)
   safeGetParam(nh_, "max_cluster_size", max_cluster_size_);
   safeGetParam(nh_, "leaf_size_filter", leaf_size_filter_);
 
-  for (int j = 0; j < num_seg_prediction_; j++)
-  {
-    std::cout << "j= " << j << std::endl;
-    cfs_kkt_Ab_.push_back(casadi::Function::load(ros::package::getPath("mader") + "/matlab/predictor_kkt_Ab_" +
-                                                 std::to_string(j + 1) + ".casadi"));  // j+1 because Matlab uses
-                                                                                       // 1-indexing
-  }
-
-  cf_coeff_predicted_ = casadi::Function::load(ros::package::getPath("mader") + "/matlab/predictor_coeff_"
-                                                                                "predicted.casadi");
+  cf_get_mean_variance_pred_ = casadi::Function::load(ros::package::getPath("mader") + "/matlab/"
+                                                                                       "get_mean_variance_pred.casadi");
 
   tf_listener_ptr_ = std::unique_ptr<tf2_ros::TransformListener>(
       new tf2_ros::TransformListener(tf_buffer_));  // needed (although tf_listener_ptr_ is not used explicitly)
@@ -96,7 +88,9 @@ TrackerPredictor::TrackerPredictor(ros::NodeHandle nh) : nh_(nh)
 
 double TrackerPredictor::getCostRowColum(tp::cluster& a, tp::track& b, double time)
 {
-  return (a.centroid - b.pwp.eval(time)).norm();
+  double result = (a.centroid - b.pwp_mean.eval(time)).norm();
+  // std::cout << "getCostRowColum= " << result << std::endl;
+  return result;
 }
 
 void TrackerPredictor::addNewTrack(const tp::cluster& c)
@@ -127,6 +121,7 @@ void TrackerPredictor::addNewTrack(const tp::cluster& c)
 void TrackerPredictor::cloud_cb(const sensor_msgs::PointCloud2ConstPtr& pcl2ptr_msg)
 {
   // log_ = {};
+  // std::cout << "-------------------------------" << std::endl;
   log_.tim_total_tp.tic();
   ///////////////////////////
   ///////////////////////////
@@ -144,13 +139,11 @@ void TrackerPredictor::cloud_cb(const sensor_msgs::PointCloud2ConstPtr& pcl2ptr_
                                    }),
                     all_tracks_.end());
 
-  std::cout << "Removed " << tracks_removed << " tracks because too many frames skipped" << std::endl;
+  // std::cout << "Removed " << tracks_removed << " tracks because too many frames skipped" << std::endl;
 
   ///////////////////////////
   ///////////////////////////
   ///////////////////////////
-
-  std::cout << "-------------------------------" << std::endl;
 
   pcl::PointCloud<pcl::PointXYZ>::Ptr input_cloud1(new pcl::PointCloud<pcl::PointXYZ>);
   pcl::PointCloud<pcl::PointXYZ>::Ptr input_cloud2(new pcl::PointCloud<pcl::PointXYZ>);
@@ -195,7 +188,7 @@ void TrackerPredictor::cloud_cb(const sensor_msgs::PointCloud2ConstPtr& pcl2ptr_
   pcl::PassThrough<pcl::PointXYZ> pass;
   pass.setInputCloud(input_cloud3);
   pass.setFilterFieldName("z");
-  pass.setFilterLimits(0.2, 1e6);  // TODO: use z_ground
+  pass.setFilterLimits(z_ground_, 1e6);  // TODO: use z_ground
   pass.filter(*input_cloud4);
   log_.tim_passthrough.toc();
 
@@ -251,7 +244,7 @@ void TrackerPredictor::cloud_cb(const sensor_msgs::PointCloud2ConstPtr& pcl2ptr_
     return;
   }
 
-  std::cout << "input_cloud->points.size()= " << input_cloud->points.size() << std::endl;
+  std::cout << "After filtering, input_cloud has= " << input_cloud->points.size() << " points" << std::endl;
 
   log_.tim_tree.tic();
   tree_->setInputCloud(input_cloud);
@@ -280,8 +273,8 @@ void TrackerPredictor::cloud_cb(const sensor_msgs::PointCloud2ConstPtr& pcl2ptr_
   log_.tim_bbox.tic();
   for (std::vector<pcl::PointIndices>::const_iterator it = cluster_indices.begin(); it != cluster_indices.end(); ++it)
   {
-    std::cout << "--- New cluster" << std::endl;
-    std::cout << " " << std::endl;
+    // std::cout << "--- New cluster" << std::endl;
+    // std::cout << " " << std::endl;
 
     ///////////////////////
     // Compute bounding box
@@ -451,7 +444,7 @@ void TrackerPredictor::cloud_cb(const sensor_msgs::PointCloud2ConstPtr& pcl2ptr_
                                    (max_z + min_z) / 2.0);  // This is the centroid of the bbox, not the
                                                             // centroid of the point cloud
 
-    std::cout << red << "tmp.centroid= " << tmp.centroid.transpose() << reset << std::endl;
+    // std::cout << red << "tmp.centroid= " << tmp.centroid.transpose() << reset << std::endl;
 
     tmp.time = time_pcloud;
 
@@ -467,8 +460,8 @@ void TrackerPredictor::cloud_cb(const sensor_msgs::PointCloud2ConstPtr& pcl2ptr_
 
   // Compute costs for each of the clusters detected
   // std::cout << "Computing costs for each of the clusters detected" << std::endl;
-  std::cout << "Num of clusters detected= " << clusters.size() << std::endl;
-  std::cout << "Num of current tracks   = " << all_tracks_.size() << std::endl;
+  // std::cout << "Num of clusters detected= " << clusters.size() << std::endl;
+  // std::cout << "Num of current tracks   = " << all_tracks_.size() << std::endl;
   for (unsigned int i = 0; i < clusters.size(); i++)
   {
     double min_cost = std::numeric_limits<double>::max();
@@ -477,7 +470,7 @@ void TrackerPredictor::cloud_cb(const sensor_msgs::PointCloud2ConstPtr& pcl2ptr_
       min_cost = std::min(min_cost, getCostRowColum(clusters[i], track_j, time_pcloud));
     }
 
-    std::cout << "min_cost= " << min_cost << std::endl;
+    // std::cout << "min_cost= " << min_cost << std::endl;
 
     if (min_cost > meters_to_create_new_track_)
     {
@@ -502,8 +495,9 @@ void TrackerPredictor::cloud_cb(const sensor_msgs::PointCloud2ConstPtr& pcl2ptr_
 
   if (clusters.size() > 0)
   {
-    std::cout << "Going to run Hungarian Algorith" << std::endl;
+    std::cout << "Running Hungarian Algorith" << std::endl;
 
+    // std::cout << "Creating the cost matrix!" << std::endl;
     // Create the cost matrix
     std::vector<std::vector<double>> costMatrix;
 
@@ -521,21 +515,22 @@ void TrackerPredictor::cloud_cb(const sensor_msgs::PointCloud2ConstPtr& pcl2ptr_
     // Run the Hungarian Algorithm;
     HungarianAlgorithm HungAlgo;
     std::vector<int> track_assigned_to_cluster;
+    // std::cout << "Calling now!!" << std::endl;
     log_.tim_hungarian.tic();
     double cost = HungAlgo.Solve(costMatrix, track_assigned_to_cluster);
     log_.tim_hungarian.toc();
-    std::cout << "Called!" << std::endl;
+    // std::cout << "Called!" << std::endl;
 
     for (unsigned int i = 0; i < costMatrix.size(); i++)  // for each of the rows
     {
-      std::cout << i << "," << track_assigned_to_cluster[i] << "\t";
+      // std::cout << i << "," << track_assigned_to_cluster[i] << "\t";
 
       all_tracks_[track_assigned_to_cluster[i]].num_frames_skipped--;
 
       // If a cluster has been unassigned (can happen if rows>columns), then create a new track for it
       if (track_assigned_to_cluster[i] == -1)
       {
-        std::cout << "cluster " << i << " unassigned, creating new track for it" << std::endl;
+        // std::cout << "cluster " << i << " unassigned, creating new track for it" << std::endl;
         std::cout << clusters[i].centroid.transpose() << std::endl;
         addNewTrack(clusters[i]);
       }
@@ -573,7 +568,7 @@ void TrackerPredictor::cloud_cb(const sensor_msgs::PointCloud2ConstPtr& pcl2ptr_
   int j = 0;
   for (auto& track_j : all_tracks_)
   {
-    std::cout << "--" << std::endl;
+    // std::cout << "--" << std::endl;
 
     // track_j.printHistory();
     // track_j.printPrediction(3.0, 5);
@@ -582,7 +577,7 @@ void TrackerPredictor::cloud_cb(const sensor_msgs::PointCloud2ConstPtr& pcl2ptr_
 
     std::string ns = "predicted_traj_" + std::to_string(j);
     pub_marker_predicted_traj_.publish(
-        pwp2ColoredMarkerArray(track_j.pwp, time_pcloud, time_pcloud + 1.0, samples, ns, track_j.color));
+        pwp2ColoredMarkerArray(track_j.pwp_mean, time_pcloud, time_pcloud + 1.0, samples, ns, track_j.color));
 
     /////////////////// construct a DynTraj msg. //TODO: use the pwp instead (this will require modifications in the
     /// mader code, for when it's not an agent)
@@ -591,13 +586,13 @@ void TrackerPredictor::cloud_cb(const sensor_msgs::PointCloud2ConstPtr& pcl2ptr_
     dynTraj_msg.header.frame_id = "world";
     dynTraj_msg.header.stamp = ros::Time::now();
 
-    dynTraj_msg.function = pieceWisePol2String(track_j.pwp);
+    dynTraj_msg.function = pieceWisePol2String(track_j.pwp_mean);
 
     std::vector<double> tmp = eigen2std(track_j.getLatestBbox());
 
     dynTraj_msg.bbox = std::vector<float>(tmp.begin(), tmp.end());  // TODO: Here I'm using the latest Bbox. Should I
                                                                     // use the biggest one of the whole history?
-    dynTraj_msg.pos = eigen2rosvector(track_j.pwp.eval(ros::Time::now().toSec()));
+    dynTraj_msg.pos = eigen2rosvector(track_j.pwp_mean.eval(ros::Time::now().toSec()));
     dynTraj_msg.id = track_j.id_int;
     dynTraj_msg.is_agent = false;
 
@@ -658,53 +653,90 @@ void TrackerPredictor::generatePredictedPwpForTrack(tp::track& track_j)
   for (int i = 0; i < track_j.getSizeSW(); i++)
   {
     // Conversion DM <--> Eigen:  https://github.com/casadi/casadi/issues/2563
-    all_pos(0, i) = track_j.history[i].centroid.x();
-    all_pos(1, i) = track_j.history[i].centroid.y();
-    all_pos(2, i) = track_j.history[i].centroid.z();
-    all_t(0, i) = track_j.history[i].time;
+
+    Eigen::Vector3d centroid_i = track_j.getCentroidHistory(i);
+    all_pos(0, i) = centroid_i.x();
+    all_pos(1, i) = centroid_i.y();
+    all_pos(2, i) = centroid_i.z();
+    all_t(0, i) = track_j.getTimeHistory(i);
   }
 
   std::map<std::string, casadi::DM> map_arguments;
   map_arguments["all_t"] = all_t;
   map_arguments["all_pos"] = all_pos;
+
+  // std::cout << "all_pos.size()=\n " << all_pos.rows() << ", " << all_pos.columns() << std::endl;
+  // std::cout << "all_pos:\n " << all_pos << std::endl;
+  // std::cout << "all_t:\n " << all_t << std::endl;
+  // std::cout << "all_t.size()=\n " << all_t.rows() << ", " << all_t.columns() << std::endl;
+
   std::map<std::string, casadi::DM> result = cf_get_mean_variance_pred_(map_arguments);
 
   casadi::DM coeffs_mean = result["coeff_mean"];
-  casadi::DM coeff_variance = result["coeff_variance"];
+  casadi::DM coeffs_var = result["coeff_var"];
+  double secs_prediction = double(result["secs_prediction"]);
+
+  // std::cout << "RESULT: " << std::endl;
+
+  // std::cout << "coeffs_mean:\n " << coeffs_mean << std::endl;
+  // std::cout << "coeffs_var:\n " << coeffs_var << std::endl;
+  // std::cout << "secs_prediction:\n " << secs_prediction << std::endl;
 
   // std::cout << "Coeffs: " << std::endl;
   // std::cout << coeffs << std::endl;
 
   //////////////////////////
 
-  Eigen::MatrixXd coeffs_mean_old(coeffs_mean.rows(), coeffs_mean.columns());
+  ///////////////////////////////////////////////////// Fill the mean
+  Eigen::VectorXd mean_coeff_x(coeffs_mean.columns());
+  Eigen::VectorXd mean_coeff_y(coeffs_mean.columns());
+  Eigen::VectorXd mean_coeff_z(coeffs_mean.columns());
 
-  for (int i = 0; i < coeffs_mean.rows(); i++)
+  for (int i = 0; i < mean_coeff_x.size(); i++)
   {
-    for (int j = 0; j < coeffs_mean.columns(); j++)
-    {
-      coeffs_mean_old(i, j) = double(coeffs_mean(i, j));
-    }
+    mean_coeff_x(i) = double(coeffs_mean(0, i));
+    mean_coeff_y(i) = double(coeffs_mean(1, i));
+    mean_coeff_z(i) = double(coeffs_mean(2, i));
   }
-
-  // Fill pwp;
-  double prediction_seconds = 1e6;  // infty TODO
-
-  Eigen::Matrix<double, 4, 1> coeff_new_x, coeff_new_y, coeff_new_z;
-
-  rescaleCoeffPol(coeffs_mean_old.block(0, 0, 1, 4).transpose(), coeff_new_x, 0.0, prediction_seconds);
-  rescaleCoeffPol(coeff_old_y, coeff_new_y, 0.0, prediction_seconds);
-  rescaleCoeffPol(coeff_old_z, coeff_new_z, 0.0, prediction_seconds);
 
   mt::PieceWisePol pwp_mean;  // will have only one interval
   pwp_mean.times.push_back(track_j.getLatestTimeSW());
-  pwp_mean.times.push_back(track_j.getLatestTimeSW() + prediction_seconds);
+  pwp_mean.times.push_back(track_j.getLatestTimeSW() + secs_prediction);
 
-  pwp_mean.coeff_x.push_back(coeff_new_x);
-  pwp_mean.coeff_y.push_back(coeff_new_y);
-  pwp_mean.coeff_z.push_back(coeff_new_z);
+  pwp_mean.all_coeff_x.push_back(mean_coeff_x);
+  pwp_mean.all_coeff_y.push_back(mean_coeff_y);
+  pwp_mean.all_coeff_z.push_back(mean_coeff_z);
 
-  track_j.pwp = pwp;
+  track_j.pwp_mean = pwp_mean;
+
+  // std::cout << "mean_coeff_x= " << mean_coeff_x.transpose() << std::endl;
+
+  // std::cout << " -------- PWP " << std::endl;
+  // pwp_mean.print();
+  // std::cout << "Evaluation at t=" << track_j.getLatestTimeSW() << " = "
+  //           << pwp_mean.eval(track_j.getLatestTimeSW()).transpose() << std::endl;
+  // std::cout << magenta << "real= " << track_j.getLatestCentroid().transpose() << reset << std::endl;
+
+  ///////////////////////////////////////////////////// Fill the variance
+  Eigen::VectorXd var_coeff_x(coeffs_var.columns());
+  Eigen::VectorXd var_coeff_y(coeffs_var.columns());
+  Eigen::VectorXd var_coeff_z(coeffs_var.columns());
+
+  for (int i = 0; i < var_coeff_x.size(); i++)
+  {
+    var_coeff_x(i) = double(coeffs_var(0, i));
+    var_coeff_y(i) = double(coeffs_var(1, i));
+    var_coeff_z(i) = double(coeffs_var(2, i));
+  }
+
+  mt::PieceWisePol pwp_var;  // will have only one interval
+  pwp_var.times = pwp_mean.times;
+
+  pwp_var.all_coeff_x.push_back(var_coeff_x);
+  pwp_var.all_coeff_y.push_back(var_coeff_y);
+  pwp_var.all_coeff_z.push_back(var_coeff_z);
+
+  track_j.pwp_var = pwp_var;
 
   // double time_pcloud = track_j.getLatestTimeSW() - track_j.getOldestTimeSW();
   // Eigen::Vector4d T =

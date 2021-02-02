@@ -496,18 +496,36 @@ struct PieceWisePol
   std::vector<double> times;  // [t0,t1,t2,...,tn+1]
 
   // coefficients has n elements
-  // The coeffients are such that pol(t)=coeff_of_that_interval*[u^3 u^2 u 1]
+  // The coeffients are such that pol(t)=coeff_of_that_interval*[u^deg u^{deg-1} ... u 1]
   // with u=(t-t_min_that_interval)/(t_max_that_interval- t_min_that_interval)
-  std::vector<Eigen::Matrix<double, 4, 1>> coeff_x;  // [a b c d]' of Int0 , [a b c d]' of Int1,...
-  std::vector<Eigen::Matrix<double, 4, 1>> coeff_y;  // [a b c d]' of Int0 , [a b c d]' of Int1,...
-  std::vector<Eigen::Matrix<double, 4, 1>> coeff_z;  // [a b c d]' of Int0 , [a b c d]' of Int1,...
+  std::vector<Eigen::VectorXd> all_coeff_x;  // [a b c d ...]' of Int0 , [a b c d ...]' of Int1,...
+  std::vector<Eigen::VectorXd> all_coeff_y;  // [a b c d ...]' of Int0 , [a b c d ...]' of Int1,...
+  std::vector<Eigen::VectorXd> all_coeff_z;  // [a b c d ...]' of Int0 , [a b c d ...]' of Int1,...
 
   void clear()
   {
     times.clear();
-    coeff_x.clear();
-    coeff_y.clear();
-    coeff_z.clear();
+    all_coeff_x.clear();
+    all_coeff_y.clear();
+    all_coeff_z.clear();
+  }
+
+  int getDeg() const
+  {
+    return (all_coeff_x.back().rows() - 1);  // should be the same for y and z
+  }
+
+  Eigen::VectorXd getU(double u)
+  {
+    int degree = getDeg();
+    Eigen::VectorXd tmp(degree + 1);
+
+    for (int i = 0; i <= degree; i++)
+    {
+      tmp(i) = pow(u, degree - i);
+    }
+
+    return tmp;
   }
 
   Eigen::Vector3d eval(double t)
@@ -516,22 +534,22 @@ struct PieceWisePol
 
     if (t >= times[times.size() - 1])
     {  // return the last value of the polynomial in the last interval
-      Eigen::Matrix<double, 4, 1> tmp;
+
       double u = 1;
-      tmp << u * u * u, u * u, u, 1.0;
-      result.x() = coeff_x.back().transpose() * tmp;
-      result.y() = coeff_y.back().transpose() * tmp;
-      result.z() = coeff_z.back().transpose() * tmp;
+      Eigen::VectorXd tmp = getU(u);
+      result.x() = all_coeff_x.back().transpose() * tmp;
+      result.y() = all_coeff_y.back().transpose() * tmp;
+      result.z() = all_coeff_z.back().transpose() * tmp;
       return result;
     }
     if (t < times[0])
     {  // return the first value of the polynomial in the first interval
-      Eigen::Matrix<double, 4, 1> tmp;
+
       double u = 0;
-      tmp << u * u * u, u * u, u, 1.0;
-      result.x() = coeff_x.front().transpose() * tmp;
-      result.y() = coeff_y.front().transpose() * tmp;
-      result.z() = coeff_z.front().transpose() * tmp;
+      Eigen::VectorXd tmp = getU(u);
+      result.x() = all_coeff_x.front().transpose() * tmp;
+      result.y() = all_coeff_y.front().transpose() * tmp;
+      result.z() = all_coeff_z.front().transpose() * tmp;
       return result;
     }
     //(times - 1) is the number of intervals
@@ -541,13 +559,10 @@ struct PieceWisePol
       {
         double u = (t - times[i]) / (times[i + 1] - times[i]);
 
-        // TODO: This is hand-coded for a third-degree polynomial
-        Eigen::Matrix<double, 4, 1> tmp;
-        tmp << u * u * u, u * u, u, 1.0;
-
-        result.x() = coeff_x[i].transpose() * tmp;
-        result.y() = coeff_y[i].transpose() * tmp;
-        result.z() = coeff_z[i].transpose() * tmp;
+        Eigen::VectorXd tmp = getU(u);
+        result.x() = all_coeff_x[i].transpose() * tmp;
+        result.y() = all_coeff_y[i].transpose() * tmp;
+        result.z() = all_coeff_z[i].transpose() * tmp;
 
         break;
       }
@@ -557,15 +572,15 @@ struct PieceWisePol
 
   void print()
   {
-    std::cout << "coeff_x.size()= " << coeff_x.size() << std::endl;
+    std::cout << "all_coeff_x.size()= " << all_coeff_x.size() << std::endl;
     std::cout << "times.size()= " << times.size() << std::endl;
 
     for (int i = 0; i < (times.size() - 1); i++)
     {
       std::cout << "From " << times[i] << " to " << times[i + 1] << std::endl;
-      std::cout << "  Coeff_x= " << coeff_x[i].transpose() << std::endl;
-      std::cout << "  Coeff_y= " << coeff_y[i].transpose() << std::endl;
-      std::cout << "  Coeff_z= " << coeff_z[i].transpose() << std::endl;
+      std::cout << "  all_coeff_x= " << all_coeff_x[i].transpose() << std::endl;
+      std::cout << "  all_coeff_y= " << all_coeff_y[i].transpose() << std::endl;
+      std::cout << "  all_coeff_z= " << all_coeff_z[i].transpose() << std::endl;
     }
   }
 };

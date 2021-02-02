@@ -154,36 +154,37 @@ mader_msgs::PieceWisePolTraj pwp2PwpMsg(const mt::PieceWisePol& pwp)
   }
 
   // push x
-  for (auto coeff_x_i : pwp.coeff_x)
+  for (auto coeff_x_i : pwp.all_coeff_x)
   {
-    mader_msgs::CoeffPoly3 coeff_poly3;
-    coeff_poly3.a = coeff_x_i(0);
-    coeff_poly3.b = coeff_x_i(1);
-    coeff_poly3.c = coeff_x_i(2);
-    coeff_poly3.d = coeff_x_i(3);
-    pwp_msg.coeff_x.push_back(coeff_poly3);
+    mader_msgs::CoeffPoly coeff_poly3;
+
+    for (int i = 0; i < coeff_x_i.size(); i++)
+    {
+      coeff_poly3.data.push_back(coeff_x_i(i));
+    }
+    pwp_msg.all_coeff_x.push_back(coeff_poly3);
   }
 
   // push y
-  for (auto coeff_y_i : pwp.coeff_y)
+  for (auto coeff_y_i : pwp.all_coeff_y)
   {
-    mader_msgs::CoeffPoly3 coeff_poly3;
-    coeff_poly3.a = coeff_y_i(0);
-    coeff_poly3.b = coeff_y_i(1);
-    coeff_poly3.c = coeff_y_i(2);
-    coeff_poly3.d = coeff_y_i(3);
-    pwp_msg.coeff_y.push_back(coeff_poly3);
+    mader_msgs::CoeffPoly coeff_poly3;
+    for (int i = 0; i < coeff_y_i.size(); i++)
+    {
+      coeff_poly3.data.push_back(coeff_y_i(i));
+    }
+    pwp_msg.all_coeff_y.push_back(coeff_poly3);
   }
 
   // push z
-  for (auto coeff_z_i : pwp.coeff_z)
+  for (auto coeff_z_i : pwp.all_coeff_z)
   {
-    mader_msgs::CoeffPoly3 coeff_poly3;
-    coeff_poly3.a = coeff_z_i(0);
-    coeff_poly3.b = coeff_z_i(1);
-    coeff_poly3.c = coeff_z_i(2);
-    coeff_poly3.d = coeff_z_i(3);
-    pwp_msg.coeff_z.push_back(coeff_poly3);
+    mader_msgs::CoeffPoly coeff_poly3;
+    for (int i = 0; i < coeff_z_i.size(); i++)
+    {
+      coeff_poly3.data.push_back(coeff_z_i(i));
+    }
+    pwp_msg.all_coeff_z.push_back(coeff_poly3);
   }
 
   return pwp_msg;
@@ -193,7 +194,8 @@ mt::PieceWisePol pwpMsg2Pwp(const mader_msgs::PieceWisePolTraj& pwp_msg)
 {
   mt::PieceWisePol pwp;
 
-  if (pwp_msg.coeff_x.size() != pwp_msg.coeff_y.size() || pwp_msg.coeff_x.size() != pwp_msg.coeff_z.size())
+  if (pwp_msg.all_coeff_x.size() != pwp_msg.all_coeff_y.size() ||
+      pwp_msg.all_coeff_x.size() != pwp_msg.all_coeff_z.size())
   {
     std::cout << " coeff_x,coeff_y,coeff_z of pwp_msg should have the same elements" << std::endl;
     std::cout << " ================================" << std::endl;
@@ -205,21 +207,28 @@ mt::PieceWisePol pwpMsg2Pwp(const mader_msgs::PieceWisePolTraj& pwp_msg)
     pwp.times.push_back(pwp_msg.times[i]);
   }
 
-  for (int i = 0; i < pwp_msg.coeff_x.size(); i++)
+  for (int i = 0; i < pwp_msg.all_coeff_x.size(); i++)  // For each of the intervals
   {
-    Eigen::Matrix<double, 4, 1> tmp_x, tmp_y, tmp_z;
+    int degree = pwp_msg.all_coeff_x[i].data.size() - 1;  // Should be the same for all i, and for x, y, z
 
-    // std::cout << termcolor::on_blue << "pwpMsg2Pwp: " << pwp_msg.coeff_z[i].a << ", " << pwp_msg.coeff_z[i].b << ", "
-    //           << pwp_msg.coeff_z[i].c << ", " << pwp_msg.coeff_z[i].d << termcolor::reset << std::endl;
+    Eigen::VectorXd tmp_x(degree + 1);
+    Eigen::VectorXd tmp_y(degree + 1);
+    Eigen::VectorXd tmp_z(degree + 1);
 
-    tmp_x << pwp_msg.coeff_x[i].a, pwp_msg.coeff_x[i].b, pwp_msg.coeff_x[i].c, pwp_msg.coeff_x[i].d;
-    pwp.coeff_x.push_back(tmp_x);
+    for (int j = 0; j < (degree + 1); j++)
+    {
+      tmp_x(j) = pwp_msg.all_coeff_x[i].data[j];
+      tmp_y(j) = pwp_msg.all_coeff_y[i].data[j];
+      tmp_z(j) = pwp_msg.all_coeff_z[i].data[j];
+    }
 
-    tmp_y << pwp_msg.coeff_y[i].a, pwp_msg.coeff_y[i].b, pwp_msg.coeff_y[i].c, pwp_msg.coeff_y[i].d;
-    pwp.coeff_y.push_back(tmp_y);
+    // std::cout << termcolor::on_blue << "pwpMsg2Pwp: " << pwp_msg.all_coeff_z[i].a << ", " << pwp_msg.all_coeff_z[i].b
+    // << ", "
+    //           << pwp_msg.all_coeff_z[i].c << ", " << pwp_msg.all_coeff_z[i].d << termcolor::reset << std::endl;
 
-    tmp_z << pwp_msg.coeff_z[i].a, pwp_msg.coeff_z[i].b, pwp_msg.coeff_z[i].c, pwp_msg.coeff_z[i].d;
-    pwp.coeff_z.push_back(tmp_z);
+    pwp.all_coeff_x.push_back(tmp_x);
+    pwp.all_coeff_y.push_back(tmp_y);
+    pwp.all_coeff_z.push_back(tmp_z);
   }
 
   return pwp;
@@ -272,9 +281,9 @@ mt::PieceWisePol createPwpFromStaticPosition(const mt::state& current_state)
   coeff_y_interv0 << 0.0, 0.0, 0.0, current_state.pos.y();
   coeff_z_interv0 << 0.0, 0.0, 0.0, current_state.pos.z();
 
-  pwp.coeff_x.push_back(coeff_x_interv0);
-  pwp.coeff_y.push_back(coeff_y_interv0);
-  pwp.coeff_z.push_back(coeff_z_interv0);
+  pwp.all_coeff_x.push_back(coeff_x_interv0);
+  pwp.all_coeff_y.push_back(coeff_y_interv0);
+  pwp.all_coeff_z.push_back(coeff_z_interv0);
 
   return pwp;
 }
@@ -342,79 +351,99 @@ mt::PieceWisePol composePieceWisePol(const double t, const double dc, mt::PieceW
   for (auto index_1_i : indexes1)
   {
     p.times.push_back(p1.times[index_1_i]);
-    p.coeff_x.push_back(p1.coeff_x[index_1_i - 1]);
-    p.coeff_y.push_back(p1.coeff_y[index_1_i - 1]);
-    p.coeff_z.push_back(p1.coeff_z[index_1_i - 1]);
+    p.all_coeff_x.push_back(p1.all_coeff_x[index_1_i - 1]);
+    p.all_coeff_y.push_back(p1.all_coeff_y[index_1_i - 1]);
+    p.all_coeff_z.push_back(p1.all_coeff_z[index_1_i - 1]);
   }
 
   for (auto index_2_i : indexes2)
   {
     if (index_2_i == 0)
     {
-      p.coeff_x.push_back(p1.coeff_x.back());
-      p.coeff_y.push_back(p1.coeff_y.back());
-      p.coeff_z.push_back(p1.coeff_z.back());
+      p.all_coeff_x.push_back(p1.all_coeff_x.back());
+      p.all_coeff_y.push_back(p1.all_coeff_y.back());
+      p.all_coeff_z.push_back(p1.all_coeff_z.back());
       p.times.push_back(p2.times[index_2_i]);
       continue;
     }
     p.times.push_back(p2.times[index_2_i]);
-    p.coeff_x.push_back(p2.coeff_x[index_2_i - 1]);
-    p.coeff_y.push_back(p2.coeff_y[index_2_i - 1]);
-    p.coeff_z.push_back(p2.coeff_z[index_2_i - 1]);
+    p.all_coeff_x.push_back(p2.all_coeff_x[index_2_i - 1]);
+    p.all_coeff_y.push_back(p2.all_coeff_y[index_2_i - 1]);
+    p.all_coeff_z.push_back(p2.all_coeff_z[index_2_i - 1]);
   }
 
   return p;
 }
 
-std::vector<std::string> pieceWisePol2String(const mt::PieceWisePol& piecewisepol)
+std::vector<std::string> pieceWisePol2String(const mt::PieceWisePol& pwp)
 {
   // Define strings
   std::string s_x = "0.0";
   std::string s_y = "0.0";
   std::string s_z = "0.0";
 
-  //(piecewisepol.times - 1) is the number of intervals
-  for (int i = 0; i < (piecewisepol.times.size() - 1); i++)  // i is the index of the interval
+  int deg = pwp.getDeg();
+
+  //(pwp.times - 1) is the number of intervals
+  for (int i = 0; i < (pwp.times.size() - 1); i++)  // i is the index of the interval
   {
-    std::string div_by_delta = "/ (" + std::to_string(piecewisepol.times[i + 1] - piecewisepol.times[i]) + ")";
+    std::string div_by_delta = "/ (" + std::to_string(pwp.times[i + 1] - pwp.times[i]) + ")";
 
-    std::string t = "(min(t," + std::to_string(piecewisepol.times.back()) + "))";
+    std::string t = "(min(t," + std::to_string(pwp.times.back()) + "))";
 
-    std::string u = "(" + t + "-" + std::to_string(piecewisepol.times[i]) + ")" + div_by_delta;
+    std::string u = "(" + t + "-" + std::to_string(pwp.times[i]) + ")" + div_by_delta;
     u = "(" + u + ")";
-    std::string uu = u + "*" + u;
-    std::string uuu = u + "*" + u + "*" + u;
-    /*    std::cout << "piecewisepol.times[i]= " << piecewisepol.times[i] << std::endl;
-        std::cout << "piecewisepol.times[i+1]= " << piecewisepol.times[i + 1] << std::endl;*/
+
+    // std::string u = "(" + t + "-" + std::to_string(pwp.times[i]) + ")" + div_by_delta;
+    // u = "(" + u + ")";
+    // std::string uu = u + "*" + u;
+    // std::string uuu = u + "*" + u + "*" + u;
+    /*    std::cout << "pwp.times[i]= " << pwp.times[i] << std::endl;
+        std::cout << "pwp.times[i+1]= " << pwp.times[i + 1] << std::endl;*/
 
     std::string cond;
-    if (i == (piecewisepol.times.size() - 2))  // if the last interval
+    if (i == (pwp.times.size() - 2))  // if the last interval
     {
-      cond = "(t>=" + std::to_string(piecewisepol.times[i]) + ")";
+      cond = "(t>=" + std::to_string(pwp.times[i]) + ")";
     }
     else
     {
-      cond = "(t>=" + std::to_string(piecewisepol.times[i]) + " and " + "t<" +
-             std::to_string(piecewisepol.times[i + 1]) + ")";
+      cond = "(t>=" + std::to_string(pwp.times[i]) + " and " + "t<" + std::to_string(pwp.times[i + 1]) + ")";
     }
 
-    std::string s_x_i = std::to_string((double)piecewisepol.coeff_x[i](0)) + "*" + uuu;   //////////////////
-    s_x_i = s_x_i + "+" + std::to_string((double)piecewisepol.coeff_x[i](1)) + "*" + uu;  //////////////////
-    s_x_i = s_x_i + "+" + std::to_string((double)piecewisepol.coeff_x[i](2)) + "*" + u;   //////////////////
-    s_x_i = s_x_i + "+" + std::to_string((double)piecewisepol.coeff_x[i](3));             //////////////////
+    std::string s_x_i = "";
+    std::string s_y_i = "";
+    std::string s_z_i = "";
+    for (int j = 0; j <= deg; j++)
+    {
+      std::string power_u = "(" + u + "^" + std::to_string(deg - j) + ")";
+
+      s_x_i = s_x_i + "+" + std::to_string((double)pwp.all_coeff_x[i](j)) + "*" + power_u;
+      s_y_i = s_y_i + "+" + std::to_string((double)pwp.all_coeff_y[i](j)) + "*" + power_u;
+      s_z_i = s_z_i + "+" + std::to_string((double)pwp.all_coeff_z[i](j)) + "*" + power_u;
+    }
+
     s_x_i = cond + "*(" + s_x_i + ")";
-
-    std::string s_y_i = std::to_string((double)piecewisepol.coeff_y[i](0)) + "*" + uuu;   //////////////////
-    s_y_i = s_y_i + "+" + std::to_string((double)piecewisepol.coeff_y[i](1)) + "*" + uu;  //////////////////
-    s_y_i = s_y_i + "+" + std::to_string((double)piecewisepol.coeff_y[i](2)) + "*" + u;   //////////////////
-    s_y_i = s_y_i + "+" + std::to_string((double)piecewisepol.coeff_y[i](3));             //////////////////
     s_y_i = cond + "*(" + s_y_i + ")";
-
-    std::string s_z_i = std::to_string((double)piecewisepol.coeff_z[i](0)) + "*" + uuu;   //////////////////
-    s_z_i = s_z_i + "+" + std::to_string((double)piecewisepol.coeff_z[i](1)) + "*" + uu;  //////////////////
-    s_z_i = s_z_i + "+" + std::to_string((double)piecewisepol.coeff_z[i](2)) + "*" + u;   //////////////////
-    s_z_i = s_z_i + "+" + std::to_string((double)piecewisepol.coeff_z[i](3));             //////////////////
     s_z_i = cond + "*(" + s_z_i + ")";
+
+    // std::string s_x_i = std::to_string((double)pwp.all_coeff_x[i](0)) + "*" + uuu;   //////////////////
+    // s_x_i = s_x_i + "+" + std::to_string((double)pwp.all_coeff_x[i](1)) + "*" + uu;  //////////////////
+    // s_x_i = s_x_i + "+" + std::to_string((double)pwp.all_coeff_x[i](2)) + "*" + u;   //////////////////
+    // s_x_i = s_x_i + "+" + std::to_string((double)pwp.all_coeff_x[i](3));             //////////////////
+    // s_x_i = cond + "*(" + s_x_i + ")";
+
+    // std::string s_y_i = std::to_string((double)pwp.all_coeff_y[i](0)) + "*" + uuu;   //////////////////
+    // s_y_i = s_y_i + "+" + std::to_string((double)pwp.all_coeff_y[i](1)) + "*" + uu;  //////////////////
+    // s_y_i = s_y_i + "+" + std::to_string((double)pwp.all_coeff_y[i](2)) + "*" + u;   //////////////////
+    // s_y_i = s_y_i + "+" + std::to_string((double)pwp.all_coeff_y[i](3));             //////////////////
+    // s_y_i = cond + "*(" + s_y_i + ")";
+
+    // std::string s_z_i = std::to_string((double)pwp.all_coeff_z[i](0)) + "*" + uuu;   //////////////////
+    // s_z_i = s_z_i + "+" + std::to_string((double)pwp.all_coeff_z[i](1)) + "*" + uu;  //////////////////
+    // s_z_i = s_z_i + "+" + std::to_string((double)pwp.all_coeff_z[i](2)) + "*" + u;   //////////////////
+    // s_z_i = s_z_i + "+" + std::to_string((double)pwp.all_coeff_z[i](3));             //////////////////
+    // s_z_i = cond + "*(" + s_z_i + ")";
 
     s_x = s_x + " + " + s_x_i;
     s_y = s_y + " + " + s_y_i;
