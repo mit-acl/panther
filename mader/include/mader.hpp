@@ -60,6 +60,8 @@ private:
   mt::state M_;
   mt::committedTrajectory plan_;
 
+  Eigen::Vector3d evalDynTrajCompiled(mt::dynTrajCompiled& traj, double t);
+
   bool isReplanningNeeded();
 
   void logAndTimeReplan(const std::string& info, const bool& success, mt::log& log);

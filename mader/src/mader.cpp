@@ -74,41 +74,68 @@ Mader::Mader(mt::parameters par) : par_(par)
 
 void Mader::dynTraj2dynTrajCompiled(const mt::dynTraj& traj, mt::dynTrajCompiled& traj_compiled)
 {
-  mtx_t_.lock();
-  for (auto function_i : traj.function)
+  if (traj.use_pwp_field == true)
   {
-    typedef exprtk::symbol_table<double> symbol_table_t;
-    typedef exprtk::expression<double> expression_t;
-    typedef exprtk::parser<double> parser_t;
+    traj_compiled.pwp = traj.pwp;
+    traj_compiled.is_static = ((traj.pwp.eval(0.0) - traj.pwp.eval(1e30)).norm() < 1e-5);  // TODO: Improve this
+  }
+  else
+  {
+    mtx_t_.lock();
+    for (auto function_i : traj.function)
+    {
+      typedef exprtk::symbol_table<double> symbol_table_t;
+      typedef exprtk::expression<double> expression_t;
+      typedef exprtk::parser<double> parser_t;
 
-    symbol_table_t symbol_table;
-    symbol_table.add_variable("t", t_);
-    symbol_table.add_constants();
-    expression_t expression;
-    expression.register_symbol_table(symbol_table);
+      symbol_table_t symbol_table;
+      symbol_table.add_variable("t", t_);
+      symbol_table.add_constants();
+      expression_t expression;
+      expression.register_symbol_table(symbol_table);
 
-    parser_t parser;
-    parser.compile(function_i, expression);
+      parser_t parser;
+      parser.compile(function_i, expression);
 
-    traj_compiled.function.push_back(expression);
+      traj_compiled.function.push_back(expression);
+    }
+
+    mtx_t_.unlock();
+
+    traj_compiled.is_static =
+        (traj.function[0].find("t") == std::string::npos) &&  // there is no dependence on t in the coordinate x
+        (traj.function[1].find("t") == std::string::npos) &&  // there is no dependence on t in the coordinate y
+        (traj.function[2].find("t") == std::string::npos);    // there is no dependence on t in the coordinate z
   }
 
-  mtx_t_.unlock();
-
+  traj_compiled.use_pwp_field = traj.use_pwp_field;
   traj_compiled.bbox = traj.bbox;
   traj_compiled.id = traj.id;
   traj_compiled.time_received = traj.time_received;  // ros::Time::now().toSec();
-
-  traj_compiled.is_static =
-      ((traj.is_agent == false) &&                           // is an obstacle and
-       (traj.function[0].find("t") == std::string::npos) &&  // there is no dependence on t in the coordinate x
-       (traj.function[1].find("t") == std::string::npos) &&  // there is no dependence on t in the coordinate y
-       (traj.function[2].find("t") == std::string::npos))    // there is no dependence on t in the coordinate z
-      ||                                                     // OR
-      (traj.is_agent == true && fabs(traj.pwp.times.back() - traj.pwp.times.front()) < 1e-7);
-
-  traj_compiled.pwp = traj.pwp;
 }
+
+// Note that this function is here because I need t_ for this evaluation
+Eigen::Vector3d Mader::evalDynTrajCompiled(mt::dynTrajCompiled& traj, double t)
+{
+  Eigen::Vector3d tmp;
+
+  if (traj.use_pwp_field == true)
+  {
+    tmp = traj.pwp.eval(t);
+  }
+  else
+  {
+    mtx_t_.lock();
+    t_ = t;
+    tmp << traj.function[0].value(),  ////////////////////
+        traj.function[1].value(),     ////////////////
+        traj.function[2].value();     /////////////////
+
+    mtx_t_.unlock();
+  }
+  return tmp;
+}
+
 // Note that we need to compile the trajectories inside mader.cpp because t_ is in mader.hpp
 void Mader::updateTrajObstacles(mt::dynTraj traj)
 {
@@ -149,15 +176,7 @@ void Mader::updateTrajObstacles(mt::dynTraj traj)
   {
     bool traj_affects_me = false;
 
-    mtx_t_.lock();
-    t_ = ros::Time::now().toSec();
-
-    Eigen::Vector3d center_obs;
-    center_obs << trajs_[index_traj].function[0].value(),  ////////////////////
-        trajs_[index_traj].function[1].value(),            ////////////////
-        trajs_[index_traj].function[2].value();            /////////////////
-
-    mtx_t_.unlock();
+    Eigen::Vector3d center_obs = evalDynTrajCompiled(trajs_[index_traj], ros::Time::now().toSec());
 
     // mtx_t_.unlock();
     if (((traj_compiled.is_static == true) && (center_obs - state_.pos).norm() > 2 * par_.Ra) ||  ////
@@ -273,13 +292,12 @@ std::vector<Eigen::Vector3d> Mader::vertexesOfInterval(mt::dynTrajCompiled& traj
          ((t > t_end) && ((t - t_end) < par_.gamma));  /////// This is to ensure we have a sample a the end
          t = t + par_.gamma)
     {
-      mtx_t_.lock();
-      t_ = std::min(t, t_end);  // this min only has effect on the last sample
+      Eigen::Vector3d tmp =
+          evalDynTrajCompiled(traj, std::min(t, t_end));  // this min only has effect on the last sample
 
-      double x = traj.function[0].value();
-      double y = traj.function[1].value();
-      double z = traj.function[2].value();
-      mtx_t_.unlock();
+      double x = tmp.x();
+      double y = tmp.y();
+      double z = tmp.z();
 
       //"Minkowski sum along the trajectory: box centered on the trajectory"
       points.push_back(Eigen::Vector3d(x + delta.x(), y + delta.y(), z + delta.z()));
@@ -295,8 +313,7 @@ std::vector<Eigen::Vector3d> Mader::vertexesOfInterval(mt::dynTrajCompiled& traj
     return points;
   }
   else
-  {  // is an agent --> use the pwp field
-
+  {
     delta = traj.bbox / 2.0 + (par_.drone_radius) * Eigen::Vector3d::Ones();
     // std::cout << "****traj.bbox = " << traj.bbox << std::endl;
     // std::cout << "****par_.drone_radius = " << par_.drone_radius << std::endl;
@@ -332,21 +349,9 @@ void Mader::removeTrajsThatWillNotAffectMe(const mt::state& A, double t_start, d
     // STATIC OBSTACLES/AGENTS
     if (traj.is_static == true)
     {
-      mtx_t_.lock();
-      t_ = t_start;  // which is constant along the trajectory
+      Eigen::Vector3d center_obs =
+          evalDynTrajCompiled(traj, t_start);  // Note that t_start is constant along the trajectory
 
-      Eigen::Vector3d center_obs;
-      if (traj.is_agent == false)
-      {
-        center_obs << traj.function[0].value(), traj.function[1].value(), traj.function[2].value();
-      }
-      else
-      {
-        center_obs = traj.pwp.eval(t_);
-      }
-
-      mtx_t_.unlock();
-      // mtx_t_.unlock();
       Eigen::Vector3d positive_half_diagonal;
       positive_half_diagonal << traj.bbox[0] / 2.0, traj.bbox[1] / 2.0, traj.bbox[2] / 2.0;
 

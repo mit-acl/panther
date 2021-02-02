@@ -345,6 +345,9 @@ void MaderRos::trajCB(const mader_msgs::DynTraj& msg)
   }
 
   mt::dynTraj tmp;
+
+  tmp.use_pwp_field = msg.use_pwp_field;
+
   tmp.function.push_back(msg.function[0]);
   tmp.function.push_back(msg.function[1]);
   tmp.function.push_back(msg.function[2]);
@@ -376,6 +379,7 @@ void MaderRos::publishOwnTraj(const mt::PieceWisePol& pwp)
   s.push_back("");
 
   mader_msgs::DynTraj msg;
+  msg.use_pwp_field = true;
   msg.function = s;
   msg.bbox.push_back(2 * par_.drone_radius);
   msg.bbox.push_back(2 * par_.drone_radius);

@@ -515,7 +515,7 @@ struct PieceWisePol
     return (all_coeff_x.back().rows() - 1);  // should be the same for y and z
   }
 
-  Eigen::VectorXd getU(double u)
+  Eigen::VectorXd getU(double u) const
   {
     int degree = getDeg();
     Eigen::VectorXd tmp(degree + 1);
@@ -528,7 +528,7 @@ struct PieceWisePol
     return tmp;
   }
 
-  Eigen::Vector3d eval(double t)
+  Eigen::Vector3d eval(double t) const
   {
     Eigen::Vector3d result;
 
@@ -587,6 +587,7 @@ struct PieceWisePol
 
 struct dynTraj
 {
+  bool use_pwp_field;  // If true, pwp is used. If false, function is used
   std::vector<std::string> function;
   Eigen::Vector3d bbox;
   int id;
@@ -597,6 +598,7 @@ struct dynTraj
 
 struct dynTrajCompiled
 {
+  bool use_pwp_field;
   std::vector<exprtk::expression<double>> function;
   Eigen::Vector3d bbox;
   int id;
