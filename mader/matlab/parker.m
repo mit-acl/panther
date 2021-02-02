@@ -2,7 +2,7 @@ close all; clc; clear;
 t0=0.0;
 tf=5.0;
 deg_pos=3; %degree of the polynomial for each interval. TODO: modify computeMatrixForAnyBSpline() function so that it accepts degrees>=3
-num_seg=10;
+num_seg=15;
 dim_pos = 3 %1D, 2D, 3D, ...
 
 c_smooth=0.0;
