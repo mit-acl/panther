@@ -3,14 +3,16 @@ En este repo:
 	
 	Behaviour look ahead when obstacle is done
 	Prepare HW experiment trajectories obstacles
-	max_runtime_casadi
+	max_runtime_casadi + mu and kappa delta_t for initial guess?
 	select via roslaunch if I want trajectories_predicted or trajectories_gtruth. Rename /trajs to /trajs_ground_truth
 	Predict the uncertainty and apply it to the polyhedra
 	Check isInFOV_smooth in main (pyramid)
-	mu and kappa delta_t for initial guess?
 	WHen using the cost (\phi-phi_tf)^2, include that on the yaw graph search (and in its heuristics)?
 	What happens at the end of the trajectory (weird)
-	
+	Check costs for the HW experiments
+	Wait duration for looking up transform in tracker
+	Como decidir entre varios obstaculos (ahora cojo traj_0 creo)
+	Create a dataset of the moving objects from the experiments??	
 
 	Check the partial derivatives of velocity of the obstacle in the cost function is right
 	Cuidado que los assert() SOLO funcionan en debug mode, no en release mode.
@@ -25,9 +27,7 @@ En este repo:
 	max_cpu in jetson
 
 	Check max_number_of_obstacles (creo que ahora hago abort())
-	Wait duration for looking up transform in tracker
-	Como decidir entre varios obstaculos (ahora cojo traj_0 creo)
-	Create a dataset of the moving objects from the experiments??
+
 
 	Why do I have to run matlab from the terminal (https://github.com/casadi/casadi/issues/2032)? If not (and I use the opts.ipopt.linear_solver option) I get the error
 					Exception of type: OPTION_INVALID in file "../../../../Ipopt/src/Algorithm/IpAlgBuilder.cpp" at line 321:
