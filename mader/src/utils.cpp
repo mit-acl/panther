@@ -94,11 +94,9 @@ visualization_msgs::MarkerArray pwp2ColoredMarkerArray(mt::PieceWisePol& pwp, do
   return marker_array;
 }
 
-// coeff_old are the coeff [a b c d]' of a polynomial p(t) defined in [0,1]
+// coeff_old are the coeff [a b c d]' of a polynomial p(t)
 // coeff_new are the coeff [a b c d]' of a polynomial q(t) defined in [0,1] such that:
-//     q((t-t0)/(tf-t0))=p(t) \forall t \in [t0,tf]
-// t0 and tf do not have to be \in [0,1]. If t0<0, we'll be doing extrapolation in the past, and if
-// tf>1, we will be doing extrapolation in the future
+//     q((t-t0)/(tf-t0))=p(t) \forall t \in [t0,tf]  I.e. p(t0)=q(0) and p(tf)=q(1)
 void rescaleCoeffPol(const Eigen::Matrix<double, 4, 1>& coeff_old, Eigen::Matrix<double, 4, 1>& coeff_new, double t0,
                      double tf)
 {

@@ -652,106 +652,66 @@ void TrackerPredictor::printAllTracks()
 
 void TrackerPredictor::generatePredictedPwpForTrack(tp::track& track_j)
 {
-  // Conversion DM <--> Eigen:  https://github.com/casadi/casadi/issues/2563
-
-  std::map<std::string, casadi::DM> map_arguments;
-
-  // double t0 = track_j.getOldestTimeSW();
-  // double tf = track_j.getLatestTimeSW();
-
-  double t0_r = track_j.getRelativeOldestTimeSW();
-  double tf_r = track_j.getRelativeLatestTimeSW();
-  double total_time = tf_r - t0_r;
-  double time_per_segment = total_time / num_seg_prediction_;
-
-  casadi::DM A, b;
+  casadi::DM all_pos(3, track_j.getSizeSW());
+  casadi::DM all_t(1, track_j.getSizeSW());
 
   for (int i = 0; i < track_j.getSizeSW(); i++)
   {
-    // std::cout << "going to get centroid" << std::endl;
-    map_arguments["pos"] = eigen2std(track_j.getCentroidHistory(i));
-
-    double time = track_j.getRelativeTimeHistory(i);
-
-    // std::cout << "time= " << time << std::endl;
-
-    int j = (time == tf_r) ? (num_seg_prediction_ - 1) :
-                             floor((time - t0_r) / time_per_segment);  // interval of the clampled uniform bspline
-
-    assert((j >= 0) && "(j >= 0 must hold");
-    assert((j <= (num_seg_prediction_ - 1)) && "(j <= (num_seg_prediction_ - 1) must hold");
-
-    // std::cout << blue << "time_per_segment= " << time_per_segment << reset << std::endl;
-
-    double u = (time - (t0_r + j * time_per_segment)) / time_per_segment;
-
-    map_arguments["u"] = u;
-
-    assert((u >= 0) && "u>=0 must hold");
-    assert((u <= 1) && "u<=1 must hold");
-
-    // std::cout << "time-t0_r=" << time - t0_r << std::endl;
-    // std::cout << green << "j=" << j << ", u= " << u << reset << std::endl;
-
-    std::map<std::string, casadi::DM> result = cfs_kkt_Ab_[j](map_arguments);
-
-    A = (i == 0) ? result["A"] : (A + result["A"]);
-    b = (i == 0) ? result["b"] : (b + result["b"]);
+    // Conversion DM <--> Eigen:  https://github.com/casadi/casadi/issues/2563
+    all_pos(0, i) = track_j.history[i].centroid.x();
+    all_pos(1, i) = track_j.history[i].centroid.y();
+    all_pos(2, i) = track_j.history[i].centroid.z();
+    all_t(0, i) = track_j.history[i].time;
   }
 
-  std::cout << "Going to solve the kkt equations" << std::endl;
+  std::map<std::string, casadi::DM> map_arguments;
+  map_arguments["all_t"] = all_t;
+  map_arguments["all_pos"] = all_pos;
+  std::map<std::string, casadi::DM> result = cf_get_mean_variance_pred_(map_arguments);
 
-  casadi::DM invA_b = solve(A, b);  // Equivalent to Matlab A\b, see
-                                    // https://web.casadi.org/docs/#id2-sub:~:text=Linear%20system%20solve
-                                    // TODO: use Schur complement to solve only for the last segment of the spline?
-  std::cout << "solved" << std::endl;
-  // std::cout << "invA_b= " << invA_b << std::endl;
+  casadi::DM coeffs_mean = result["coeff_mean"];
+  casadi::DM coeff_variance = result["coeff_variance"];
 
-  std::map<std::string, casadi::DM> map_arguments2;
-  map_arguments2["t0"] = t0_r;
-  map_arguments2["tf"] = tf_r;
-  map_arguments2["invA_b"] = invA_b;
-
-  std::map<std::string, casadi::DM> result = cf_coeff_predicted_(map_arguments2);
-
-  casadi::DM coeffs = result["coeff_predicted"];
   // std::cout << "Coeffs: " << std::endl;
   // std::cout << coeffs << std::endl;
 
   //////////////////////////
 
-  Eigen::Matrix<double, 4, 1> coeff_old_x =
-      Eigen::Vector4d(0.0, double(coeffs(0, 0)), double(coeffs(0, 1)), double(coeffs(0, 2)));
-  Eigen::Matrix<double, 4, 1> coeff_old_y =
-      Eigen::Vector4d(0.0, double(coeffs(1, 0)), double(coeffs(1, 1)), double(coeffs(1, 2)));
-  Eigen::Matrix<double, 4, 1> coeff_old_z =
-      Eigen::Vector4d(0.0, double(coeffs(2, 0)), double(coeffs(2, 1)), double(coeffs(2, 2)));
+  Eigen::MatrixXd coeffs_mean_old(coeffs_mean.rows(), coeffs_mean.columns());
 
-  double time_pcloud = track_j.getLatestTimeSW() - track_j.getOldestTimeSW();
-  Eigen::Vector4d T =
-      Eigen::Vector4d(pow(time_pcloud, 2), pow(time_pcloud, 2), pow(time_pcloud, 1), pow(time_pcloud, 0));
-  // std::cout << magenta << "predicted before= " << coeff_old_x.transpose() * T <<  //////
-  //     ", " << coeff_old_y.transpose() * T <<                                      /////
-  //     ", " << coeff_old_z.transpose() * T << reset << std::endl;
+  for (int i = 0; i < coeffs_mean.rows(); i++)
+  {
+    for (int j = 0; j < coeffs_mean.columns(); j++)
+    {
+      coeffs_mean_old(i, j) = double(coeffs_mean(i, j));
+    }
+  }
 
   // Fill pwp;
   double prediction_seconds = 1e6;  // infty TODO
 
   Eigen::Matrix<double, 4, 1> coeff_new_x, coeff_new_y, coeff_new_z;
 
-  rescaleCoeffPol(coeff_old_x, coeff_new_x, tf_r, tf_r + prediction_seconds);
-  rescaleCoeffPol(coeff_old_y, coeff_new_y, tf_r, tf_r + prediction_seconds);
-  rescaleCoeffPol(coeff_old_z, coeff_new_z, tf_r, tf_r + prediction_seconds);
+  rescaleCoeffPol(coeffs_mean_old.block(0, 0, 1, 4).transpose(), coeff_new_x, 0.0, prediction_seconds);
+  rescaleCoeffPol(coeff_old_y, coeff_new_y, 0.0, prediction_seconds);
+  rescaleCoeffPol(coeff_old_z, coeff_new_z, 0.0, prediction_seconds);
 
-  mt::PieceWisePol pwp;  // will have only one interval
-  pwp.times.push_back(track_j.getLatestTimeSW());
-  pwp.times.push_back(track_j.getLatestTimeSW() + prediction_seconds);
+  mt::PieceWisePol pwp_mean;  // will have only one interval
+  pwp_mean.times.push_back(track_j.getLatestTimeSW());
+  pwp_mean.times.push_back(track_j.getLatestTimeSW() + prediction_seconds);
 
-  pwp.coeff_x.push_back(coeff_new_x);
-  pwp.coeff_y.push_back(coeff_new_y);
-  pwp.coeff_z.push_back(coeff_new_z);
+  pwp_mean.coeff_x.push_back(coeff_new_x);
+  pwp_mean.coeff_y.push_back(coeff_new_y);
+  pwp_mean.coeff_z.push_back(coeff_new_z);
 
   track_j.pwp = pwp;
+
+  // double time_pcloud = track_j.getLatestTimeSW() - track_j.getOldestTimeSW();
+  // Eigen::Vector4d T =
+  //     Eigen::Vector4d(pow(time_pcloud, 2), pow(time_pcloud, 2), pow(time_pcloud, 1), pow(time_pcloud, 0));
+  // std::cout << magenta << "predicted before= " << coeff_old_x.transpose() * T <<  //////
+  //     ", " << coeff_old_y.transpose() * T <<                                      /////
+  //     ", " << coeff_old_z.transpose() * T << reset << std::endl;
 
   // std::cout << magenta << "predicted after= " << track_j.pwp.eval(time_pcloud +
   // track_j.getOldestTimeSW()).transpose()
