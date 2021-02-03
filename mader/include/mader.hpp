@@ -60,7 +60,8 @@ private:
   mt::state M_;
   mt::committedTrajectory plan_;
 
-  Eigen::Vector3d evalDynTrajCompiled(mt::dynTrajCompiled& traj, double t);
+  Eigen::Vector3d evalMeanDynTrajCompiled(const mt::dynTrajCompiled& traj, double t);
+  Eigen::Vector3d evalVarDynTrajCompiled(const mt::dynTrajCompiled& traj, double t);
 
   bool isReplanningNeeded();
 

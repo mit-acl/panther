@@ -76,60 +76,98 @@ void Mader::dynTraj2dynTrajCompiled(const mt::dynTraj& traj, mt::dynTrajCompiled
 {
   if (traj.use_pwp_field == true)
   {
-    traj_compiled.pwp = traj.pwp;
-    traj_compiled.is_static = ((traj.pwp.eval(0.0) - traj.pwp.eval(1e30)).norm() < 1e-5);  // TODO: Improve this
+    traj_compiled.pwp_mean = traj.pwp_mean;
+    traj_compiled.pwp_var = traj.pwp_var;
+    traj_compiled.is_static =
+        ((traj.pwp_mean.eval(0.0) - traj.pwp_mean.eval(1e30)).norm() < 1e-5);  // TODO: Improve this
   }
   else
   {
     mtx_t_.lock();
-    for (auto function_i : traj.function)
-    {
-      typedef exprtk::symbol_table<double> symbol_table_t;
-      typedef exprtk::expression<double> expression_t;
-      typedef exprtk::parser<double> parser_t;
 
+    typedef exprtk::symbol_table<double> symbol_table_t;
+    typedef exprtk::expression<double> expression_t;
+    typedef exprtk::parser<double> parser_t;
+
+    // Compile the mean
+    for (auto function_i : traj.s_mean)
+    {
       symbol_table_t symbol_table;
       symbol_table.add_variable("t", t_);
       symbol_table.add_constants();
       expression_t expression;
       expression.register_symbol_table(symbol_table);
-
       parser_t parser;
       parser.compile(function_i, expression);
+      traj_compiled.s_mean.push_back(expression);
+    }
 
-      traj_compiled.function.push_back(expression);
+    // Compile the variance
+    for (auto function_i : traj.s_var)
+    {
+      symbol_table_t symbol_table;
+      symbol_table.add_variable("t", t_);
+      symbol_table.add_constants();
+      expression_t expression;
+      expression.register_symbol_table(symbol_table);
+      parser_t parser;
+      parser.compile(function_i, expression);
+      traj_compiled.s_var.push_back(expression);
     }
 
     mtx_t_.unlock();
 
     traj_compiled.is_static =
-        (traj.function[0].find("t") == std::string::npos) &&  // there is no dependence on t in the coordinate x
-        (traj.function[1].find("t") == std::string::npos) &&  // there is no dependence on t in the coordinate y
-        (traj.function[2].find("t") == std::string::npos);    // there is no dependence on t in the coordinate z
+        (traj.s_mean[0].find("t") == std::string::npos) &&  // there is no dependence on t in the coordinate x
+        (traj.s_mean[1].find("t") == std::string::npos) &&  // there is no dependence on t in the coordinate y
+        (traj.s_mean[2].find("t") == std::string::npos);    // there is no dependence on t in the coordinate z
   }
 
   traj_compiled.use_pwp_field = traj.use_pwp_field;
+  traj_compiled.is_agent = traj.is_agent;
   traj_compiled.bbox = traj.bbox;
   traj_compiled.id = traj.id;
   traj_compiled.time_received = traj.time_received;  // ros::Time::now().toSec();
 }
 
 // Note that this function is here because I need t_ for this evaluation
-Eigen::Vector3d Mader::evalDynTrajCompiled(mt::dynTrajCompiled& traj, double t)
+Eigen::Vector3d Mader::evalMeanDynTrajCompiled(const mt::dynTrajCompiled& traj, double t)
 {
   Eigen::Vector3d tmp;
 
   if (traj.use_pwp_field == true)
   {
-    tmp = traj.pwp.eval(t);
+    tmp = traj.pwp_mean.eval(t);
   }
   else
   {
     mtx_t_.lock();
     t_ = t;
-    tmp << traj.function[0].value(),  ////////////////////
-        traj.function[1].value(),     ////////////////
-        traj.function[2].value();     /////////////////
+    tmp << traj.s_mean[0].value(),  ////////////////////
+        traj.s_mean[1].value(),     ////////////////
+        traj.s_mean[2].value();     /////////////////
+
+    mtx_t_.unlock();
+  }
+  return tmp;
+}
+
+// Note that this function is here because I need t_ for this evaluation
+Eigen::Vector3d Mader::evalVarDynTrajCompiled(const mt::dynTrajCompiled& traj, double t)
+{
+  Eigen::Vector3d tmp;
+
+  if (traj.use_pwp_field == true)
+  {
+    tmp = traj.pwp_var.eval(t);
+  }
+  else
+  {
+    mtx_t_.lock();
+    t_ = t;
+    tmp << traj.s_var[0].value(),  ////////////////////
+        traj.s_var[1].value(),     ////////////////
+        traj.s_var[2].value();     /////////////////
 
     mtx_t_.unlock();
   }
@@ -176,7 +214,7 @@ void Mader::updateTrajObstacles(mt::dynTraj traj)
   {
     bool traj_affects_me = false;
 
-    Eigen::Vector3d center_obs = evalDynTrajCompiled(trajs_[index_traj], ros::Time::now().toSec());
+    Eigen::Vector3d center_obs = evalMeanDynTrajCompiled(trajs_[index_traj], ros::Time::now().toSec());
 
     // mtx_t_.unlock();
     if (((traj_compiled.is_static == true) && (center_obs - state_.pos).norm() > 2 * par_.Ra) ||  ////
@@ -242,10 +280,65 @@ std::vector<Eigen::Vector3d> Mader::vertexesOfInterval(mt::PieceWisePol& pwp, do
   // push all the complete intervals
   for (int i = index_first_interval; i <= index_last_interval; i++)
   {
-    P.row(0) = pwp.all_coeff_x[i];
-    P.row(1) = pwp.all_coeff_y[i];
-    P.row(2) = pwp.all_coeff_z[i];
+    Eigen::VectorXd coeff_x_scaled;
+    Eigen::VectorXd coeff_y_scaled;
+    Eigen::VectorXd coeff_z_scaled;
 
+    if (i == index_first_interval && i != index_last_interval)
+    {
+      double u_t_start = pwp.t2u(t_start);
+
+      changeDomPoly(pwp.all_coeff_x[i], u_t_start, 1.0, coeff_x_scaled, 0.0, 1.0);
+      changeDomPoly(pwp.all_coeff_y[i], u_t_start, 1.0, coeff_y_scaled, 0.0, 1.0);
+      changeDomPoly(pwp.all_coeff_z[i], u_t_start, 1.0, coeff_z_scaled, 0.0, 1.0);
+      std::cout << "=====================================================" << std::endl;
+      pwp.print();
+
+      // std::cout << red << bold << "pwp.all_coeff_x[i]= " << pwp.all_coeff_x[i].transpose() << reset << std::endl;
+      std::cout << red << bold << "t_start= " << t_start << reset << std::endl;
+      std::cout << red << bold << "coeff_x_scaled= " << coeff_x_scaled.transpose() << reset << std::endl;
+      std::cout << red << bold << "u_t_start= " << u_t_start << reset << std::endl;
+    }
+    else if (i == index_last_interval && i != index_first_interval)
+    {
+      double u_t_end = pwp.t2u(t_end);
+      changeDomPoly(pwp.all_coeff_x[i], 0.0, u_t_end, coeff_x_scaled, 0.0, 1.0);
+      changeDomPoly(pwp.all_coeff_y[i], 0.0, u_t_end, coeff_y_scaled, 0.0, 1.0);
+      changeDomPoly(pwp.all_coeff_z[i], 0.0, u_t_end, coeff_z_scaled, 0.0, 1.0);
+    }
+    else if (i == index_first_interval && i == index_last_interval)  // happens where there is only one interval
+    {
+      double u_t_start = pwp.t2u(t_start);
+      double u_t_end = pwp.t2u(t_end);
+      changeDomPoly(pwp.all_coeff_x[i], u_t_start, u_t_end, coeff_x_scaled, 0.0, 1.0);
+      changeDomPoly(pwp.all_coeff_y[i], u_t_start, u_t_end, coeff_y_scaled, 0.0, 1.0);
+      changeDomPoly(pwp.all_coeff_z[i], u_t_start, u_t_end, coeff_z_scaled, 0.0, 1.0);
+    }
+    else
+    {
+      coeff_x_scaled = pwp.all_coeff_x[i];
+      coeff_y_scaled = pwp.all_coeff_y[i];
+      coeff_z_scaled = pwp.all_coeff_z[i];
+    }
+
+    /// TODO
+    if (pwp.getDeg() > 3)
+    {
+      std::cout << bold << red << "The part below is assumming that degree<=3. You have deg=" << pwp.getDeg()
+                << " Aborting" << reset << std::endl;
+      abort();
+    }
+    ////////
+
+    int tmp = coeff_x_scaled.size();
+
+    P = Eigen::Matrix<double, 3, 4>::Zero();
+    (P.row(0)).tail(tmp) = coeff_x_scaled;
+    (P.row(1)).tail(tmp) = coeff_y_scaled;
+    (P.row(2)).tail(tmp) = coeff_z_scaled;
+
+    // TODO: here I'm using the MINVO basis for n=3. When it's a 1st/2nd deg. polynomial, I could use the MINVO basis
+    // for n=1 or n=2 to obtain a tighter approx.
     V = P * A_rest_pos_basis_inverse_;
 
     for (int j = 0; j < V.cols(); j++)
@@ -276,16 +369,18 @@ std::vector<Eigen::Vector3d> Mader::vertexesOfInterval(mt::PieceWisePol& pwp, do
   return points;
 }
 
-// return a vector that contains all the vertexes of the polyhedral approx of an interval.
+// // return a vector that contains all the vertexes of the polyhedral approx of an interval.
 std::vector<Eigen::Vector3d> Mader::vertexesOfInterval(mt::dynTrajCompiled& traj, double t_start, double t_end)
 {
-  Eigen::Vector3d delta = Eigen::Vector3d::Zero();
-  if (traj.is_agent == false)
+  // every side of the box will be increased by 2*delta (+delta on one end, -delta on the other)
+  // note that we use the variance at t_end (which is going to be worse that the one at t_start)
+  Eigen::Vector3d delta = traj.bbox / 2.0 + (par_.drone_radius) * Eigen::Vector3d::Ones() +  //////
+                          par_.norminv_prob * (evalVarDynTrajCompiled(traj, t_end)).cwiseSqrt();
+
+  if (traj.use_pwp_field == false)
   {
     std::vector<Eigen::Vector3d> points;
-    delta = traj.bbox / 2.0 + (par_.drone_radius + par_.beta + par_.alpha) *
-                                  Eigen::Vector3d::Ones();  // every side of the box will be increased by 2*delta
-                                                            //(+delta on one end, -delta on the other)
+
     // Will always have a sample at the beginning of the interval, and another at the end.
     for (double t = t_start;                           /////////////
          (t < t_end) ||                                /////////////
@@ -293,33 +388,24 @@ std::vector<Eigen::Vector3d> Mader::vertexesOfInterval(mt::dynTrajCompiled& traj
          t = t + par_.gamma)
     {
       Eigen::Vector3d tmp =
-          evalDynTrajCompiled(traj, std::min(t, t_end));  // this min only has effect on the last sample
-
-      double x = tmp.x();
-      double y = tmp.y();
-      double z = tmp.z();
+          evalMeanDynTrajCompiled(traj, std::min(t, t_end));  // this min only has effect on the last sample
 
       //"Minkowski sum along the trajectory: box centered on the trajectory"
-      points.push_back(Eigen::Vector3d(x + delta.x(), y + delta.y(), z + delta.z()));
-      points.push_back(Eigen::Vector3d(x + delta.x(), y - delta.y(), z - delta.z()));
-      points.push_back(Eigen::Vector3d(x + delta.x(), y + delta.y(), z - delta.z()));
-      points.push_back(Eigen::Vector3d(x + delta.x(), y - delta.y(), z + delta.z()));
-      points.push_back(Eigen::Vector3d(x - delta.x(), y - delta.y(), z - delta.z()));
-      points.push_back(Eigen::Vector3d(x - delta.x(), y + delta.y(), z + delta.z()));
-      points.push_back(Eigen::Vector3d(x - delta.x(), y + delta.y(), z - delta.z()));
-      points.push_back(Eigen::Vector3d(x - delta.x(), y - delta.y(), z + delta.z()));
+      points.push_back(Eigen::Vector3d(tmp.x() + delta.x(), tmp.y() + delta.y(), tmp.z() + delta.z()));
+      points.push_back(Eigen::Vector3d(tmp.x() + delta.x(), tmp.y() - delta.y(), tmp.z() - delta.z()));
+      points.push_back(Eigen::Vector3d(tmp.x() + delta.x(), tmp.y() + delta.y(), tmp.z() - delta.z()));
+      points.push_back(Eigen::Vector3d(tmp.x() + delta.x(), tmp.y() - delta.y(), tmp.z() + delta.z()));
+      points.push_back(Eigen::Vector3d(tmp.x() - delta.x(), tmp.y() - delta.y(), tmp.z() - delta.z()));
+      points.push_back(Eigen::Vector3d(tmp.x() - delta.x(), tmp.y() + delta.y(), tmp.z() + delta.z()));
+      points.push_back(Eigen::Vector3d(tmp.x() - delta.x(), tmp.y() + delta.y(), tmp.z() - delta.z()));
+      points.push_back(Eigen::Vector3d(tmp.x() - delta.x(), tmp.y() - delta.y(), tmp.z() + delta.z()));
     }
 
     return points;
   }
   else
   {
-    delta = traj.bbox / 2.0 + (par_.drone_radius) * Eigen::Vector3d::Ones();
-    // std::cout << "****traj.bbox = " << traj.bbox << std::endl;
-    // std::cout << "****par_.drone_radius = " << par_.drone_radius << std::endl;
-    // std::cout << "****Inflation by delta= " << delta.transpose() << std::endl;
-
-    return vertexesOfInterval(traj.pwp, t_start, t_end, delta);
+    return vertexesOfInterval(traj.pwp_mean, t_start, t_end, delta);
   }
 }
 
@@ -350,7 +436,7 @@ void Mader::removeTrajsThatWillNotAffectMe(const mt::state& A, double t_start, d
     if (traj.is_static == true)
     {
       Eigen::Vector3d center_obs =
-          evalDynTrajCompiled(traj, t_start);  // Note that t_start is constant along the trajectory
+          evalMeanDynTrajCompiled(traj, t_start);  // Note that t_start is constant along the trajectory
 
       Eigen::Vector3d positive_half_diagonal;
       positive_half_diagonal << traj.bbox[0] / 2.0, traj.bbox[1] / 2.0, traj.bbox[2] / 2.0;
@@ -441,20 +527,20 @@ void Mader::sampleFeaturePosVel(double t_start, double t_end, std::vector<Eigen:
   // std::cout << red << bold << "in sampleFeaturePositions, waiting to lock mtx_trajs_" << reset << std::endl;
   mtx_trajs_.lock();
   // std::cout << red << bold << "in sampleFeaturePositions, waiting to lock t_" << reset << std::endl;
-  mtx_t_.lock();
+  // mtx_t_.lock();
 
   double delta = (t_end - t_start) / par_.num_samples_simpson;
 
   for (int i = 0; i < par_.num_samples_simpson; i++)
   {
-    t_ = t_start + i * delta;  // which is constant along the trajectory
-
     if (trajs_.size() > 0)
     {
       size_t wt = 0;  // which traj I should focus on. Take the trajectory of the first obstacle for now
-      pos.push_back(Eigen::Vector3d(trajs_[wt].function[0].value(),  ////////////
-                                    trajs_[wt].function[1].value(),  ////////////
-                                    trajs_[wt].function[2].value()));
+
+      double ti = t_start + i * delta;  // which is constant along the trajectory
+      Eigen::Vector3d pos_i = evalMeanDynTrajCompiled(trajs_[wt], ti);
+
+      pos.push_back(pos_i);
 
       // MyTimer timer(true);
       // This commented part always returns 0.0. why??
@@ -470,13 +556,10 @@ void Mader::sampleFeaturePosVel(double t_start, double t_end, std::vector<Eigen:
 
       // Use finite differences to obtain the derivative
       double epsilon = 1e-6;
-      t_ = t_ + epsilon;
 
-      Eigen::Vector3d pos_i_epsilon = Eigen::Vector3d(trajs_[wt].function[0].value(),  ////////////
-                                                      trajs_[wt].function[1].value(),  ////////////
-                                                      trajs_[wt].function[2].value());
+      Eigen::Vector3d pos_i_epsilon = evalMeanDynTrajCompiled(trajs_[wt], ti + epsilon);
 
-      vel.push_back((pos_i_epsilon - pos[i]) / epsilon);
+      vel.push_back((pos_i_epsilon - pos_i) / epsilon);
 
       // std::cout << bold << "Velocity= " << vel[i].transpose() << reset << std::endl;
       //////////////////////////////
@@ -489,7 +572,7 @@ void Mader::sampleFeaturePosVel(double t_start, double t_end, std::vector<Eigen:
       vel.push_back(Eigen::Vector3d::Zero());
     }
   }
-  mtx_t_.unlock();
+  // mtx_t_.unlock();
   // std::cout << red << bold << "in sampleFeaturePositions, mtx_t_ unlocked" << reset << std::endl;
   mtx_trajs_.unlock();
   // std::cout << red << bold << "in sampleFeaturePositions, mtx_trajs_ unlocked" << reset << std::endl;

@@ -13,6 +13,9 @@
 #include <CGAL/Polyhedron_3.h>
 #include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
 #include <CGAL/Convex_hull_traits_3.h>
+#include <CGAL/convex_hull_3.h>
+#include <CGAL/Triangulation_3.h>
+#include <decomp_geometry/polyhedron.h>
 #include <decomp_geometry/polyhedron.h>
 
 typedef CGAL::Exact_predicates_inexact_constructions_kernel K;

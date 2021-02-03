@@ -62,8 +62,15 @@ res_plot_traj: 15.0  #Higher --> More resolution when plotting the trajectory
 factor_v_max: 1.0 #\in [0,1]. Used to find the total duration of a given trajectory.
 alpha_shrink: 0.95 #\in [0,1] Only used for MINVO/Bezier
 
-alpha: 0.0 #[m] Error in position
-beta: 0.0 #[m] Deviation between the trajectory and the segment between two discretization points
+# alpha: 0.0 #[m] Error in position
+# beta: 0.0 #[m] Deviation between the trajectory and the segment between two discretization points
+norminv_prob: 0.52 #For x% bands, set this to norminv(x). #70.0% band <--> 0.524
+                                                          #80.0% band <--> 0.841
+                                                          #90.0% band <--> 1.282
+                                                          #97.5% band <--> 1.96 
+
+
+
 gamma: 0.1 #[seconds] >0 Time step between discretization points
 
 
@@ -73,7 +80,7 @@ gamma: 0.1 #[seconds] >0 Time step between discretization points
 # impose_fov: false
 # R_local_map: 5.5 #[m] Trajectories from obstacles/agents whose center falls inside this local map are stored
 
-##### Not used in the MADER algorithm
+#####
 fov_x_deg: 80 #[deg] \in (0,180] ,  angle between two faces of the tetrahedron. Horizontal FOV
 fov_y_deg: 80 #[deg] \in (0,180] ,  angle between two faces of the tetrahedron. Vertical FOV
 fov_depth: 4.5 #[m] Should be < Ra

@@ -585,8 +585,11 @@ void TrackerPredictor::cloud_cb(const sensor_msgs::PointCloud2ConstPtr& pcl2ptr_
     mader_msgs::DynTraj dynTraj_msg;
     dynTraj_msg.header.frame_id = "world";
     dynTraj_msg.header.stamp = ros::Time::now();
-
-    dynTraj_msg.function = pieceWisePol2String(track_j.pwp_mean);
+    dynTraj_msg.use_pwp_field = true;
+    dynTraj_msg.pwp_mean = pwp2PwpMsg(track_j.pwp_mean);
+    dynTraj_msg.pwp_var = pwp2PwpMsg(track_j.pwp_var);
+    // dynTraj_msg.s_mean = pieceWisePol2String(track_j.pwp_mean);
+    // dynTraj_msg.s_var = pieceWisePol2String(track_j.pwp_var);
 
     std::vector<double> tmp = eigen2std(track_j.getLatestBbox());
 

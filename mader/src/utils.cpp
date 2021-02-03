@@ -94,53 +94,115 @@ visualization_msgs::MarkerArray pwp2ColoredMarkerArray(mt::PieceWisePol& pwp, do
   return marker_array;
 }
 
-// coeff_old are the coeff [a b c d]' of a polynomial p(t)
-// coeff_new are the coeff [a b c d]' of a polynomial q(t) defined in [0,1] such that:
-//     q((t-t0)/(tf-t0))=p(t) \forall t \in [t0,tf]  I.e. p(t0)=q(0) and p(tf)=q(1)
-void rescaleCoeffPol(const Eigen::Matrix<double, 4, 1>& coeff_old, Eigen::Matrix<double, 4, 1>& coeff_new, double t0,
-                     double tf)
+// https://www.geeksforgeeks.org/binomial-coefficient-dp-9/#highlighter_72035:~:text=Following%20is%20a%20space%2Doptimized%20version%20of%20the%20above%20code
+int nChoosek(int n, int k)
 {
-  // if (t0 < 0 || t0 > 1 || tf < 0 || tf > 1)
-  // {
-  //   std::cout << "tf and t0 should be in [0,1]" << std::endl;
-  //   std::cout << "t0= " << t0 << std::endl;
-  //   std::cout << "tf= " << tf << std::endl;
-  //   std::cout << "================================" << std::endl;
-  //   abort();
-  // }
+  int C[k + 1];
+  memset(C, 0, sizeof(C));
 
-  double a = coeff_old(0);
-  double b = coeff_old(1);
-  double c = coeff_old(2);
-  double d = coeff_old(3);
+  C[0] = 1;  // nC0 is 1
 
-  double delta = tf - t0;
-  double delta_2 = delta * delta;
-  double delta_3 = delta * delta * delta;
-
-  // std::cout << "delta= " << delta << std::endl;
-
-  // // if (isnan(delta))
-  // // {
-  // //   std::cout << "tf= " << tf << std::endl;
-  // //   std::cout << "t0= " << tf << std::endl;
-  // //   std::cout << "delta is NAN" << std::endl;
-  // //   abort();
-  // // }
-
-  // std::cout << "a= " << a << std::endl;
-  // std::cout << "b= " << b << std::endl;
-  // std::cout << "c= " << c << std::endl;
-  // std::cout << "d= " << d << std::endl;
-
-  double t0_2 = t0 * t0;
-  double t0_3 = t0 * t0 * t0;
-
-  coeff_new(0) = a * delta_3;
-  coeff_new(1) = b * delta_2 + 3 * a * delta_2 * t0;
-  coeff_new(2) = c * delta + 2 * b * delta * t0 + 3 * a * delta * t0_2;
-  coeff_new(3) = d + c * t0 + b * t0_2 + a * t0_3;
+  for (int i = 1; i <= n; i++)
+  {
+    // Compute next row of pascal triangle using
+    // the previous row
+    for (int j = std::min(i, k); j > 0; j--)
+      C[j] = C[j] + C[j - 1];
+  }
+  return C[k];
 }
+
+// https://stackoverflow.com/questions/141422/how-can-a-transform-a-polynomial-to-another-coordinate-system
+
+// Denote T=[t^n,...,t,1]'
+// given a polynomial p(t)=coeff_p'*T
+// compute the coeff_q of the polynomial q(t)=p(a*t + b).
+// q(t)=coeff_q'*T
+void linearTransformPoly(const Eigen::VectorXd& coeff_p, Eigen::VectorXd& coeff_q, double a, double b)
+{
+  Eigen::VectorXd c = coeff_p.reverse();
+
+  Eigen::MatrixXd Q(coeff_p.size(), coeff_p.size());
+  for (int i = 0; i < Q.rows(); i++)
+  {
+    for (int j = 0; j < Q.cols(); j++)
+    {
+      int jchoosei = (i > j) ? 0 : nChoosek(j, i);
+      // std::cout << "i= " << i << std::endl;
+      // std::cout << "j= " << j << std::endl;
+      Q(i, j) = jchoosei * pow(a, i) * pow(b, j - i);
+    }
+  }
+  Eigen::VectorXd d = Q * c;
+  coeff_q = d.reverse();  // Note that d = d.reverse() is wrong!
+
+  // std::cout << "Q= \n" << Q << std::endl;
+  // std::cout << "coeff_p= \n" << coeff_p << std::endl;
+  // std::cout << "coeff_q= \n" << coeff_q << std::endl;
+  // std::cout << "coeff_q= \n" << coeff_q << std::endl;
+}
+
+// Obtain the coefficients of q(t) such that
+// p(tp1)==q(tq1)
+// p(tp2)==q(tq2)
+void changeDomPoly(const Eigen::VectorXd& coeff_p, double tp1, double tp2, Eigen::VectorXd& coeff_q, double tq1,
+                   double tq2)
+{
+  // The equations below are from executing this in Matlab:
+  // syms tq1 tq2 tp1 tp2 a b;
+  // s=solve([tp1==a*tq1+b, tp2==a*tq2+b],[a,b])
+  double a = (tp1 - tp2) / (tq1 - tq2);
+  double b = -(tp1 * tq2 - tp2 * tq1) / (tq1 - tq2);
+  linearTransformPoly(coeff_p, coeff_q, a, b);
+}
+
+// // coeff_old are the coeff [a b c d]' of a polynomial p(t)
+// // coeff_new are the coeff [a b c d]' of a polynomial q(t) defined in [0,1] such that:
+// //     q((t-t0)/(tf-t0))=p(t) \forall t \in [t0,tf]  I.e. p(t0)=q(0) and p(tf)=q(1)
+// void rescaleCoeffPol(const Eigen::Matrix<double, 4, 1>& coeff_old, Eigen::Matrix<double, 4, 1>& coeff_new, double t0,
+//                      double tf)
+// {
+//   // if (t0 < 0 || t0 > 1 || tf < 0 || tf > 1)
+//   // {
+//   //   std::cout << "tf and t0 should be in [0,1]" << std::endl;
+//   //   std::cout << "t0= " << t0 << std::endl;
+//   //   std::cout << "tf= " << tf << std::endl;
+//   //   std::cout << "================================" << std::endl;
+//   //   abort();
+//   // }
+
+//   double a = coeff_old(0);
+//   double b = coeff_old(1);
+//   double c = coeff_old(2);
+//   double d = coeff_old(3);
+
+//   double delta = tf - t0;
+//   double delta_2 = delta * delta;
+//   double delta_3 = delta * delta * delta;
+
+//   // std::cout << "delta= " << delta << std::endl;
+
+//   // // if (isnan(delta))
+//   // // {
+//   // //   std::cout << "tf= " << tf << std::endl;
+//   // //   std::cout << "t0= " << tf << std::endl;
+//   // //   std::cout << "delta is NAN" << std::endl;
+//   // //   abort();
+//   // // }
+
+//   // std::cout << "a= " << a << std::endl;
+//   // std::cout << "b= " << b << std::endl;
+//   // std::cout << "c= " << c << std::endl;
+//   // std::cout << "d= " << d << std::endl;
+
+//   double t0_2 = t0 * t0;
+//   double t0_3 = t0 * t0 * t0;
+
+//   coeff_new(0) = a * delta_3;
+//   coeff_new(1) = b * delta_2 + 3 * a * delta_2 * t0;
+//   coeff_new(2) = c * delta + 2 * b * delta * t0 + 3 * a * delta * t0_2;
+//   coeff_new(3) = d + c * t0 + b * t0_2 + a * t0_3;
+// }
 
 mader_msgs::PieceWisePolTraj pwp2PwpMsg(const mt::PieceWisePol& pwp)
 {
@@ -273,6 +335,7 @@ mt::PieceWisePol createPwpFromStaticPosition(const mt::state& current_state)
   mt::PieceWisePol pwp;
   pwp.times = { ros::Time::now().toSec(), ros::Time::now().toSec() + 1e10 };
 
+  // In this case we encode it as a third-order polynomial
   Eigen::Matrix<double, 4, 1> coeff_x_interv0;  // [a b c d]' of the interval 0
   Eigen::Matrix<double, 4, 1> coeff_y_interv0;  // [a b c d]' of the interval 0
   Eigen::Matrix<double, 4, 1> coeff_z_interv0;  // [a b c d]' of the interval 0

@@ -515,62 +515,87 @@ struct PieceWisePol
     return (all_coeff_x.back().rows() - 1);  // should be the same for y and z
   }
 
+  int getNumOfIntervals() const
+  {
+    return (all_coeff_x.size());  // should be the same for y and z
+  }
+
   Eigen::VectorXd getU(double u) const
   {
     int degree = getDeg();
-    Eigen::VectorXd tmp(degree + 1);
+    Eigen::VectorXd U(degree + 1);
 
     for (int i = 0; i <= degree; i++)
     {
-      tmp(i) = pow(u, degree - i);
+      U(i) = pow(u, degree - i);
     }
 
-    return tmp;
+    return U;
+  }
+
+  int getInterval(double t) const
+  {
+    if (t >= times[times.size() - 1])
+    {
+      return (getNumOfIntervals() - 1);
+    }
+    if (t < times[0])
+    {
+      return 0;
+    }
+    for (int i = 0; i < (times.size() - 1); i++)
+    {
+      if (times[i] <= t && t < times[i + 1])
+      {
+        return i;
+      }
+    }
+    std::cout << "[getInterval] THIS SHOULD NEVER HAPPEN" << std::endl;
+    abort();
+    return 0;
+  }
+
+  double t2u(double t) const
+  {
+    int j = getInterval(t);
+    double u = (t - times[j]) / (times[j + 1] - times[j]);
+    if (u > 1.0 || u < 0.0)
+    {
+      std::cout << "[t2u] THIS SHOULD NEVER HAPPENN, u=" << u << std::endl;
+      std::cout << "[t2u] j=" << j << std::endl;
+      std::cout << "t=" << t << std::endl;
+      std::cout << "(times[j + 1] - times[j])=" << (times[j + 1] - times[j]) << std::endl;
+      std::cout << "times[j]=" << times[j] << std::endl;
+      print();
+      abort();
+    }
+    return u;
   }
 
   Eigen::Vector3d eval(double t) const
   {
     Eigen::Vector3d result;
 
-    if (t >= times[times.size() - 1])
-    {  // return the last value of the polynomial in the last interval
+    // Saturate
+    double tt = std::max(t, times[0]);
+    tt = std::min(tt, times[times.size() - 1]);
 
-      double u = 1;
-      Eigen::VectorXd tmp = getU(u);
-      result.x() = all_coeff_x.back().transpose() * tmp;
-      result.y() = all_coeff_y.back().transpose() * tmp;
-      result.z() = all_coeff_z.back().transpose() * tmp;
-      return result;
-    }
-    if (t < times[0])
-    {  // return the first value of the polynomial in the first interval
+    double u = t2u(tt);
+    int j = getInterval(tt);  // TODO [Improve efficiency]: note that t2u is already calling getInterval()
 
-      double u = 0;
-      Eigen::VectorXd tmp = getU(u);
-      result.x() = all_coeff_x.front().transpose() * tmp;
-      result.y() = all_coeff_y.front().transpose() * tmp;
-      result.z() = all_coeff_z.front().transpose() * tmp;
-      return result;
-    }
-    //(times - 1) is the number of intervals
-    for (int i = 0; i < (times.size() - 1); i++)
-    {
-      if (times[i] <= t && t < times[i + 1])
-      {
-        double u = (t - times[i]) / (times[i + 1] - times[i]);
+    // std::cout << "tt= " << tt << std::endl;
+    // std::cout << "u= " << u << std::endl;
+    // std::cout << "j= " << j << std::endl;
 
-        Eigen::VectorXd tmp = getU(u);
-        result.x() = all_coeff_x[i].transpose() * tmp;
-        result.y() = all_coeff_y[i].transpose() * tmp;
-        result.z() = all_coeff_z[i].transpose() * tmp;
+    Eigen::VectorXd tmp = getU(u);
 
-        break;
-      }
-    }
+    result.x() = all_coeff_x[j].transpose() * tmp;
+    result.y() = all_coeff_y[j].transpose() * tmp;
+    result.z() = all_coeff_z[j].transpose() * tmp;
     return result;
   }
 
-  void print()
+  void print() const
   {
     std::cout << "all_coeff_x.size()= " << all_coeff_x.size() << std::endl;
     std::cout << "times.size()= " << times.size() << std::endl;
@@ -587,25 +612,34 @@ struct PieceWisePol
 
 struct dynTraj
 {
-  bool use_pwp_field;  // If true, pwp is used. If false, function is used
-  std::vector<std::string> function;
+  bool use_pwp_field;  // If true, pwp is used. If false, the string is used
+
+  std::vector<std::string> s_mean;
+  std::vector<std::string> s_var;
+  mt::PieceWisePol pwp_mean;
+  mt::PieceWisePol pwp_var;
+
   Eigen::Vector3d bbox;
   int id;
   double time_received;  // time at which this trajectory was received from an agent
   bool is_agent;         // true for a trajectory of an agent, false for an obstacle
-  mt::PieceWisePol pwp;
 };
 
 struct dynTrajCompiled
 {
   bool use_pwp_field;
   std::vector<exprtk::expression<double>> function;
+
+  std::vector<exprtk::expression<double>> s_mean;
+  std::vector<exprtk::expression<double>> s_var;
+  mt::PieceWisePol pwp_mean;
+  mt::PieceWisePol pwp_var;
+
   Eigen::Vector3d bbox;
   int id;
   double time_received;  // time at which this trajectory was received from an agent
   bool is_agent;         // true for a trajectory of an agent, false for an obstacle
   bool is_static;
-  mt::PieceWisePol pwp;
 };
 
 // struct mt::PieceWisePolWithInfo
@@ -685,8 +719,9 @@ struct parameters
 
   double alpha_shrink = 1.0;
 
-  double alpha = 0.0;
-  double beta = 0.0;
+  // double alpha = 0.0;
+  // double beta = 0.0;
+  double norminv_prob = 1.96;
   double gamma = 0.5;
 
   // weights

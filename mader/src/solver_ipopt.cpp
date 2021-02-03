@@ -35,6 +35,12 @@ using namespace termcolor;
 //   return ("");
 // }
 
+template <typename T>
+int sgn(T val)
+{
+  return (T(0) < val) - (val < T(0));
+}
+
 SolverIpopt::SolverIpopt(mt::parameters &par, std::shared_ptr<mt::log> log_ptr)
 {
   par_ = par;

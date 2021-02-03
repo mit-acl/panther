@@ -165,6 +165,7 @@ class FakeSim:
             t=rospy.get_time(); #Same as before, but it's float
 
             dynamic_trajectory_msg=DynTraj(); 
+            
 
             bbox_i=self.bboxes[i];
             s=self.world.scale;
@@ -194,9 +195,11 @@ class FakeSim:
             y = eval(y_string)
             z = eval(z_string)
 
+            dynamic_trajectory_msg.use_pwp_field=False;
             dynamic_trajectory_msg.is_agent=False;
             dynamic_trajectory_msg.header.stamp= t_ros;
-            dynamic_trajectory_msg.function = [x_string, y_string, z_string]
+            dynamic_trajectory_msg.s_mean = [x_string, y_string, z_string]
+            dynamic_trajectory_msg.s_var = ["0.0", "0.0", "0.0"]
             dynamic_trajectory_msg.pos.x=x #Current position
             dynamic_trajectory_msg.pos.y=y #Current position
             dynamic_trajectory_msg.pos.z=z #Current position

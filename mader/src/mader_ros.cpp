@@ -128,8 +128,9 @@ MaderRos::MaderRos(ros::NodeHandle nh1, ros::NodeHandle nh2, ros::NodeHandle nh3
 
   safeGetParam(nh1_, "res_plot_traj", par_.res_plot_traj);
 
-  safeGetParam(nh1_, "alpha", par_.alpha);
-  safeGetParam(nh1_, "beta", par_.beta);
+  // safeGetParam(nh1_, "alpha", par_.alpha);
+  // safeGetParam(nh1_, "beta", par_.beta);
+  safeGetParam(nh1_, "norminv_prob", par_.norminv_prob);
   safeGetParam(nh1_, "gamma", par_.gamma);
 
   safeGetParam(nh1_, "alpha_shrink", par_.alpha_shrink);
@@ -345,24 +346,27 @@ void MaderRos::trajCB(const mader_msgs::DynTraj& msg)
   }
 
   mt::dynTraj tmp;
-
   tmp.use_pwp_field = msg.use_pwp_field;
 
-  tmp.function.push_back(msg.function[0]);
-  tmp.function.push_back(msg.function[1]);
-  tmp.function.push_back(msg.function[2]);
-
-  tmp.bbox << msg.bbox[0], msg.bbox[1], msg.bbox[2];
-
-  tmp.id = msg.id;
-
-  tmp.is_agent = msg.is_agent;
-
-  if (msg.is_agent)
+  if (msg.use_pwp_field)
   {
-    tmp.pwp = pwpMsg2Pwp(msg.pwp);
+    tmp.pwp_mean = pwpMsg2Pwp(msg.pwp_mean);
+    tmp.pwp_var = pwpMsg2Pwp(msg.pwp_var);
+  }
+  else
+  {
+    tmp.s_mean.push_back(msg.s_mean[0]);
+    tmp.s_mean.push_back(msg.s_mean[1]);
+    tmp.s_mean.push_back(msg.s_mean[2]);
+
+    tmp.s_var.push_back(msg.s_var[0]);
+    tmp.s_var.push_back(msg.s_var[1]);
+    tmp.s_var.push_back(msg.s_var[2]);
   }
 
+  tmp.bbox << msg.bbox[0], msg.bbox[1], msg.bbox[2];
+  tmp.id = msg.id;
+  tmp.is_agent = msg.is_agent;
   tmp.time_received = ros::Time::now().toSec();
 
   mader_ptr_->updateTrajObstacles(tmp);
@@ -372,15 +376,21 @@ void MaderRos::trajCB(const mader_msgs::DynTraj& msg)
 // composition of pwp
 void MaderRos::publishOwnTraj(const mt::PieceWisePol& pwp)
 {
-  std::vector<std::string> s;  // pieceWisePol2String(pwp); The rest of the agents will use the pwp field, not the
-                               // string
-  s.push_back("");
-  s.push_back("");
-  s.push_back("");
+  // std::vector<std::string> s;  // pieceWisePol2String(pwp); The rest of the agents will use the pwp field, not the
+  //                              // string
+  // s.push_back("");
+  // s.push_back("");
+  // s.push_back("");
 
   mader_msgs::DynTraj msg;
   msg.use_pwp_field = true;
-  msg.function = s;
+  msg.pwp_mean = pwp2PwpMsg(pwp);
+
+  mt::state tmp;
+  tmp.setZero();
+  msg.pwp_var = pwp2PwpMsg(createPwpFromStaticPosition(tmp));  // zero variance
+
+  // msg.function = s;
   msg.bbox.push_back(2 * par_.drone_radius);
   msg.bbox.push_back(2 * par_.drone_radius);
   msg.bbox.push_back(2 * par_.drone_radius);
@@ -390,8 +400,6 @@ void MaderRos::publishOwnTraj(const mt::PieceWisePol& pwp)
   msg.id = id_;
 
   msg.is_agent = true;
-
-  msg.pwp = pwp2PwpMsg(pwp);
 
   // std::cout<<"msg.pwp.times[0]= "<<msg.pwp.times[0]
 

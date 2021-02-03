@@ -71,8 +71,8 @@ mader_msgs::Log log2LogMsg(mt::log log);
 visualization_msgs::MarkerArray pwp2ColoredMarkerArray(mt::PieceWisePol& pwp, double t_init, double t_final,
                                                        int samples, std::string ns, Eigen::Vector3d& color);
 
-void rescaleCoeffPol(const Eigen::Matrix<double, 4, 1>& coeff_old, Eigen::Matrix<double, 4, 1>& coeff_new, double t0,
-                     double tf);
+// void rescaleCoeffPol(const Eigen::Matrix<double, 4, 1>& coeff_old, Eigen::Matrix<double, 4, 1>& coeff_new, double t0,
+//                      double tf);
 
 mt::PieceWisePol createPwpFromStaticPosition(const mt::state& current_state);
 
@@ -129,12 +129,16 @@ geometry_msgs::Vector3 vectorNull();
 
 geometry_msgs::Vector3 vectorUniform(double a);
 
+int nChoosek(int n, int k);
+void linearTransformPoly(const Eigen::VectorXd& coeff_old, Eigen::VectorXd& coeff_new, double a, double b);
+void changeDomPoly(const Eigen::VectorXd& coeff_p, double tp1, double tp2, Eigen::VectorXd& coeff_q, double tq1,
+                   double tq2);
 // sign function
-template <typename T>
-int sgn(T val)
-{
-  return (T(0) < val) - (val < T(0));
-}
+// template <typename T>
+// int sgn(T val)
+// {
+//   return (T(0) < val) - (val < T(0));
+// }
 
 // given 2 points (A inside and B outside the sphere) it computes the intersection of the lines between
 // that 2 points and the sphere

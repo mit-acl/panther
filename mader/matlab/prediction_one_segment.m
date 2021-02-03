@@ -41,7 +41,7 @@ all_pos=MX.sym('all_pos',dim_pos,size_sliding_window);
 % t_query=MX.sym('t',1,1);
 
 
-all_t_modified=(all_t-max(all_t))/secs_prediction; %Shifting to avoid numerical issues
+all_t_modified=(all_t-max(all_t))/secs_prediction; %Shifting/scaling to avoid numerical issues
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Start of use of t_modified
 X=[];
@@ -82,8 +82,8 @@ coeff_var=   [getCoeffPolyCasadi(variance(1), t, 2*deg_pos_prediction);
                    getCoeffPolyCasadi(variance(3), t, 2*deg_pos_prediction)];
     
 
-%Both coeff_predicted and coeff_variance are expressed such that t=0
-%corresponds with max(all_t);
+%Both coeff_predicted and coeff_variance are expressed such that  t=0 corresponds to max(all_t)  
+%                                                                 t=1 corresponds to max(all_t) + secs_prediction;
 g= Function('g', {all_t, all_pos},      [{coeff_mean, coeff_var, secs_prediction}], ...
                  {'all_t','all_pos'},    {'coeff_mean', 'coeff_var', 'secs_prediction'} );
 

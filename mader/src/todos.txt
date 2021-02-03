@@ -4,14 +4,13 @@ En este repo:
 	Behaviour look ahead when obstacle is done
 	Prepare HW experiment trajectories obstacles
 	max_runtime_casadi + mu and kappa delta_t for initial guess?
-	select via roslaunch if I want trajectories_predicted or trajectories_gtruth. Rename /trajs to /trajs_ground_truth
-	Predict the uncertainty and apply it to the polyhedra
 	Check isInFOV_smooth in main (pyramid)
 	WHen using the cost (\phi-phi_tf)^2, include that on the yaw graph search (and in its heuristics)?
 	What happens at the end of the trajectory (weird)
 	Check costs for the HW experiments
 	Wait duration for looking up transform in tracker
 	Como decidir entre varios obstaculos (ahora cojo traj_0 creo)
+	Should I comment removeTrajsThatDontAffectMe
 	Create a dataset of the moving objects from the experiments??	
 
 	Check the partial derivatives of velocity of the obstacle in the cost function is right

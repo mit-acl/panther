@@ -103,9 +103,11 @@ class FakeSim:
             self.marker_array.markers.append(self.generateMarker(mesh, bbox, i));
 
             dynamic_trajectory_msg=DynTraj(); 
+            dynamic_trajectory_msg.use_pwp_field=False;
             dynamic_trajectory_msg.is_agent=False;
             dynamic_trajectory_msg.header.stamp= rospy.Time.now();
-            dynamic_trajectory_msg.function = [traj_x, traj_y, traj_z]
+            dynamic_trajectory_msg.s_mean = [traj_x, traj_y, traj_z]
+            dynamic_trajectory_msg.s_var = ["0.0", "0.0", "0.0"]
             dynamic_trajectory_msg.bbox = [bbox[0], bbox[1], bbox[2]];
             dynamic_trajectory_msg.pos.x=x #Current position, will be updated later
             dynamic_trajectory_msg.pos.y=y #Current position, will be updated later
@@ -163,9 +165,9 @@ class FakeSim:
 
             marker=self.marker_array.markers[i];
           
-            x = eval(self.all_dyn_traj[i].function[0])
-            y = eval(self.all_dyn_traj[i].function[1])
-            z = eval(self.all_dyn_traj[i].function[2])
+            x = eval(self.all_dyn_traj[i].s_mean[0])
+            y = eval(self.all_dyn_traj[i].s_mean[1])
+            z = eval(self.all_dyn_traj[i].s_mean[2])
 
             # Set the stamp and the current pos
             self.all_dyn_traj[i].header.stamp= t_ros;
@@ -296,9 +298,9 @@ class FakeSim:
   </link>
   <gazebo>
     <plugin name="move_model" filename="libmove_model.so">
-    <traj_x>"""+self.all_dyn_traj[i].function[0]+"""</traj_x>
-    <traj_y>"""+self.all_dyn_traj[i].function[1]+"""</traj_y>
-    <traj_z>"""+self.all_dyn_traj[i].function[2]+"""</traj_z>
+    <traj_x>"""+self.all_dyn_traj[i].s_mean[0]+"""</traj_x>
+    <traj_y>"""+self.all_dyn_traj[i].s_mean[1]+"""</traj_y>
+    <traj_z>"""+self.all_dyn_traj[i].s_mean[2]+"""</traj_z>
     </plugin>
   </gazebo>
 </robot>

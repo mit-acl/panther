@@ -7,8 +7,6 @@
  * -------------------------------------------------------------------------- */
 
 #include "cgal_utils.hpp"
-#include <CGAL/convex_hull_3.h>
-#include <CGAL/Triangulation_3.h>
 
 struct Plane_equation
 {

@@ -151,5 +151,44 @@ int main()
     pwpAB.print();
   }
 
+  std::cout << "Test linear transformation..." << std::endl;
+  ////////////////// Test linear transformation
+  Eigen::VectorXd coeff_p(5);
+  Eigen::VectorXd coeff_q(5);
+  double a = 7.0;
+  double b = 3.0;
+  coeff_p << 5.0, 1.0, 2.0, 3.0, 6.0;
+  linearTransformPoly(coeff_p, coeff_q, a, b);
+
+  std::cout << "coeff_p= " << coeff_p.transpose() << std::endl;
+  std::cout << "a= " << a << ", b=" << b << std::endl;
+  std::cout << "coeff of q(at +b)= " << coeff_q.transpose() << std::endl;
+
+  // The previous result should be the same as this one in matlab:
+  // coeff_p=[5.0, 1.0, 2.0, 3.0, 6.0]';
+  // syms t real; T=(t.^[(numel(coeff_p)-1):-1:0])';
+  // p=coeff_p'*T; a=7.0; b=3.0; q=subs(p,t,a*t+b);
+  // coeffs(q,'All')
+
+  std::cout << "Test scale/shift poly..." << std::endl;
+  changeDomPoly(coeff_p, 3.0, 50.0, coeff_q, 1.0, 7.0);
+  std::cout << "coeff_q= " << coeff_q.transpose() << std::endl;
+
+  // The previous result should be the same as this one in matlab:
+
+  // tp1=3.0; tp2=50; tq1=1.0; tq2=7.0;
+  // syms a b
+  // s=solve([tp1==a*tq1+b, tp2==a*tq2+b],[a,b])
+
+  // coeff_p=[5.0, 1.0, 2.0, 3.0, 6.0]';
+  // syms t real; T=(t.^[(numel(coeff_p)-1):-1:0])';
+  // p=coeff_p'*T;
+  // q=subs(p,t,s.a*t+s.b);
+
+  // assert(subs(p, t,tp1) - subs(q, t,tq1) ==0)
+  // assert(subs(p, t,tp2) - subs(q, t,tq2) ==0)
+
+  // vpa(coeffs(q,'All'),6)
+
   return 0;
 }
