@@ -1,11 +1,8 @@
 #!/usr/bin/env python
 
-import roslib
+
 import rospy
-import copy
 import math
-from geometry_msgs.msg import PoseStamped
-from geometry_msgs.msg import Pose
 from gazebo_msgs.msg import ModelState
 from snapstack_msgs.msg import State
 
