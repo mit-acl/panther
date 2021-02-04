@@ -803,6 +803,7 @@ bool Mader::isReplanningNeeded()
 
   // Check if we have reached the goal
   double dist_to_goal = (G_term.pos - state_local.pos).norm();
+  // std::cout << "dist_to_goal= " << dist_to_goal << std::endl;
   if (dist_to_goal < par_.goal_radius)
   {
     changeDroneStatus(DroneStatus::GOAL_REACHED);
@@ -812,6 +813,7 @@ bool Mader::isReplanningNeeded()
   // Check if we have seen the goal in the last replan
   mtx_plan_.lock();
   double dist_last_plan_to_goal = (G_term.pos - plan_.back().pos).norm();
+  // std::cout << "dist_last_plan_to_goal= " << dist_last_plan_to_goal << std::endl;
   mtx_plan_.unlock();
   if (dist_last_plan_to_goal < par_.goal_radius && drone_status_ == DroneStatus::TRAVELING)
   {
@@ -915,11 +917,13 @@ bool Mader::replan(mt::Edges& edges_obstacles_out, std::vector<mt::state>& X_saf
 
   double factor_v_max_tmp = par_.factor_v_max;
 
+  // std::cout << "distA2TermGoal= " << distA2TermGoal << std::endl;
+
   // when it's near the terminal goal --> use a small factor_v_max (if not it will oscillate)
   if (distA2TermGoal < 3.0)  // TODO: Put this as a param
   {
-    factor_v_max_tmp = 0.4;  // TODO: Put this as a param
-    solver_->par_.c_final_pos = 1000.0;
+    factor_v_max_tmp = 0.8;  // TODO: Put this as a param
+    solver_->par_.c_final_pos = 100000000.0;
   }
   else
   {
