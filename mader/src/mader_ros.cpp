@@ -116,6 +116,8 @@ MaderRos::MaderRos(ros::NodeHandle nh1, ros::NodeHandle nh2, ros::NodeHandle nh3
   safeGetParam(nh1_, "kappa", par_.kappa);
   safeGetParam(nh1_, "mu", par_.mu);
 
+  safeGetParam(nh1_, "max_seconds_keeping_traj", par_.max_seconds_keeping_traj);
+
   safeGetParam(nh1_, "a_star_samp_x", par_.a_star_samp_x);
   safeGetParam(nh1_, "a_star_samp_y", par_.a_star_samp_y);
   safeGetParam(nh1_, "a_star_samp_z", par_.a_star_samp_z);
@@ -340,10 +342,10 @@ void MaderRos::trajCB(const mader_msgs::DynTraj& msg)
 
   can_use_its_info = (dist <= 4 * par_.Ra);  // See explanation of 4*Ra in Mader::updateTrajObstacles
 
-  if (can_use_its_info == false)
-  {
-    return;
-  }
+  // if (can_use_its_info == false)
+  // {
+  //   return;
+  // } //TODO: Commented (4-Feb-2021)
 
   mt::dynTraj tmp;
   tmp.use_pwp_field = msg.use_pwp_field;

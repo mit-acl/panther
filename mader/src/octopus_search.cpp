@@ -35,23 +35,23 @@ OctopusSearch::OctopusSearch(std::string basis, int num_seg, int deg_pos, double
   if (basis == "MINVO")
   {
     // std::cout << green << bold << "A* is using MINVO" << reset << std::endl;
-    M_pos_bs2basis_ = basis_converter.getMinvoPosConverters(num_seg);
-    M_vel_bs2basis_ = basis_converter.getBSplineVelConverters(num_seg);  // getMinvoVelConverters TODO!!
+    M_pos_bs2basis_ = basis_converter.getMinvoDeg3Converters(num_seg);
+    M_vel_bs2basis_ = basis_converter.getBSplineDeg2Converters(num_seg);  // getMinvoDeg2Converters TODO!!
     basis_ = MINVO;
   }
   else if (basis == "BEZIER")
   {
     // std::cout << green << bold << "A* is using BEZIER" << reset << std::endl;
-    M_pos_bs2basis_ = basis_converter.getBezierPosConverters(num_seg);
-    M_vel_bs2basis_ = basis_converter.getBSplineVelConverters(num_seg);  // getBezierVelConverters TODO!!
+    M_pos_bs2basis_ = basis_converter.getBezierDeg3Converters(num_seg);
+    M_vel_bs2basis_ = basis_converter.getBSplineDeg2Converters(num_seg);  // getBezierDeg2Converters TODO!!
     basis_ = BEZIER;
   }
   else if (basis == "B_SPLINE")
   {
     // std::cout << green << bold << "A* is using B_SPLINE" << reset << std::endl;
 
-    M_pos_bs2basis_ = basis_converter.getBSplinePosConverters(num_seg);
-    M_vel_bs2basis_ = basis_converter.getBSplineVelConverters(num_seg);
+    M_pos_bs2basis_ = basis_converter.getBSplineDeg3Converters(num_seg);
+    M_vel_bs2basis_ = basis_converter.getBSplineDeg2Converters(num_seg);
 
     basis_ = B_SPLINE;
   }

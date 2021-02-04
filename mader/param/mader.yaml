@@ -26,7 +26,7 @@ z_max: 1000000000.0         #[m] JPS is not allowed to give a solution that goes
 v_max: [2.6, 2.6, 2.6]   #[m/s]  7.0
 a_max: [20.0, 20.0, 9.6]   #[m/s2] Note that if a_max.z() > 9.81, the drone may flip
 j_max: [100.0, 100.0, 100.0]   #[m/s2] Note that if a_max.z() > 9.81, the drone may flip
-ydot_max: 4.0           # [rd/s] Maximum angular velocity. 0.4 for Hardware
+ydot_max: 5.0           # [rd/s] Maximum angular velocity. 0.4 for Hardware
 
 factor_alpha: 1.5 #[-] DeltaT = factor_alpha*States_took_previous_replan
 
@@ -48,6 +48,8 @@ upper_bound_runtime_snlopt: 0.35 #[seconds] snlopt (init guess + solver) will ne
 lower_bound_runtime_snlopt: 0.05 #[seconds] snlopt (init guess + solver) will never take less than this amount of seconds
 kappa: 0.4 #% of time spent to find initial guess
 mu: 0.4    #% of time spent to solve the optimization
+
+max_seconds_keeping_traj: 1.0    #% If a trajectory has been kept for this long (since its last update was received), it is deleted
 
 # Samples in velocity for the A* guess used in the nlopt optimization problem
 a_star_samp_x: 5

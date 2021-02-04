@@ -43,15 +43,18 @@ Mader::Mader(mt::parameters par) : par_(par)
 
   if (par.basis == "MINVO")
   {
-    A_rest_pos_basis_ = basis_converter.getArestMinvo();
+    A_basis_deg2_rest_ = basis_converter.getArestMinvoDeg2();
+    A_basis_deg3_rest_ = basis_converter.getArestMinvoDeg3();
   }
   else if (par.basis == "BEZIER")
   {
-    A_rest_pos_basis_ = basis_converter.getArestBezier();
+    A_basis_deg2_rest_ = basis_converter.getArestBezierDeg2();
+    A_basis_deg3_rest_ = basis_converter.getArestBezierDeg3();
   }
   else if (par.basis == "B_SPLINE")
   {
-    A_rest_pos_basis_ = basis_converter.getArestBSpline();
+    A_basis_deg2_rest_ = basis_converter.getArestBSplineDeg2();
+    A_basis_deg3_rest_ = basis_converter.getArestBSplineDeg3();
   }
   else
   {
@@ -60,7 +63,8 @@ Mader::Mader(mt::parameters par) : par_(par)
     abort();
   }
 
-  A_rest_pos_basis_inverse_ = A_rest_pos_basis_.inverse();
+  A_basis_deg2_rest_inverse_ = A_basis_deg2_rest_.inverse();
+  A_basis_deg3_rest_inverse_ = A_basis_deg3_rest_.inverse();
 
   // solver_ = new SolverNlopt(par_for_solver);
   // solver_ = new SolverGurobi(par_for_solver);
@@ -174,6 +178,32 @@ Eigen::Vector3d Mader::evalVarDynTrajCompiled(const mt::dynTrajCompiled& traj, d
   return tmp;
 }
 
+void Mader::removeOldTrajectories()
+{
+  double time_now = ros::Time::now().toSec();
+  std::vector<int> ids_to_remove;
+
+  mtx_trajs_.lock();
+
+  for (int index_traj = 0; index_traj < trajs_.size(); index_traj++)
+  {
+    if ((time_now - trajs_[index_traj].time_received) > par_.max_seconds_keeping_traj)
+    {
+      ids_to_remove.push_back(trajs_[index_traj].id);
+    }
+  }
+
+  for (auto id : ids_to_remove)
+  {
+    // ROS_WARN_STREAM("Removing " << id);
+    trajs_.erase(
+        std::remove_if(trajs_.begin(), trajs_.end(), [&](mt::dynTrajCompiled const& traj) { return traj.id == id; }),
+        trajs_.end());
+  }
+
+  mtx_trajs_.unlock();
+}
+
 // Note that we need to compile the trajectories inside mader.cpp because t_ is in mader.hpp
 void Mader::updateTrajObstacles(mt::dynTraj traj)
 {
@@ -210,11 +240,13 @@ void Mader::updateTrajObstacles(mt::dynTraj traj)
   // Note that these positions are obtained with the trajectory stored in the past in the local map
   std::vector<int> ids_to_remove;
 
+  double time_now = ros::Time::now().toSec();
+
   for (int index_traj = 0; index_traj < trajs_.size(); index_traj++)
   {
     bool traj_affects_me = false;
 
-    Eigen::Vector3d center_obs = evalMeanDynTrajCompiled(trajs_[index_traj], ros::Time::now().toSec());
+    Eigen::Vector3d center_obs = evalMeanDynTrajCompiled(trajs_[index_traj], time_now);
 
     // mtx_t_.unlock();
     if (((traj_compiled.is_static == true) && (center_obs - state_.pos).norm() > 2 * par_.Ra) ||  ////
@@ -274,9 +306,6 @@ std::vector<Eigen::Vector3d> Mader::vertexesOfInterval(mt::PieceWisePol& pwp, do
   saturate(index_first_interval, 0, (int)(pwp.all_coeff_x.size() - 1));
   saturate(index_last_interval, 0, (int)(pwp.all_coeff_x.size() - 1));
 
-  Eigen::Matrix<double, 3, 4> P;
-  Eigen::Matrix<double, 3, 4> V;
-
   // push all the complete intervals
   for (int i = index_first_interval; i <= index_last_interval; i++)
   {
@@ -321,8 +350,9 @@ std::vector<Eigen::Vector3d> Mader::vertexesOfInterval(mt::PieceWisePol& pwp, do
       coeff_z_scaled = pwp.all_coeff_z[i];
     }
 
+    int deg = pwp.getDeg();
     /// TODO
-    if (pwp.getDeg() > 3)
+    if (deg > 3)
     {
       std::cout << bold << red << "The part below is assumming that degree<=3. You have deg=" << pwp.getDeg()
                 << " Aborting" << reset << std::endl;
@@ -332,14 +362,36 @@ std::vector<Eigen::Vector3d> Mader::vertexesOfInterval(mt::PieceWisePol& pwp, do
 
     int tmp = coeff_x_scaled.size();
 
-    P = Eigen::Matrix<double, 3, 4>::Zero();
-    (P.row(0)).tail(tmp) = coeff_x_scaled;
-    (P.row(1)).tail(tmp) = coeff_y_scaled;
-    (P.row(2)).tail(tmp) = coeff_z_scaled;
+    Eigen::Matrix<double, 3, -1> P(3, deg + 1);
+    Eigen::Matrix<double, 3, -1> V(3, deg + 1);  // 3 x number of vertexes of the simplex
 
-    // TODO: here I'm using the MINVO basis for n=3. When it's a 1st/2nd deg. polynomial, I could use the MINVO basis
-    // for n=1 or n=2 to obtain a tighter approx.
-    V = P * A_rest_pos_basis_inverse_;
+    P.row(0) = coeff_x_scaled;
+    P.row(1) = coeff_y_scaled;
+    P.row(2) = coeff_z_scaled;
+
+    // P = Eigen::Matrix<double, 3, 4>::Zero();
+    // (P.row(0)).tail(tmp) = coeff_x_scaled;
+    // (P.row(1)).tail(tmp) = coeff_y_scaled;
+    // (P.row(2)).tail(tmp) = coeff_z_scaled;
+
+    if (deg == 3)
+    {
+      V = P * A_basis_deg3_rest_inverse_;
+    }
+    else if (deg == 2)
+    {
+      // std::cout << on_blue << "Using Deg=2!!!" << reset << std::endl;
+      V = P * A_basis_deg2_rest_inverse_;
+    }
+    else
+    {
+      // TODO
+      std::cout << "Not implemented yet. Aborting" << std::endl;
+      abort();
+    }
+
+    // std::cout << "P= \n" << P << std::endl;
+    // std::cout << "V= \n" << V << std::endl;
 
     for (int j = 0; j < V.cols(); j++)
     {
@@ -349,6 +401,7 @@ std::vector<Eigen::Vector3d> Mader::vertexesOfInterval(mt::PieceWisePol& pwp, do
 
       if (delta.norm() < 1e-6)
       {  // no inflation
+        std::cout << "No inflation" << std::endl;
         points.push_back(Eigen::Vector3d(x, y, z));
       }
       else
@@ -533,6 +586,8 @@ void Mader::sampleFeaturePosVel(int argmax_prob_collision, double t_start, doubl
 
   double delta = (t_end - t_start) / par_.num_samples_simpson;
 
+  bool used_last_state_tracked = false;
+
   for (int i = 0; i < par_.num_samples_simpson; i++)
   {
     if (argmax_prob_collision >= 0)
@@ -566,12 +621,19 @@ void Mader::sampleFeaturePosVel(int argmax_prob_collision, double t_start, doubl
     }
     else
     {
-      std::cout << on_red << bold << "ERROR: there is no dynamic obstacle to track!!" << reset << std::endl;
-      std::cout << on_red << bold << "Pushing simply ones vectors" << reset << std::endl;
-      pos.push_back(Eigen::Vector3d::Ones());
-      vel.push_back(Eigen::Vector3d::Zero());
+      pos.push_back(last_state_tracked_.pos);
+      vel.push_back(last_state_tracked_.vel);
+      used_last_state_tracked = true;
     }
   }
+
+  if (used_last_state_tracked == true)
+  {
+    std::cout << bold << "There is no dynamic obstacle to track, using last_pos_tracked_" << reset << std::endl;
+  }
+
+  last_state_tracked_.pos = pos.back();
+  last_state_tracked_.vel = vel.back();
   // mtx_t_.unlock();
   // std::cout << red << bold << "in sampleFeaturePositions, mtx_t_ unlocked" << reset << std::endl;
   // mtx_trajs_.unlock();
@@ -848,6 +910,9 @@ bool Mader::replan(mt::Edges& edges_obstacles_out, std::vector<mt::state>& X_saf
 
   log_ptr_->replanning_was_needed = true;
   log_ptr_->tim_total_replan.tic();
+
+  removeOldTrajectories();
+
   //////////////////////////////////////////////////////////////////////////
   ///////////////////////// Select mt::state A /////////////////////////////////
   //////////////////////////////////////////////////////////////////////////
@@ -995,7 +1060,7 @@ bool Mader::replan(mt::Edges& edges_obstacles_out, std::vector<mt::state>& X_saf
   mtx_trajs_.lock();
 
   time_init_opt_ = ros::Time::now().toSec();
-  removeTrajsThatWillNotAffectMe(A, t_start, t_final);
+  // removeTrajsThatWillNotAffectMe(A, t_start, t_final); //TODO: Commented (4-Feb-2021)
   ConvexHullsOfCurves hulls = convexHullsOfCurves(t_start, t_final);
   mtx_trajs_.unlock();
   // std::cout << red << bold << "in replan(), mtx_trajs_ unlocked" << reset << std::endl;

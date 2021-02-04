@@ -16,7 +16,7 @@ deg_pos_prediction=2;
 dim_pos=3;
 % num_seg_prediction =1; %Not used (in this file we fit a polynomial, not a
 % spline)
-size_sliding_window=10; %This is the number of observations
+size_sliding_window=20; %This is the number of observations
 secs_prediction=100;
 
 my_file=fopen('params_casadi_prediction.yaml','w'); %Overwrite content. This will clear its content

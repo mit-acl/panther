@@ -109,6 +109,8 @@ void TrackerPredictor::addNewTrack(const tp::cluster& c)
 
   // unsigned int last_id = (all_tracks_.size() == 0) ? 0 : (all_tracks_[all_tracks_.rbegin()->.id] + 1);
 
+  std::cout << red << "Calling generatePredictedPwpForTrack()" << reset << std::endl;
+
   generatePredictedPwpForTrack(tmp);
 
   all_tracks_.push_back(tmp);
@@ -515,11 +517,11 @@ void TrackerPredictor::cloud_cb(const sensor_msgs::PointCloud2ConstPtr& pcl2ptr_
     // Run the Hungarian Algorithm;
     HungarianAlgorithm HungAlgo;
     std::vector<int> track_assigned_to_cluster;
-    // std::cout << "Calling now!!" << std::endl;
+    std::cout << "Calling Hungarian Algorithm now!!" << std::endl;
     log_.tim_hungarian.tic();
     double cost = HungAlgo.Solve(costMatrix, track_assigned_to_cluster);
     log_.tim_hungarian.toc();
-    // std::cout << "Called!" << std::endl;
+    std::cout << "Called  Hungarian Algorithm!" << std::endl;
 
     for (unsigned int i = 0; i < costMatrix.size(); i++)  // for each of the rows
     {
@@ -532,6 +534,7 @@ void TrackerPredictor::cloud_cb(const sensor_msgs::PointCloud2ConstPtr& pcl2ptr_
       {
         // std::cout << "cluster " << i << " unassigned, creating new track for it" << std::endl;
         std::cout << clusters[i].centroid.transpose() << std::endl;
+        std::cout << "calling addNewTrack()" << std::endl;
         addNewTrack(clusters[i]);
       }
       else
@@ -650,8 +653,11 @@ void TrackerPredictor::printAllTracks()
 
 void TrackerPredictor::generatePredictedPwpForTrack(tp::track& track_j)
 {
-  casadi::DM all_pos(3, track_j.getSizeSW());
-  casadi::DM all_t(1, track_j.getSizeSW());
+  std::cout << "Creating the matrices" << std::endl;
+  casadi::DM all_pos = casadi::DM::zeros(3, track_j.getSizeSW());  //(casadi::Sparsity::dense(3, track_j.getSizeSW()));
+  casadi::DM all_t = casadi::DM::zeros(1, track_j.getSizeSW());    //(casadi::Sparsity::dense(1, track_j.getSizeSW()));
+
+  std::cout << "Matrices created" << std::endl;
 
   for (int i = 0; i < track_j.getSizeSW(); i++)
   {
@@ -661,8 +667,13 @@ void TrackerPredictor::generatePredictedPwpForTrack(tp::track& track_j)
     all_pos(0, i) = centroid_i.x();
     all_pos(1, i) = centroid_i.y();
     all_pos(2, i) = centroid_i.z();
+    std::cout << "track_j.getTimeHistory(i)= " << track_j.getTimeHistory(i) << std::endl;
+    std::cout << "Going to add, i=" << i << " cols= " << track_j.getSizeSW() << std::endl;
     all_t(0, i) = track_j.getTimeHistory(i);
+    std::cout << "Added" << std::endl;
   }
+
+  std::cout << "Matrices assigned" << std::endl;
 
   std::map<std::string, casadi::DM> map_arguments;
   map_arguments["all_t"] = all_t;
@@ -677,15 +688,21 @@ void TrackerPredictor::generatePredictedPwpForTrack(tp::track& track_j)
   std::map<std::string, casadi::DM> result = cf_get_mean_variance_pred_(map_arguments);
   std::cout << "Called casadi " << std::endl;
 
+  std::cout << "RESULT Before: " << std::endl;
+
+  std::cout << "coeffs_mean:\n " << result["coeff_mean"] << std::endl;
+  std::cout << "coeffs_var:\n " << result["coeff_var"] << std::endl;
+  std::cout << "secs_prediction:\n " << result["secs_prediction"] << std::endl;
+
   casadi::DM coeffs_mean = result["coeff_mean"];
   casadi::DM coeffs_var = result["coeff_var"];
   double secs_prediction = double(result["secs_prediction"]);
 
-  // std::cout << "RESULT: " << std::endl;
+  std::cout << "RESULT AFTER: " << std::endl;
 
-  // std::cout << "coeffs_mean:\n " << coeffs_mean << std::endl;
-  // std::cout << "coeffs_var:\n " << coeffs_var << std::endl;
-  // std::cout << "secs_prediction:\n " << secs_prediction << std::endl;
+  std::cout << "coeffs_mean:\n " << coeffs_mean << std::endl;
+  std::cout << "coeffs_var:\n " << coeffs_var << std::endl;
+  std::cout << "secs_prediction:\n " << secs_prediction << std::endl;
 
   // std::cout << "Coeffs: " << std::endl;
   // std::cout << coeffs << std::endl;

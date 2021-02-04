@@ -60,20 +60,20 @@ SolverIpopt::SolverIpopt(mt::parameters &par, std::shared_ptr<mt::log> log_ptr)
   if (par_.basis == "MINVO")
   {
     basis_ = MINVO;
-    M_pos_bs2basis_ = basis_converter.getMinvoPosConverters(par_.num_seg);
-    M_vel_bs2basis_ = basis_converter.getMinvoVelConverters(par_.num_seg);
+    M_pos_bs2basis_ = basis_converter.getMinvoDeg3Converters(par_.num_seg);
+    M_vel_bs2basis_ = basis_converter.getMinvoDeg2Converters(par_.num_seg);
   }
   else if (par_.basis == "BEZIER")
   {
     basis_ = BEZIER;
-    M_pos_bs2basis_ = basis_converter.getBezierPosConverters(par_.num_seg);
-    M_vel_bs2basis_ = basis_converter.getBezierVelConverters(par_.num_seg);
+    M_pos_bs2basis_ = basis_converter.getBezierDeg3Converters(par_.num_seg);
+    M_vel_bs2basis_ = basis_converter.getBezierDeg2Converters(par_.num_seg);
   }
   else if (par_.basis == "B_SPLINE")
   {
     basis_ = B_SPLINE;
-    M_pos_bs2basis_ = basis_converter.getBSplinePosConverters(par_.num_seg);
-    M_vel_bs2basis_ = basis_converter.getBSplineVelConverters(par_.num_seg);
+    M_pos_bs2basis_ = basis_converter.getBSplineDeg3Converters(par_.num_seg);
+    M_vel_bs2basis_ = basis_converter.getBSplineDeg2Converters(par_.num_seg);
   }
   else
   {
@@ -471,6 +471,9 @@ bool SolverIpopt::optimize()
   map_arguments["total_time"] = (t_final_ - t_init_);
   // all_w_fe is a matrix whose columns are the positions of the feature (in world frame) in the times [t0,t0+XX,
   // ...,tf-XX, tf] (i.e. uniformly distributed and including t0 and tf)
+  // std::cout << "Using all_w_fe_= \n" << all_w_fe_ << std::endl;
+  // std::cout << "Using all_w_velfewrtworld= \n" << all_w_velfewrtworld_ << std::endl;
+  // std::cout << "Using par_.c_fov= \n" << par_.c_fov << std::endl;
   map_arguments["all_w_fe"] = all_w_fe_;
   map_arguments["all_w_velfewrtworld"] = all_w_velfewrtworld_;
   map_arguments["c_pos_smooth"] = par_.c_pos_smooth;
@@ -483,7 +486,13 @@ bool SolverIpopt::optimize()
 
   int max_num_of_planes = par_.num_max_of_obst * par_.num_seg;
 
-  assert((n_guess_.size() <= max_num_of_planes) && "the casadi function does not support so many planes");
+  // assert((n_guess_.size() <= max_num_of_planes) && "the casadi function does not support so many planes");
+
+  if ((n_guess_.size() > max_num_of_planes))
+  {
+    std::cout << red << bold << "the casadi function does not support so many planes" << reset << std::endl;
+    abort();
+  }
 
   //  casadi::DM all_nd(casadi::Sparsity::dense(4, max_num_of_planes));  // TODO: do this just once
 

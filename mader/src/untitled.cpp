@@ -49,20 +49,20 @@ SolverGurobi::SolverGurobi(par_sgurobi &par)
   if (par.basis == "MINVO")
   {
     basis_ = MINVO;
-    M_pos_bs2basis_ = basis_converter.getMinvoPosConverters(num_of_segments_);
-    M_vel_bs2basis_ = basis_converter.getMinvoVelConverters(num_of_segments_);
+    M_pos_bs2basis_ = basis_converter.getMinvoDeg3Converters(num_of_segments_);
+    M_vel_bs2basis_ = basis_converter.getMinvoDeg2Converters(num_of_segments_);
   }
   else if (par.basis == "BEZIER")
   {
     basis_ = BEZIER;
-    M_pos_bs2basis_ = basis_converter.getBezierPosConverters(num_of_segments_);
-    M_vel_bs2basis_ = basis_converter.getBezierVelConverters(num_of_segments_);
+    M_pos_bs2basis_ = basis_converter.getBezierDeg3Converters(num_of_segments_);
+    M_vel_bs2basis_ = basis_converter.getBezierDeg2Converters(num_of_segments_);
   }
   else if (par.basis == "B_SPLINE")
   {
     basis_ = B_SPLINE;
-    M_pos_bs2basis_ = basis_converter.getBSplinePosConverters(num_of_segments_);
-    M_vel_bs2basis_ = basis_converter.getBSplineVelConverters(num_of_segments_);
+    M_pos_bs2basis_ = basis_converter.getBSplineDeg3Converters(num_of_segments_);
+    M_vel_bs2basis_ = basis_converter.getBSplineDeg2Converters(num_of_segments_);
   }
   else
   {
@@ -71,7 +71,7 @@ SolverGurobi::SolverGurobi(par_sgurobi &par)
     abort();
   }
 
-  A_pos_bs_ = basis_converter.getABSpline(num_of_segments_);
+  A_pos_bs_ = basis_converter.getABSplineDeg3(num_of_segments_);
 
   ///////////////////////////////////////
   ///////////////////////////////////////

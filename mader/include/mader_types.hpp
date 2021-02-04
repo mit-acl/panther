@@ -155,95 +155,118 @@ struct state
 // TODO: move this to a class (so that no one can modify these matrices)
 struct basisConverter
 {
-  Eigen::Matrix<double, 4, 4> A_pos_mv_rest;
-  Eigen::Matrix<double, 4, 4> A_pos_be_rest;
-  Eigen::Matrix<double, 4, 4> A_pos_bs_seg0, A_pos_bs_seg1, A_pos_bs_rest, A_pos_bs_seg_last2, A_pos_bs_seg_last;
+  Eigen::Matrix<double, 3, 3> A_mv_deg2_rest;
+  Eigen::Matrix<double, 3, 3> A_be_deg2_rest;
+  Eigen::Matrix<double, 3, 3> A_bs_deg2_rest;
 
-  Eigen::Matrix<double, 4, 4> M_pos_bs2mv_seg0, M_pos_bs2mv_seg1, M_pos_bs2mv_rest, M_pos_bs2mv_seg_last2,
-      M_pos_bs2mv_seg_last;
+  Eigen::Matrix<double, 4, 4> A_mv_deg3_rest;
+  Eigen::Matrix<double, 4, 4> A_be_deg3_rest;
+  Eigen::Matrix<double, 4, 4> A_bs_deg3_seg0, A_bs_deg3_seg1, A_bs_deg3_rest, A_bs_deg3_seg_last2, A_bs_deg3_seg_last;
 
-  Eigen::Matrix<double, 4, 4> M_pos_bs2be_seg0, M_pos_bs2be_seg1, M_pos_bs2be_rest, M_pos_bs2be_seg_last2,
-      M_pos_bs2be_seg_last;
+  Eigen::Matrix<double, 4, 4> M_bs2mv_deg3_seg0, M_bs2mv_deg3_seg1, M_bs2mv_deg3_rest, M_bs2mv_deg3_seg_last2,
+      M_bs2mv_deg3_seg_last;
 
-  Eigen::Matrix<double, 3, 3> M_vel_bs2mv_seg0, M_vel_bs2mv_rest, M_vel_bs2mv_seg_last;
-  Eigen::Matrix<double, 3, 3> M_vel_bs2be_seg0, M_vel_bs2be_rest, M_vel_bs2be_seg_last;
+  Eigen::Matrix<double, 4, 4> M_bs2be_deg3_seg0, M_bs2be_deg3_seg1, M_bs2be_deg3_rest, M_bs2be_deg3_seg_last2,
+      M_bs2be_deg3_seg_last;
+
+  Eigen::Matrix<double, 3, 3> M_bs2mv_deg2_seg0, M_bs2mv_deg2_rest, M_bs2mv_deg2_seg_last;
+  Eigen::Matrix<double, 3, 3> M_bs2be_deg2_seg0, M_bs2be_deg2_rest, M_bs2be_deg2_seg_last;
 
   basisConverter()
   {
     // See matlab.
-    // This is for t \in [0 1];
+    // All these matrices are for t \in [0 1];
 
     // clang-format off
 
-        //////MATRICES A FOR MINVO POSITION///////// (there is only one)
-        A_pos_mv_rest << 
+        //////MATRICES A FOR MINVO Degree 2 and 3///////// (there is only one per degree)
+        A_mv_deg3_rest << 
 
      -3.4416308968564117698463178385282,  6.9895481477801393310755884158425, -4.4622887507045296828778191411402,                   0.91437149978080234369315348885721,
       6.6792587327074839365081970754545, -11.845989901556746914934592496138,  5.2523596690684613008670567069203,                                                    0,
      -6.6792587327074839365081970754545,  8.1917862965657040064115790301003, -1.5981560640774179482548333908198,                  0.085628500219197656306846511142794,
       3.4416308968564117698463178385282, -3.3353445427890959784633650997421, 0.80808514571348655231020075007109, -0.0000000000000000084567769453869345852581318467855;
 
-        //////MATRICES A FOR Bezier POSITION///////// (there is only one)
-        A_pos_be_rest << 
+      A_mv_deg2_rest <<   
+
+     1.4999999992328318931811281800037, -2.3660254034601950756666610686807,  0.93301270211368159124276644433849,
+    -2.9999999984656637863622563600074,  2.9999999984656637863622563600074,                                   0,
+     1.4999999992328318931811281800037, -0.6339745950054685996732928288111, 0.066987297886318325490506708774774;
+
+        //////MATRICES A FOR Bezier Degree 2 and 3///////// (there is only one per degree)
+        A_be_deg3_rest << 
 
            -1.0,  3.0, -3.0, 1.0,
             3.0, -6.0,  3.0,   0,
            -3.0,  3.0,    0,   0,
             1.0,    0,    0,   0;
 
-        //////MATRICES A FOR BSPLINE POSITION/////////
-        A_pos_bs_seg0 <<
+        A_be_deg2_rest << 
+
+             1.0, -2.0, 1.0,
+            -2.0,  2.0,   0,
+             1.0,    0,   0;
+
+        //////MATRICES A FOR BSPLINE Degree 2 and 3/////////
+        A_bs_deg3_seg0 <<
 
            -1.0000,    3.0000,   -3.0000,    1.0000,
             1.7500,   -4.5000,    3.0000,         0,
            -0.9167,    1.5000,         0,         0,
             0.1667,         0,         0,         0;
 
-        A_pos_bs_seg1 <<
+        A_bs_deg3_seg1 <<
 
            -0.2500,    0.7500,   -0.7500,    0.2500,
             0.5833,   -1.2500,    0.2500,    0.5833,
            -0.5000,    0.5000,    0.5000,    0.1667,
             0.1667,         0,         0,         0;
 
-        A_pos_bs_rest << 
+        A_bs_deg3_rest << 
 
            -0.1667,    0.5000,   -0.5000,    0.1667,
             0.5000,   -1.0000,         0,    0.6667,
            -0.5000,    0.5000,    0.5000,    0.1667,
             0.1667,         0,         0,         0;
 
-        A_pos_bs_seg_last2 <<
+        A_bs_deg3_seg_last2 <<
            -0.1667,    0.5000,   -0.5000,    0.1667,
             0.5000,   -1.0000,    0.0000,    0.6667,
            -0.5833,    0.5000,    0.5000,    0.1667,
             0.2500,         0,         0,         0;
 
-        A_pos_bs_seg_last <<
+        A_bs_deg3_seg_last <<
 
            -0.1667,    0.5000,   -0.5000,   0.1667,
             0.9167,   -1.2500,   -0.2500,   0.5833,
            -1.7500,    0.7500,    0.7500,   0.2500,
             1.0000,         0,         0,        0;
 
+        A_bs_deg2_rest <<
 
-        //////BSPLINE to MINVO POSITION/////////
+           0.5, -1.0, 0.5,
+          -1.0,  1.0, 0.5,
+           0.5,    0,   0;
 
-        M_pos_bs2mv_seg0 <<
+        //TODO: Add also 2_seg_last,.... for degree = 2 (although I'm not using them right now)
+
+        //////BSPLINE to MINVO Degree 3/////////
+
+        M_bs2mv_deg3_seg0 <<
 
          1.1023313949144333268037598827505,   0.34205724556666972091534262290224, -0.092730934245582874453361910127569, -0.032032766697130621302846975595457,
       -0.049683556253749178166501110354147,   0.65780347324677179710050722860615,   0.53053863760186903419935333658941,   0.21181027098212013015654520131648,
       -0.047309044211162346038612724896666,  0.015594436894155586093013710069499,    0.5051827557159349613158383363043,   0.63650059656260427054519368539331,
      -0.0053387944495217444854096022766043, -0.015455155707597083292181849856206,  0.057009540927778303009976212933907,   0.18372189915240558222286892942066;
 
-        M_pos_bs2mv_seg1 <<
+        M_bs2mv_deg3_seg1 <<
 
         0.27558284872860833170093997068761,  0.085514311391667430228835655725561, -0.023182733561395718613340477531892, -0.0080081916742826553257117438988644,
          0.6099042761975865811763242163579,   0.63806904207840509091198555324809,   0.29959938009132258684985572472215,    0.12252106674808682651445224109921,
         0.11985166952332682033244282138185,   0.29187180223752445806795208227413,   0.66657381254229419731416328431806,    0.70176522577378930289881964199594,
      -0.0053387944495217444854096022766043, -0.015455155707597083292181849856206,  0.057009540927778303009976212933907,    0.18372189915240558222286892942066;
 
-        M_pos_bs2mv_rest <<
+        M_bs2mv_deg3_rest <<
 
         0.18372189915240555446729331379174,  0.057009540927778309948870116841135, -0.015455155707597117986651369392348, -0.0053387944495218164764338553140988,
         0.70176522577378919187651717948029,   0.66657381254229419731416328431806,   0.29187180223752384744528853843804,    0.11985166952332582113172065874096,
@@ -251,14 +274,14 @@ struct basisConverter
      -0.0053387944495217444854096022766043, -0.015455155707597083292181849856206,  0.057009540927778303009976212933907,    0.18372189915240558222286892942066;
 
 
-        M_pos_bs2mv_seg_last2 <<
+        M_bs2mv_deg3_seg_last2 <<
 
         0.18372189915240569324517139193631,  0.057009540927778309948870116841135, -0.015455155707597145742226985021261, -0.0053387944495218164764338553140988,
         0.70176522577378952494342456702725,   0.66657381254229453038107067186502,   0.29187180223752412500104469472717,    0.11985166952332593215402312125661,
          0.1225210667480875342816304396365,   0.29959938009132280889446064975346,   0.63806904207840497988968309073243,    0.60990427619758624810941682881094,
      -0.0080081916742826154270717964323012, -0.023182733561395621468825822830695,  0.085514311391667444106623463540018,    0.27558284872860833170093997068761;
 
-        M_pos_bs2mv_seg_last <<
+        M_bs2mv_deg3_seg_last <<
 
        0.18372189915240555446729331379174, 0.057009540927778309948870116841135, -0.015455155707597117986651369392348, -0.0053387944495218164764338553140988,
        0.63650059656260415952289122287766,   0.5051827557159349613158383363043,  0.015594436894155294659469745965907,  -0.047309044211162887272337229660479,
@@ -266,76 +289,76 @@ struct basisConverter
      -0.032032766697130461708287185729205, -0.09273093424558248587530329132278,   0.34205724556666977642649385416007,     1.1023313949144333268037598827505;
 
 
-        //////BSPLINE to BEZIER POSITION/////////
+        //////BSPLINE to BEZIER Degree 3/////////
 
-        M_pos_bs2be_seg0 <<
+        M_bs2be_deg3_seg0 <<
 
             1.0000,    0.0000,   -0.0000,         0,
                  0,    1.0000,    0.5000,    0.2500,
                  0,   -0.0000,    0.5000,    0.5833,
                  0,         0,         0,    0.1667;
 
-        M_pos_bs2be_seg1 <<
+        M_bs2be_deg3_seg1 <<
 
             0.2500,    0.0000,   -0.0000,         0,
             0.5833,    0.6667,    0.3333,    0.1667,
             0.1667,    0.3333,    0.6667,    0.6667,
                  0,         0,         0,    0.1667;
 
-        M_pos_bs2be_rest <<
+        M_bs2be_deg3_rest <<
 
             0.1667,    0.0000,         0,         0,
             0.6667,    0.6667,    0.3333,    0.1667,
             0.1667,    0.3333,    0.6667,    0.6667,
                  0,         0,         0,    0.1667;
 
-        M_pos_bs2be_seg_last2 <<
+        M_bs2be_deg3_seg_last2 <<
 
             0.1667,         0,   -0.0000,         0,
             0.6667,    0.6667,    0.3333,    0.1667,
             0.1667,    0.3333,    0.6667,    0.5833,
                  0,         0,         0,    0.2500;
 
-        M_pos_bs2be_seg_last <<
+        M_bs2be_deg3_seg_last <<
 
             0.1667,    0.0000,         0,         0,
             0.5833,    0.5000,         0,         0,
             0.2500,    0.5000,    1.0000,         0,
                  0,         0,         0,    1.0000;
 
-        /////BSPLINE to MINVO VELOCITY
-        M_vel_bs2mv_seg0 <<
+        /////BSPLINE to MINVO Degree 2
+        M_bs2mv_deg2_seg0 <<
 
     1.077349059083916,  0.1666702138890985, -0.07735049175615138,
  -0.03867488648729411,  0.7499977187062712,   0.5386802643920123,
  -0.03867417280506149, 0.08333206631563977,    0.538670227146185;
 
-        M_vel_bs2mv_rest <<
+        M_bs2mv_deg2_rest <<
 
     0.538674529541958, 0.08333510694454926, -0.03867524587807569,
    0.4999996430546639,  0.8333328256508203,   0.5000050185139366,
  -0.03867417280506149, 0.08333206631563977,    0.538670227146185;
 
-        M_vel_bs2mv_seg_last <<
+        M_bs2mv_deg2_seg_last <<
 
     0.538674529541958, 0.08333510694454926, -0.03867524587807569,
    0.5386738158597254,  0.7500007593351806, -0.03866520863224832,
  -0.07734834561012298,  0.1666641326312795,     1.07734045429237;
 
-      /////BSPLINE to BEZIER VELOCITY
-        M_vel_bs2be_seg0 <<
+      /////BSPLINE to BEZIER Degree 2
+        M_bs2be_deg2_seg0 <<
 
             1.0000,         0,         0,
                  0,    1.0000,    0.5000,
                  0,         0,    0.5000;
 
-        M_vel_bs2be_rest <<
+        M_bs2be_deg2_rest <<
 
             0.5000,         0,         0,
             0.5000,    1.0000,    0.5000,
                  0,         0,    0.5000;
 
-        M_vel_bs2be_seg_last <<
+        M_bs2be_deg2_seg_last <<
 
             0.5000,         0,         0,
             0.5000,    1.0000,         0,
@@ -344,91 +367,108 @@ struct basisConverter
     // clang-format on
   }
 
-  //////MATRIX A FOR MINVO POSITION/////////
-  Eigen::Matrix<double, 4, 4> getArestMinvo()
+  //////MATRIX A FOR MINVO Deg 2 and 3/////////
+  Eigen::Matrix<double, 3, 3> getArestMinvoDeg2()
   {
-    return A_pos_mv_rest;
-  }
-  //////MATRIX A FOR Bezier POSITION/////////
-  Eigen::Matrix<double, 4, 4> getArestBezier()
-  {
-    return A_pos_be_rest;
+    return A_mv_deg2_rest;
   }
 
-  //////MATRIX A FOR BSPLINE POSITION/////////
-  Eigen::Matrix<double, 4, 4> getArestBSpline()
+  Eigen::Matrix<double, 4, 4> getArestMinvoDeg3()
   {
-    return A_pos_bs_rest;
+    return A_mv_deg3_rest;
   }
-  //////MATRICES A FOR MINVO POSITION/////////
-  std::vector<Eigen::Matrix<double, 4, 4>> getAMinvo(int num_seg)
+  //////MATRIX A FOR Bezier Deg 2 and 3/////////
+
+  Eigen::Matrix<double, 3, 3> getArestBezierDeg2()
   {
-    std::vector<Eigen::Matrix<double, 4, 4>> A_pos_mv;  // will have as many elements as num_seg
+    return A_be_deg2_rest;
+  }
+
+  Eigen::Matrix<double, 4, 4> getArestBezierDeg3()
+  {
+    return A_be_deg3_rest;
+  }
+
+  //////MATRIX A FOR BSPLINE Deg 2 and 3/////////
+
+  Eigen::Matrix<double, 3, 3> getArestBSplineDeg2()
+  {
+    return A_bs_deg2_rest;
+  }
+
+  Eigen::Matrix<double, 4, 4> getArestBSplineDeg3()
+  {
+    return A_bs_deg3_rest;
+  }
+  //////MATRICES A FOR MINVO Deg3/////////
+  std::vector<Eigen::Matrix<double, 4, 4>> getAMinvoDeg3(int num_seg)
+  {
+    std::vector<Eigen::Matrix<double, 4, 4>> A_mv_deg3;  // will have as many elements as num_seg
     for (int i = 0; i < num_seg; i++)
     {
-      A_pos_mv.push_back(A_pos_mv_rest);
+      A_mv_deg3.push_back(A_mv_deg3_rest);
     }
-    return A_pos_mv;
+    return A_mv_deg3;
   }
 
   //////MATRICES A FOR Bezier POSITION/////////
-  std::vector<Eigen::Matrix<double, 4, 4>> getABezier(int num_seg)
+  std::vector<Eigen::Matrix<double, 4, 4>> getABezierDeg3(int num_seg)
   {
-    std::vector<Eigen::Matrix<double, 4, 4>> A_pos_be;  // will have as many elements as num_seg
+    std::vector<Eigen::Matrix<double, 4, 4>> A_be_deg3;  // will have as many elements as num_seg
     for (int i = 0; i < num_seg; i++)
     {
-      A_pos_be.push_back(A_pos_be_rest);
+      A_be_deg3.push_back(A_be_deg3_rest);
     }
-    return A_pos_be;
+    return A_be_deg3;
   }
 
   //////MATRICES A FOR BSPLINE POSITION/////////
-  std::vector<Eigen::Matrix<double, 4, 4>> getABSpline(int num_seg)
+  std::vector<Eigen::Matrix<double, 4, 4>> getABSplineDeg3(int num_seg)
   {
-    std::vector<Eigen::Matrix<double, 4, 4>> A_pos_bs;  // will have as many elements as num_seg
-    A_pos_bs.push_back(A_pos_bs_seg0);
-    A_pos_bs.push_back(A_pos_bs_seg1);
+    std::vector<Eigen::Matrix<double, 4, 4>> A_bs_deg3;  // will have as many elements as num_seg
+    A_bs_deg3.push_back(A_bs_deg3_seg0);
+    A_bs_deg3.push_back(A_bs_deg3_seg1);
     for (int i = 0; i < (num_seg - 4); i++)
     {
-      A_pos_bs.push_back(A_pos_bs_rest);
+      A_bs_deg3.push_back(A_bs_deg3_rest);
     }
-    A_pos_bs.push_back(A_pos_bs_seg_last2);
-    A_pos_bs.push_back(A_pos_bs_seg_last);
-    return A_pos_bs;
+    A_bs_deg3.push_back(A_bs_deg3_seg_last2);
+    A_bs_deg3.push_back(A_bs_deg3_seg_last);
+    return A_bs_deg3;
   }
 
   //////BSPLINE to MINVO POSITION/////////
-  std::vector<Eigen::Matrix<double, 4, 4>> getMinvoPosConverters(int num_seg)
+  std::vector<Eigen::Matrix<double, 4, 4>> getMinvoDeg3Converters(int num_seg)
   {
-    std::vector<Eigen::Matrix<double, 4, 4>> M_pos_bs2mv;  // will have as many elements as num_seg
-    M_pos_bs2mv.push_back(M_pos_bs2mv_seg0);
-    M_pos_bs2mv.push_back(M_pos_bs2mv_seg1);
+    std::vector<Eigen::Matrix<double, 4, 4>> M_bs2mv_deg3;  // will have as many elements as num_seg
+    M_bs2mv_deg3.push_back(M_bs2mv_deg3_seg0);
+    M_bs2mv_deg3.push_back(M_bs2mv_deg3_seg1);
     for (int i = 0; i < (num_seg - 4); i++)
     {
-      M_pos_bs2mv.push_back(M_pos_bs2mv_rest);
+      M_bs2mv_deg3.push_back(M_bs2mv_deg3_rest);
     }
-    M_pos_bs2mv.push_back(M_pos_bs2mv_seg_last2);
-    M_pos_bs2mv.push_back(M_pos_bs2mv_seg_last);
-    return M_pos_bs2mv;
+    M_bs2mv_deg3.push_back(M_bs2mv_deg3_seg_last2);
+    M_bs2mv_deg3.push_back(M_bs2mv_deg3_seg_last);
+    return M_bs2mv_deg3;
   }
 
   //////BSPLINE to BEZIER POSITION/////////
-  std::vector<Eigen::Matrix<double, 4, 4>> getBezierPosConverters(int num_seg)
+  std::vector<Eigen::Matrix<double, 4, 4>> getBezierDeg3Converters(int num_seg)
   {
-    std::vector<Eigen::Matrix<double, 4, 4>> M_pos_bs2be;  // will have as many elements as num_seg
-    M_pos_bs2be.push_back(M_pos_bs2be_seg0);
-    M_pos_bs2be.push_back(M_pos_bs2be_seg1);
+    std::vector<Eigen::Matrix<double, 4, 4>> M_bs2be_deg3;  // will have as many elements as num_seg
+    M_bs2be_deg3.push_back(M_bs2be_deg3_seg0);
+    M_bs2be_deg3.push_back(M_bs2be_deg3_seg1);
     for (int i = 0; i < (num_seg - 4); i++)
     {
-      M_pos_bs2be.push_back(M_pos_bs2be_rest);
+      M_bs2be_deg3.push_back(M_bs2be_deg3_rest);
     }
-    M_pos_bs2be.push_back(M_pos_bs2be_seg_last2);
-    M_pos_bs2be.push_back(M_pos_bs2be_seg_last);
-    return M_pos_bs2be;
+    M_bs2be_deg3.push_back(M_bs2be_deg3_seg_last2);
+    M_bs2be_deg3.push_back(M_bs2be_deg3_seg_last);
+    return M_bs2be_deg3;
   }
 
   //////BSPLINE to BSPLINE POSITION/////////
-  std::vector<Eigen::Matrix<double, 4, 4>> getBSplinePosConverters(int num_seg)
+  std::vector<Eigen::Matrix<double, 4, 4>> getBSplineDeg3Converters(int num_seg)
   {
     std::vector<Eigen::Matrix<double, 4, 4>> M_pos_bs2bs;  // will have as many elements as num_seg
     for (int i = 0; i < num_seg; i++)
@@ -439,33 +479,33 @@ struct basisConverter
   }
 
   //////BSPLINE to MINVO Velocity/////////
-  std::vector<Eigen::Matrix<double, 3, 3>> getMinvoVelConverters(int num_seg)
+  std::vector<Eigen::Matrix<double, 3, 3>> getMinvoDeg2Converters(int num_seg)
   {
-    std::vector<Eigen::Matrix<double, 3, 3>> M_vel_bs2mv;  // will have as many elements as num_seg
-    M_vel_bs2mv.push_back(M_vel_bs2mv_seg0);
+    std::vector<Eigen::Matrix<double, 3, 3>> M_bs2mv_deg2;  // will have as many elements as num_seg
+    M_bs2mv_deg2.push_back(M_bs2mv_deg2_seg0);
     for (int i = 0; i < (num_seg - 2 - 1); i++)
     {
-      M_vel_bs2mv.push_back(M_vel_bs2mv_rest);
+      M_bs2mv_deg2.push_back(M_bs2mv_deg2_rest);
     }
-    M_vel_bs2mv.push_back(M_vel_bs2mv_seg_last);
-    return M_vel_bs2mv;
+    M_bs2mv_deg2.push_back(M_bs2mv_deg2_seg_last);
+    return M_bs2mv_deg2;
   }
 
   //////BSPLINE to BEZIER Velocity/////////
-  std::vector<Eigen::Matrix<double, 3, 3>> getBezierVelConverters(int num_seg)
+  std::vector<Eigen::Matrix<double, 3, 3>> getBezierDeg2Converters(int num_seg)
   {
-    std::vector<Eigen::Matrix<double, 3, 3>> M_vel_bs2be;  // will have as many elements as segments
-    M_vel_bs2be.push_back(M_vel_bs2be_seg0);
+    std::vector<Eigen::Matrix<double, 3, 3>> M_bs2be_deg2;  // will have as many elements as segments
+    M_bs2be_deg2.push_back(M_bs2be_deg2_seg0);
     for (int i = 0; i < (num_seg - 2 - 1); i++)
     {
-      M_vel_bs2be.push_back(M_vel_bs2be_rest);
+      M_bs2be_deg2.push_back(M_bs2be_deg2_rest);
     }
-    M_vel_bs2be.push_back(M_vel_bs2be_seg_last);
-    return M_vel_bs2be;
+    M_bs2be_deg2.push_back(M_bs2be_deg2_seg_last);
+    return M_bs2be_deg2;
   }
 
   //////BSPLINE to BSPLINE Velocity/////////
-  std::vector<Eigen::Matrix<double, 3, 3>> getBSplineVelConverters(int num_seg)
+  std::vector<Eigen::Matrix<double, 3, 3>> getBSplineDeg2Converters(int num_seg)
   {
     std::vector<Eigen::Matrix<double, 3, 3>> M_vel_bs2bs;  // will have as many elements as num_seg
     for (int i = 0; i < num_seg; i++)
@@ -555,20 +595,36 @@ struct PieceWisePol
     return 0;
   }
 
+  void saturateMinMax(double& var, const double min, const double max) const
+  {
+    if (var < min)
+    {
+      var = min;
+    }
+    else if (var > max)
+    {
+      var = max;
+    }
+  }
+
   double t2u(double t) const
   {
     int j = getInterval(t);
     double u = (t - times[j]) / (times[j + 1] - times[j]);
-    if (u > 1.0 || u < 0.0)
-    {
-      std::cout << "[t2u] THIS SHOULD NEVER HAPPENN, u=" << u << std::endl;
-      std::cout << "[t2u] j=" << j << std::endl;
-      std::cout << "t=" << t << std::endl;
-      std::cout << "(times[j + 1] - times[j])=" << (times[j + 1] - times[j]) << std::endl;
-      std::cout << "times[j]=" << times[j] << std::endl;
-      print();
-      abort();
-    }
+    // if (u > 1.0 || u < 0.0)
+    // {
+    //   std::cout << "[t2u] THIS SHOULD NEVER HAPPENN, u=" << u << std::endl;
+    //   std::cout << "[t2u] j=" << j << std::endl;
+    //   std::cout << "t=" << t << std::endl;
+    //   std::cout << "(times[j + 1] - times[j])=" << (times[j + 1] - times[j]) << std::endl;
+    //   std::cout << "times[j]=" << times[j] << std::endl;
+    //   print();
+    //   // abort();
+    // }
+
+    // Saturate
+    saturateMinMax(u, 0.0, 1.0);
+
     return u;
   }
 
@@ -576,9 +632,9 @@ struct PieceWisePol
   {
     Eigen::Vector3d result;
 
+    double tt = t;
     // Saturate
-    double tt = std::max(t, times[0]);
-    tt = std::min(tt, times[times.size() - 1]);
+    saturateMinMax(tt, times[0], times[times.size() - 1]);
 
     double u = t2u(tt);
     int j = getInterval(tt);  // TODO [Improve efficiency]: note that t2u is already calling getInterval()
@@ -702,6 +758,8 @@ struct parameters
   double lower_bound_runtime_snlopt;
   double kappa;
   double mu;
+
+  double max_seconds_keeping_traj = 1e6;
 
   int a_star_samp_x = 7;
   int a_star_samp_y = 7;

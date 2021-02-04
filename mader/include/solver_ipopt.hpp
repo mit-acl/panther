@@ -205,7 +205,7 @@ private:
   ///////////////////////////////// Things for the yaw search
   // specify some types
   // typedef adjacency_list<listS, vecS, undirectedS, no_property, property<edge_weight_t, cost_graph>> mygraph_t;
-  typedef boost::adjacency_list<boost::listS, boost::vecS, boost::undirectedS, data,
+  typedef boost::adjacency_list<boost::listS, boost::vecS, boost::directedS, data,
                                 boost::property<boost::edge_weight_t, cost_graph>>
       mygraph_t;
   typedef boost::property_map<mygraph_t, boost::edge_weight_t>::type WeightMap;

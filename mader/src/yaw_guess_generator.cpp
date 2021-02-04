@@ -148,8 +148,9 @@ casadi::DM SolverIpopt::generateYawGuess(casadi::DM matrix_qp_guess, casadi::DM 
     // if it doesn't satisfy the  ydot_maxconstraint --> very expensive edge. Note that with this option (instead of the
     // option of NOT creating an edge) there will always be a solution in the graph
 
-    // std::cout << "edge between [" << j << ", " << i << "] and [" << j_next << ", " << i + 1
-    //           << "] with cost= " << weightmap[e] << std::endl;
+    // std::cout << "edge between [" << mygraph_[index_vertex1].layer << ", " << mygraph_[index_vertex1].circle
+    //           << "] and [" << mygraph_[index_vertex2].layer << ", " << mygraph_[index_vertex2].circle
+    //           << "] with cost= " << weightmap[*ed_ptr] << std::endl;
   }
   ////////////////////////
 
@@ -165,16 +166,16 @@ casadi::DM SolverIpopt::generateYawGuess(casadi::DM matrix_qp_guess, casadi::DM 
 
   vd start = all_vertexes_[0][0];
 
-  vector<vd> p(num_vertices(mygraph_));
-  vector<cost_graph> d(num_vertices(mygraph_));
+  std::vector<vd> p(num_vertices(mygraph_));
+  std::vector<cost_graph> d(num_vertices(mygraph_));
 
   log_ptr_->tim_guess_yaw_search_graph.tic();
   try
   {
     // call astar named parameter interface
     astar_search_tree(mygraph_, start, distance_heuristic<mygraph_t, cost_graph>(),
-                      predecessor_map(make_iterator_property_map(p.begin(), get(vertex_index, mygraph_)))
-                          .distance_map(make_iterator_property_map(d.begin(), get(vertex_index, mygraph_)))
+                      predecessor_map(make_iterator_property_map(p.begin(), get(boost::vertex_index, mygraph_)))
+                          .distance_map(make_iterator_property_map(d.begin(), get(boost::vertex_index, mygraph_)))
                           .visitor(astar_goal_visitor<vd>(num_of_layers_ - 1)));
   }
 
@@ -188,10 +189,14 @@ casadi::DM SolverIpopt::generateYawGuess(casadi::DM matrix_qp_guess, casadi::DM 
     {
       shortest_path_vd.push_front(v);
       if (p[v] == v)
+      {
         break;
+      }
     }
     std::list<vd>::iterator spi = shortest_path_vd.begin();
     // std::cout << mygraph_[all_vertexes_[0][0]].yaw;
+
+    // std::cout << "shortest_path_vd.size()= " << shortest_path_vd.size() << std::endl;
 
     casadi::DM vector_shortest_path(1, shortest_path_vd.size());  // TODO: do this just once?
 
@@ -202,10 +207,13 @@ casadi::DM SolverIpopt::generateYawGuess(casadi::DM matrix_qp_guess, casadi::DM 
     for (++spi; spi != shortest_path_vd.end(); ++spi)
     {
       // double yaw_tmp = mygraph_[*spi].yaw;
-      // std::cout << " -> " << yaw_tmp;
+      // std::cout << "layer = " << mygraph_[*spi].layer << ", circle=" << mygraph_[*spi].circle << std::endl;
+
       vector_shortest_path(i) = mygraph_[*spi].yaw;
       i = i + 1;
     }
+
+    // std::cout << "before vector_shortest_path.columns()" << vector_shortest_path.columns() << std::endl;
 
     // std::cout << "vector_yaw_samples_=\n" << vector_yaw_samples_ << std::endl;
     // std::cout << "vis_matrix_casadi=\n" << vis_matrix_casadi << std::endl;
@@ -267,6 +275,8 @@ casadi::DM SolverIpopt::generateYawGuess(casadi::DM matrix_qp_guess, casadi::DM 
     // See "fit_to_angular_data.m"
     casadi::DM vsp_corrected = vector_shortest_path;
 
+    // std::cout << "vector_shortest_path.columns()" << vector_shortest_path.columns() << std::endl;
+
     vsp_corrected(0) = vector_shortest_path(0);
     for (size_t i = 1; i < vsp_corrected.columns(); i++)  // starts in 1, not in 0
     {
@@ -302,6 +312,8 @@ casadi::DM SolverIpopt::generateYawGuess(casadi::DM matrix_qp_guess, casadi::DM 
       // assert(fabs(phi_i - phi_mi) <= M_PI && "This diff must be <= pi");
     }
     ////////////////END OF ONLY FOR DEBUGGING
+
+    // std::cout << "vsp_corrected.columns()" << vsp_corrected.columns() << std::endl;
 
     std::map<std::string, casadi::DM> map_arg2;
     map_arg2["all_yaw"] = vsp_corrected;

@@ -2,14 +2,11 @@
 
 #Jesus Tordesillas Torres, December 2019
 
-#This files plots in gazebo with the position and orientation of the drone according to the desired position and acceleration specified in the goal topic
-
 import roslib
 import rospy
 import math
 from snapstack_msgs.msg import Goal, State
 from geometry_msgs.msg import Pose
-from gazebo_msgs.msg import ModelState
 import numpy as np
 from numpy import linalg as LA
 from tf.transformations import quaternion_from_euler, euler_from_quaternion, quaternion_about_axis, quaternion_multiply, random_quaternion
@@ -36,8 +33,6 @@ class FakeSim:
         self.state.quat.z = quat[2]
         self.state.quat.w = quat[3]
 
-        self.pubGazeboState = rospy.Publisher('/gazebo/set_model_state', ModelState, queue_size=1)
-        # self.pubMarkerDrone = rospy.Publisher('marker', Marker, queue_size=1, latch=True)
         self.pubState = rospy.Publisher('state', State, queue_size=1, latch=True)
         self.timer = rospy.Timer(rospy.Duration(0.01), self.pubTF)
         name = rospy.get_namespace()
@@ -103,23 +98,6 @@ class FakeSim:
         self.state.quat.z=w_q_b[2]  #z
 
         self.pubState.publish(self.state) 
-
-        ## HACK TO NOT USE GAZEBO
-        gazebo_state = ModelState()
-        gazebo_state.model_name = self.name
-        gazebo_state.pose.position.x = data.p.x
-        gazebo_state.pose.position.y = data.p.y
-        gazebo_state.pose.position.z = data.p.z
-        gazebo_state.pose.orientation = self.state.quat
-        #self.gazebo_state.twist = data.twist
-        gazebo_state.reference_frame = "world" 
-        self.pubGazeboState.publish(gazebo_state)  
-        ## END OF HACK TO NOT USE GAZEBO
-
-        # =gazebo_state.pose.orientation
-        # print("State after:")
-        # print(self.state.quat)
-
         # self.pubMarkerDrone.publish(self.getDroneMarker(gazebo_state.pose));
 
     def pubTF(self, timer):

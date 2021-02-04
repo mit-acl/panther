@@ -25,6 +25,9 @@
             <arg name="yaw" default="$(arg yaw)"/>
         </include>
 
+        <node ns="$(arg quad)" name="publish_in_gazebo" pkg="mader" type="publish_in_gazebo.py" output="screen">
+        </node>
+
     </group>
 
      <!-- Camera to body tf -->

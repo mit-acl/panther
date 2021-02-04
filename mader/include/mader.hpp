@@ -103,6 +103,8 @@ private:
   void sampleFeaturePosVel(int argmax_prob_collision, double t_start, double t_end, std::vector<Eigen::Vector3d>& pos,
                            std::vector<Eigen::Vector3d>& vel);
 
+  void removeOldTrajectories();
+
   mt::parameters par_;
 
   double t_;  // variable where the expressions of the trajs of the dyn obs are evaluated
@@ -159,12 +161,17 @@ private:
   // SolverGurobi* solver_;  // pointer to the optimization solver
   SolverIpopt* solver_;  // pointer to the optimization solver
 
-  Eigen::Matrix<double, 4, 4> A_rest_pos_basis_;
-  Eigen::Matrix<double, 4, 4> A_rest_pos_basis_inverse_;
+  Eigen::Matrix<double, 3, 3> A_basis_deg2_rest_;
+  Eigen::Matrix<double, 3, 3> A_basis_deg2_rest_inverse_;
+
+  Eigen::Matrix<double, 4, 4> A_basis_deg3_rest_;
+  Eigen::Matrix<double, 4, 4> A_basis_deg3_rest_inverse_;
 
   separator::Separator* separator_solver_;
 
   std::shared_ptr<mt::log> log_ptr_;
+
+  mt::state last_state_tracked_;
 };
 
 #endif
