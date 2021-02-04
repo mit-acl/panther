@@ -140,6 +140,11 @@ void changeDomPoly(const Eigen::VectorXd& coeff_p, double tp1, double tp2, Eigen
 //   return (T(0) < val) - (val < T(0));
 // }
 
+double cdfUnivariateNormalDist(double x, double mu, double std_deviation);
+double probUnivariateNormalDistAB(double a, double b, double mu, double std_deviation);
+double probMultivariateNormalDist(const Eigen::VectorXd& a, const Eigen::VectorXd& b, const Eigen::VectorXd& mu,
+                                  const Eigen::VectorXd& std_deviation);
+
 // given 2 points (A inside and B outside the sphere) it computes the intersection of the lines between
 // that 2 points and the sphere
 Eigen::Vector3d getIntersectionWithSphere(Eigen::Vector3d& A, Eigen::Vector3d& B, double r, Eigen::Vector3d& center);

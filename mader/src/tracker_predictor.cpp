@@ -156,7 +156,7 @@ void TrackerPredictor::cloud_cb(const sensor_msgs::PointCloud2ConstPtr& pcl2ptr_
   pcl::fromROSMsg(*pcl2ptr_msg, *input_cloud1);
   log_.tim_conversion_pcl.toc();
 
-  std::cout << "Input point cloud has " << input_cloud1->points.size() << " points" << std::endl;
+  // std::cout << "Input point cloud has " << input_cloud1->points.size() << " points" << std::endl;
 
   log_.tim_tf_transform.tic();
   // Transform w_T_b
@@ -244,7 +244,7 @@ void TrackerPredictor::cloud_cb(const sensor_msgs::PointCloud2ConstPtr& pcl2ptr_
     return;
   }
 
-  std::cout << "After filtering, input_cloud has= " << input_cloud->points.size() << " points" << std::endl;
+  std::cout << "Filtering:" << input_cloud1->points.size() << " -->" << input_cloud->points.size() << " points";
 
   log_.tim_tree.tic();
   tree_->setInputCloud(input_cloud);
@@ -669,11 +669,13 @@ void TrackerPredictor::generatePredictedPwpForTrack(tp::track& track_j)
   map_arguments["all_pos"] = all_pos;
 
   // std::cout << "all_pos.size()=\n " << all_pos.rows() << ", " << all_pos.columns() << std::endl;
-  // std::cout << "all_pos:\n " << all_pos << std::endl;
-  // std::cout << "all_t:\n " << all_t << std::endl;
+  std::cout << "all_pos:\n " << all_pos << std::endl;
+  std::cout << "all_t:\n " << all_t << std::endl;
   // std::cout << "all_t.size()=\n " << all_t.rows() << ", " << all_t.columns() << std::endl;
 
+  std::cout << "Calling casadi!" << std::endl;
   std::map<std::string, casadi::DM> result = cf_get_mean_variance_pred_(map_arguments);
+  std::cout << "Called casadi " << std::endl;
 
   casadi::DM coeffs_mean = result["coeff_mean"];
   casadi::DM coeffs_var = result["coeff_var"];

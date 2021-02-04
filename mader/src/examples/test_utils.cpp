@@ -189,6 +189,23 @@ int main()
   // assert(subs(p, t,tp2) - subs(q, t,tq2) ==0)
 
   // vpa(coeffs(q,'All'),6)
+  {
+    std::cout << "Test probMultivariateNormalDist..." << std::endl;
+
+    Eigen::Vector3d a(0.1, 0.6, 0.3);
+    Eigen::Vector3d b(0.3, 0.9, 2.3);
+    Eigen::Vector3d mu(0.2, 0.3, 0.4);
+    Eigen::Vector3d std_deviation(5.0, 3.0, 1.0);
+    double result = probMultivariateNormalDist(a, b, mu, std_deviation);
+    std::cout << "result= " << result << std::endl;
+
+    // The previous result should be the same as this one in matlab:
+    //     clc; clear;
+    // mu=[0.2, 0.3, 0.4]'; std_deviation=[5.0, 3.0, 1.0];
+    // Sigma=diag(std_deviation.^2);
+    // a=[0.1, 0.6, 0.3]'; b=[0.3, 0.9, 2.3]';
+    // mvncdf(b, mu, Sigma) - mvncdf(a, mu, Sigma)
+  }
 
   return 0;
 }

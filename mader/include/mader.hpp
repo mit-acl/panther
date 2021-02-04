@@ -100,7 +100,7 @@ private:
 
   void printDroneStatus();
 
-  void sampleFeaturePosVel(double t_start, double t_end, std::vector<Eigen::Vector3d>& pos,
+  void sampleFeaturePosVel(int argmax_prob_collision, double t_start, double t_end, std::vector<Eigen::Vector3d>& pos,
                            std::vector<Eigen::Vector3d>& vel);
 
   mt::parameters par_;

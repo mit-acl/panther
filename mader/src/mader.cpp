@@ -518,14 +518,16 @@ ConvexHullsOfCurves Mader::convexHullsOfCurves(double t_start, double t_end)
   return result;
 }
 
-void Mader::sampleFeaturePosVel(double t_start, double t_end, std::vector<Eigen::Vector3d>& pos,
-                                std::vector<Eigen::Vector3d>& vel)
+// argmax_prob_collision is the index of trajectory I should focus on
+// a negative value means that there are no trajectories to track
+void Mader::sampleFeaturePosVel(int argmax_prob_collision, double t_start, double t_end,
+                                std::vector<Eigen::Vector3d>& pos, std::vector<Eigen::Vector3d>& vel)
 {
   pos.clear();
   vel.clear();
 
   // std::cout << red << bold << "in sampleFeaturePositions, waiting to lock mtx_trajs_" << reset << std::endl;
-  mtx_trajs_.lock();
+  // mtx_trajs_.lock(); //Already locked when this function is called
   // std::cout << red << bold << "in sampleFeaturePositions, waiting to lock t_" << reset << std::endl;
   // mtx_t_.lock();
 
@@ -533,12 +535,10 @@ void Mader::sampleFeaturePosVel(double t_start, double t_end, std::vector<Eigen:
 
   for (int i = 0; i < par_.num_samples_simpson; i++)
   {
-    if (trajs_.size() > 0)
+    if (argmax_prob_collision >= 0)
     {
-      size_t wt = 0;  // which traj I should focus on. Take the trajectory of the first obstacle for now
-
       double ti = t_start + i * delta;  // which is constant along the trajectory
-      Eigen::Vector3d pos_i = evalMeanDynTrajCompiled(trajs_[wt], ti);
+      Eigen::Vector3d pos_i = evalMeanDynTrajCompiled(trajs_[argmax_prob_collision], ti);
 
       pos.push_back(pos_i);
 
@@ -557,7 +557,7 @@ void Mader::sampleFeaturePosVel(double t_start, double t_end, std::vector<Eigen:
       // Use finite differences to obtain the derivative
       double epsilon = 1e-6;
 
-      Eigen::Vector3d pos_i_epsilon = evalMeanDynTrajCompiled(trajs_[wt], ti + epsilon);
+      Eigen::Vector3d pos_i_epsilon = evalMeanDynTrajCompiled(trajs_[argmax_prob_collision], ti + epsilon);
 
       vel.push_back((pos_i_epsilon - pos_i) / epsilon);
 
@@ -574,7 +574,7 @@ void Mader::sampleFeaturePosVel(double t_start, double t_end, std::vector<Eigen:
   }
   // mtx_t_.unlock();
   // std::cout << red << bold << "in sampleFeaturePositions, mtx_t_ unlocked" << reset << std::endl;
-  mtx_trajs_.unlock();
+  // mtx_trajs_.unlock();
   // std::cout << red << bold << "in sampleFeaturePositions, mtx_trajs_ unlocked" << reset << std::endl;
 }
 
@@ -790,7 +790,6 @@ bool Mader::isReplanningNeeded()
   }
 
   //////////////////////////////////////////////////////////////////////////
-  ///////////////////////// G <-- Project GTerm ////////////////////////////
   //////////////////////////////////////////////////////////////////////////
 
   mtx_state.lock();
@@ -895,37 +894,16 @@ bool Mader::replan(mt::Edges& edges_obstacles_out, std::vector<mt::state>& X_saf
 
   // std::cout << green << "Runtime snlopt= " << runtime_snlopt << reset << std::endl;
 
-  /////////////////////////////////////////////////////////////////////////
-  ///////////////////////// Global plan = Straight line  ///////////////////
   //////////////////////////////////////////////////////////////////////////
-
-  std::vector<Eigen::Vector3d> global_plan;
-  global_plan.push_back(A.pos);
-  global_plan.push_back(G_term.pos);
-
+  ///////////////////////// Get point G ////////////////////////////////////
   //////////////////////////////////////////////////////////////////////////
-  ///////////////////////// Get point E ////////////////////////////////////
-  //////////////////////////////////////////////////////////////////////////
-  double distA2TermGoal = (A.pos - G_term.pos).norm();
+  double distA2TermGoal = (G_term.pos - A.pos).norm();
   double ra = std::min((distA2TermGoal - 0.001), par_.Ra);  // radius of the sphere S
-  bool noPointsOutsideS;
-  int li1;  // last index inside the sphere of global_plan
-  mt::state E;
-  // std::cout << bold << std::setprecision(3) << "A.pos= " << A.pos.transpose() << reset << std::endl;
-  // std::cout << "A= " << A.pos.transpose() << std::endl;
-  // std::cout << "G= " << G.pos.transpose() << std::endl;
-  // std::cout << "ra= " << ra << std::endl;
-  E.pos = getFirstIntersectionWithSphere(global_plan, ra, global_plan[0], &li1, &noPointsOutsideS);
-  if (noPointsOutsideS == true)  // if G_term is inside the sphere
-  {
-    E.pos = G_term.pos;
-  }
-
-  mt::state initial = A;
-  mt::state final = E;
+  mt::state G;
+  G.pos = A.pos + ra * (G_term.pos - A.pos).normalized();
 
   //////////////////////////////////////////////////////////////////////////
-  ///////////////////////// Solve optimization! ////////////////////////////
+  ///////////////////////// Set Times in optimization! ////////////////////////////
   //////////////////////////////////////////////////////////////////////////
 
   solver_->setMaxRuntimeKappaAndMu(runtime_snlopt, par_.kappa, par_.mu);
@@ -948,11 +926,11 @@ bool Mader::replan(mt::Edges& edges_obstacles_out, std::vector<mt::state>& X_saf
     solver_->par_.c_final_pos = par_.c_final_pos;
   }
 
-  double t_final = t_start + (initial.pos - final.pos).array().abs().maxCoeff() /
+  double t_final = t_start + (A.pos - G.pos).array().abs().maxCoeff() /
                                  (factor_v_max_tmp * par_.v_max.x());  // time to execute the optimized path
 
   bool correctInitialCond =
-      solver_->setInitStateFinalStateInitTFinalT(initial, final, t_start,
+      solver_->setInitStateFinalStateInitTFinalT(A, G, t_start,
                                                  t_final);  // note that here t_final may have been updated
 
   if (correctInitialCond == false)
@@ -960,8 +938,54 @@ bool Mader::replan(mt::Edges& edges_obstacles_out, std::vector<mt::state>& X_saf
     logAndTimeReplan("Solver cannot guarantee feasibility for v1", false, log);
     return false;
   }
+  /////////////////////////////////////////////////////////////////////////
+  ////////////////////////Compute trajectory to focus on //////////////////
+  /////////////////////////////////////////////////////////////////////////
 
-  ////////////////
+  double max_prob_collision = -std::numeric_limits<double>::max();  // it's actually a heuristics of the probability (we
+                                                                    // are summing below --> can be >1)
+  int argmax_prob_collision = -1;  // will contain the index of the trajectory to focus on
+
+  int num_samplesp1 = 20;
+  double delta = 1.0 / num_samplesp1;
+  Eigen::Vector3d R = par_.drone_radius * Eigen::Vector3d::Ones();
+
+  mtx_trajs_.lock();
+  for (int i = 0; i < trajs_.size(); i++)
+  {
+    double prob_i = 0.0;
+    for (int j = 0; j <= num_samplesp1; j++)
+    {
+      double t = t_start + j * delta * (t_final - t_start);
+
+      Eigen::Vector3d pos_drone = A.pos + j * delta * (G_term_.pos - A.pos);  // not a random variable
+      Eigen::Vector3d pos_obs_mean = evalMeanDynTrajCompiled(trajs_[i], t);
+      Eigen::Vector3d pos_obs_std = (evalVarDynTrajCompiled(trajs_[i], t)).cwiseSqrt();
+      // std::cout << "pos_obs_std= " << pos_obs_std << std::endl;
+      prob_i += probMultivariateNormalDist(-R, R, pos_obs_mean - pos_drone, pos_obs_std);
+    }
+
+    std::cout << "Trajectory " << i << " has P(collision)= " << prob_i * pow(10, 15) << "e-15" << std::endl;
+
+    if (prob_i > max_prob_collision)
+    {
+      max_prob_collision = prob_i;
+      argmax_prob_collision = i;
+    }
+  }
+
+  std::vector<Eigen::Vector3d> w_posfeature;      // velocity of the feature expressed in w
+  std::vector<Eigen::Vector3d> w_velfeaturewrtw;  // velocity of the feature wrt w, expressed in w
+  sampleFeaturePosVel(argmax_prob_collision, t_start, t_final, w_posfeature,
+                      w_velfeaturewrtw);  // need to do it here so that argmax_prob_collision does not become invalid
+                                          // with new updates
+  std::cout << bold << "Chosen Trajectory " << argmax_prob_collision << reset << std::endl;
+
+  mtx_trajs_.unlock();
+
+  //////////////////////////////////////////////////////////////////////////
+  ///////////////////////// Solve optimization! ////////////////////////////
+  //////////////////////////////////////////////////////////////////////////
 
   // std::cout << red << bold << "in replan(), waiting to lock mtx_trajs_" << reset << std::endl;
   mtx_trajs_.lock();
@@ -977,10 +1001,6 @@ bool Mader::replan(mt::Edges& edges_obstacles_out, std::vector<mt::state>& X_saf
   edges_obstacles_out = vectorGCALPol2edges(hulls);
 
   solver_->setHulls(hulls_std);
-
-  std::vector<Eigen::Vector3d> w_posfeature;      // velocity of the feature expressed in w
-  std::vector<Eigen::Vector3d> w_velfeaturewrtw;  // velocity of the feature wrt w, expressed in w
-  sampleFeaturePosVel(t_start, t_final, w_posfeature, w_velfeaturewrtw);
 
   solver_->setSimpsonFeatureSamples(w_posfeature, w_velfeaturewrtw);
 

@@ -28,7 +28,7 @@ num_of_yaw_per_layer=6; %This will be used in the graph yaw search of C++
                          %Note that the initial layer will have only one yaw (which is given) 
 basis="MINVO"; %MINVO OR B_SPLINE or BEZIER. This is the basis used for collision checking (in position, velocity, accel and jerk space), both in Matlab and in C++
 linear_solver_name='mumps'; %mumps [default, comes when installing casadi], ma27, ma57, ma77, ma86, ma97 
-print_level=5; %From 0 (no verbose) to 12 (very verbose), default is 5
+print_level=0; %From 0 (no verbose) to 12 (very verbose), default is 5
 t0=0; 
 tf=10.5;
 
@@ -310,29 +310,29 @@ for j=1:sp.num_seg
       
       %FOV version 2: (the four planes of the FOV (i.e. a pyramid) + sigmoid to smooth)
       %See also Mathematica notebook
-      gamma=30;
-      tthx=tan(thetax_half_FOV_rad);
-      tthy=tan(thetay_half_FOV_rad);
-      v0h=[0.0, 0.0, 0.0, 1.0]';     %Vertex of the pyramid
-      v1h=[-tthx, -tthy, 1.0, 1.0]'; %Point in the base of the pyramid
-      v2h=[-tthx, tthy, 1.0, 1.0]';  %Point in the base of the pyramid
-      v3h=[tthx, tthy, 1.0, 1.0]';   %Point in the base of the pyramid
-      v4h=[tthx, -tthy, 1.0, 1.0]';  %Point in the base of the pyramid
-      x=c_P(1);y=c_P(2); z=c_P(3);
-      xyzh=[x, y, z, 1.0]';
-      dA21=computeDet([xyzh'; v0h'; v2h'; v1h'] );%This has to be >=0
-      dA32=computeDet([xyzh'; v0h'; v3h'; v2h'] );%This has to be >=0
-      dA43=computeDet([xyzh'; v0h'; v4h'; v3h'] );%This has to be >=0
-      dA14=computeDet([xyzh'; v0h'; v1h'; v4h'] );%This has to be >=0
-      isInFOV_smooth=(mySig(gamma, dA21)*mySig(gamma, dA32)*mySig(gamma, dA43)*mySig(gamma, dA14));
+%       gamma=30;
+%       tthx=tan(thetax_half_FOV_rad);
+%       tthy=tan(thetay_half_FOV_rad);
+%       v0h=[0.0, 0.0, 0.0, 1.0]';     %Vertex of the pyramid
+%       v1h=[-tthx, -tthy, 1.0, 1.0]'; %Point in the base of the pyramid
+%       v2h=[-tthx, tthy, 1.0, 1.0]';  %Point in the base of the pyramid
+%       v3h=[tthx, tthy, 1.0, 1.0]';   %Point in the base of the pyramid
+%       v4h=[tthx, -tthy, 1.0, 1.0]';  %Point in the base of the pyramid
+%       x=c_P(1);y=c_P(2); z=c_P(3);
+%       xyzh=[x, y, z, 1.0]';
+%       dA21=computeDet([xyzh'; v0h'; v2h'; v1h'] );%This has to be >=0
+%       dA32=computeDet([xyzh'; v0h'; v3h'; v2h'] );%This has to be >=0
+%       dA43=computeDet([xyzh'; v0h'; v4h'; v3h'] );%This has to be >=0
+%       dA14=computeDet([xyzh'; v0h'; v1h'; v4h'] );%This has to be >=0
+%       isInFOV_smooth=(mySig(gamma, dA21)*mySig(gamma, dA32)*mySig(gamma, dA43)*mySig(gamma, dA14));
       
       %%%%%%%%%%%%%%%%%%
-     %Simpler version of version 1 (cone):
-%     gamma=100;
-%     w_beta=w_fevar(1:3)-w_T_c(1:3,4);
-%     w_beta=w_beta/norm(w_beta);
-%     is_in_FOV1=-cos(thetax_half_FOV_deg*pi/180.0)+w_beta'*w_T_c(1:3,3); %This has to be >=0
-%     isInFOV_smooth=  (   1/(1+exp(-gamma*is_in_FOV1))  );
+     %Simpler [but no simplification made!] version of version 1 (cone):
+    gamma=100;
+    w_beta=w_fevar(1:3)-w_T_c(1:3,4);
+    w_beta=w_beta/norm(w_beta);
+    is_in_FOV1=-cos(thetax_half_FOV_deg*pi/180.0)+w_beta'*w_T_c(1:3,3); %This has to be >=0
+    isInFOV_smooth=  (   1/(1+exp(-gamma*is_in_FOV1))  );
 
     
     %     %%%%%%%%%%%%%%%%%%%
@@ -447,7 +447,7 @@ opts.jit_options.verbose=true;  %See example in shallow_water.cpp
 opts.expand=true; %When this option is true, it goes WAY faster!
 opts.print_time=true;
 opts.ipopt.print_level=print_level; 
-opts.ipopt.print_frequency_iter=1;%1e10 %Big if you don't want to print all the iteratons
+opts.ipopt.print_frequency_iter=1e10;%1e10 %Big if you don't want to print all the iteratons
 opts.ipopt.linear_solver=linear_solver_name;
 % if(strcmp(linear_solver_name,'ma57'))
 %    opts.ipopt.ma57_automatic_scaling='no';

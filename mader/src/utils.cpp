@@ -36,6 +36,43 @@ mader_msgs::Log log2LogMsg(mt::log log)
   return log_msg;
 }
 
+// https://en.wikipedia.org/wiki/Normal_distribution#Cumulative_distribution_function
+double cdfUnivariateNormalDist(double x, double mu, double std_deviation)
+{
+  return 0.5 * (1 + erf((x - mu) / (std_deviation * sqrt(2))));
+}
+
+// note that b>=a is a requirement
+double probUnivariateNormalDistAB(double a, double b, double mu, double std_deviation)
+{
+  if (b < a)
+  {
+    std::cout << "Needed: b>=a. ABORTING!" << std::endl;
+    abort();
+  }
+
+  return (cdfUnivariateNormalDist(b, mu, std_deviation) - cdfUnivariateNormalDist(a, mu, std_deviation));
+}
+
+// This works when the covariance matris is diagonal (and the diagonal is given by the vector std_deviation.^2 )
+// TODO: we are assumming that all the vectors have the same size (if not it'll crash) --> make template
+double probMultivariateNormalDist(const Eigen::VectorXd& a, const Eigen::VectorXd& b, const Eigen::VectorXd& mu,
+                                  const Eigen::VectorXd& std_deviation)
+{
+  double prob_less_a = 1.0;
+  for (int i = 0; i < a.size(); i++)
+  {
+    prob_less_a *= cdfUnivariateNormalDist(a(i), mu(i), std_deviation(i));
+  }
+
+  double prob_less_b = 1.0;
+  for (int i = 0; i < b.size(); i++)
+  {
+    prob_less_b *= cdfUnivariateNormalDist(b(i), mu(i), std_deviation(i));
+  }
+  return (prob_less_b - prob_less_a);
+}
+
 visualization_msgs::MarkerArray pwp2ColoredMarkerArray(mt::PieceWisePol& pwp, double t_init, double t_final,
                                                        int samples, std::string ns, Eigen::Vector3d& color)
 {
