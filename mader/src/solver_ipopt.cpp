@@ -102,13 +102,10 @@ SolverIpopt::SolverIpopt(mt::parameters &par, std::shared_ptr<mt::log> log_ptr)
 
   // m_casadi_ptr_ = std::unique_ptr<PImpl>(new PImpl());
 
-  casadi_function_ = casadi::Function::load(ros::package::getPath("mader") + "/matlab/"
-                                                                             "solve_opt_problem.casadi");
-
-  casadi_fit_yaw_function_ = casadi::Function::load(ros::package::getPath("mader") + "/matlab/"
-                                                                                     "fit_spline_to_samples.casadi");
-
-  casadi_visibility_function_ = casadi::Function::load(ros::package::getPath("mader") + "/matlab/visibility.casadi");
+  cf_op_ = casadi::Function::load(ros::package::getPath("mader") + "/matlab/op.casadi");
+  cf_op_force_final_pos_ = casadi::Function::load(ros::package::getPath("mader") + "/matlab/op_force_final_pos.casadi");
+  cf_fit_yaw_ = casadi::Function::load(ros::package::getPath("mader") + "/matlab/fit_yaw.casadi");
+  cf_visibility_ = casadi::Function::load(ros::package::getPath("mader") + "/matlab/visibility.casadi");
 
   all_w_fe_ = casadi::DM(3, par_.num_samples_simpson);
   all_w_velfewrtworld_ = casadi::DM(3, par_.num_samples_simpson);
@@ -428,6 +425,17 @@ bool SolverIpopt::optimize()
   n_ = n_guess_;
   d_ = d_guess_;
 
+  int max_num_of_planes = par_.num_max_of_obst * par_.num_seg;
+  if ((n_guess_.size() > max_num_of_planes))
+  {
+    std::cout << red << bold << "the casadi function does not support so many planes" << reset << std::endl;
+    std::cout << red << bold << "you have " << num_of_obst_ << "*" << par_.num_seg << "=" << n_guess_.size()
+              << " planes" << std::endl;
+    std::cout << red << bold << "and max is  " << par_.num_max_of_obst << "*" << par_.num_seg << "="
+              << max_num_of_planes << " planes" << std::endl;
+    return false;
+  }
+
   ////////////////////////////////////
   ////////////////////////////////////
   //////////////////////////////////// CASADI!
@@ -484,16 +492,6 @@ bool SolverIpopt::optimize()
 
   // std::cout << "Total time= " << (t_final_ - t_init_) << std::endl;
 
-  int max_num_of_planes = par_.num_max_of_obst * par_.num_seg;
-
-  // assert((n_guess_.size() <= max_num_of_planes) && "the casadi function does not support so many planes");
-
-  if ((n_guess_.size() > max_num_of_planes))
-  {
-    std::cout << red << bold << "the casadi function does not support so many planes" << reset << std::endl;
-    abort();
-  }
-
   //  casadi::DM all_nd(casadi::Sparsity::dense(4, max_num_of_planes));  // TODO: do this just once
 
   casadi::DM all_nd(casadi::DM::zeros(4, max_num_of_planes));  // TODO: do this just once
@@ -526,14 +524,22 @@ bool SolverIpopt::optimize()
   map_arguments["guess_CPs_Yaw"] = matrix_qy_guess;
 
   ////////////////////////// CALL THE SOLVER
+  std::map<std::string, casadi::DM> result;
   log_ptr_->tim_opt.tic();
-  std::map<std::string, casadi::DM> result = casadi_function_(map_arguments);
+  if (par_.force_final_pos == true)
+  {
+    result = cf_op_force_final_pos_(map_arguments);
+  }
+  else
+  {
+    result = cf_op_(map_arguments);
+  }
   log_ptr_->tim_opt.toc();
 
   ///////////////// GET STATUS FROM THE SOLVER
   // Very hacky solution, see discussion at https://groups.google.com/g/casadi-users/c/1061E0eVAXM/m/dFHpw1CQBgAJ
   // Inspired from https://gist.github.com/jgillis/9d12df1994b6fea08eddd0a3f0b0737f
-  auto optimstatus = casadi_function_.instruction_MX(index_instruction_).which_function().stats(1)["return_status"];
+  auto optimstatus = cf_op_.instruction_MX(index_instruction_).which_function().stats(1)["return_status"];
 
   //////////////// LOG COSTS OBTAINED
   log_ptr_->pos_smooth_cost = double(result["pos_smooth_cost"]);

@@ -24,7 +24,7 @@ deg_yaw=2;
 num_seg =4; %number of segments
 num_max_of_obst=10; %This is the maximum num of the obstacles 
 num_samples_simpson=7;  %This will also be the num_of_layers in the graph yaw search of C++
-num_of_yaw_per_layer=20; %This will be used in the graph yaw search of C++
+num_of_yaw_per_layer=40; %This will be used in the graph yaw search of C++
                          %Note that the initial layer will have only one yaw (which is given) 
 basis="MINVO"; %MINVO OR B_SPLINE or BEZIER. This is the basis used for collision checking (in position, velocity, accel and jerk space), both in Matlab and in C++
 linear_solver_name='mumps'; %mumps [default, comes when installing casadi], ma27, ma57, ma77, ma86, ma97 
@@ -434,33 +434,10 @@ opti.minimize(simplify(total_cost));
 %%%%%%%%%%%%%%%%%%%%%%%%%%% SOLVE! %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % opti.callback(@(i) stairs(opti.debug.value(total_cost)));
-jit_compilation=false; %If true, when I call solve(), Matlab will automatically generate a .c file, convert it to a .mex and then solve the problem using that compiled code
 
 
-opts = struct;
-%opts.ipopt.hessian_approximation = 'limited-memory';
-opts.jit=jit_compilation;
-
-opts.compiler='clang';
-opts.jit_options.flags='-O0';  %Takes ~15 seconds to generate if O0 (much more if O1,...,O3)
-opts.jit_options.verbose=true;  %See example in shallow_water.cpp
-opts.expand=true; %When this option is true, it goes WAY faster!
-opts.print_time=true;
-opts.ipopt.print_level=print_level; 
-opts.ipopt.print_frequency_iter=1e10;%1e10 %Big if you don't want to print all the iteratons
-opts.ipopt.linear_solver=linear_solver_name;
-% if(strcmp(linear_solver_name,'ma57'))
-%    opts.ipopt.ma57_automatic_scaling='no';
-% end
-% opts.enable_forward=false; %Seems this option doesn't have effect?
-% opts.enable_reverse=false;
-% opts.enable_jacobian=false;
-
-opti.solver('ipopt',opts); %{"ipopt.hessian_approximation":"limited-memory"} 
 
 
-% opts.qpsol ='qrqp';  %Other solver
-% opti.solver('sqpmethod',opts);
 
 %%%%%%%%%%%%%%%% Example of how to create a casadi function from the solver and then call it
 all_nd=[];
@@ -562,8 +539,38 @@ for i=1:numel(all_params_and_init_guesses)
 end
 
 
-my_function = opti.to_function('mader_casadi_function', vars, {all_pCPs,all_yCPs, pos_smooth_cost, yaw_smooth_cost, fov_cost, final_pos_cost, final_yaw_cost},...
+opts = struct;
+opts.expand=true; %When this option is true, it goes WAY faster!
+opts.print_time=true;
+opts.ipopt.print_level=print_level; 
+opts.ipopt.print_frequency_iter=1e10;%1e10 %Big if you don't want to print all the iteratons
+opts.ipopt.linear_solver=linear_solver_name;
+opti.solver('ipopt',opts); %{"ipopt.hessian_approximation":"limited-memory"} 
+% if(strcmp(linear_solver_name,'ma57'))
+%    opts.ipopt.ma57_automatic_scaling='no';
+% end
+%opts.ipopt.hessian_approximation = 'limited-memory';
+% jit_compilation=false; %If true, when I call solve(), Matlab will automatically generate a .c file, convert it to a .mex and then solve the problem using that compiled code
+% opts.jit=jit_compilation;
+% opts.compiler='clang';
+% opts.jit_options.flags='-O0';  %Takes ~15 seconds to generate if O0 (much more if O1,...,O3)
+% opts.jit_options.verbose=true;  %See example in shallow_water.cpp
+% opts.enable_forward=false; %Seems this option doesn't have effect?
+% opts.enable_reverse=false;
+% opts.enable_jacobian=false;
+% opts.qpsol ='qrqp';  %Other solver
+% opti.solver('sqpmethod',opts);
+
+my_function = opti.to_function('my_function', vars, {all_pCPs,all_yCPs, pos_smooth_cost, yaw_smooth_cost, fov_cost, final_pos_cost, final_yaw_cost},...
                                                         names, {'all_pCPs','all_yCPs','pos_smooth_cost','yaw_smooth_cost','fov_cost','final_pos_cost','final_yaw_cost'});
+my_function.save('op.casadi') %Optimization Problam. The file generated is quite big
+
+
+opti_tmp=opti;
+opti_tmp.subject_to( sp.getPosT(tf)== pf );
+my_function_tmp = opti_tmp.to_function('my_function_tmp', vars, {all_pCPs,all_yCPs, pos_smooth_cost, yaw_smooth_cost, fov_cost, final_pos_cost, final_yaw_cost},...
+                                                        names, {'all_pCPs','all_yCPs','pos_smooth_cost','yaw_smooth_cost','fov_cost','final_pos_cost','final_yaw_cost'});
+my_function_tmp.save('op_force_final_pos.casadi') %The file generated is quite big
                                                     
 % my_function=my_function.expand();
 tic();
@@ -571,10 +578,8 @@ sol=my_function( names_value{:});
 toc();
 
 statistics=get_stats(my_function); %See functions defined below
-full(sol.all_pCPs)
-full(sol.all_yCPs)
-
-my_function.save('solve_opt_problem.casadi') %The file generated is quite big
+full(sol.all_pCPs);
+full(sol.all_yCPs);
 
 %Write param file with the characteristics of the casadi function generated
 my_file=fopen('params_casadi.yaml','w'); %Overwrite content. This will clear its content
@@ -751,7 +756,7 @@ subplot(4,1,1); hold on;
 plot(t_simpson, all_yaw_value, 'o')
 
 
-f.save('fit_spline_to_samples.casadi') %The file generated is quite big
+f.save('fit_yaw.casadi') %The file generated is quite big
 
 % solution=convertMX2Matlab(A)\convertMX2Matlab(b);  %Solve the system of equations
 % sy.updateCPsWithSolution(solution(1:end-3)');

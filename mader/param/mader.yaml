@@ -18,15 +18,36 @@ y_max: 1000000000.0   # [m] don't forget the .0
 z_min: -1000000000.0         #[m] points below this are considered ground
 z_max: 1000000000.0         #[m] JPS is not allowed to give a solution that goes higher than this height
 
-#For multi-agent simulations
-# v_max: [2.5, 2.5, 2.5]   #[m/s]  
-# a_max: [30.0, 30.0, 9.6]   #[m/s2] 
+####For simulations
 
-#For single-agent simulations
+#max limits
+# v_max: [2.6, 2.6, 2.6]   #[m/s]  7.0
+# a_max: [20.0, 20.0, 9.6]   #[m/s2] Note that if a_max.z() > 9.81, the drone may flip
+# j_max: [100.0, 100.0, 100.0]   #[m/s3] Note that if a_max.z() > 9.81, the drone may flip
+# ydot_max: 5.0           # [rd/s] Maximum angular velocity. 0.4 for Hardware
+
+#parameters for Casadi
+# c_pos_smooth: 0.0000
+# c_yaw_smooth: 0.0000
+# c_fov: 1.0
+# c_final_pos: 20.0
+# c_final_yaw: 0.0
+
+####For Hardware
+
+#max limits
 v_max: [2.6, 2.6, 2.6]   #[m/s]  7.0
 a_max: [20.0, 20.0, 9.6]   #[m/s2] Note that if a_max.z() > 9.81, the drone may flip
-j_max: [100.0, 100.0, 100.0]   #[m/s2] Note that if a_max.z() > 9.81, the drone may flip
-ydot_max: 5.0           # [rd/s] Maximum angular velocity. 0.4 for Hardware
+j_max: [40.0, 40.0, 40.0]   #[m/s3] Note that if a_max.z() > 9.81, the drone may flip
+ydot_max: 1.5           # [rd/s] Maximum angular velocity. 0.4 for Hardware
+
+#parameters for Casadi
+c_pos_smooth: 0.05
+c_yaw_smooth: 0.1
+c_fov: 1.0
+c_final_pos: 20000.0
+c_final_yaw: 0.0
+
 
 factor_alpha: 1.5 #[-] DeltaT = factor_alpha*States_took_previous_replan
 
@@ -36,12 +57,6 @@ c_visibility_yaw_search: 1.0
 # num_of_layers --> this one comes from Matlab, it's = num_samples_simpson 
 # num_of_yaw_per_layer --> this one comes from Matlab
 
-#Parameters for Casadi
-c_pos_smooth: 0.0000
-c_yaw_smooth: 0.00001
-c_fov: 1.0
-c_final_pos: 20.0
-c_final_yaw: 0.0
 
 # kappa + mu <=1 Ideally kappa + mu<1 (so that there is time for other stuff)
 upper_bound_runtime_snlopt: 0.35 #[seconds] snlopt (init guess + solver) will never take longer than this amount of seconds
@@ -71,7 +86,7 @@ norminv_prob: 0.52 #For x% bands, set this to norminv(x). #70.0% band <--> 0.524
                                                           #90.0% band <--> 1.282
                                                           #97.5% band <--> 1.96 
 
-
+distance_to_force_final_pos: 2.0
 
 gamma: 0.1 #[seconds] >0 Time step between discretization points
 

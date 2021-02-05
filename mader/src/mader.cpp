@@ -854,17 +854,17 @@ bool Mader::isReplanningNeeded()
   //////////////////////////////////////////////////////////////////////////
   //////////////////////////////////////////////////////////////////////////
 
-  mtx_state.lock();
+  // mtx_state.lock();
   mtx_G_term.lock();
 
-  mt::state state_local = state_;
+  // mt::state state_local = state_;
   mt::state G_term = G_term_;  // Local copy of the terminal terminal goal
 
   mtx_G_term.unlock();
-  mtx_state.unlock();
+  // mtx_state.unlock();
 
   // Check if we have reached the goal
-  double dist_to_goal = (G_term.pos - state_local.pos).norm();
+  double dist_to_goal = (G_term.pos - plan_.front().pos).norm();
   // std::cout << "dist_to_goal= " << dist_to_goal << std::endl;
   if (dist_to_goal < par_.goal_radius)
   {
@@ -984,15 +984,19 @@ bool Mader::replan(mt::Edges& edges_obstacles_out, std::vector<mt::state>& X_saf
 
   // std::cout << "distA2TermGoal= " << distA2TermGoal << std::endl;
 
-  // when it's near the terminal goal --> use a small factor_v_max (if not it will oscillate)
-  if (distA2TermGoal < 3.0)  // TODO: Put this as a param
+  // when it's near the terminal goal --> force the final condition (if not it may oscillate)
+  if (distA2TermGoal < par_.distance_to_force_final_pos)
   {
-    factor_v_max_tmp = 0.8;  // TODO: Put this as a param
-    solver_->par_.c_final_pos = 100000000.0;
+    factor_v_max_tmp = 0.6;           // TODO: Put this as a param
+    solver_->par_.c_final_pos = 0.0;  // Is a constraint --> don't care about this cost
+    solver_->par_.c_fov = 5.0;
+    solver_->par_.force_final_pos = true;
   }
   else
   {
     solver_->par_.c_final_pos = par_.c_final_pos;
+    solver_->par_.c_fov = par_.c_fov;
+    solver_->par_.force_final_pos = par_.force_final_pos;
   }
 
   double t_final = t_start + (A.pos - G.pos).array().abs().maxCoeff() /
