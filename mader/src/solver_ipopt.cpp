@@ -291,6 +291,8 @@ bool SolverIpopt::setInitStateFinalStateInitTFinalT(mt::state initial_state, mt:
 
   deltaT_ = (t_final - t_init) / (1.0 * (M_ - 2 * p_ - 1 + 1));
 
+  double old_deltaT = deltaT_;
+
   //////////////////////////////
   // Now make sure deltaT in knots_ is such that -v_max<=v1<=v_max is satisfied:
   // std::cout << bold << "deltaT_ before= " << deltaT_ << reset << std::endl;
@@ -327,6 +329,12 @@ bool SolverIpopt::setInitStateFinalStateInitTFinalT(mt::state initial_state, mt:
       // do nothing: a0 ==0 for that axis, so that means that v1==v0, and therefore v1 satisfies constraints for that
       // axis
     }
+  }
+
+  if (old_deltaT != deltaT_)
+  {
+    std::cout << red << bold << "old_deltaT= " << old_deltaT << reset << std::endl;
+    std::cout << red << bold << "deltaT_= " << deltaT_ << reset << std::endl;
   }
 
   // Eigen::Vector3d bound1 = ((p_ - 1) * (par_.v_max - v0).array() / (a0.array()));
@@ -643,7 +651,7 @@ bool SolverIpopt::optimize()
   traj_solution_.back().ddyaw = final_state_.ddyaw;
 
   // Uncomment the following line if you wanna visualize the planes
-  // fillPlanesFromNDQ(n_, d_, q);  // TODO: move this outside the SolverIpopt class
+  // fillPlanesFromNDQ(n_, d_, qp);  // TODO: move this outside the SolverIpopt class
 
   return true;
 }
@@ -686,12 +694,12 @@ void SolverIpopt::fillPlanesFromNDQ(const std::vector<Eigen::Vector3d> &n, const
       // the colors refer to the second figure of
       // https://github.com/mit-acl/separator/tree/06c0ddc6e2f11dbfc5b6083c2ea31b23fd4fa9d1
 
-      // Equation of the blue planes is n'x+d == -1
+      // Equation of the red planes is n'x+d == 1
       // Convert here to equation [A B C]'x+D ==0
       double A = n[ip].x();
       double B = n[ip].y();
       double C = n[ip].z();
-      double D = d[ip] + 1;
+      double D = d[ip] - 1;
 
       /////////////////// OPTION 1: point_in_plane = intersection between line  centroid_cps --> centroid_hull
       // bool intersects = getIntersectionWithPlane(centroid_cps, centroid_hull, Eigen::Vector4d(A, B, C, D),
