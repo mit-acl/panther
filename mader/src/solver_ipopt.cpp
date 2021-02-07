@@ -246,6 +246,15 @@ void SolverIpopt::setSimpsonFeatureSamples(const std::vector<Eigen::Vector3d> &s
   }
 }
 
+casadi::DM SolverIpopt::eigen2casadi(const Eigen::Vector3d &a)
+{
+  casadi::DM b = casadi::DM::zeros(3, 1);
+  b(0, 0) = a(0);
+  b(1, 0) = a(1);
+  b(2, 0) = a(2);
+  return b;
+};
+
 // Note that t_final will be updated in case the saturation in deltaT_ has had effect
 bool SolverIpopt::setInitStateFinalStateInitTFinalT(mt::state initial_state, mt::state final_state, double t_init,
                                                     double &t_final)
@@ -492,9 +501,9 @@ bool SolverIpopt::optimize()
 
   // std::cout << "Total time= " << (t_final_ - t_init_) << std::endl;
 
-  //  casadi::DM all_nd(casadi::Sparsity::dense(4, max_num_of_planes));  // TODO: do this just once
-
-  casadi::DM all_nd(casadi::DM::zeros(4, max_num_of_planes));  // TODO: do this just once
+  //  casadi::DM all_nd(casadi::Sparsity::dense(4, max_num_of_planes));
+  // casadi::DM::rand(4, 0);
+  static casadi::DM all_nd(casadi::DM::zeros(4, max_num_of_planes));
   for (int i = 0; i < n_guess_.size(); i++)
   {
     // Casadi needs the plane equation as n_casadi'x+d_casadi<=0
@@ -506,7 +515,7 @@ bool SolverIpopt::optimize()
     all_nd(3, i) = d_guess_[i] - 1;
   }
 
-  map_arguments["all_nd"] = all_nd;  // casadi::DM::rand(4, 0);
+  map_arguments["all_nd"] = all_nd;
 
   ///////////////// GUESS FOR POSITION CONTROL POINTS
   casadi::DM matrix_qp_guess(3, (N_ + 1));  // TODO: do this just once?
@@ -539,7 +548,28 @@ bool SolverIpopt::optimize()
   ///////////////// GET STATUS FROM THE SOLVER
   // Very hacky solution, see discussion at https://groups.google.com/g/casadi-users/c/1061E0eVAXM/m/dFHpw1CQBgAJ
   // Inspired from https://gist.github.com/jgillis/9d12df1994b6fea08eddd0a3f0b0737f
-  auto optimstatus = cf_op_.instruction_MX(index_instruction_).which_function().stats(1)["return_status"];
+  // auto optimstatus = cf_op_.instruction_MX(index_instruction_).which_function().stats(1)["return_status"];
+
+  std::string optimstatus;
+  if (par_.force_final_pos == true)
+  {
+    optimstatus = std::string(
+        cf_op_force_final_pos_.instruction_MX(index_instruction_).which_function().stats(1)["return_status"]);
+  }
+  else
+  {
+    optimstatus = std::string(cf_op_.instruction_MX(index_instruction_).which_function().stats(1)["return_status"]);
+  }
+
+  ////// Example of how to obtain inf_pr and inf_du
+  // std::vector<double> inf_pr_all = std::map<std::string, casadi::GenericType>(
+  //     cf_op_.instruction_MX(index_instruction_).which_function().stats(1)["iterations"])["inf_pr"];
+  // std::vector<double> inf_du_all = std::map<std::string, casadi::GenericType>(
+  //     cf_op_.instruction_MX(index_instruction_).which_function().stats(1)["iterations"])["inf_du"];
+  // double inf_pr = inf_pr_all.back();
+  // double inf_du = inf_du_all.back();
+  // std::cout << "inf_pr= " << inf_pr << std::endl;
+  // std::cout << "inf_du= " << inf_du << std::endl;
 
   //////////////// LOG COSTS OBTAINED
   log_ptr_->pos_smooth_cost = double(result["pos_smooth_cost"]);
@@ -571,9 +601,10 @@ bool SolverIpopt::optimize()
   {
     std::cout << red << "IPOPT failed to find a solution" << reset << std::endl;
     log_ptr_->success_opt = false;
-    qp = qp_guess_;
-    qy = qy_guess_;  // TODO: If I want to commit to the guesses, they need to be feasible (right now they aren't
-                     // because of j_max and yaw_dot_max) For now, let's not commit to them and return false
+    // qp = qp_guess_;
+    // qy = qy_guess_;
+    // TODO: If I want to commit to the guesses, they need to be feasible (right now they aren't
+    // because of j_max and yaw_dot_max) For now, let's not commit to them and return false
     return false;
   }
 
@@ -592,16 +623,17 @@ bool SolverIpopt::optimize()
 
   std::cout << "Called CPs2TrajAndPwp!" << std::endl;
 
-  // Force last position =final_state_ (which it's not guaranteed because of the discretization with par_.dc)
-  traj_solution_.back().vel = final_state_.vel;
-  traj_solution_.back().accel = final_state_.accel;
-  traj_solution_.back().jerk = Eigen::Vector3d::Zero();
-
   // std::cout << bold << red << "traj_solution_.[-2].accel= " << traj_solution_.end()[-2].accel.transpose() << reset
   //           << std::endl;
 
   // std::cout << bold << red << "traj_solution_.back().accel= " << traj_solution_.back().accel.transpose() << reset
-  //           << std::endl;
+  //           << std::endl; //This can be at most j_max*dc
+
+  // Force last vel and jerk =final_state_ (which it's not guaranteed because of the discretization with par_.dc)
+  traj_solution_.back().vel = final_state_.vel;
+  traj_solution_.back().accel = final_state_.accel;
+  traj_solution_.back().jerk = Eigen::Vector3d::Zero();
+  traj_solution_.back().ddyaw = final_state_.ddyaw;
 
   // Uncomment the following line if you wanna visualize the planes
   // fillPlanesFromNDQ(n_, d_, q);  // TODO: move this outside the SolverIpopt class
@@ -724,3 +756,13 @@ bool SolverIpopt::getIntersectionWithPlane(const Eigen::Vector3d &P1, const Eige
 
   return result;
 }
+
+// std::map<std::string, casadi::GenericType> tmp3 =
+//     cf_op_.instruction_MX(index_instruction_).which_function().stats(1)["iterations"];
+// auto tmp = cf_op_.instruction_MX(index_instruction_).which_function().stats(1);
+// for (auto it = tmp.begin(); it != tmp.end(); it++)
+// {
+//   std::cout << it->first          // string (key)
+//             << ':' << it->second  // string's value
+//             << std::endl;
+// }

@@ -221,39 +221,43 @@ casadi::DM SolverIpopt::generateYawGuess(casadi::DM matrix_qp_guess, casadi::DM 
     //////////////////////////////////////////////////////////////////////////////
     /////////////////////PRINT SHORTEST PATH AND VISIBILITY MATRIX////////////////
     //////////////////////////////////////////////////////////////////////////////
-    for (int j = 0; j < vector_yaw_samples_.numel(); j++)
+    if (par_.print_graph_yaw_info)
     {
-      std::cout << right << std::fixed << std::setw(8) << std::setfill(' ') << "[" << j << "]" << reset;
-    }
-    std::cout << std::endl;
-    for (int j = 0; j < vector_yaw_samples_.numel(); j++)
-    {
-      std::cout << right << std::fixed << std::setw(8) << std::setfill(' ') << blue << vector_yaw_samples_(j) << reset;
-    }
-    std::cout << std::endl;
-
-    for (int i = 0; i < vis_matrix_casadi.rows(); i++)
-    {
-      std::cout << "[" << i << "] ";
-      for (int j = 0; j < vis_matrix_casadi.columns(); j++)
+      for (int j = 0; j < vector_yaw_samples_.numel(); j++)
       {
-        {
-          std::cout << right << std::fixed << std::setw(8) << std::setfill(' ');
-          if (abs(double(vector_yaw_samples_(j)) - double(vector_shortest_path(i))) < 1e-5)
-          {
-            std::cout << "\033[0;31m";
-          }
-          else
-          {
-            // std::cout << left << std::fixed << std::setw(8) << std::setfill(' ') << vis_matrix_casadi(i, j) << reset;
-          }
-
-          std::cout << vis_matrix_casadi(i, j) << reset;
-        }
+        std::cout << right << std::fixed << std::setw(8) << std::setfill(' ') << "[" << j << "]" << reset;
       }
       std::cout << std::endl;
-    }
+      for (int j = 0; j < vector_yaw_samples_.numel(); j++)
+      {
+        std::cout << right << std::fixed << std::setw(8) << std::setfill(' ') << blue << vector_yaw_samples_(j)
+                  << reset;
+      }
+      std::cout << std::endl;
 
+      for (int i = 0; i < vis_matrix_casadi.rows(); i++)
+      {
+        std::cout << "[" << i << "] ";
+        for (int j = 0; j < vis_matrix_casadi.columns(); j++)
+        {
+          {
+            std::cout << right << std::fixed << std::setw(8) << std::setfill(' ');
+            if (abs(double(vector_yaw_samples_(j)) - double(vector_shortest_path(i))) < 1e-5)
+            {
+              std::cout << "\033[0;31m";
+            }
+            else
+            {
+              // std::cout << left << std::fixed << std::setw(8) << std::setfill(' ') << vis_matrix_casadi(i, j) <<
+              // reset;
+            }
+
+            std::cout << vis_matrix_casadi(i, j) << reset;
+          }
+        }
+        std::cout << std::endl;
+      }
+    }
     std::cout << "Shortest path: ";
     for (int i = 0; i < vector_shortest_path.numel(); i++)
     {

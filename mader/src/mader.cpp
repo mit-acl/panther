@@ -980,27 +980,36 @@ bool Mader::replan(mt::Edges& edges_obstacles_out, std::vector<mt::state>& X_saf
 
   double t_start = k_index * par_.dc + time_now;
 
-  double factor_v_max_tmp = par_.factor_v_max;
+  double factor_alloc_tmp = par_.factor_alloc;
 
   // std::cout << "distA2TermGoal= " << distA2TermGoal << std::endl;
 
-  // when it's near the terminal goal --> force the final condition (if not it may oscillate)
-  if (distA2TermGoal < par_.distance_to_force_final_pos)
-  {
-    factor_v_max_tmp = 0.6;           // TODO: Put this as a param
-    solver_->par_.c_final_pos = 0.0;  // Is a constraint --> don't care about this cost
-    solver_->par_.c_fov = 5.0;
-    solver_->par_.force_final_pos = true;
-  }
-  else
-  {
-    solver_->par_.c_final_pos = par_.c_final_pos;
-    solver_->par_.c_fov = par_.c_fov;
-    solver_->par_.force_final_pos = par_.force_final_pos;
-  }
+  //// when it's near the terminal goal --> force the final condition (if not it may oscillate)
+  // if (distA2TermGoal < par_.distance_to_force_final_pos)
+  // {
+  //   std::cout << "distA2TermGoal= " << distA2TermGoal << std::endl;
+  //   std::cout << bold << blue << "Forcing final Pos" << reset << std::endl;
 
-  double t_final = t_start + (A.pos - G.pos).array().abs().maxCoeff() /
-                                 (factor_v_max_tmp * par_.v_max.x());  // time to execute the optimized path
+  //   factor_alloc_tmp = par_.factor_alloc_when_forcing_final_pos;
+  //   solver_->par_.c_final_pos = 0.0;  // Is a constraint --> don't care about this cost
+  //   solver_->par_.c_fov = 5.0;
+  //   solver_->par_.force_final_pos = true;
+  // }
+  // else
+  // {
+  solver_->par_.c_final_pos = par_.c_final_pos;
+  solver_->par_.c_fov = par_.c_fov;
+  solver_->par_.force_final_pos = true;  // par_.force_final_pos;
+  // }
+
+  double time_allocated = getMinTimeDoubleIntegrator3D(A.pos, A.vel, G.pos, G.vel, par_.v_max, par_.a_max);
+
+  // double t_final = t_start + (A.pos - G.pos).array().abs().maxCoeff() /
+  //                                (factor_alloc_tmp * par_.v_max.x());  // time to execute the optimized path
+
+  // std::cout << red << bold << "TIME ALLOCATED= " << time_allocated << reset << std::endl;
+
+  double t_final = t_start + factor_alloc_tmp * time_allocated;
 
   bool correctInitialCond =
       solver_->setInitStateFinalStateInitTFinalT(A, G, t_start,

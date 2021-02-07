@@ -773,7 +773,7 @@ struct parameters
 
   double res_plot_traj;
 
-  double factor_v_max = 0.6;
+  double factor_alloc = 0.6;
 
   double alpha_shrink = 1.0;
 
@@ -796,6 +796,8 @@ struct parameters
 
   bool force_final_pos = false;
   double distance_to_force_final_pos = 1.0;
+  double factor_alloc_when_forcing_final_pos = 1.0;
+  bool print_graph_yaw_info = false;
 
   Eigen::Affine3d b_T_c;
 };

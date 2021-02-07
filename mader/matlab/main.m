@@ -28,7 +28,7 @@ num_of_yaw_per_layer=40; %This will be used in the graph yaw search of C++
                          %Note that the initial layer will have only one yaw (which is given) 
 basis="MINVO"; %MINVO OR B_SPLINE or BEZIER. This is the basis used for collision checking (in position, velocity, accel and jerk space), both in Matlab and in C++
 linear_solver_name='mumps'; %mumps [default, comes when installing casadi], ma27, ma57, ma77, ma86, ma97 
-print_level=0; %From 0 (no verbose) to 12 (very verbose), default is 5
+print_level=5; %From 0 (no verbose) to 12 (very verbose), default is 5
 t0=0; 
 tf=10.5;
 
@@ -106,8 +106,9 @@ sy=MyClampedUniformSpline(t0,tf,deg_yaw, dim_yaw, num_seg, opti); %spline yaw.
 scaling=(tf-t0)/total_time;
 
 v0_scaled=v0/scaling;
-ydot0_scaled=ydot0/scaling;
 a0_scaled=a0/(scaling^2);
+ydot0_scaled=ydot0/scaling;
+
 
 vf_scaled=vf/scaling;
 af_scaled=af/(scaling^2);
@@ -543,7 +544,7 @@ opts = struct;
 opts.expand=true; %When this option is true, it goes WAY faster!
 opts.print_time=true;
 opts.ipopt.print_level=print_level; 
-opts.ipopt.print_frequency_iter=1e10;%1e10 %Big if you don't want to print all the iteratons
+opts.ipopt.print_frequency_iter=1;%1e10 %Big if you don't want to print all the iteratons
 opts.ipopt.linear_solver=linear_solver_name;
 opti.solver('ipopt',opts); %{"ipopt.hessian_approximation":"limited-memory"} 
 % if(strcmp(linear_solver_name,'ma57'))
@@ -561,15 +562,18 @@ opti.solver('ipopt',opts); %{"ipopt.hessian_approximation":"limited-memory"}
 % opts.qpsol ='qrqp';  %Other solver
 % opti.solver('sqpmethod',opts);
 
-my_function = opti.to_function('my_function', vars, {all_pCPs,all_yCPs, pos_smooth_cost, yaw_smooth_cost, fov_cost, final_pos_cost, final_yaw_cost},...
-                                                        names, {'all_pCPs','all_yCPs','pos_smooth_cost','yaw_smooth_cost','fov_cost','final_pos_cost','final_yaw_cost'});
+results_vars={all_pCPs,all_yCPs, pos_smooth_cost, yaw_smooth_cost, fov_cost, final_pos_cost, final_yaw_cost};
+results_names={'all_pCPs','all_yCPs','pos_smooth_cost','yaw_smooth_cost','fov_cost','final_pos_cost','final_yaw_cost'};
+
+my_function = opti.to_function('my_function', vars, results_vars,...
+                                              names, results_names);
 my_function.save('op.casadi') %Optimization Problam. The file generated is quite big
 
 
 opti_tmp=opti;
 opti_tmp.subject_to( sp.getPosT(tf)== pf );
-my_function_tmp = opti_tmp.to_function('my_function_tmp', vars, {all_pCPs,all_yCPs, pos_smooth_cost, yaw_smooth_cost, fov_cost, final_pos_cost, final_yaw_cost},...
-                                                        names, {'all_pCPs','all_yCPs','pos_smooth_cost','yaw_smooth_cost','fov_cost','final_pos_cost','final_yaw_cost'});
+my_function_tmp = opti_tmp.to_function('my_function_tmp', vars, results_vars,...
+                                                        names, results_names);
 my_function_tmp.save('op_force_final_pos.casadi') %The file generated is quite big
                                                     
 % my_function=my_function.expand();

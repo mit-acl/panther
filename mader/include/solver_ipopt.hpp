@@ -179,7 +179,7 @@ private:
   casadi::Function cf_op_force_final_pos_;
   casadi::Function cf_fit_yaw_;
   casadi::Function cf_visibility_;
-  
+
   casadi::DM all_w_fe_;
   casadi::DM all_w_velfewrtworld_;
   casadi::DM b_Tmatrixcasadi_c_;
@@ -224,6 +224,8 @@ private:
   casadi::DM vector_yaw_samples_;
 
   std::shared_ptr<mt::log> log_ptr_;
+
+  casadi::DM eigen2casadi(const Eigen::Vector3d &a);
 
   // std::unique_ptr<mygraph_t> mygraph_ptr;
   //////////////////////////////////
