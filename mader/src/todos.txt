@@ -45,6 +45,8 @@ En este repo:
 		Make sure qyaw_guess is feasible (in case I commit to it when ipopt doesn't find a solution)
 
 
+	If Ipopt says infeasible, it's likely because the init_guess is not feasible (due to the fact that jerk_max is not used in the init_guess), while ipopt has that constraint. Increasing jerk_max solves this issue
+
 Future/enhancements:
 	Schur complement to avoid inverting the whole matrix?
 	The predictor should use the pwp field (instead of the string field) of dynTraj. This will require changes in mader.cpp (how is_agent is used)
