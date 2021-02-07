@@ -152,14 +152,14 @@ MaderRos::MaderRos(ros::NodeHandle nh1, ros::NodeHandle nh2, ros::NodeHandle nh3
   safeGetParam(nh1_, "c_final_pos", par_.c_final_pos);
   safeGetParam(nh1_, "c_final_yaw", par_.c_final_yaw);
 
-  safeGetParam(nh1_, "distance_to_force_final_pos", par_.distance_to_force_final_pos);
-  safeGetParam(nh1_, "factor_alloc_when_forcing_final_pos", par_.factor_alloc_when_forcing_final_pos);
+  // safeGetParam(nh1_, "distance_to_force_final_pos", par_.distance_to_force_final_pos);
+  // safeGetParam(nh1_, "factor_alloc_when_forcing_final_pos", par_.factor_alloc_when_forcing_final_pos);
   safeGetParam(nh1_, "print_graph_yaw_info", par_.print_graph_yaw_info);
 
   bool perfect_prediction;  // use_ground_truth_prediction
   safeGetParam(nh1_, "perfect_prediction", perfect_prediction);
 
-  par_.force_final_pos = false;
+  // par_.force_final_pos = false;
 
   if ((par_.basis != "B_SPLINE" || par_.basis != "BEZIER" || par_.basis != "MINVO") == false)
   {

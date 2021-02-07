@@ -17,7 +17,7 @@ x_max: 100.0  # [m] don't forget the .0
 y_min: -100.0  # [m] don't forget the .0
 y_max: 100.0   # [m] don't forget the .0
 
-z_min: 0.2        #[m] points below this are considered ground
+z_min: -100.0        #[m] points below this are considered ground
 z_max: 100.0         #[m] 
 
 ####For simulations
@@ -79,7 +79,7 @@ a_star_bias: 1.0 #Bias (cost=g+bias*h) in the A* search
 
 res_plot_traj: 15.0  #Higher --> More resolution when plotting the trajectory 
 factor_alloc: 1.2 #>=1. Used to find the total duration of a given trajectory.
-factor_alloc_when_forcing_final_pos: 2.0 #>=1. Used to find the total duration of a given trajectory.
+# factor_alloc_when_forcing_final_pos: 2.0 #>=1. Used to find the total duration of a given trajectory.
 alpha_shrink: 0.95 #\in [0,1] Only used for MINVO/Bezier
 
 # alpha: 0.0 #[m] Error in position
@@ -89,7 +89,7 @@ norminv_prob: 0.52 #For x% bands, set this to norminv(x). #70.0% band <--> 0.524
                                                           #90.0% band <--> 1.282
                                                           #97.5% band <--> 1.96 
 
-distance_to_force_final_pos: 2.0
+# distance_to_force_final_pos: 2.0
 print_graph_yaw_info: false
 
 gamma: 0.1 #[seconds] >0 Time step between discretization points

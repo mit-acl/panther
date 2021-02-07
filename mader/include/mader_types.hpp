@@ -794,9 +794,9 @@ struct parameters
   double c_final_pos = 100.0;
   double c_final_yaw = 0.0;
 
-  bool force_final_pos = false;
-  double distance_to_force_final_pos = 1.0;
-  double factor_alloc_when_forcing_final_pos = 1.0;
+  // bool force_final_pos = false;
+  // double distance_to_force_final_pos = 1.0;
+  // double factor_alloc_when_forcing_final_pos = 1.0;
   bool print_graph_yaw_info = false;
 
   Eigen::Affine3d b_T_c;

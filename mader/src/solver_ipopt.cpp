@@ -103,7 +103,8 @@ SolverIpopt::SolverIpopt(mt::parameters &par, std::shared_ptr<mt::log> log_ptr)
   // m_casadi_ptr_ = std::unique_ptr<PImpl>(new PImpl());
 
   cf_op_ = casadi::Function::load(ros::package::getPath("mader") + "/matlab/op.casadi");
-  cf_op_force_final_pos_ = casadi::Function::load(ros::package::getPath("mader") + "/matlab/op_force_final_pos.casadi");
+  // cf_op_force_final_pos_ = casadi::Function::load(ros::package::getPath("mader") +
+  // "/matlab/op_force_final_pos.casadi");
   cf_fit_yaw_ = casadi::Function::load(ros::package::getPath("mader") + "/matlab/fit_yaw.casadi");
   cf_visibility_ = casadi::Function::load(ros::package::getPath("mader") + "/matlab/visibility.casadi");
 
@@ -538,14 +539,14 @@ bool SolverIpopt::optimize()
   ////////////////////////// CALL THE SOLVER
   std::map<std::string, casadi::DM> result;
   log_ptr_->tim_opt.tic();
-  if (par_.force_final_pos == true)
-  {
-    result = cf_op_force_final_pos_(map_arguments);
-  }
-  else
-  {
-    result = cf_op_(map_arguments);
-  }
+  // if (par_.force_final_pos == true)
+  // {
+  //   result = cf_op_force_final_pos_(map_arguments);
+  // }
+  // else
+  // {
+  result = cf_op_(map_arguments);
+  // }
   log_ptr_->tim_opt.toc();
 
   ///////////////// GET STATUS FROM THE SOLVER
@@ -554,15 +555,15 @@ bool SolverIpopt::optimize()
   // auto optimstatus = cf_op_.instruction_MX(index_instruction_).which_function().stats(1)["return_status"];
 
   std::string optimstatus;
-  if (par_.force_final_pos == true)
-  {
-    optimstatus = std::string(
-        cf_op_force_final_pos_.instruction_MX(index_instruction_).which_function().stats(1)["return_status"]);
-  }
-  else
-  {
-    optimstatus = std::string(cf_op_.instruction_MX(index_instruction_).which_function().stats(1)["return_status"]);
-  }
+  // if (par_.force_final_pos == true)
+  // {
+  //   optimstatus = std::string(
+  //       cf_op_force_final_pos_.instruction_MX(index_instruction_).which_function().stats(1)["return_status"]);
+  // }
+  // else
+  // {
+  optimstatus = std::string(cf_op_.instruction_MX(index_instruction_).which_function().stats(1)["return_status"]);
+  // }
 
   ////// Example of how to obtain inf_pr and inf_du
   // std::vector<double> inf_pr_all = std::map<std::string, casadi::GenericType>(
@@ -625,6 +626,9 @@ bool SolverIpopt::optimize()
   CPs2TrajAndPwp_cleaner(qp, qy, traj_solution_, pwp_solution_, param_pp, param_py, knots_, par_.dc);
 
   std::cout << "Called CPs2TrajAndPwp!" << std::endl;
+
+  std::cout << bold << red << "traj_solution_.back().pos= " << traj_solution_.back().pos.transpose() << reset
+            << std::endl;
 
   // std::cout << bold << red << "traj_solution_.[-2].accel= " << traj_solution_.end()[-2].accel.transpose() << reset
   //           << std::endl;

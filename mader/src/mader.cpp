@@ -980,7 +980,7 @@ bool Mader::replan(mt::Edges& edges_obstacles_out, std::vector<mt::state>& X_saf
 
   double t_start = k_index * par_.dc + time_now;
 
-  double factor_alloc_tmp = par_.factor_alloc;
+  // double factor_alloc_tmp = par_.factor_alloc;
 
   // std::cout << "distA2TermGoal= " << distA2TermGoal << std::endl;
 
@@ -997,19 +997,24 @@ bool Mader::replan(mt::Edges& edges_obstacles_out, std::vector<mt::state>& X_saf
   // }
   // else
   // {
-  solver_->par_.c_final_pos = par_.c_final_pos;
-  solver_->par_.c_fov = par_.c_fov;
-  solver_->par_.force_final_pos = false;  // par_.force_final_pos;
+  // solver_->par_.c_final_pos = par_.c_final_pos;
+  // solver_->par_.c_fov = par_.c_fov;
+  // solver_->par_.force_final_pos = false;  // par_.force_final_pos;
   // }
 
   double time_allocated = getMinTimeDoubleIntegrator3D(A.pos, A.vel, G.pos, G.vel, par_.v_max, par_.a_max);
+
+  std::cout << green << bold << "Time allocated new version= " << time_allocated << reset << std::endl;
+  std::cout << green << bold
+            << "Time allocated old version= " << (A.pos - G.pos).array().abs().maxCoeff() / (par_.v_max.x()) << reset
+            << std::endl;
 
   // double t_final = t_start + (A.pos - G.pos).array().abs().maxCoeff() /
   //                                (factor_alloc_tmp * par_.v_max.x());  // time to execute the optimized path
 
   // std::cout << red << bold << "TIME ALLOCATED= " << time_allocated << reset << std::endl;
 
-  double t_final = t_start + factor_alloc_tmp * time_allocated;
+  double t_final = t_start + par_.factor_alloc * time_allocated;
 
   bool correctInitialCond =
       solver_->setInitStateFinalStateInitTFinalT(A, G, t_start,

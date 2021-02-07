@@ -13,7 +13,7 @@ En este repo:
 	Create a dataset of the moving objects from the experiments??	
 	Should I sum or multiply the probabilities? See paper from Marco Pavone
 	Revisar formulas en getMinTimeDoubleIntegrator1D()
-	Why the tracker sometimes crashes??
+	Why does the tracker sometimes crashes??
 
 	Check the partial derivatives of velocity of the obstacle in the cost function is right
 	Cuidado que los assert() SOLO funcionan en debug mode, no en release mode.
