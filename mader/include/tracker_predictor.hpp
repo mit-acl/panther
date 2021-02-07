@@ -269,6 +269,11 @@ private:
   std::vector<int> ids_markers_published_;
 
   tp::logtp log_;
+
+  pcl::PointCloud<pcl::PointXYZ>::Ptr input_cloud2_;
+  pcl::PointCloud<pcl::PointXYZ>::Ptr input_cloud3_;
+  pcl::PointCloud<pcl::PointXYZ>::Ptr input_cloud4_;
+  pcl::PointCloud<pcl::PointXYZ>::Ptr input_cloud_;
 };
 
 #endif

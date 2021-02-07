@@ -84,10 +84,16 @@ TrackerPredictor::TrackerPredictor(ros::NodeHandle nh) : nh_(nh)
   pub_marker_predicted_traj_ = nh_.advertise<visualization_msgs::MarkerArray>("marker_predicted_traj", 1);
   pub_marker_bbox_obstacles_ = nh_.advertise<visualization_msgs::MarkerArray>("marker_bbox_obstacles", 1);
   pub_traj_ = nh_.advertise<mader_msgs::DynTraj>("trajs_predicted", 1, true);  // The last boolean is latched or not
-  pub_pcloud_filtered_ = nh_.advertise<sensor_msgs::PointCloud2>("pcloud_filtered", 1);
+  // pub_pcloud_filtered_ = nh_.advertise<sensor_msgs::PointCloud2>("pcloud_filtered", 1);
+  pub_pcloud_filtered_ = nh_.advertise<pcl::PointCloud<pcl::PointXYZ>>("pcloud_filtered", 1);
   pub_log_ = nh_.advertise<mader_msgs::Logtp>("logtp", 1);
 
   tree_ = pcl::search::KdTree<pcl::PointXYZ>::Ptr(new pcl::search::KdTree<pcl::PointXYZ>);
+
+  input_cloud2_ = pcl::PointCloud<pcl::PointXYZ>::Ptr(new pcl::PointCloud<pcl::PointXYZ>);
+  input_cloud3_ = pcl::PointCloud<pcl::PointXYZ>::Ptr(new pcl::PointCloud<pcl::PointXYZ>);
+  input_cloud4_ = pcl::PointCloud<pcl::PointXYZ>::Ptr(new pcl::PointCloud<pcl::PointXYZ>);
+  input_cloud_ = pcl::PointCloud<pcl::PointXYZ>::Ptr(new pcl::PointCloud<pcl::PointXYZ>);
 }
 
 double TrackerPredictor::getCostRowColum(tp::cluster& a, tp::track& b, double time)
@@ -152,12 +158,6 @@ void TrackerPredictor::cloud_cb(const pcl::PointCloud<pcl::PointXYZ>::ConstPtr& 
   ///////////////////////////
   ///////////////////////////
 
-  // pcl::PointCloud<pcl::PointXYZ>::Ptr input_cloud1(new pcl::PointCloud<pcl::PointXYZ>);
-  pcl::PointCloud<pcl::PointXYZ>::Ptr input_cloud2(new pcl::PointCloud<pcl::PointXYZ>);
-  pcl::PointCloud<pcl::PointXYZ>::Ptr input_cloud3(new pcl::PointCloud<pcl::PointXYZ>);
-  pcl::PointCloud<pcl::PointXYZ>::Ptr input_cloud4(new pcl::PointCloud<pcl::PointXYZ>);
-  pcl::PointCloud<pcl::PointXYZ>::Ptr input_cloud(new pcl::PointCloud<pcl::PointXYZ>);
-
   // Convert to PCL
   log_.tim_conversion_pcl.tic();
   // pcl::fromROSMsg(*pcl2ptr_msg, *input_cloud1);
@@ -188,39 +188,45 @@ void TrackerPredictor::cloud_cb(const pcl::PointCloud<pcl::PointXYZ>::ConstPtr& 
     ROS_WARN("[world_database_master_ros] OnGetTransform failed with %s", ex.what());
     return;
   }
-  pcl::transformPointCloud(*input_cloud1, *input_cloud2, w_T_b);
+  pcl::transformPointCloud(*input_cloud1, *input_cloud2_, w_T_b);
   log_.tim_tf_transform.toc();
 
   // Remove nans
   log_.tim_remove_nans.tic();
   std::vector<int> indices;
-  pcl::removeNaNFromPointCloud(*input_cloud2, *input_cloud3, indices);
+  pcl::removeNaNFromPointCloud(*input_cloud2_, *input_cloud3_, indices);
   log_.tim_remove_nans.toc();
 
   // PassThrough Filter (remove the ground)
   log_.tim_passthrough.tic();
   pcl::PassThrough<pcl::PointXYZ> pass;
-  pass.setInputCloud(input_cloud3);
+  pass.setInputCloud(input_cloud3_);
   pass.setFilterFieldName("z");
   pass.setFilterLimits(z_ground_, 1e6);  // TODO: use z_ground
-  pass.filter(*input_cloud4);
+  pass.filter(*input_cloud4_);
   log_.tim_passthrough.toc();
 
   // Voxel grid filter
   log_.tim_voxel_grid.tic();
   pcl::ApproximateVoxelGrid<pcl::PointXYZ> sor;
-  sor.setInputCloud(input_cloud4);
+  sor.setInputCloud(input_cloud4_);
   sor.setLeafSize(leaf_size_filter_, leaf_size_filter_, leaf_size_filter_);
-  sor.filter(*input_cloud);
+  sor.filter(*input_cloud_);
   log_.tim_voxel_grid.toc();
 
   log_.tim_pub_filtered.tic();
   // Publish filtered point cloud
-  sensor_msgs::PointCloud2 filtered_pcl2_msg;
-  pcl::toROSMsg(*input_cloud, filtered_pcl2_msg);
-  filtered_pcl2_msg.header.frame_id = "world";
-  filtered_pcl2_msg.header.stamp = ros::Time::now();
-  pub_pcloud_filtered_.publish(filtered_pcl2_msg);
+  // sensor_msgs::PointCloud2 filtered_pcl2_msg;
+  // pcl::toROSMsg(*input_cloud_, filtered_pcl2_msg);
+  // filtered_pcl2_msg.header.frame_id = "world";
+  // filtered_pcl2_msg.header.stamp = ros::Time::now();
+  // pub_pcloud_filtered_.publish(filtered_pcl2_msg);
+
+  input_cloud_->header.frame_id = "world";
+  // https://github.com/ros-perception/perception_pcl/blob/melodic-devel/pcl_conversions/include/pcl_conversions/pcl_conversions.h#L88
+  input_cloud_->header.stamp = ros::Time::now().toNSec() / 1000ull;
+
+  pub_pcloud_filtered_.publish(*input_cloud_);
   log_.tim_pub_filtered.toc();
 
   /////Listen to the transform
@@ -252,16 +258,16 @@ void TrackerPredictor::cloud_cb(const pcl::PointCloud<pcl::PointXYZ>::ConstPtr& 
   // sor.setLeafSize(0.1f, 0.1f, 0.1f);
   // sor.filter(*input_cloud);
 
-  if (input_cloud->points.size() == 0)
+  if (input_cloud_->points.size() == 0)
   {
     std::cout << "Point cloud is empty, doing nothing" << std::endl;
     return;
   }
 
-  std::cout << "Filtering:" << input_cloud1->points.size() << " -->" << input_cloud->points.size() << " points";
+  std::cout << "Filtering:" << input_cloud1->points.size() << " -->" << input_cloud_->points.size() << " points";
 
   log_.tim_tree.tic();
-  tree_->setInputCloud(input_cloud);
+  tree_->setInputCloud(input_cloud_);
   log_.tim_tree.toc();
 
   std::vector<pcl::PointIndices> cluster_indices;
@@ -270,7 +276,7 @@ void TrackerPredictor::cloud_cb(const pcl::PointCloud<pcl::PointXYZ>::ConstPtr& 
   ec.setMinClusterSize(min_cluster_size_);
   ec.setMaxClusterSize(max_cluster_size_);
   ec.setSearchMethod(tree_);
-  ec.setInputCloud(input_cloud);
+  ec.setInputCloud(input_cloud_);
 
   /* Extract the clusters out of pc and save indices in cluster_indices.*/
 
@@ -326,32 +332,32 @@ void TrackerPredictor::cloud_cb(const pcl::PointCloud<pcl::PointXYZ>::ConstPtr& 
     for (std::vector<int>::const_iterator pit = it->indices.begin(); pit != it->indices.end(); pit++)
     {
       // std::cout << "input_cloud->points[*pit]= " << input_cloud->points[*pit] << std::endl;
-      if (input_cloud->points[*pit].x <= min_x)
+      if (input_cloud_->points[*pit].x <= min_x)
       {
-        min_x = input_cloud->points[*pit].x;
+        min_x = input_cloud_->points[*pit].x;
       }
-      if (input_cloud->points[*pit].y <= min_y)
+      if (input_cloud_->points[*pit].y <= min_y)
       {
-        min_y = input_cloud->points[*pit].y;
+        min_y = input_cloud_->points[*pit].y;
       }
-      if (input_cloud->points[*pit].z <= min_z)
+      if (input_cloud_->points[*pit].z <= min_z)
       {
-        min_z = input_cloud->points[*pit].z;
+        min_z = input_cloud_->points[*pit].z;
       }
-      if (input_cloud->points[*pit].x >= max_x)
+      if (input_cloud_->points[*pit].x >= max_x)
       {
         // std::cout << "assigning max_x" << std::endl;
-        max_x = input_cloud->points[*pit].x;
+        max_x = input_cloud_->points[*pit].x;
       }
-      if (input_cloud->points[*pit].y >= max_y)
+      if (input_cloud_->points[*pit].y >= max_y)
       {
         // std::cout << "assigning max_y" << std::endl;
-        max_y = input_cloud->points[*pit].y;
+        max_y = input_cloud_->points[*pit].y;
       }
-      if (input_cloud->points[*pit].z >= max_z)
+      if (input_cloud_->points[*pit].z >= max_z)
       {
         // std::cout << "assigning max_z" << std::endl;
-        max_z = input_cloud->points[*pit].z;
+        max_z = input_cloud_->points[*pit].z;
       }
     }
 
