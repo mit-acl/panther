@@ -84,6 +84,12 @@ for i=1:num_samples_simpson
     w_velfewrtworld{i}=opti.parameter(3,1);%Velocity of the feature wrt the world frame, expressed in the world frame
 end
 
+%%% Min/max x, y ,z
+
+x_lim=opti.parameter(2,1); %[min max]
+y_lim=opti.parameter(2,1); %[min max]
+z_lim=opti.parameter(2,1); %[min max]
+
 %%% Maximum velocity and acceleration
 v_max=opti.parameter(3,1);
 a_max=opti.parameter(3,1);
@@ -165,13 +171,20 @@ for j=1:(sp.num_seg)
         tmp=(Q{kk}-p0);
         opti.subject_to( (tmp'*tmp)<=(Ra*Ra) );
     end
+    
+    %Min max xyz constraints
+    for kk=1:size(Q,2) 
+        tmp=Q{kk};
+%         opti.subject_to( x_lim(1)<=tmp(1) );
+%         opti.subject_to( x_lim(2)>=tmp(1) );
+%         
+%         opti.subject_to( y_lim(1)<=tmp(2) );
+%         opti.subject_to( y_lim(2)>=tmp(2) );
 
+        opti.subject_to( z_lim(1)<=tmp(3) ); %For now let's use only this constraint (z_ground). The more ineq constraints --> The more comp time usually
+%         opti.subject_to( z_lim(2)>=tmp(3) );
+    end
 end
-
-%Sphere constraints
-
-
-
 
 %Max vel constraints (position)
 for j=1:sp.num_seg
@@ -486,7 +499,11 @@ yf_value=0.0;
 ydot0_value=0.0;
 ydotf_value=0.0;
 b_T_c_value= [roty(90)*rotz(-90) zeros(3,1); zeros(1,3) 1];
-                           
+
+x_lim_value=[-100;100];
+y_lim_value=[-100;100];
+z_lim_value=[-100;100];
+
 all_params= [ {createStruct('thetax_FOV_deg', thetax_FOV_deg, thetax_FOV_deg_value)},...
               {createStruct('thetay_FOV_deg', thetay_FOV_deg, thetay_FOV_deg_value)},...
               {createStruct('b_T_c', b_T_c, b_T_c_value)},...
@@ -504,7 +521,10 @@ all_params= [ {createStruct('thetax_FOV_deg', thetax_FOV_deg, thetax_FOV_deg_val
               {createStruct('v_max', v_max, v_max_value)},...
               {createStruct('a_max', a_max, a_max_value)},...
               {createStruct('j_max', j_max, j_max_value)},...
-              {createStruct('ydot_max', ydot_max, ydot_max_value)},...
+              {createStruct('ydot_max', ydot_max, ydot_max_value)},... 
+              {createStruct('x_lim', x_lim, x_lim_value)},...
+              {createStruct('y_lim', y_lim, y_lim_value)},...
+              {createStruct('z_lim', z_lim, z_lim_value)},...
               {createStruct('total_time', total_time, total_time_value)},...
               {createStruct('all_nd', all_nd, zeros(4,num_max_of_obst*num_seg))},...
               {createStruct('all_w_fe', all_w_fe, all_w_fe_value)},...

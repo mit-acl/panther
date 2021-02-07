@@ -485,6 +485,9 @@ bool SolverIpopt::optimize()
   map_arguments["a_max"] = eigen2std(par_.a_max);
   map_arguments["j_max"] = eigen2std(par_.j_max);
   map_arguments["ydot_max"] = par_.ydot_max;
+  map_arguments["x_lim"] = std::vector<double>{ par_.x_min, par_.x_max };
+  map_arguments["y_lim"] = std::vector<double>{ par_.y_min, par_.y_max };
+  map_arguments["z_lim"] = std::vector<double>{ par_.z_min, par_.z_max };
   map_arguments["total_time"] = (t_final_ - t_init_);
   // all_w_fe is a matrix whose columns are the positions of the feature (in world frame) in the times [t0,t0+XX,
   // ...,tf-XX, tf] (i.e. uniformly distributed and including t0 and tf)
