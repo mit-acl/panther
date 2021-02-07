@@ -166,24 +166,24 @@ for j=1:(sp.num_seg)
       end
     end  
  
-    %Sphere constraints
-    for kk=1:size(Q,2) 
-        tmp=(Q{kk}-p0);
-        opti.subject_to( (tmp'*tmp)<=(Ra*Ra) );
-    end
+%     %Sphere constraints
+%     for kk=1:size(Q,2) 
+%         tmp=(Q{kk}-p0);
+%         opti.subject_to( (tmp'*tmp)<=(Ra*Ra) );
+%     end
     
-    %Min max xyz constraints
-    for kk=1:size(Q,2) 
-        tmp=Q{kk};
-%         opti.subject_to( x_lim(1)<=tmp(1) );
-%         opti.subject_to( x_lim(2)>=tmp(1) );
-%         
-%         opti.subject_to( y_lim(1)<=tmp(2) );
-%         opti.subject_to( y_lim(2)>=tmp(2) );
-
-        opti.subject_to( z_lim(1)<=tmp(3) ); %For now let's use only this constraint (z_ground). The more ineq constraints --> The more comp time usually
-%         opti.subject_to( z_lim(2)>=tmp(3) );
-    end
+%     %Min max xyz constraints
+%     for kk=1:size(Q,2) 
+%         tmp=Q{kk};
+% %         opti.subject_to( x_lim(1)<=tmp(1) );
+% %         opti.subject_to( x_lim(2)>=tmp(1) );
+% %         
+% %         opti.subject_to( y_lim(1)<=tmp(2) );
+% %         opti.subject_to( y_lim(2)>=tmp(2) );
+% 
+%         opti.subject_to( z_lim(1)<=tmp(3) ); %For now let's use only this constraint (z_ground). The more ineq constraints --> The more comp time usually
+% %         opti.subject_to( z_lim(2)>=tmp(3) );
+%     end
 end
 
 %Max vel constraints (position)
@@ -500,6 +500,14 @@ ydot0_value=0.0;
 ydotf_value=0.0;
 b_T_c_value= [roty(90)*rotz(-90) zeros(3,1); zeros(1,3) 1];
 
+p0_value=[-4;0.0;0.0];
+v0_value=[0;0;0];
+a0_value=[0;0;0];
+
+pf_value=[4.0;0.0;0.0];
+vf_value=[0;0;0];
+af_value=[0;0;0];
+
 x_lim_value=[-100;100];
 y_lim_value=[-100;100];
 z_lim_value=[-100;100];
@@ -508,12 +516,12 @@ all_params= [ {createStruct('thetax_FOV_deg', thetax_FOV_deg, thetax_FOV_deg_val
               {createStruct('thetay_FOV_deg', thetay_FOV_deg, thetay_FOV_deg_value)},...
               {createStruct('b_T_c', b_T_c, b_T_c_value)},...
               {createStruct('Ra', Ra, Ra_value)},...
-              {createStruct('p0', p0, [-4;0;0])},...
-              {createStruct('v0', v0, [0;0;0])},...
-              {createStruct('a0', a0, [0;0;0])},...
-              {createStruct('pf', pf, [4;0;0])},...
-              {createStruct('vf', vf, [0;0;0])},...
-              {createStruct('af', af, [0;0;0])},...
+              {createStruct('p0', p0, p0_value)},...
+              {createStruct('v0', v0, v0_value)},...
+              {createStruct('a0', a0, a0_value)},...
+              {createStruct('pf', pf, pf_value)},...
+              {createStruct('vf', vf, vf_value)},...
+              {createStruct('af', af, af_value)},...
               {createStruct('y0', y0, y0_value)},...
               {createStruct('ydot0', ydot0, ydot0_value)},...
               {createStruct('yf', yf, yf_value)},...
