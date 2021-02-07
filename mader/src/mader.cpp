@@ -999,7 +999,7 @@ bool Mader::replan(mt::Edges& edges_obstacles_out, std::vector<mt::state>& X_saf
   // {
   solver_->par_.c_final_pos = par_.c_final_pos;
   solver_->par_.c_fov = par_.c_fov;
-  solver_->par_.force_final_pos = true;  // par_.force_final_pos;
+  solver_->par_.force_final_pos = false;  // par_.force_final_pos;
   // }
 
   double time_allocated = getMinTimeDoubleIntegrator3D(A.pos, A.vel, G.pos, G.vel, par_.v_max, par_.a_max);
