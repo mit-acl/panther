@@ -13,8 +13,8 @@ En este repo:
 	Create a dataset of the moving objects from the experiments??	
 	Should I sum or multiply the probabilities? See paper from Marco Pavone
 	Revisar formulas en getMinTimeDoubleIntegrator1D()
-	Impose z_min and z_max in the opt?
 	Tracker change to pcl (when subscribing to the pcloud)
+	Why the tracker sometimes crashes??
 
 	Check the partial derivatives of velocity of the obstacle in the cost function is right
 	Cuidado que los assert() SOLO funcionan en debug mode, no en release mode.
@@ -88,6 +88,8 @@ Papers to cite in proposal/Paper:
 En MADER:
 	Try creating a NLOPT object each time. 
 	Cuidado que los assert() SOLO funcionan en debug mode, no en release mode.
+	Implement getMinTimeDoubleIntegrator1D? seems to be working quite well
+
 
 
 
