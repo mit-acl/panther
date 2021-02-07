@@ -321,7 +321,7 @@ casadi::DM SolverIpopt::generateYawGuess(casadi::DM matrix_qp_guess, casadi::DM 
 
     std::map<std::string, casadi::DM> map_arg2;
     map_arg2["all_yaw"] = vsp_corrected;
-    map_arg2["y0"] = y0;
+    // map_arg2["y0"] = y0;
     map_arg2["ydot0"] = ydot0;
     map_arg2["ydotf"] = ydotf;
     log_ptr_->tim_guess_yaw_fit_poly.tic();

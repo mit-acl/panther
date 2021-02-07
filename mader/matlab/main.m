@@ -750,7 +750,8 @@ lambda1=MX.sym('lambda1',1,1);
 lambda2=MX.sym('lambda2',1,1);
 lambda3=MX.sym('lambda3',1,1);
 
-c1= sy_tmp.getPosT(t0) - y0; %==0
+%Note that y0 \equiv all_yaw(1)
+c1= sy_tmp.getPosT(t0) - all_yaw(1); %==0
 c2= sy_tmp.getVelT(t0) - ydot0; %==0
 c3= sy_tmp.getVelT(tf) - ydotf; %==0
 
@@ -766,13 +767,13 @@ A=jacobian(kkt_eqs, variables);
 
 solution=A\b;  %Solve the system of equations
 
-f= Function('f', {all_yaw, y0, ydot0, ydotf }, {solution(1:end-3)}, ...
-                 {'all_yaw', 'y0', 'ydot0', 'ydotf'}, {'result'} );
+f= Function('f', {all_yaw, ydot0, ydotf }, {solution(1:end-3)}, ...
+                 {'all_yaw', 'ydot0', 'ydotf'}, {'result'} );
 % f=f.expand();
 all_yaw_value=linspace(0,pi,numel(t_simpson));
 
 
-solution=f(all_yaw_value, y0_value, ydot0_value, ydotf_value);
+solution=f(all_yaw_value, ydot0_value, ydotf_value);
 sy_tmp=MyClampedUniformSpline(t0,tf,deg_yaw, dim_yaw, num_seg, opti);  %creating another object to not mess up with sy
 sy_tmp.updateCPsWithSolution(full(solution)');
 sy_tmp.plotPosVelAccelJerk();
