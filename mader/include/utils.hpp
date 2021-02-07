@@ -67,6 +67,13 @@ bool safeGetParam(ros::NodeHandle& nh, std::string const& param_name, T& param_v
   return true;
 }
 
+double getMinTimeDoubleIntegrator1D(const double& p0, const double& v0, const double& pf, const double& vf,
+                                    const double& v_max, const double& a_max);
+
+double getMinTimeDoubleIntegrator3D(const Eigen::Vector3d& p0, const Eigen::Vector3d& v0, const Eigen::Vector3d& pf,
+                                    const Eigen::Vector3d& vf, const Eigen::Vector3d& v_max,
+                                    const Eigen::Vector3d& a_max);
+
 mader_msgs::Log log2LogMsg(mt::log log);
 visualization_msgs::MarkerArray pwp2ColoredMarkerArray(mt::PieceWisePol& pwp, double t_init, double t_final,
                                                        int samples, std::string ns, Eigen::Vector3d& color);
@@ -134,11 +141,11 @@ void linearTransformPoly(const Eigen::VectorXd& coeff_old, Eigen::VectorXd& coef
 void changeDomPoly(const Eigen::VectorXd& coeff_p, double tp1, double tp2, Eigen::VectorXd& coeff_q, double tq1,
                    double tq2);
 // sign function
-// template <typename T>
-// int sgn(T val)
-// {
-//   return (T(0) < val) - (val < T(0));
-// }
+template <typename T>
+int sign(T val)
+{
+  return (T(0) < val) - (val < T(0));
+}
 
 double cdfUnivariateNormalDist(double x, double mu, double std_deviation);
 double probUnivariateNormalDistAB(double a, double b, double mu, double std_deviation);
