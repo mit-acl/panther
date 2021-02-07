@@ -412,19 +412,19 @@ bool SolverIpopt::optimize()
 
   // reset some stuff
   traj_solution_.clear();
-  // note that, for a v0 and a0 given, q2_ is not guaranteed to lie within the bounds. If that's the case --> keep
-  // executing previous trajectory
-  if (q2_.x() > par_.x_max || q2_.x() < par_.x_min ||  //////////////
-      q2_.y() > par_.y_max || q2_.y() < par_.y_min ||  /////////////////
-      q2_.z() > par_.z_max || q2_.z() < par_.z_min)
-  {
-    std::cout << bold << red << "q2_ is not in [min, max]" << reset << std::endl;
-    std::cout << "q2_= " << q2_.transpose() << std::endl;
-    std::cout << "par_.x_min= " << par_.x_min << ", par_.x_max=" << par_.x_max << std::endl;
-    std::cout << "par_.y_min= " << par_.y_min << ", par_.y_max=" << par_.y_max << std::endl;
-    std::cout << "par_.z_min= " << par_.z_min << ", par_.z_max=" << par_.z_max << std::endl;
-    return false;
-  }
+  // // note that, for a v0 and a0 given, q2_ is not guaranteed to lie within the bounds. If that's the case --> keep
+  // // executing previous trajectory
+  // if (q2_.x() > par_.x_max || q2_.x() < par_.x_min ||  //////////////
+  //     q2_.y() > par_.y_max || q2_.y() < par_.y_min ||  /////////////////
+  //     q2_.z() > par_.z_max || q2_.z() < par_.z_min)
+  // {
+  //   std::cout << bold << red << "q2_ is not in [min, max]" << reset << std::endl;
+  //   std::cout << "q2_= " << q2_.transpose() << std::endl;
+  //   std::cout << "par_.x_min= " << par_.x_min << ", par_.x_max=" << par_.x_max << std::endl;
+  //   std::cout << "par_.y_min= " << par_.y_min << ", par_.y_max=" << par_.y_max << std::endl;
+  //   std::cout << "par_.z_min= " << par_.z_min << ", par_.z_max=" << par_.z_max << std::endl;
+  //   return false;
+  // }
   bool guess_found = generateAStarGuess();  // I obtain q_quess_, n_guess_, d_guess_
   if (guess_found == false)
   {

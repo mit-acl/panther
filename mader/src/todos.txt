@@ -13,7 +13,6 @@ En este repo:
 	Create a dataset of the moving objects from the experiments??	
 	Should I sum or multiply the probabilities? See paper from Marco Pavone
 	Revisar formulas en getMinTimeDoubleIntegrator1D()
-	Tracker change to pcl (when subscribing to the pcloud)
 	Why the tracker sometimes crashes??
 
 	Check the partial derivatives of velocity of the obstacle in the cost function is right

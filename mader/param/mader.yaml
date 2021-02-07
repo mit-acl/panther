@@ -17,7 +17,7 @@ x_max: 100.0  # [m] don't forget the .0
 y_min: -100.0  # [m] don't forget the .0
 y_max: 100.0   # [m] don't forget the .0
 
-z_min: 0.2         #[m] points below this are considered ground
+z_min: 0.2        #[m] points below this are considered ground
 z_max: 100.0         #[m] 
 
 ####For simulations
@@ -40,7 +40,7 @@ z_max: 100.0         #[m]
 #max limits
 v_max: [2.6, 2.6, 2.6]   #[m/s]  7.0
 a_max: [20.0, 20.0, 9.6]   #[m/s2] Note that if a_max.z() > 9.81, the drone may flip
-j_max: [40.0, 40.0, 40.0]   #[m/s3] Note that if a_max.z() > 9.81, the drone may flip
+j_max: [100.0, 100.0, 100.0]   #[m/s3] Note that if a_max.z() > 9.81, the drone may flip
 ydot_max: 1.5           # [rd/s] Maximum angular velocity. 0.4 for Hardware
 
 #parameters for Casadi
@@ -78,7 +78,7 @@ allow_infeasible_guess: true  #whether allow infeasible guesses to be used for t
 a_star_bias: 1.0 #Bias (cost=g+bias*h) in the A* search 
 
 res_plot_traj: 15.0  #Higher --> More resolution when plotting the trajectory 
-factor_alloc: 1.5 #>=1. Used to find the total duration of a given trajectory.
+factor_alloc: 1.2 #>=1. Used to find the total duration of a given trajectory.
 factor_alloc_when_forcing_final_pos: 2.0 #>=1. Used to find the total duration of a given trajectory.
 alpha_shrink: 0.95 #\in [0,1] Only used for MINVO/Bezier
 
