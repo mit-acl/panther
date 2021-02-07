@@ -70,17 +70,18 @@ struct cluster  // one observation
 class track
 {
 public:
-  track(int size, const tp::cluster& c)
+  track(const tp::cluster& c, const int& min_ssw_tmp, const int& max_ssw_tmp)
   {
-    ssw = size;
+    max_ssw = max_ssw_tmp;
+    min_ssw = min_ssw_tmp;
 
-    history = std::deque<tp::cluster>(ssw, c);  // Constant initialization
+    history = std::deque<tp::cluster>(min_ssw, c);  // Constant initialization
 
     // We have only one observation --> we assume the obstacle has always been there
     // std::cout << termcolor::magenta << "c.time= " << c.time << termcolor::reset << std::endl;
-    for (int i = 0; i < ssw; i++)
+    for (int i = 0; i < min_ssw; i++)
     {
-      history[i].time = c.time - (size - i - 1);
+      history[i].time = c.time - (min_ssw - i - 1);
       //   c.time - (size - i - 1) * c.time / size;  // I need to have different times, if not A will become singular
       // std::cout << termcolor::magenta << "i= " << i << "history[i].time= " << history[i].time << termcolor::reset
       //           << std::endl;
@@ -109,7 +110,7 @@ public:
   void addToHistory(const tp::cluster& c)
   {
     history.push_back(c);
-    if (history.size() > ssw)  // TODO (size of the sliding window)
+    if (history.size() > max_ssw)
     {
       history.pop_front();  // Delete the oldest element
     }
@@ -117,7 +118,7 @@ public:
 
   unsigned int getSizeSW()
   {
-    return ssw;
+    return history.size();
   }
 
   Eigen::Vector3d getCentroidHistory(int i)
@@ -201,7 +202,8 @@ public:
   int id_int;
 
 private:
-  unsigned int ssw;  // size of the sliding window
+  unsigned int max_ssw;  // max size of the sliding window
+  unsigned int min_ssw;  // min size of the sliding window
   unsigned int id;
 
   // This deque will ALWAYS have ssw elements
@@ -231,13 +233,16 @@ private:
 
   std::vector<tp::track> all_tracks_;
 
-  casadi::Function cf_get_mean_variance_pred_;
+  // casadi::Function cf_get_mean_variance_pred_;
+
+  std::map<int, casadi::Function> cf_get_mean_variance_pred_;
 
   int num_seg_prediction_;  // Comes from Matlab
 
   double z_ground_;
-  int size_sliding_window_;            // TODO (as a param)
-  double meters_to_create_new_track_;  // TODO (as a param)
+  int min_size_sliding_window_;
+  int max_size_sliding_window_;
+  double meters_to_create_new_track_;
   int max_frames_skipped_;
   double cluster_tolerance_;
   int min_cluster_size_;

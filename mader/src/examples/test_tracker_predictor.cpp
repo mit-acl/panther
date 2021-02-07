@@ -18,7 +18,7 @@ int main(int argc, char** argv)
   c.bbox = Eigen::Vector3d(1.0, 1.0, 1.0);
   c.time = ros::Time::now().toSec();
 
-  tp::track my_track(10, c);
+  tp::track my_track(c, 10, 15);
 
   tracker_predictor.generatePredictedPwpForTrack(my_track);
 

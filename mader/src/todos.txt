@@ -14,6 +14,7 @@ En este repo:
 	Should I sum or multiply the probabilities? See paper from Marco Pavone
 	Revisar formulas en getMinTimeDoubleIntegrator1D()
 	Impose z_min and z_max in the opt?
+	Tracker change to pcl (when subscribing to the pcloud)
 
 	Check the partial derivatives of velocity of the obstacle in the cost function is right
 	Cuidado que los assert() SOLO funcionan en debug mode, no en release mode.
@@ -27,7 +28,7 @@ En este repo:
 	The FOV of Gazebo should be consistent with fov_x_deg and fov_y_deg
 	max_cpu in jetson
 
-	Check max_number_of_obstacles (creo que ahora hago abort())
+	Check max_number_of_obstacles (creo que ahora hago return)
 
 
 	Why do I have to run matlab from the terminal (https://github.com/casadi/casadi/issues/2032)? If not (and I use the opts.ipopt.linear_solver option) I get the error

@@ -63,7 +63,8 @@ using namespace termcolor;
 TrackerPredictor::TrackerPredictor(ros::NodeHandle nh) : nh_(nh)
 {
   safeGetParam(nh_, "z_ground", z_ground_);
-  safeGetParam(nh_, "size_sliding_window", size_sliding_window_);
+  safeGetParam(nh_, "min_size_sliding_window", min_size_sliding_window_);
+  safeGetParam(nh_, "max_size_sliding_window", max_size_sliding_window_);
   safeGetParam(nh_, "meters_to_create_new_track", meters_to_create_new_track_);
   safeGetParam(nh_, "max_frames_skipped", max_frames_skipped_);
   safeGetParam(nh_, "cluster_tolerance", cluster_tolerance_);
@@ -71,8 +72,11 @@ TrackerPredictor::TrackerPredictor(ros::NodeHandle nh) : nh_(nh)
   safeGetParam(nh_, "max_cluster_size", max_cluster_size_);
   safeGetParam(nh_, "leaf_size_filter", leaf_size_filter_);
 
-  cf_get_mean_variance_pred_ = casadi::Function::load(ros::package::getPath("mader") + "/matlab/"
-                                                                                       "get_mean_variance_pred.casadi");
+  for (int i = min_size_sliding_window_; i <= max_size_sliding_window_; i++)
+  {
+    cf_get_mean_variance_pred_[i] = casadi::Function::load(
+        ros::package::getPath("mader") + "/matlab/get_mean_variance_pred_" + std::to_string(i) + ".casadi");
+  }
 
   tf_listener_ptr_ = std::unique_ptr<tf2_ros::TransformListener>(
       new tf2_ros::TransformListener(tf_buffer_));  // needed (although tf_listener_ptr_ is not used explicitly)
@@ -95,7 +99,7 @@ double TrackerPredictor::getCostRowColum(tp::cluster& a, tp::track& b, double ti
 
 void TrackerPredictor::addNewTrack(const tp::cluster& c)
 {
-  tp::track tmp(size_sliding_window_, c);
+  tp::track tmp(c, min_size_sliding_window_, max_size_sliding_window_);
   // mt::PieceWisePol pwp;  // will have only one interval
   // pwp.times.push_back(time);
   // pwp.times.push_back(std::numeric_limits<double>::max());  // infty
@@ -659,7 +663,9 @@ void TrackerPredictor::generatePredictedPwpForTrack(tp::track& track_j)
 
   std::cout << "Matrices created" << std::endl;
 
-  for (int i = 0; i < track_j.getSizeSW(); i++)
+  int current_ssw = track_j.getSizeSW();
+
+  for (int i = 0; i < current_ssw; i++)
   {
     // Conversion DM <--> Eigen:  https://github.com/casadi/casadi/issues/2563
 
@@ -685,7 +691,7 @@ void TrackerPredictor::generatePredictedPwpForTrack(tp::track& track_j)
   // std::cout << "all_t.size()=\n " << all_t.rows() << ", " << all_t.columns() << std::endl;
 
   std::cout << "Calling casadi!" << std::endl;
-  std::map<std::string, casadi::DM> result = cf_get_mean_variance_pred_(map_arguments);
+  std::map<std::string, casadi::DM> result = cf_get_mean_variance_pred_[current_ssw](map_arguments);
   std::cout << "Called casadi " << std::endl;
 
   std::cout << "RESULT Before: " << std::endl;
