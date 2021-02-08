@@ -8,7 +8,6 @@ En este repo:
 	WHen using the cost (\phi-phi_tf)^2, include that on the yaw graph search (and in its heuristics)?
 	Check costs constants for the HW experiments
 	Wait duration for looking up transform in tracker
-	Como decidir entre varios obstaculos (ahora cojo traj_0 creo)
 	Should I comment removeTrajsThatDontAffectMe
 	Create a dataset of the moving objects from the experiments??	
 	Should I sum or multiply the probabilities? See paper from Marco Pavone
