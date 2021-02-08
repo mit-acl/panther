@@ -1003,11 +1003,10 @@ bool Mader::replan(mt::Edges& edges_obstacles_out, std::vector<mt::state>& X_saf
   // }
 
   double time_allocated = getMinTimeDoubleIntegrator3D(A.pos, A.vel, G.pos, G.vel, par_.v_max, par_.a_max);
+  double time_allocated_old_version = (A.pos - G.pos).array().abs().maxCoeff() / (par_.v_max.x());
 
   std::cout << green << bold << "Time allocated new version= " << time_allocated << reset << std::endl;
-  std::cout << green << bold
-            << "Time allocated old version= " << (A.pos - G.pos).array().abs().maxCoeff() / (par_.v_max.x()) << reset
-            << std::endl;
+  std::cout << green << bold << "Time allocated old version= " << time_allocated_old_version << reset << std::endl;
 
   // double t_final = t_start + (A.pos - G.pos).array().abs().maxCoeff() /
   //                                (factor_alloc_tmp * par_.v_max.x());  // time to execute the optimized path
