@@ -8,9 +8,8 @@ Panels:
         - /Predictions1
         - /CvxPolyObstacles1
         - /CameraPub1
-        - /Light1/Direction1
-      Splitter Ratio: 0.2574257552623749
-    Tree Height: 783
+      Splitter Ratio: 0.257425755
+    Tree Height: 566
   - Class: rviz/Selection
     Name: Selection
   - Class: rviz/Tool Properties
@@ -19,7 +18,7 @@ Panels:
       - /2D Nav Goal1
       - /Publish Point1
     Name: Tool Properties
-    Splitter Ratio: 0.5886790156364441
+    Splitter Ratio: 0.588679016
   - Class: rviz/Views
     Expanded:
       - /Current View1
@@ -29,7 +28,7 @@ Panels:
     Experimental: false
     Name: Time
     SyncMode: 0
-    SyncSource: DepthImage
+    SyncSource: ""
   - Class: rviz/Displays
     Help Height: 0
     Name: Displays
@@ -38,10 +37,8 @@ Panels:
         - /Grid1
         - /TF1
         - /TF1/Frames1
-      Splitter Ratio: 0.652466356754303
-    Tree Height: 441
-Preferences:
-  PromptSaveOnExit: true
+      Splitter Ratio: 0.652466357
+    Tree Height: 437
 Toolbars:
   toolButtonStyle: 2
 Visualization Manager:
@@ -53,7 +50,7 @@ Visualization Manager:
       Color: 160; 160; 164
       Enabled: true
       Line Style:
-        Line Width: 0.029999999329447746
+        Line Width: 0.0299999993
         Value: Lines
       Name: Grid
       Normal Cell Count: 0
@@ -70,15 +67,19 @@ Visualization Manager:
       Frame Timeout: 1000
       Frames:
         All Enabled: false
-        SQ01s:
+        SQ04:
           Value: true
-        SQ01s/camera:
+        SQ04/camera:
           Value: true
-        obs_4000:
+        SQ04/camera_color_frame:
           Value: true
-        obs_4001:
+        SQ04/camera_color_optical_frame:
           Value: true
-        vicon:
+        SQ04/camera_depth_frame:
+          Value: true
+        SQ04/camera_depth_optical_frame:
+          Value: true
+        SQ04/camera_link:
           Value: true
         world:
           Value: true
@@ -89,14 +90,15 @@ Visualization Manager:
       Show Names: true
       Tree:
         world:
-          obs_4000:
-            {}
-          obs_4001:
-            {}
-          vicon:
-            SQ01s:
-              SQ01s/camera:
-                {}
+          SQ04:
+            SQ04/camera:
+              SQ04/camera_link:
+                SQ04/camera_color_frame:
+                  SQ04/camera_color_optical_frame:
+                    {}
+                SQ04/camera_depth_frame:
+                  SQ04/camera_depth_optical_frame:
+                    {}
       Update Interval: 0
       Value: true
     - Alpha: 1
@@ -105,7 +107,7 @@ Visualization Manager:
       Enabled: true
       History Length: 1
       Name: GTerm
-      Radius: 0.20000000298023224
+      Radius: 0.200000003
       Topic: /SQ01s/mader/point_G_term
       Unreliable: false
       Value: true
@@ -115,7 +117,7 @@ Visualization Manager:
       Enabled: true
       History Length: 1
       Name: GTerm
-      Radius: 0.20000000298023224
+      Radius: 0.200000003
       Topic: /SQ02s/mader/point_G_term
       Unreliable: false
       Value: true
@@ -125,7 +127,7 @@ Visualization Manager:
       Enabled: true
       History Length: 1
       Name: GTerm
-      Radius: 0.20000000298023224
+      Radius: 0.200000003
       Topic: /SQ03s/mader/point_G_term
       Unreliable: false
       Value: true
@@ -135,7 +137,7 @@ Visualization Manager:
       Enabled: true
       History Length: 1
       Name: GTerm
-      Radius: 0.20000000298023224
+      Radius: 0.200000003
       Topic: /SQ04s/mader/point_G_term
       Unreliable: false
       Value: true
@@ -145,7 +147,7 @@ Visualization Manager:
       Enabled: true
       History Length: 1
       Name: G
-      Radius: 0.20000000298023224
+      Radius: 0.200000003
       Topic: /SQ01s/cvx/point_G
       Unreliable: false
       Value: true
@@ -165,30 +167,30 @@ Visualization Manager:
         {}
       Queue Size: 100
       Value: false
-    - Alpha: 0.20000000298023224
+    - Alpha: 0.200000003
       BoundColor: 0; 255; 0
       Class: decomp_rviz_plugins/PolyhedronArray
-      Enabled: true
+      Enabled: false
       MeshColor: 252; 175; 62
       Name: PolySafe
-      Scale: 0.10000000149011612
+      Scale: 0.100000001
       State: Both
       Topic: /SQ01s/cvx/polyhedron_array_occupied2
       Unreliable: false
-      Value: true
+      Value: false
       VsColor: 61; 255; 116
       VsScale: 1
-    - Alpha: 0.20000000298023224
+    - Alpha: 0.200000003
       BoundColor: 255; 154; 140
       Class: decomp_rviz_plugins/PolyhedronArray
-      Enabled: true
+      Enabled: false
       MeshColor: 255; 255; 0
       Name: PolyWhole
-      Scale: 0.10000000149011612
+      Scale: 0.100000001
       State: Both
       Topic: /SQ01s/cvx/polyhedron_array_occupied
       Unreliable: false
-      Value: true
+      Value: false
       VsColor: 255; 154; 140
       VsScale: 1
     - Alpha: 1
@@ -214,7 +216,7 @@ Visualization Manager:
       Queue Size: 10
       Selectable: true
       Size (Pixels): 3
-      Size (m): 0.05000000074505806
+      Size (m): 0.0500000007
       Style: Squares
       Topic: /SQ01s/tracker_predictor_node/pcloud_filtered
       Unreliable: false
@@ -234,7 +236,7 @@ Visualization Manager:
       Marker Topic: /obstacles_mesh
       Name: Obstacles
       Namespaces:
-        mesh: true
+        {}
       Queue Size: 100
       Value: true
     - Class: rviz/MarkerArray
@@ -320,13 +322,13 @@ Visualization Manager:
       Max Color: 255; 255; 255
       Max Intensity: -0.5
       Min Color: 0; 0; 0
-      Min Intensity: -6.699999809265137
+      Min Intensity: -6.69999981
       Name: PCloudFiltered
       Position Transformer: XYZ
       Queue Size: 10
       Selectable: true
       Size (Pixels): 3
-      Size (m): 0.10000000149011612
+      Size (m): 0.100000001
       Style: Boxes
       Topic: /SQ01s/tracker_predictor_node/pcloud_filtered
       Unreliable: false
@@ -349,48 +351,12 @@ Visualization Manager:
         {}
       Queue Size: 100
       Value: true
-    - Align Bottom: false
-      Background Alpha: 0.800000011920929
-      Background Color: 0; 0; 0
-      Class: jsk_rviz_plugin/OverlayText
+    - Class: jsk_rviz_plugin/OverlayText
       Enabled: false
-      Foreground Alpha: 0.800000011920929
-      Foreground Color: 25; 255; 240
-      Invert Shadow: false
       Name: OpsProblemRun
-      Overtake BG Color Properties: false
-      Overtake FG Color Properties: false
-      Overtake Position Properties: false
-      Topic: /SQ01s/mader/text
-      Value: false
-      font: DejaVu Sans Mono
-      height: 128
-      left: 0
-      line width: 2
-      text size: 12
-      top: 0
-      width: 128
-    - Align Bottom: false
-      Background Alpha: 0.800000011920929
-      Background Color: 0; 0; 0
-      Class: jsk_rviz_plugin/OverlayText
+    - Class: jsk_rviz_plugin/OverlayText
       Enabled: false
-      Foreground Alpha: 0.800000011920929
-      Foreground Color: 25; 255; 240
-      Invert Shadow: false
       Name: Console
-      Overtake BG Color Properties: false
-      Overtake FG Color Properties: false
-      Overtake Position Properties: false
-      Topic: /SQ04s/rosconsole_overlay_text/output
-      Value: false
-      font: DejaVu Sans Mono
-      height: 128
-      left: 0
-      line width: 2
-      text size: 12
-      top: 0
-      width: 128
     - Class: rviz/MarkerArray
       Enabled: true
       Marker Topic: /SQ01s/mader/traj_safe_colored
@@ -522,67 +488,27 @@ Visualization Manager:
     - Class: jsk_rviz_plugin/TFTrajectory
       Enabled: false
       Name: TFTrajectory
-      Value: false
-      color: 25; 255; 240
-      duration: 10
-      frame: SQ01s
-      line_width: 0.009999999776482582
     - Class: jsk_rviz_plugin/TFTrajectory
       Enabled: false
       Name: TFTrajectory
-      Value: false
-      color: 25; 255; 240
-      duration: 10
-      frame: SQ02s
-      line_width: 0.10000000149011612
     - Class: jsk_rviz_plugin/TFTrajectory
       Enabled: false
       Name: TFTrajectory
-      Value: false
-      color: 239; 41; 41
-      duration: 10
-      frame: SQ03s
-      line_width: 0.10000000149011612
     - Class: jsk_rviz_plugin/TFTrajectory
       Enabled: false
       Name: TFTrajectory
-      Value: false
-      color: 115; 210; 22
-      duration: 10
-      frame: SQ04s
-      line_width: 0.10000000149011612
     - Class: jsk_rviz_plugin/TFTrajectory
       Enabled: false
       Name: TFTrajectory
-      Value: false
-      color: 117; 80; 123
-      duration: 10
-      frame: SQ05s
-      line_width: 0.10000000149011612
     - Class: jsk_rviz_plugin/TFTrajectory
       Enabled: false
       Name: TFTrajectory
-      Value: false
-      color: 193; 125; 17
-      duration: 10
-      frame: SQ06s
-      line_width: 0.10000000149011612
     - Class: jsk_rviz_plugin/TFTrajectory
       Enabled: false
       Name: TFTrajectory
-      Value: false
-      color: 252; 233; 79
-      duration: 10
-      frame: SQ07s
-      line_width: 0.10000000149011612
     - Class: jsk_rviz_plugin/TFTrajectory
       Enabled: false
       Name: TFTrajectory
-      Value: false
-      color: 238; 238; 236
-      duration: 10
-      frame: SQ08s
-      line_width: 0.10000000149011612
     - Class: rviz/Marker
       Enabled: true
       Marker Topic: /SQ01s/mader/actual_traj
@@ -911,49 +837,9 @@ Visualization Manager:
         {}
       Queue Size: 100
       Value: false
-    - Background Color: 0; 0; 0
-      Camera Info Topic: /camera1/camera_info
-      Class: rviz_camera_stream/CameraPub
-      Display namespace: ""
+    - Class: rviz_camera_stream/CameraPub
       Enabled: true
-      Frame Rate: -1
-      Image Encoding: rgb8
-      Image Topic: /rviz1/camera1/image
       Name: CameraPub
-      Near Clip Distance: 0.009999999776482582
-      Queue Size: 2
-      Value: true
-      Visibility:
-        ActTraj: true
-        Camera: true
-        Console: true
-        CvxPolyObstacles: true
-        DepthCloud: true
-        DepthImage: true
-        DroneObs: true
-        FOV: true
-        G: true
-        GTerm: true
-        Grid: true
-        Image: true
-        Light: true
-        Marker: true
-        MarkerArray: true
-        Obstacles: true
-        OpsProblemRun: true
-        PCFiltered: true
-        PCloudFiltered: true
-        Planes: true
-        PolySafe: true
-        PolyWhole: true
-        Predictions: true
-        RealTrajectory: true
-        Safe_Color: true
-        Setpoint: true
-        TF: true
-        TFTrajectory: true
-        Value: true
-        bbox_obstacles_predictor: true
     - Class: rviz/Image
       Enabled: false
       Image Topic: /rviz1/camera1/image
@@ -967,23 +853,8 @@ Visualization Manager:
       Unreliable: false
       Value: false
     - Class: rviz_lighting/Light
-      Diffuse Color: 255; 255; 255
-      Direction:
-        X: 0
-        Y: 0
-        Z: 1
       Enabled: false
-      Falloff: 1
-      Light Type: Directional
       Name: Light
-      Outer Angle: 0.5
-      Position:
-        X: 0
-        Y: 0
-        Z: 0
-      Reference Frame: camera1
-      Specular Color: 255; 255; 255
-      Value: false
     - Class: rviz/Camera
       Enabled: false
       Image Rendering: background and overlay
@@ -995,7 +866,6 @@ Visualization Manager:
       Unreliable: false
       Value: false
       Visibility:
-        "": true
         ActTraj: true
         CameraPub: true
         Console: true
@@ -1010,6 +880,7 @@ Visualization Manager:
         Image: true
         Light: true
         Marker: true
+        MarkerArray: true
         Obstacles: true
         OpsProblemRun: true
         PCFiltered: true
@@ -1081,10 +952,7 @@ Visualization Manager:
     - Class: rviz/FocusCamera
     - Class: rviz/Measure
     - Class: rviz/SetInitialPose
-      Theta std deviation: 0.2617993950843811
       Topic: /initialpose
-      X std deviation: 0.5
-      Y std deviation: 0.5
     - Class: rviz/SetGoal
       Topic: /SQ01s/term_goal
     - Class: rviz/PublishPoint
@@ -1094,25 +962,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/ThirdPersonFollower
-      Distance: 27.45043182373047
+      Distance: 12.564518
       Enable Stereo Rendering:
-        Stereo Eye Separation: 0.05999999865889549
+        Stereo Eye Separation: 0.0599999987
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 1.6535534858703613
-        Y: 2.0520832538604736
-        Z: 5.540535312320571e-6
+        X: 1.65355349
+        Y: 2.05208325
+        Z: 5.54053531e-06
       Focal Shape Fixed Size: true
-      Focal Shape Size: 0.05000000074505806
+      Focal Shape Size: 0.0500000007
       Invert Z Axis: false
       Name: Current View
-      Near Clip Distance: 0.009999999776482582
-      Pitch: 0.9697967767715454
+      Near Clip Distance: 0.00999999978
+      Pitch: 0.969796777
       Target Frame: <Fixed Frame>
       Value: ThirdPersonFollower (rviz)
-      Yaw: 2.664976119995117
+      Yaw: 2.66497612
     Saved: ~
 Window Geometry:
   Camera:
@@ -1121,12 +989,12 @@ Window Geometry:
     collapsed: false
   Displays:
     collapsed: false
-  Height: 1385
+  Height: 1056
   Hide Left Dock: false
   Hide Right Dock: true
   Image:
     collapsed: false
-  QMainWindow State: 000000ff00000000fd00000004000000000000029c000004cbfc0200000011fb0000001200530065006c0065006300740069006f006e000000003d000004c20000005c00fffffffb0000001e0054006f006f006c002000500072006f00700065007200740069006500730200000b4b00000293000002b300000152fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261fb0000000c00430061006d0065007200610000000028000003960000001600fffffffb000000100044006900730070006c006100790073010000003d0000034c000000c900fffffffb0000000a0049006d00610067006500000001830000006c0000001600fffffffb0000000a0049006d0061006700650000000000ffffffff0000000000000000fb0000000a0049006d00610067006500000002f4000000ca0000000000000000fb0000000a0049006d00610067006501000001530000012c0000000000000000fb0000000c00430061006d0065007200610100000285000001390000000000000000fb0000000a0049006d00610067006501000002dd0000022b0000000000000000fb00000014004400650070007400680049006d006100670065010000038f000001790000001600fffffffb0000000c00430061006d0065007200610100000407000001010000000000000000000000010000016a000004cbfc0200000004fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000000a00560069006500770073000000003d000004cb000000a400fffffffb000000100044006900730070006c00610079007300000000db000002e3000000c900fffffffb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e10000019700000003000009bd0000003efc0100000002fb0000000800540069006d00650100000000000009bd000002eb00fffffffb0000000800540069006d006501000000000000045000000000000000000000071b000004cb00000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
+  QMainWindow State: 000000ff00000000fd00000004000000000000029c00000396fc0200000011fb0000001200530065006c0065006300740069006f006e000000003d000004c20000006100fffffffb0000001e0054006f006f006c002000500072006f007000650072007400690065007302000004cd00000293000002b300000152fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261fb0000000c00430061006d0065007200610000000028000003960000001600fffffffb000000100044006900730070006c006100790073010000002800000277000000d700fffffffb0000000a0049006d00610067006500000001830000006c0000001600fffffffb0000000a0049006d0061006700650000000000ffffffff0000000000000000fb0000000a0049006d00610067006500000002f4000000ca0000000000000000fb0000000a0049006d00610067006501000001530000012c0000000000000000fb0000000c00430061006d0065007200610100000285000001390000000000000000fb0000000a0049006d00610067006501000002dd0000022b0000000000000000fb00000014004400650070007400680049006d00610067006501000002a5000001190000001600fffffffb0000000c00430061006d0065007200610100000407000001010000000000000000000000010000016a000004cbfc0200000004fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000000a00560069006500770073000000003d000004cb000000ad00fffffffb000000100044006900730070006c00610079007300000000db000002e3000000d700fffffffb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e100000197000000030000073f0000003efc0100000002fb0000000800540069006d006501000000000000073f0000030000fffffffb0000000800540069006d006501000000000000045000000000000000000000049d0000039600000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
   Selection:
     collapsed: false
   Time:
@@ -1135,6 +1003,6 @@ Window Geometry:
     collapsed: false
   Views:
     collapsed: true
-  Width: 2493
-  X: 67
-  Y: 27
+  Width: 1855
+  X: 65
+  Y: 24
