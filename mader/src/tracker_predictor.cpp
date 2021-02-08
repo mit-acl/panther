@@ -127,6 +127,8 @@ void TrackerPredictor::addNewTrack(const tp::cluster& c)
 // void TrackerPredictor::cloud_cb(const sensor_msgs::PointCloud2ConstPtr& pcl2ptr_msg)
 void TrackerPredictor::cloud_cb(const pcl::PointCloud<pcl::PointXYZ>::ConstPtr& input_cloud1)
 {
+  std::cout << "Beginning of cloud_cb" << std::endl;
+
   input_cloud2_ = pcl::PointCloud<pcl::PointXYZ>::Ptr(new pcl::PointCloud<pcl::PointXYZ>);
   input_cloud3_ = pcl::PointCloud<pcl::PointXYZ>::Ptr(new pcl::PointCloud<pcl::PointXYZ>);
   input_cloud4_ = pcl::PointCloud<pcl::PointXYZ>::Ptr(new pcl::PointCloud<pcl::PointXYZ>);
@@ -641,10 +643,10 @@ void TrackerPredictor::cloud_cb(const pcl::PointCloud<pcl::PointXYZ>::ConstPtr& 
 
   log_.tim_pub.toc();
 
-  std::cout << "End of cloud_cb" << std::endl;
   log_.tim_total_tp.toc();
 
   pub_log_.publish(logtp2LogtpMsg(log_));
+  std::cout << "End of cloud_cb" << std::endl;
 }
 
 mader_msgs::Logtp TrackerPredictor::logtp2LogtpMsg(tp::logtp log)
