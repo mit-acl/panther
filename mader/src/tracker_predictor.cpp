@@ -90,11 +90,6 @@ TrackerPredictor::TrackerPredictor(ros::NodeHandle nh) : nh_(nh)
   pub_log_ = nh_.advertise<mader_msgs::Logtp>("logtp", 1);
 
   tree_ = pcl::search::KdTree<pcl::PointXYZ>::Ptr(new pcl::search::KdTree<pcl::PointXYZ>);
-
-  input_cloud2_ = pcl::PointCloud<pcl::PointXYZ>::Ptr(new pcl::PointCloud<pcl::PointXYZ>);
-  input_cloud3_ = pcl::PointCloud<pcl::PointXYZ>::Ptr(new pcl::PointCloud<pcl::PointXYZ>);
-  input_cloud4_ = pcl::PointCloud<pcl::PointXYZ>::Ptr(new pcl::PointCloud<pcl::PointXYZ>);
-  input_cloud_ = pcl::PointCloud<pcl::PointXYZ>::Ptr(new pcl::PointCloud<pcl::PointXYZ>);
 }
 
 double TrackerPredictor::getCostRowColum(tp::cluster& a, tp::track& b, double time)
@@ -134,6 +129,11 @@ void TrackerPredictor::addNewTrack(const tp::cluster& c)
 // void TrackerPredictor::cloud_cb(const sensor_msgs::PointCloud2ConstPtr& pcl2ptr_msg)
 void TrackerPredictor::cloud_cb(const pcl::PointCloud<pcl::PointXYZ>::ConstPtr& input_cloud1)
 {
+  input_cloud2_ = pcl::PointCloud<pcl::PointXYZ>::Ptr(new pcl::PointCloud<pcl::PointXYZ>);
+  input_cloud3_ = pcl::PointCloud<pcl::PointXYZ>::Ptr(new pcl::PointCloud<pcl::PointXYZ>);
+  input_cloud4_ = pcl::PointCloud<pcl::PointXYZ>::Ptr(new pcl::PointCloud<pcl::PointXYZ>);
+  input_cloud_ = pcl::PointCloud<pcl::PointXYZ>::Ptr(new pcl::PointCloud<pcl::PointXYZ>);
+
   // log_ = {};
   // std::cout << "-------------------------------" << std::endl;
   log_.tim_total_tp.tic();
