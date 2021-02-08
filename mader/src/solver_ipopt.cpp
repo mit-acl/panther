@@ -515,7 +515,8 @@ bool SolverIpopt::optimize()
 
   //  casadi::DM all_nd(casadi::Sparsity::dense(4, max_num_of_planes));
   // casadi::DM::rand(4, 0);
-  static casadi::DM all_nd(casadi::DM::zeros(4, max_num_of_planes));
+  static casadi::DM all_nd(4, max_num_of_planes);
+  all_nd = casadi::DM::zeros(4, max_num_of_planes);
   for (int i = 0; i < n_guess_.size(); i++)
   {
     // Casadi needs the plane equation as n_casadi'x+d_casadi<=0
