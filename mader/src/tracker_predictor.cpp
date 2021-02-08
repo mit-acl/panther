@@ -205,16 +205,16 @@ void TrackerPredictor::cloud_cb(const pcl::PointCloud<pcl::PointXYZ>::ConstPtr& 
   pass.setInputCloud(input_cloud3_);
   pass.setFilterFieldName("z");
   pass.setFilterLimits(z_ground_, 1e6);  // TODO: use z_ground
-  pass.filter(*input_cloud4_);
+  pass.filter(*input_cloud_);
   log_.tim_passthrough.toc();
 
   // Voxel grid filter
-  log_.tim_voxel_grid.tic();
-  pcl::ApproximateVoxelGrid<pcl::PointXYZ> sor;
-  sor.setInputCloud(input_cloud4_);
-  sor.setLeafSize(leaf_size_filter_, leaf_size_filter_, leaf_size_filter_);
-  sor.filter(*input_cloud_);
-  log_.tim_voxel_grid.toc();
+  // log_.tim_voxel_grid.tic();
+  // pcl::ApproximateVoxelGrid<pcl::PointXYZ> sor;
+  // sor.setInputCloud(input_cloud4_);
+  // sor.setLeafSize(leaf_size_filter_, leaf_size_filter_, leaf_size_filter_);
+  // sor.filter(*input_cloud_);
+  // log_.tim_voxel_grid.toc();
 
   log_.tim_pub_filtered.tic();
   // Publish filtered point cloud
