@@ -120,13 +120,13 @@ void TrackerPredictor::addNewTrack(const tp::cluster& c)
 
   // unsigned int last_id = (all_tracks_.size() == 0) ? 0 : (all_tracks_[all_tracks_.rbegin()->.id] + 1);
 
-  //std::cout << red << "Calling generatePredictedPwpForTrack()" << reset << std::endl;
+  // std::cout << red << "Calling generatePredictedPwpForTrack()" << reset << std::endl;
 
   generatePredictedPwpForTrack(tmp);
 
   all_tracks_.push_back(tmp);
 
-  //std::cout << red << "End of addNewTrack" << reset << std::endl;
+  // std::cout << red << "End of addNewTrack" << reset << std::endl;
 
   // all_tracks_[last_id] = tmp;
 }
@@ -285,7 +285,7 @@ void TrackerPredictor::cloud_cb(const pcl::PointCloud<pcl::PointXYZ>::ConstPtr& 
   log_.tim_clustering.tic();
   ec.extract(cluster_indices);
   log_.tim_clustering.toc();
-  //std::cout << "Clustering done!" << std::endl;
+  // std::cout << "Clustering done!" << std::endl;
 
   std::vector<tp::cluster> clusters;
 
@@ -418,7 +418,7 @@ void TrackerPredictor::cloud_cb(const pcl::PointCloud<pcl::PointXYZ>::ConstPtr& 
     min_y = yExtremes.first->y();
     min_z = zExtremes.first->z();
 
-    //std::cout << std::endl;
+    // std::cout << std::endl;
 
     // std::cout << "min_x= " << min_x << std::endl;
     // std::cout << "min_y= " << min_y << std::endl;
@@ -459,9 +459,10 @@ void TrackerPredictor::cloud_cb(const pcl::PointCloud<pcl::PointXYZ>::ConstPtr& 
     assert(tmp.bbox.y() >= 0 && "Must hold: tmp.bbox.y() >= 0");
     assert(tmp.bbox.z() >= 0 && "Must hold: tmp.bbox.z() >= 0");
 
-		if (tmp.bbox.x()<min_dim_cluster_size_ && tmp.bbox.y()<min_dim_cluster_size_ && tmp.bbox.z()<min_dim_cluster_size_)
+    if (tmp.bbox.x() < min_dim_cluster_size_ && tmp.bbox.y() < min_dim_cluster_size_ &&
+        tmp.bbox.z() < min_dim_cluster_size_)
     {
-	  continue; //cluster too small --> noise
+      continue;  // cluster too small --> noise
     }
 
     // std::cout << bold << magenta << "bbox= " << tmp.bbox << reset << std::endl;
@@ -504,8 +505,8 @@ void TrackerPredictor::cloud_cb(const pcl::PointCloud<pcl::PointXYZ>::ConstPtr& 
     }
   }
 
- // std::cout << "Creating= " << indexes_costs_too_big.size() << " new clusters because cost row is too big" << std::endl;
-  // If the minimum of each of the rows is too large --> create new track
+  // std::cout << "Creating= " << indexes_costs_too_big.size() << " new clusters because cost row is too big" <<
+  // std::endl; If the minimum of each of the rows is too large --> create new track
   for (auto i : indexes_costs_too_big)
   {
     // clusters[i].print();
@@ -541,11 +542,11 @@ void TrackerPredictor::cloud_cb(const pcl::PointCloud<pcl::PointXYZ>::ConstPtr& 
     // Run the Hungarian Algorithm;
     HungarianAlgorithm HungAlgo;
     std::vector<int> track_assigned_to_cluster;
-    //std::cout << "Calling Hungarian Algorithm now!!" << std::endl;
+    // std::cout << "Calling Hungarian Algorithm now!!" << std::endl;
     log_.tim_hungarian.tic();
     double cost = HungAlgo.Solve(costMatrix, track_assigned_to_cluster);
     log_.tim_hungarian.toc();
-    //std::cout << "Called  Hungarian Algorithm!" << std::endl;
+    // std::cout << "Called  Hungarian Algorithm!" << std::endl;
 
     for (unsigned int i = 0; i < costMatrix.size(); i++)  // for each of the rows
     {
@@ -558,7 +559,7 @@ void TrackerPredictor::cloud_cb(const pcl::PointCloud<pcl::PointXYZ>::ConstPtr& 
       {
         // std::cout << "cluster " << i << " unassigned, creating new track for it" << std::endl;
         std::cout << clusters[i].centroid.transpose() << std::endl;
-       // std::cout << "calling addNewTrack()" << std::endl;
+        // std::cout << "calling addNewTrack()" << std::endl;
         addNewTrack(clusters[i]);
       }
       else
@@ -581,6 +582,11 @@ void TrackerPredictor::cloud_cb(const pcl::PointCloud<pcl::PointXYZ>::ConstPtr& 
   log_.tim_fitting.tic();
   for (auto& track_j : all_tracks_)
   {
+    if (track_j.hasEnoughSamples() == false)
+    {
+      continue;
+    }
+
     generatePredictedPwpForTrack(track_j);
   }
   log_.tim_fitting.toc();
@@ -596,6 +602,11 @@ void TrackerPredictor::cloud_cb(const pcl::PointCloud<pcl::PointXYZ>::ConstPtr& 
   for (auto& track_j : all_tracks_)
   {
     // std::cout << "--" << std::endl;
+
+    if (track_j.hasEnoughSamples() == false)
+    {
+      continue;
+    }
 
     // track_j.printHistory();
     // track_j.printPrediction(3.0, 5);
@@ -677,11 +688,11 @@ void TrackerPredictor::printAllTracks()
 
 void TrackerPredictor::generatePredictedPwpForTrack(tp::track& track_j)
 {
- // std::cout << "Creating the matrices" << std::endl;
+  // std::cout << "Creating the matrices" << std::endl;
   casadi::DM all_pos = casadi::DM::zeros(3, track_j.getSizeSW());  //(casadi::Sparsity::dense(3, track_j.getSizeSW()));
   casadi::DM all_t = casadi::DM::zeros(1, track_j.getSizeSW());    //(casadi::Sparsity::dense(1, track_j.getSizeSW()));
 
- // std::cout << "Matrices created" << std::endl;
+  // std::cout << "Matrices created" << std::endl;
 
   int current_ssw = track_j.getSizeSW();
 
@@ -693,42 +704,42 @@ void TrackerPredictor::generatePredictedPwpForTrack(tp::track& track_j)
     all_pos(0, i) = centroid_i.x();
     all_pos(1, i) = centroid_i.y();
     all_pos(2, i) = centroid_i.z();
-   // std::cout << "track_j.getTimeHistory(i)= " << track_j.getTimeHistory(i) << std::endl;
-   // std::cout << "Going to add, i=" << i << " cols= " << track_j.getSizeSW() << std::endl;
+    // std::cout << "track_j.getTimeHistory(i)= " << track_j.getTimeHistory(i) << std::endl;
+    // std::cout << "Going to add, i=" << i << " cols= " << track_j.getSizeSW() << std::endl;
     all_t(0, i) = track_j.getTimeHistory(i);
-   // std::cout << "Added" << std::endl;
+    // std::cout << "Added" << std::endl;
   }
 
-  //std::cout << "Matrices assigned" << std::endl;
+  // std::cout << "Matrices assigned" << std::endl;
 
   std::map<std::string, casadi::DM> map_arguments;
   map_arguments["all_t"] = all_t;
   map_arguments["all_pos"] = all_pos;
 
   // std::cout << "all_pos.size()=\n " << all_pos.rows() << ", " << all_pos.columns() << std::endl;
-  //std::cout << "all_pos:\n " << all_pos << std::endl;
-  //std::cout << "all_t:\n " << all_t << std::endl;
+  // std::cout << "all_pos:\n " << all_pos << std::endl;
+  // std::cout << "all_t:\n " << all_t << std::endl;
   // std::cout << "all_t.size()=\n " << all_t.rows() << ", " << all_t.columns() << std::endl;
 
-  //std::cout << "Calling casadi!" << std::endl;
+  // std::cout << "Calling casadi!" << std::endl;
   std::map<std::string, casadi::DM> result = cf_get_mean_variance_pred_[current_ssw](map_arguments);
-  //std::cout << "Called casadi " << std::endl;
+  // std::cout << "Called casadi " << std::endl;
 
-  //std::cout << "RESULT Before: " << std::endl;
+  // std::cout << "RESULT Before: " << std::endl;
 
-  //std::cout << "coeffs_mean:\n " << result["coeff_mean"] << std::endl;
-  //std::cout << "coeffs_var:\n " << result["coeff_var"] << std::endl;
-  //std::cout << "secs_prediction:\n " << result["secs_prediction"] << std::endl;
+  // std::cout << "coeffs_mean:\n " << result["coeff_mean"] << std::endl;
+  // std::cout << "coeffs_var:\n " << result["coeff_var"] << std::endl;
+  // std::cout << "secs_prediction:\n " << result["secs_prediction"] << std::endl;
 
   casadi::DM coeffs_mean = result["coeff_mean"];
   casadi::DM coeffs_var = result["coeff_var"];
   double secs_prediction = double(result["secs_prediction"]);
 
-  //std::cout << "RESULT AFTER: " << std::endl;
+  // std::cout << "RESULT AFTER: " << std::endl;
 
-  //std::cout << "coeffs_mean:\n " << coeffs_mean << std::endl;
-  //std::cout << "coeffs_var:\n " << coeffs_var << std::endl;
-  //std::cout << "secs_prediction:\n " << secs_prediction << std::endl;
+  // std::cout << "coeffs_mean:\n " << coeffs_mean << std::endl;
+  // std::cout << "coeffs_var:\n " << coeffs_var << std::endl;
+  // std::cout << "secs_prediction:\n " << secs_prediction << std::endl;
 
   // std::cout << "Coeffs: " << std::endl;
   // std::cout << coeffs << std::endl;
