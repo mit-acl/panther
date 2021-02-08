@@ -16,7 +16,7 @@ Go to http://www.hsl.rl.ac.uk/ipopt/ and click on "Coin-HSL Full(Stable)". Note:
 Fill the form, and wait one day, and download the link in the email you receive
 Extract it
 cd coinhsl-XXXX
-Note the name of a subfolder called 'metis-XXXX'. 
+Note that the name of a subfolder is called 'metis-XXXX'. 
 Download metis-XXXX.tar.gz from http://glaros.dtc.umn.edu/gkhome/metis/metis/download, extract it, and place it inside the folder `coinhsl-XXXX`
 
 [
