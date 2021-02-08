@@ -272,18 +272,16 @@ private:
 
   ros::NodeHandle nh_;
 
-  pcl::search::KdTree<pcl::PointXYZ>::Ptr tree_;
-
   std::string namespace_markers = "predictor";
 
   std::vector<int> ids_markers_published_;
 
   tp::logtp log_;
 
-  pcl::PointCloud<pcl::PointXYZ>::Ptr input_cloud2_;
-  pcl::PointCloud<pcl::PointXYZ>::Ptr input_cloud3_;
-  pcl::PointCloud<pcl::PointXYZ>::Ptr input_cloud4_;
-  pcl::PointCloud<pcl::PointXYZ>::Ptr input_cloud_;
+  // pcl::PointCloud<pcl::PointXYZ>::Ptr input_cloud2_;
+  // pcl::PointCloud<pcl::PointXYZ>::Ptr input_cloud3_;
+  // pcl::PointCloud<pcl::PointXYZ>::Ptr input_cloud4_;
+  // pcl::PointCloud<pcl::PointXYZ>::Ptr input_cloud_;
 };
 
 #endif
