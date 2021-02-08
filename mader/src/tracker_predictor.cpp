@@ -88,8 +88,6 @@ TrackerPredictor::TrackerPredictor(ros::NodeHandle nh) : nh_(nh)
   // pub_pcloud_filtered_ = nh_.advertise<sensor_msgs::PointCloud2>("pcloud_filtered", 1);
   pub_pcloud_filtered_ = nh_.advertise<pcl::PointCloud<pcl::PointXYZ>>("pcloud_filtered", 1);
   pub_log_ = nh_.advertise<mader_msgs::Logtp>("logtp", 1);
-
-  tree_ = pcl::search::KdTree<pcl::PointXYZ>::Ptr(new pcl::search::KdTree<pcl::PointXYZ>);
 }
 
 double TrackerPredictor::getCostRowColum(tp::cluster& a, tp::track& b, double time)
@@ -133,6 +131,7 @@ void TrackerPredictor::cloud_cb(const pcl::PointCloud<pcl::PointXYZ>::ConstPtr& 
   input_cloud3_ = pcl::PointCloud<pcl::PointXYZ>::Ptr(new pcl::PointCloud<pcl::PointXYZ>);
   input_cloud4_ = pcl::PointCloud<pcl::PointXYZ>::Ptr(new pcl::PointCloud<pcl::PointXYZ>);
   input_cloud_ = pcl::PointCloud<pcl::PointXYZ>::Ptr(new pcl::PointCloud<pcl::PointXYZ>);
+  tree_ = pcl::search::KdTree<pcl::PointXYZ>::Ptr(new pcl::search::KdTree<pcl::PointXYZ>);
 
   // log_ = {};
   // std::cout << "-------------------------------" << std::endl;
