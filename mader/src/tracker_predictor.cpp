@@ -586,6 +586,7 @@ void TrackerPredictor::cloud_cb(const pcl::PointCloud<pcl::PointXYZ>::ConstPtr& 
     {
       continue;
     }
+    std::cout << "Going to predict with " << track_j.getSizeSW() << " samples" << std::endl;
 
     generatePredictedPwpForTrack(track_j);
   }
