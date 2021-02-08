@@ -2,6 +2,7 @@ z_ground: 0.5
 meters_to_create_new_track: 2.0
 max_frames_skipped: 10
 cluster_tolerance: 0.3
-min_cluster_size: 20
-max_cluster_size: 600
-leaf_size_filter: 0.2
+min_cluster_size: 2       #units= num of points
+max_cluster_size: 600     #units= num of points
+min_dim_cluster_size: 0.2 #units= meters
+leaf_size_filter: 0.1

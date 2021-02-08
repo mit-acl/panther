@@ -249,6 +249,7 @@ private:
   double cluster_tolerance_;
   int min_cluster_size_;
   int max_cluster_size_;
+  int min_dim_cluster_size_;
   double leaf_size_filter_;
 
   std::unique_ptr<tf2_ros::TransformListener> tf_listener_ptr_;

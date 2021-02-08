@@ -1,7 +1,7 @@
 <launch>
 
-	<arg name="quad" default="SQ01s"/>
-	<arg name="cloud_topic" default="camera/cloud" />   
+	<arg name="quad" default="SQ04"/>
+	<arg name="cloud_topic" default="camera/depth/color/points" />   <!--camera/cloud -->
 
 
 	<node ns="$(arg quad)" name="tracker_predictor_node" pkg="mader" type="tracker_predictor_node" output="screen" clear_params="false"> 
