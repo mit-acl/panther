@@ -75,18 +75,17 @@ public:
     max_ssw = max_ssw_tmp;
     min_ssw = min_ssw_tmp;
 
-    // history = std::deque<tp::cluster>(min_ssw, c);  // Constant initialization
-    // // We have only one observation --> we assume the obstacle has always been there
-    // for (int i = 0; i < min_ssw; i++)
-    // {
-    //   history[i].time = c.time - (min_ssw - i - 1);
-    //   //   c.time - (size - i - 1) * c.time / size;  // I need to have different times, if not A will become singular
-    //   // std::cout << termcolor::magenta << "i= " << i << "history[i].time= " << history[i].time << termcolor::reset
-    //   //           << std::endl;
-    // }
+    history = std::deque<tp::cluster>(min_ssw, c);  // Constant initialization
 
-    history.clear();
-    history.push_back(c);
+    // We have only one observation --> we assume the obstacle has always been there
+    // std::cout << termcolor::magenta << "c.time= " << c.time << termcolor::reset << std::endl;
+    for (int i = 0; i < min_ssw; i++)
+    {
+      history[i].time = c.time - (min_ssw - i - 1);
+      //   c.time - (size - i - 1) * c.time / size;  // I need to have different times, if not A will become singular
+      // std::cout << termcolor::magenta << "i= " << i << "history[i].time= " << history[i].time << termcolor::reset
+      //           << std::endl;
+    }
 
     color = Eigen::Vector3d(((double)rand() / (RAND_MAX)),   ////// r
                             ((double)rand() / (RAND_MAX)),   ////// g
@@ -115,11 +114,6 @@ public:
     {
       history.pop_front();  // Delete the oldest element
     }
-  }
-
-  bool hasEnoughSamples()
-  {
-    return (getSizeSW() >= min_ssw);
   }
 
   unsigned int getSizeSW()

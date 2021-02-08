@@ -582,12 +582,6 @@ void TrackerPredictor::cloud_cb(const pcl::PointCloud<pcl::PointXYZ>::ConstPtr& 
   log_.tim_fitting.tic();
   for (auto& track_j : all_tracks_)
   {
-    if (track_j.hasEnoughSamples() == false)
-    {
-      continue;
-    }
-    std::cout << "Going to predict with " << track_j.getSizeSW() << " samples" << std::endl;
-
     generatePredictedPwpForTrack(track_j);
   }
   log_.tim_fitting.toc();
@@ -603,11 +597,6 @@ void TrackerPredictor::cloud_cb(const pcl::PointCloud<pcl::PointXYZ>::ConstPtr& 
   for (auto& track_j : all_tracks_)
   {
     // std::cout << "--" << std::endl;
-
-    if (track_j.hasEnoughSamples() == false)
-    {
-      continue;
-    }
 
     // track_j.printHistory();
     // track_j.printPrediction(3.0, 5);
@@ -837,11 +826,6 @@ visualization_msgs::MarkerArray TrackerPredictor::getBBoxesAsMarkerArray()
   int j = 0;
   for (auto& track_j : all_tracks_)
   {
-    if (track_j.hasEnoughSamples() == false)
-    {
-      continue;
-    }
-
     visualization_msgs::Marker m;
     m.type = visualization_msgs::Marker::CUBE;
     m.header.frame_id = "world";
