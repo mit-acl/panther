@@ -911,6 +911,8 @@ bool Mader::replan(mt::Edges& edges_obstacles_out, std::vector<mt::state>& X_saf
   log_ptr_->replanning_was_needed = true;
   log_ptr_->tim_total_replan.tic();
 
+  log_ptr_->tim_initial_setup.tic();
+
   removeOldTrajectories();
 
   //////////////////////////////////////////////////////////////////////////
@@ -1078,7 +1080,10 @@ bool Mader::replan(mt::Edges& edges_obstacles_out, std::vector<mt::state>& X_saf
 
   time_init_opt_ = ros::Time::now().toSec();
   // removeTrajsThatWillNotAffectMe(A, t_start, t_final); //TODO: Commented (4-Feb-2021)
+  log_ptr_->tim_convex_hulls.tic();
   ConvexHullsOfCurves hulls = convexHullsOfCurves(t_start, t_final);
+  log_ptr_->tim_convex_hulls.toc();
+
   mtx_trajs_.unlock();
   // std::cout << red << bold << "in replan(), mtx_trajs_ unlocked" << reset << std::endl;
 
@@ -1095,6 +1100,8 @@ bool Mader::replan(mt::Edges& edges_obstacles_out, std::vector<mt::state>& X_saf
             << std::endl;
 
   std::cout << "[FA] Calling NL" << std::endl;
+
+  log_ptr_->tim_initial_setup.toc();
 
   bool result = solver_->optimize();
 

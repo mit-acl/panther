@@ -29,6 +29,8 @@ struct log
 {
   bool replanning_was_needed = false;
 
+  MADER_timers::Timer tim_initial_setup;           //
+  MADER_timers::Timer tim_convex_hulls;            //
   MADER_timers::Timer tim_opt;                     //
   MADER_timers::Timer tim_guess_pos;               //
   MADER_timers::Timer tim_guess_yaw_search_graph;  //
