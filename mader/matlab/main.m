@@ -2,7 +2,10 @@
 %Everything here is 1-based indexing (first element is one)
 
 close all; clc;clear;
-setenv('LD_LIBRARY_PATH', '/home/jtorde/Desktop/ws/devel/lib:/opt/ros/melodic/lib:/opt/gurobi910/linux64/lib:/opt/gurobi910/linux64/lib:/opt/gurobi910/linux64/lib:/opt/gurobi910/linux64/lib:/opt/gurobi910/linux64/lib:/opt/gurobi910/linux64/lib:/usr/local/lib:/usr/local/MATLAB/R2020b/sys/os/glnxa64:/usr/local/MATLAB/R2020b/bin/glnxa64:/usr/local/MATLAB/R2020b/extern/lib/glnxa64:/usr/local/MATLAB/R2020b/cefclient/sys/os/glnxa64:/usr/local/MATLAB/R2020b/runtime/glnxa64:/usr/local/MATLAB/R2020b/sys/java/jre/glnxa64/jre/lib/amd64/native_threads:/usr/local/MATLAB/R2020b/sys/java/jre/glnxa64/jre/lib/amd64/server:/home/jtorde/Desktop/ws/devel/lib:/opt/ros/melodic/lib:/opt/gurobi910/linux64/lib:/opt/gurobi910/linux64/lib:/opt/gurobi910/linux64/lib:/usr/local/lib:/usr/local/lib')
+
+% setenv('LD_LIBRARY_PATH', '/usr/local/lib:/home/jtorde/Desktop/ws/devel/lib:/opt/ros/melodic/lib:/opt/gurobi910/linux64/lib:/opt/gurobi910/linux64/lib:/opt/gurobi910/linux64/lib:/opt/gurobi910/linux64/lib:/opt/gurobi910/linux64/lib:/opt/gurobi910/linux64/lib:/usr/local/lib:/usr/local/MATLAB/R2020b/sys/os/glnxa64:/usr/local/MATLAB/R2020b/bin/glnxa64:/usr/local/MATLAB/R2020b/extern/lib/glnxa64:/usr/local/MATLAB/R2020b/cefclient/sys/os/glnxa64:/usr/local/MATLAB/R2020b/runtime/glnxa64:/usr/local/MATLAB/R2020b/sys/java/jre/glnxa64/jre/lib/amd64/native_threads:/usr/local/MATLAB/R2020b/sys/java/jre/glnxa64/jre/lib/amd64/server:/home/jtorde/Desktop/ws/devel/lib:/opt/ros/melodic/lib:/opt/gurobi910/linux64/lib:/opt/gurobi910/linux64/lib:/opt/gurobi910/linux64/lib:/usr/local/lib:/usr/local/lib')
+% set(0,'DefaultFigureWindowStyle','docked') %'normal' 'docked'
+% setenv('LD_LIBRARY_PATH', '/usr/local/lib:/home/jtorde/Desktop/ws/devel/lib:/opt/ros/melodic/lib:/opt/gurobi910/linux64/lib:/opt/gurobi910/linux64/lib:/opt/gurobi910/linux64/lib:/opt/gurobi910/linux64/lib:/opt/gurobi910/linux64/lib:/opt/gurobi910/linux64/lib:/usr/local/lib:/usr/local/MATLAB/R2020b/sys/os/glnxa64:/usr/local/MATLAB/R2020b/bin/glnxa64:/usr/local/MATLAB/R2020b/extern/lib/glnxa64:/usr/local/MATLAB/R2020b/cefclient/sys/os/glnxa64:/usr/local/MATLAB/R2020b/runtime/glnxa64:/usr/local/MATLAB/R2020b/sys/java/jre/glnxa64/jre/lib/amd64/native_threads:/usr/local/MATLAB/R2020b/sys/java/jre/glnxa64/jre/lib/amd64/server:/home/jtorde/Desktop/ws/devel/lib:/opt/ros/melodic/lib:/opt/gurobi910/linux64/lib:/opt/gurobi910/linux64/lib:/opt/gurobi910/linux64/lib:/usr/local/lib:/usr/local/lib')
 set(0,'DefaultFigureWindowStyle','docked') %'normal' 'docked'
 set(0,'defaulttextInterpreter','latex');
 set(groot, 'defaultAxesTickLabelInterpreter','latex'); set(groot, 'defaultLegendInterpreter','latex');
@@ -27,7 +30,7 @@ num_samples_simpson=7;  %This will also be the num_of_layers in the graph yaw se
 num_of_yaw_per_layer=40; %This will be used in the graph yaw search of C++
                          %Note that the initial layer will have only one yaw (which is given) 
 basis="MINVO"; %MINVO OR B_SPLINE or BEZIER. This is the basis used for collision checking (in position, velocity, accel and jerk space), both in Matlab and in C++
-linear_solver_name='mumps'; %mumps [default, comes when installing casadi], ma27, ma57, ma77, ma86, ma97 
+linear_solver_name='ma57'; %mumps [default, comes when installing casadi], ma27, ma57, ma77, ma86, ma97 
 print_level=5; %From 0 (no verbose) to 12 (very verbose), default is 5
 t0=0; 
 tf=10.5;
@@ -651,7 +654,7 @@ g_result=g('guess_CPs_Pos',full(sol.all_pCPs),...
                          'thetay_FOV_deg',thetay_FOV_deg_value,...
                          'b_T_c',b_T_c_value,...
                          'yaw_samples', linspace(0,2*pi,numel(yaw_samples)));
-full(g_result.result)
+full(g_result.result);
 
 
 sp_cpoints_var=sp.getCPsAsMatrix();
