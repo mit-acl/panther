@@ -87,6 +87,8 @@ public:
       //           << std::endl;
     }
 
+    num_diff_samples = 1;
+
     color = Eigen::Vector3d(((double)rand() / (RAND_MAX)),   ////// r
                             ((double)rand() / (RAND_MAX)),   ////// g
                             ((double)rand() / (RAND_MAX)));  ////// b
@@ -114,6 +116,7 @@ public:
     {
       history.pop_front();  // Delete the oldest element
     }
+    num_diff_samples = num_diff_samples + 1;
   }
 
   unsigned int getSizeSW()
@@ -124,6 +127,11 @@ public:
   Eigen::Vector3d getCentroidHistory(int i)
   {
     return history[i].centroid;
+  }
+
+  bool shouldPublish()
+  {
+    return (num_diff_samples >= min_ssw);
   }
 
   double getTimeHistory(int i)
@@ -205,6 +213,7 @@ private:
   unsigned int max_ssw;  // max size of the sliding window
   unsigned int min_ssw;  // min size of the sliding window
   unsigned int id;
+  int num_diff_samples;
 
   // This deque will ALWAYS have ssw elements
   std::deque<tp::cluster> history;  //[t-N], [t-N+1],...,[t] (i.e. index of the oldest element is 0)

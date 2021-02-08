@@ -598,6 +598,11 @@ void TrackerPredictor::cloud_cb(const pcl::PointCloud<pcl::PointXYZ>::ConstPtr& 
   {
     // std::cout << "--" << std::endl;
 
+    if (track_j.shouldPublish() == false)
+    {
+      continue;
+    }
+
     // track_j.printHistory();
     // track_j.printPrediction(3.0, 5);
 
@@ -826,6 +831,10 @@ visualization_msgs::MarkerArray TrackerPredictor::getBBoxesAsMarkerArray()
   int j = 0;
   for (auto& track_j : all_tracks_)
   {
+    if (track_j.shouldPublish() == false)
+    {
+      continue;
+    }
     visualization_msgs::Marker m;
     m.type = visualization_msgs::Marker::CUBE;
     m.header.frame_id = "world";
