@@ -17,6 +17,7 @@ Fill the form, and wait one day, and download the link in the email you receive
 Extract it
 cd coinhsl-XXXX
 Note that the name of a subfolder is called 'metis-XXXX'. 
+(la version tambien la puedes ver en el archivo "configure", esta hand-coded all'i)
 Download metis-XXXX.tar.gz from http://glaros.dtc.umn.edu/gkhome/metis/metis/download, extract it, and place it inside the folder `coinhsl-XXXX`
 
 [
@@ -36,7 +37,7 @@ cd coinhsl-XXXX
 `sudo make clean`
 `./configure LIBS="-llapack" --with-blas="-L/usr/lib -lblas" CXXFLAGS="-g -O3 -fopenmp" FCFLAGS="-g -O3 -fopenmp" CFLAGS="-g -O3 -fopenmp"` (make sure the output says `checking for metis to compile... yes`)
 `sudo make install` (the files will go to /usr/local/lib)
-cd /usr/local/lib
+`cd /usr/local/lib`
 `sudo ln -s libcoinhsl.so libhsl.so` (This creates a symbolic link `libhsl.so` pointing to `libcoinhsl.so`). It's needed because Casadi expects to find `libhsl.so`, see https://github.com/casadi/casadi/issues/1437
 
 And at the end of your `~/.bashrc`, add `export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:/usr/local/lib"`
