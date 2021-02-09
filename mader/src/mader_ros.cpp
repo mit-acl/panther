@@ -186,7 +186,7 @@ MaderRos::MaderRos(ros::NodeHandle nh1, ros::NodeHandle nh2, ros::NodeHandle nh3
 
   assert((par_.ydot_max >= 0) && "ydot_max>=0 must hold");
   assert((par_.gamma <= 0) && "par_.gamma <= 0 must hold");
-  assert((par_.beta < 0 || par_.alpha < 0) && " ");
+  // assert((par_.beta < 0 || par_.alpha < 0) && " ");
   assert((par_.a_max.z() >= 9.81) && "par_.a_max.z() >= 9.81, the drone will flip");
   assert((par_.factor_alloc < 1.0) && "Needed: factor_alloc>=1");
   assert((par_.kappa < 0 || par_.mu < 0) && "Needed: kappa and mu > 0");
