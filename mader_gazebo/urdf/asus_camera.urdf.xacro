@@ -109,7 +109,7 @@
             <cameraInfoTopicName>${name}/rgb/camera_info</cameraInfoTopicName>
             <depthImageTopicName>${name}/depth/image_rect_raw</depthImageTopicName>
             <depthImageCameraInfoTopicName>${name}/depth/camera_info</depthImageCameraInfoTopicName>
-            <pointCloudTopicName>${name}/cloud</pointCloudTopicName>
+            <pointCloudTopicName>${name}/depth/color/points</pointCloudTopicName>
             <frameName>${name}</frameName>
             <pointCloudCutoff>0.06</pointCloudCutoff>
             <pointCloudCutoffMax>7.0</pointCloudCutoffMax> <!--this is the clipping distance for the Depth image and Point Cloud-->

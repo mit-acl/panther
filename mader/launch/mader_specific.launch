@@ -17,7 +17,7 @@
 	  		<arg name="quad" value="$(arg quad)"/>
 	 	 </include> 
 	</group>
- <!--
+ 
 	<include file="$(find mader)/launch/perfect_tracker_and_sim.launch">
   		<arg name="quad" value="$(arg quad)"/>
   		<arg name="gazebo" value="$(arg gazebo)"/>
@@ -27,6 +27,6 @@
         <arg name="z" value="$(arg z)"/>
         <arg name="yaw" default="$(arg yaw)"/>
  	 </include> 
--->
+
 
 </launch>

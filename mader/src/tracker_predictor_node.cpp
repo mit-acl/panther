@@ -1,4 +1,5 @@
 
+
 #include "tracker_predictor.hpp"
 
 int main(int argc, char** argv)
@@ -11,12 +12,24 @@ int main(int argc, char** argv)
 
   TrackerPredictor tmp(nh);
 
-  ros::Subscriber sub = nh.subscribe("cloud", 1, &TrackerPredictor::cloud_cb, &tmp);
+  // ros::Subscriber sub = nh.subscribe("cloud", 1, &TrackerPredictor::cloud_cb, &tmp);
 
   // pub_cluster0 = nh.advertise<sensor_msgs::PointCloud2>("cluster_0", 1);
   // objID_pub = nh.advertise<std_msgs::Int32MultiArray>("obj_id", 1);
 
   // markerPub = nh.advertise<visualization_msgs::MarkerArray>("viz", 1);
+
+// ros::Rate r(10); // 100 hz
+//   while (ros::ok()){
+//   	try {
+//   		ros::spinOnce();
+//   	}
+//   	catch(...){
+//   		std::cout<<"Exception!"<<std::endl;
+//   	}
+//   }
+
+//   r.sleep();
 
   ros::spin();
 }

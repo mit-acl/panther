@@ -225,8 +225,8 @@ class TrackerPredictor
 public:
   TrackerPredictor(ros::NodeHandle nh);
 
-  // void cloud_cb(const sensor_msgs::PointCloud2ConstPtr& input);
-  void cloud_cb(const pcl::PointCloud<pcl::PointXYZ>::ConstPtr& input_cloud1);
+  void cloud_cb(const sensor_msgs::PointCloud2ConstPtr& input);
+  // void cloud_cb(const pcl::PointCloud<pcl::PointXYZ>::ConstPtr& input_cloud1);
 
   void printAllTracks();
 
@@ -272,16 +272,21 @@ private:
 
   ros::NodeHandle nh_;
 
+  pcl::search::KdTree<pcl::PointXYZ>::Ptr tree_;
+
   std::string namespace_markers = "predictor";
 
   std::vector<int> ids_markers_published_;
 
   tp::logtp log_;
 
-  // pcl::PointCloud<pcl::PointXYZ>::Ptr input_cloud2_;
-  // pcl::PointCloud<pcl::PointXYZ>::Ptr input_cloud3_;
-  // pcl::PointCloud<pcl::PointXYZ>::Ptr input_cloud4_;
-  // pcl::PointCloud<pcl::PointXYZ>::Ptr input_cloud_;
+  pcl::PointCloud<pcl::PointXYZ>::Ptr input_cloud2_;
+  pcl::PointCloud<pcl::PointXYZ>::Ptr input_cloud3_;
+  pcl::PointCloud<pcl::PointXYZ>::Ptr input_cloud4_;
+  pcl::PointCloud<pcl::PointXYZ>::Ptr input_cloud_;
+  pcl::PointCloud<pcl::PointXYZ>::Ptr input_cloud1;
+
+  ros::Subscriber sub_;
 };
 
 #endif

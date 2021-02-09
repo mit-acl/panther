@@ -88,6 +88,21 @@ TrackerPredictor::TrackerPredictor(ros::NodeHandle nh) : nh_(nh)
   // pub_pcloud_filtered_ = nh_.advertise<sensor_msgs::PointCloud2>("pcloud_filtered", 1);
   pub_pcloud_filtered_ = nh_.advertise<pcl::PointCloud<pcl::PointXYZ>>("pcloud_filtered", 1);
   pub_log_ = nh_.advertise<mader_msgs::Logtp>("logtp", 1);
+
+int i;
+
+  // sub_ = nh_.subscribe("cloud", 1, boost::bind(TrackerPredictor::cloud_cb, _1, i));
+  sub_ = nh_.subscribe("cloud", 1,  &TrackerPredictor::cloud_cb, this);
+  // sub_state_ = nh1_.subscribe("state", 1, &MaderRos::stateCB, this);
+
+
+  tree_ = pcl::search::KdTree<pcl::PointXYZ>::Ptr(new pcl::search::KdTree<pcl::PointXYZ>);
+
+  input_cloud2_ = pcl::PointCloud<pcl::PointXYZ>::Ptr(new pcl::PointCloud<pcl::PointXYZ>);
+  input_cloud3_ = pcl::PointCloud<pcl::PointXYZ>::Ptr(new pcl::PointCloud<pcl::PointXYZ>);
+  input_cloud4_ = pcl::PointCloud<pcl::PointXYZ>::Ptr(new pcl::PointCloud<pcl::PointXYZ>);
+  input_cloud_ = pcl::PointCloud<pcl::PointXYZ>::Ptr(new pcl::PointCloud<pcl::PointXYZ>);
+  input_cloud1 = pcl::PointCloud<pcl::PointXYZ>::Ptr(new pcl::PointCloud<pcl::PointXYZ>);
 }
 
 double TrackerPredictor::getCostRowColum(tp::cluster& a, tp::track& b, double time)
@@ -124,28 +139,9 @@ void TrackerPredictor::addNewTrack(const tp::cluster& c)
   // all_tracks_[last_id] = tmp;
 }
 
-// void TrackerPredictor::cloud_cb(const sensor_msgs::PointCloud2ConstPtr& pcl2ptr_msg)
-void TrackerPredictor::cloud_cb(const pcl::PointCloud<pcl::PointXYZ>::ConstPtr& input_cloud1)
+void TrackerPredictor::cloud_cb(const sensor_msgs::PointCloud2ConstPtr& pcl2ptr_msg)
+// void TrackerPredictor::cloud_cb(const pcl::PointCloud<pcl::PointXYZ>::ConstPtr& input_cloud1)
 {
-  std::cout << "Beginning of cloud_cb" << std::endl;
-
-  pcl::PointCloud<pcl::PointXYZ>::Ptr input_cloud2_ =
-      pcl::PointCloud<pcl::PointXYZ>::Ptr(new pcl::PointCloud<pcl::PointXYZ>);
-  pcl::PointCloud<pcl::PointXYZ>::Ptr input_cloud3_ =
-      pcl::PointCloud<pcl::PointXYZ>::Ptr(new pcl::PointCloud<pcl::PointXYZ>);
-  pcl::PointCloud<pcl::PointXYZ>::Ptr input_cloud4_ =
-      pcl::PointCloud<pcl::PointXYZ>::Ptr(new pcl::PointCloud<pcl::PointXYZ>);
-  pcl::PointCloud<pcl::PointXYZ>::Ptr input_cloud_ =
-      pcl::PointCloud<pcl::PointXYZ>::Ptr(new pcl::PointCloud<pcl::PointXYZ>);
-  pcl::search::KdTree<pcl::PointXYZ>::Ptr tree_ =
-      pcl::search::KdTree<pcl::PointXYZ>::Ptr(new pcl::search::KdTree<pcl::PointXYZ>);
-
-  // input_cloud2_ = pcl::PointCloud<pcl::PointXYZ>::Ptr(new pcl::PointCloud<pcl::PointXYZ>);
-  // input_cloud3_ = pcl::PointCloud<pcl::PointXYZ>::Ptr(new pcl::PointCloud<pcl::PointXYZ>);
-  // input_cloud4_ = pcl::PointCloud<pcl::PointXYZ>::Ptr(new pcl::PointCloud<pcl::PointXYZ>);
-  // input_cloud_ = pcl::PointCloud<pcl::PointXYZ>::Ptr(new pcl::PointCloud<pcl::PointXYZ>);
-  // tree_ = pcl::search::KdTree<pcl::PointXYZ>::Ptr(new pcl::search::KdTree<pcl::PointXYZ>);
-
   // log_ = {};
   // std::cout << "-------------------------------" << std::endl;
   log_.tim_total_tp.tic();
@@ -173,7 +169,7 @@ void TrackerPredictor::cloud_cb(const pcl::PointCloud<pcl::PointXYZ>::ConstPtr& 
 
   // Convert to PCL
   log_.tim_conversion_pcl.tic();
-  // pcl::fromROSMsg(*pcl2ptr_msg, *input_cloud1);
+  pcl::fromROSMsg(*pcl2ptr_msg, *input_cloud1);
   log_.tim_conversion_pcl.toc();
 
   // std::cout << "Input point cloud has " << input_cloud1->points.size() << " points" << std::endl;
@@ -216,30 +212,36 @@ void TrackerPredictor::cloud_cb(const pcl::PointCloud<pcl::PointXYZ>::ConstPtr& 
   pass.setInputCloud(input_cloud3_);
   pass.setFilterFieldName("z");
   pass.setFilterLimits(z_ground_, 1e6);  // TODO: use z_ground
-  pass.filter(*input_cloud_);
+  pass.filter(*input_cloud4_);
   log_.tim_passthrough.toc();
 
   // Voxel grid filter
-  // log_.tim_voxel_grid.tic();
-  // pcl::ApproximateVoxelGrid<pcl::PointXYZ> sor;
-  // sor.setInputCloud(input_cloud4_);
-  // sor.setLeafSize(leaf_size_filter_, leaf_size_filter_, leaf_size_filter_);
-  // sor.filter(*input_cloud_);
-  // log_.tim_voxel_grid.toc();
+  log_.tim_voxel_grid.tic();
+  // pcl::ApproximateVoxelGrid<pcl::PointXYZ> sor; //this one crashes randomly on the NUC and Jetson
+  pcl::VoxelGrid<pcl::PointXYZ> sor;
+  sor.setInputCloud(input_cloud4_);
+  sor.setLeafSize(leaf_size_filter_, leaf_size_filter_, leaf_size_filter_);
+  sor.filter(*input_cloud_);
+  log_.tim_voxel_grid.toc();
 
   log_.tim_pub_filtered.tic();
+ 
   // Publish filtered point cloud
-  // sensor_msgs::PointCloud2 filtered_pcl2_msg;
-  // pcl::toROSMsg(*input_cloud_, filtered_pcl2_msg);
-  // filtered_pcl2_msg.header.frame_id = "world";
-  // filtered_pcl2_msg.header.stamp = ros::Time::now();
-  // pub_pcloud_filtered_.publish(filtered_pcl2_msg);
 
-  input_cloud_->header.frame_id = "world";
-  // https://github.com/ros-perception/perception_pcl/blob/melodic-devel/pcl_conversions/include/pcl_conversions/pcl_conversions.h#L88
-  input_cloud_->header.stamp = ros::Time::now().toNSec() / 1000ull;
+  //Option 1
+  sensor_msgs::PointCloud2 filtered_pcl2_msg;
+  pcl::toROSMsg(*input_cloud_, filtered_pcl2_msg);
+  filtered_pcl2_msg.header.frame_id = "world";
+  filtered_pcl2_msg.header.stamp = ros::Time::now();
+  pub_pcloud_filtered_.publish(filtered_pcl2_msg);
 
-  pub_pcloud_filtered_.publish(*input_cloud_);
+  //Option 2, crashes randomly on the NUC and Jetson
+  // input_cloud_->header.frame_id = "world";
+  // // https://github.com/ros-perception/perception_pcl/blob/melodic-devel/pcl_conversions/include/pcl_conversions/pcl_conversions.h#L88
+  // input_cloud_->header.stamp = ros::Time::now().toNSec() / 1000ull;
+  // pub_pcloud_filtered_.publish(*input_cloud_);
+
+
   log_.tim_pub_filtered.toc();
 
   /////Listen to the transform
@@ -534,7 +536,7 @@ void TrackerPredictor::cloud_cb(const pcl::PointCloud<pcl::PointXYZ>::ConstPtr& 
 
   if (clusters.size() > 0)
   {
-    std::cout << "Running Hungarian Algorith" << std::endl;
+    std::cout << "Running Hungarian Algorithm" << std::endl;
 
     // std::cout << "Creating the cost matrix!" << std::endl;
     // Create the cost matrix
@@ -654,10 +656,10 @@ void TrackerPredictor::cloud_cb(const pcl::PointCloud<pcl::PointXYZ>::ConstPtr& 
 
   log_.tim_pub.toc();
 
+  std::cout << "End of cloud_cb" << std::endl;
   log_.tim_total_tp.toc();
 
   pub_log_.publish(logtp2LogtpMsg(log_));
-  std::cout << "End of cloud_cb" << std::endl;
 }
 
 mader_msgs::Logtp TrackerPredictor::logtp2LogtpMsg(tp::logtp log)
@@ -695,11 +697,11 @@ void TrackerPredictor::printAllTracks()
 
 void TrackerPredictor::generatePredictedPwpForTrack(tp::track& track_j)
 {
-  // std::cout << "Creating the matrices" << std::endl;
+   std::cout << "Creating the matrices" << std::endl;
   casadi::DM all_pos = casadi::DM::zeros(3, track_j.getSizeSW());  //(casadi::Sparsity::dense(3, track_j.getSizeSW()));
   casadi::DM all_t = casadi::DM::zeros(1, track_j.getSizeSW());    //(casadi::Sparsity::dense(1, track_j.getSizeSW()));
 
-  // std::cout << "Matrices created" << std::endl;
+  std::cout << "Matrices created" << std::endl;
 
   int current_ssw = track_j.getSizeSW();
 
@@ -712,25 +714,27 @@ void TrackerPredictor::generatePredictedPwpForTrack(tp::track& track_j)
     all_pos(1, i) = centroid_i.y();
     all_pos(2, i) = centroid_i.z();
     // std::cout << "track_j.getTimeHistory(i)= " << track_j.getTimeHistory(i) << std::endl;
-    // std::cout << "Going to add, i=" << i << " cols= " << track_j.getSizeSW() << std::endl;
+    std::cout << "Going to add, i=" << i << " cols= " << track_j.getSizeSW() << std::endl;
     all_t(0, i) = track_j.getTimeHistory(i);
-    // std::cout << "Added" << std::endl;
+    std::cout << "Added" << std::endl;
   }
 
-  // std::cout << "Matrices assigned" << std::endl;
+  std::cout << "Matrices assigned" << std::endl;
 
   std::map<std::string, casadi::DM> map_arguments;
   map_arguments["all_t"] = all_t;
   map_arguments["all_pos"] = all_pos;
+
+std::cout<<"current_ssw= "<<current_ssw<<std::endl;
 
   // std::cout << "all_pos.size()=\n " << all_pos.rows() << ", " << all_pos.columns() << std::endl;
   // std::cout << "all_pos:\n " << all_pos << std::endl;
   // std::cout << "all_t:\n " << all_t << std::endl;
   // std::cout << "all_t.size()=\n " << all_t.rows() << ", " << all_t.columns() << std::endl;
 
-  // std::cout << "Calling casadi!" << std::endl;
+  std::cout << "Calling casadi!" << std::endl;
   std::map<std::string, casadi::DM> result = cf_get_mean_variance_pred_[current_ssw](map_arguments);
-  // std::cout << "Called casadi " << std::endl;
+  std::cout << "Called casadi " << std::endl;
 
   // std::cout << "RESULT Before: " << std::endl;
 
