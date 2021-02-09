@@ -4,7 +4,7 @@
 	<arg name="cloud_topic" default="camera/depth/color/points"  />   <!--camera/cloud -->
 
 
-	<node ns="$(arg quad)" name="tracker_predictor_node" pkg="mader" type="tracker_predictor_node" output="screen" clear_params="false" launch-prefix="xterm -e gdb -ex run --args"> 
+	<node ns="$(arg quad)" name="tracker_predictor_node" pkg="mader" type="tracker_predictor_node" output="screen" clear_params="false" respawn="true"> 
 		<rosparam file="$(find mader)/matlab/params_casadi_prediction.yaml" command="load"/>
 		<rosparam file="$(find mader)/param/predictor.yaml" command="load"/>
 		<remap from="~cloud" to="$(arg cloud_topic)"/>
