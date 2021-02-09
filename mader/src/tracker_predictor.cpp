@@ -714,9 +714,9 @@ void TrackerPredictor::generatePredictedPwpForTrack(tp::track& track_j)
     all_pos(1, i) = centroid_i.y();
     all_pos(2, i) = centroid_i.z();
     // std::cout << "track_j.getTimeHistory(i)= " << track_j.getTimeHistory(i) << std::endl;
-    std::cout << "Going to add, i=" << i << " cols= " << track_j.getSizeSW() << std::endl;
+   // std::cout << "Going to add, i=" << i << " cols= " << track_j.getSizeSW() << std::endl;
     all_t(0, i) = track_j.getTimeHistory(i);
-    std::cout << "Added" << std::endl;
+    //std::cout << "Added" << std::endl;
   }
 
   std::cout << "Matrices assigned" << std::endl;

@@ -632,8 +632,8 @@ void Mader::sampleFeaturePosVel(int argmax_prob_collision, double t_start, doubl
     std::cout << bold << "There is no dynamic obstacle to track, using last_pos_tracked_" << reset << std::endl;
   }
 
-  last_state_tracked_.pos = pos.back();
-  last_state_tracked_.vel = vel.back();
+  last_state_tracked_.pos =pos.front();// pos.back();
+  last_state_tracked_.vel =pos.front();// vel.back();
   // mtx_t_.unlock();
   // std::cout << red << bold << "in sampleFeaturePositions, mtx_t_ unlocked" << reset << std::endl;
   // mtx_trajs_.unlock();
