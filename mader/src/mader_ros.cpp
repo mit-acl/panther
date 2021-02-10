@@ -233,6 +233,8 @@ MaderRos::MaderRos(ros::NodeHandle nh1, ros::NodeHandle nh2, ros::NodeHandle nh3
   ///
   if (perfect_prediction == false)
   {
+
+    ROS_INFO("NOT using ground truth trajectories (subscribed to trajs_predicted)");
     sub_traj_ = nh1_.subscribe("trajs_predicted", 20, &MaderRos::trajCB, this);  // number is queue size
 
     // obstacles --> topic trajs_predicted
@@ -240,6 +242,8 @@ MaderRos::MaderRos(ros::NodeHandle nh1, ros::NodeHandle nh2, ros::NodeHandle nh3
   }
   else
   {
+    ROS_INFO("Using ground truth trajectories (subscribed to /trajs)");
+
     sub_traj_ = nh1_.subscribe("/trajs", 20, &MaderRos::trajCB, this);  // The number is the queue size
     // obstacles --> topic /trajs
     // agents --> topic /trajs
