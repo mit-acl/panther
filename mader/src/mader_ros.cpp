@@ -774,7 +774,7 @@ void MaderRos::terminalGoalCB(const geometry_msgs::PoseStamped& msg)
   double z;
   if (fabs(msg.pose.position.z) < 1e-5)  // This happens when you click in RVIZ (msg.z is 0.0)
   {
-    z = 1.0;
+    z = 2.0;
   }
   else  // This happens when you publish by yourself the goal (should always be above the ground)
   {
