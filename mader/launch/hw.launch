@@ -1,0 +1,46 @@
+<launch>
+
+	<arg name="quad" default="HX09"/>
+  <arg name="use_gui_mission" default="true"/>
+  <arg name="perfect_prediction" default="false"/>
+
+  <!-- COMMANDS -->
+  <node ns="$(arg quad)" name="commands" pkg="mader_other" type="commands.py" output="screen"/>
+ 
+  <!-- RUN CAMERA AND TRACKER-->
+  <group unless="$(arg perfect_prediction)">
+       <include file="$(find mader)/launch/tracker_predictor.launch">
+          <arg name="quad" value="$(arg quad)"/>
+       </include> 
+
+       <include file="$(find mader_other)/launch/start_rs.launch">
+          <arg name="quad" value="$(arg quad)"/>
+       </include> 
+  </group>
+
+  <!-- BEHAVIOUR SELECTOR --> 
+  <node pkg="behavior_selector" type="behavior_selector_node.py" name="behavior_selector" output="screen" />
+
+  <!-- MADER --> 
+  <node ns="$(arg quad)" name="mader" pkg="mader" type="mader_node" output="screen" clear_params="false"> 
+
+    <!-- Parameters -->
+    <rosparam file="$(find mader)/param/mader.yaml" command="load"/>
+    <rosparam file="$(find mader)/matlab/params_casadi.yaml" command="load"/>
+    <param name="use_gui_mission" value="$(arg use_gui_mission)" /> 
+    <param name="perfect_prediction" value="$(arg perfect_prediction)" /> 
+
+    <!-- Subscriptions -->
+    <remap from="~state" to="state"/>
+    <remap from="~who_plans" to="who_plans"/>
+    <remap from="~term_goal" to="term_goal" />
+    <remap from="~trajs_predicted" to="tracker_predictor_node/trajs_predicted" />
+
+    <!-- Publications -->
+    <remap from="~traj" to="traj"/>
+    <remap from="~goal" to="goal" />
+    <remap from="~setpoint" to="setpoint" />
+
+  </node>
+
+</launch>
