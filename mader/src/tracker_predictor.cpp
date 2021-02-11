@@ -662,7 +662,7 @@ void TrackerPredictor::cloud_cb(const sensor_msgs::PointCloud2ConstPtr& pcl2ptr_
 
     std::string ns = "predicted_traj_" + std::to_string(j);
     pub_marker_predicted_traj_.publish(
-        pwp2ColoredMarkerArray(track_j.pwp_mean, time_pcloud, time_pcloud + 1.0, samples, ns, track_j.color));
+        pwp2ColoredMarkerArray(track_j.pwp_mean, time_pcloud, time_pcloud + 2.0, samples, ns, track_j.color));
 
     /////////////////// construct a DynTraj msg. //TODO: use the pwp instead (this will require modifications in the
     /// mader code, for when it's not an agent)
@@ -676,7 +676,8 @@ void TrackerPredictor::cloud_cb(const sensor_msgs::PointCloud2ConstPtr& pcl2ptr_
     // dynTraj_msg.s_mean = pieceWisePol2String(track_j.pwp_mean);
     // dynTraj_msg.s_var = pieceWisePol2String(track_j.pwp_var);
 
-    std::vector<double> tmp = eigen2std(track_j.getLatestBbox());
+    // std::vector<double> tmp = eigen2std(track_j.getLatestBbox());
+    std::vector<double> tmp = eigen2std(track_j.getMaxBbox());
 
     dynTraj_msg.bbox = std::vector<float>(tmp.begin(), tmp.end());  // TODO: Here I'm using the latest Bbox. Should I
                                                                     // use the biggest one of the whole history?
@@ -930,7 +931,8 @@ visualization_msgs::MarkerArray TrackerPredictor::getBBoxesAsMarkerArray()
     m.pose.position.y = centroid.y();
     m.pose.position.z = centroid.z();
 
-    Eigen::Vector3d bbox = track_j.getLatestBbox();
+    // Eigen::Vector3d bbox = track_j.getLatestBbox();
+    Eigen::Vector3d bbox = track_j.getMaxBbox();
 
     m.scale.x = bbox.x();
     m.scale.y = bbox.y();

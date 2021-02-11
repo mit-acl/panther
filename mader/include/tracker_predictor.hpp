@@ -190,6 +190,23 @@ public:
     return history.back().bbox;
   }
 
+  Eigen::Vector3d getMaxBbox()
+  {
+
+    double max_x=-std::numeric_limits<double>::max();
+    double max_y=-std::numeric_limits<double>::max();
+    double max_z=-std::numeric_limits<double>::max();
+
+    for (auto& c : history)
+    {
+      max_x=std::max(c.bbox.x(),max_x);
+      max_y=std::max(c.bbox.y(),max_y);
+      max_z=std::max(c.bbox.z(),max_z);
+    }
+
+    return Eigen::Vector3d(max_x, max_y, max_z);
+  }
+
   void printPrediction(double seconds, int samples)
   {
     double last_time = getLatestTimeSW();
