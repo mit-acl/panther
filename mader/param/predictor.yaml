@@ -1,4 +1,9 @@
-z_ground: 1.2
+x_min: -4.0
+x_max: 3.2
+y_min: -3.5
+y_max: 3.3
+z_min: 1.2
+z_max: 15.0
 meters_to_create_new_track: 2.0
 max_frames_skipped: 10
 cluster_tolerance: 0.3
