@@ -161,6 +161,9 @@ private:
   // SolverGurobi* solver_;  // pointer to the optimization solver
   SolverIpopt* solver_;  // pointer to the optimization solver
 
+  Eigen::Matrix<double, 2, 2> A_basis_deg1_rest_;
+  Eigen::Matrix<double, 2, 2> A_basis_deg1_rest_inverse_;
+
   Eigen::Matrix<double, 3, 3> A_basis_deg2_rest_;
   Eigen::Matrix<double, 3, 3> A_basis_deg2_rest_inverse_;
 

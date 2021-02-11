@@ -43,16 +43,19 @@ Mader::Mader(mt::parameters par) : par_(par)
 
   if (par.basis == "MINVO")
   {
+    A_basis_deg1_rest_ = basis_converter.getArestMinvoDeg1();
     A_basis_deg2_rest_ = basis_converter.getArestMinvoDeg2();
     A_basis_deg3_rest_ = basis_converter.getArestMinvoDeg3();
   }
   else if (par.basis == "BEZIER")
   {
+    A_basis_deg1_rest_ = basis_converter.getArestBezierDeg1();
     A_basis_deg2_rest_ = basis_converter.getArestBezierDeg2();
     A_basis_deg3_rest_ = basis_converter.getArestBezierDeg3();
   }
   else if (par.basis == "B_SPLINE")
   {
+    A_basis_deg1_rest_ = basis_converter.getArestBSplineDeg1();
     A_basis_deg2_rest_ = basis_converter.getArestBSplineDeg2();
     A_basis_deg3_rest_ = basis_converter.getArestBSplineDeg3();
   }
@@ -63,6 +66,7 @@ Mader::Mader(mt::parameters par) : par_(par)
     abort();
   }
 
+  A_basis_deg1_rest_inverse_ = A_basis_deg1_rest_.inverse();
   A_basis_deg2_rest_inverse_ = A_basis_deg2_rest_.inverse();
   A_basis_deg3_rest_inverse_ = A_basis_deg3_rest_.inverse();
 
@@ -383,11 +387,17 @@ std::vector<Eigen::Vector3d> Mader::vertexesOfInterval(mt::PieceWisePol& pwp, do
       // std::cout << on_blue << "Using Deg=2!!!" << reset << std::endl;
       V = P * A_basis_deg2_rest_inverse_;
     }
+    else if (deg == 1)
+    {
+      V = P*A_basis_deg1_rest_inverse_;
+    }
     else
     {
-      // TODO
+     
+     // TODO
       std::cout << "Not implemented yet. Aborting" << std::endl;
       abort();
+
     }
 
     // std::cout << "P= \n" << P << std::endl;
