@@ -216,9 +216,9 @@ MaderRos::MaderRos(ros::NodeHandle nh1, ros::NodeHandle nh2, ros::NodeHandle nh3
   pub_point_G_term_ = nh1_.advertise<geometry_msgs::PointStamped>("point_G_term", 1);
   pub_point_A_ = nh1_.advertise<visualization_msgs::Marker>("point_A", 1);
   pub_actual_traj_ = nh1_.advertise<visualization_msgs::Marker>("actual_traj", 1);
-  poly_safe_pub_ = nh1_.advertise<decomp_ros_msgs::PolyhedronArray>("poly_safe", 1, true);
+  poly_safe_pub_ = nh1_.advertise<decomp_ros_msgs::PolyhedronArray>("polys", 1, true);
   // pub_text_ = nh1_.advertise<jsk_rviz_plugins::OverlayText>("text", 1);
-  pub_traj_safe_colored_ = nh1_.advertise<visualization_msgs::MarkerArray>("traj_safe_colored", 1);
+  pub_traj_safe_colored_ = nh1_.advertise<visualization_msgs::MarkerArray>("traj_obtained", 1);
   pub_traj_ = nh1_.advertise<mader_msgs::DynTraj>("/trajs", 1, true);  // The last boolean is latched or not
   // pub_text_ = nh1_.advertise<jsk_rviz_plugins::OverlayText>("text", 1);
   pub_fov_ = nh1_.advertise<visualization_msgs::Marker>("fov", 1);

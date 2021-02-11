@@ -142,8 +142,8 @@ void TrackerPredictor::addNewTrack(const tp::cluster& c)
 void TrackerPredictor::cloud_cb(const sensor_msgs::PointCloud2ConstPtr& pcl2ptr_msg)
 // void TrackerPredictor::cloud_cb(const pcl::PointCloud<pcl::PointXYZ>::ConstPtr& input_cloud1)
 {
-  // log_ = {};
-  // std::cout << "-------------------------------" << std::endl;
+
+
   log_.tim_total_tp.tic();
   ///////////////////////////
   ///////////////////////////
@@ -212,16 +212,17 @@ void TrackerPredictor::cloud_cb(const sensor_msgs::PointCloud2ConstPtr& pcl2ptr_
   pass.setInputCloud(input_cloud3_);
   pass.setFilterFieldName("z");
   pass.setFilterLimits(z_ground_, 1e6);  // TODO: use z_ground
-  pass.filter(*input_cloud4_);
+  // pass.filter(*input_cloud4_);
+  pass.filter(*input_cloud_);
   log_.tim_passthrough.toc();
 
   // Voxel grid filter
   log_.tim_voxel_grid.tic();
-  // pcl::ApproximateVoxelGrid<pcl::PointXYZ> sor; //this one crashes randomly on the NUC and Jetson
-  pcl::VoxelGrid<pcl::PointXYZ> sor;
-  sor.setInputCloud(input_cloud4_);
-  sor.setLeafSize(leaf_size_filter_, leaf_size_filter_, leaf_size_filter_);
-  sor.filter(*input_cloud_);
+  // // pcl::ApproximateVoxelGrid<pcl::PointXYZ> sor; //this one crashes randomly on the NUC and Jetson
+  // pcl::VoxelGrid<pcl::PointXYZ> sor;
+  // sor.setInputCloud(input_cloud4_);
+  // sor.setLeafSize(leaf_size_filter_, leaf_size_filter_, leaf_size_filter_);
+  // sor.filter(*input_cloud_);
   log_.tim_voxel_grid.toc();
 
   log_.tim_pub_filtered.tic();
@@ -383,114 +384,140 @@ void TrackerPredictor::cloud_cb(const sensor_msgs::PointCloud2ConstPtr& pcl2ptr_
     // std::cout << "max_y= " << max_y << std::endl;
     // std::cout << "max_z= " << max_z << std::endl;
 
-    ////////////////////////
-    ////////////////////////
+    double sum_x=0.0;
+    double sum_y=0.0;
+    double sum_z=0.0;
 
-    std::vector<Eigen::Vector4d> vertexes_bbox(8);
-    vertexes_bbox[0] = Eigen::Vector4d(max_x, max_y, max_z, 1.0);
-    vertexes_bbox[1] = Eigen::Vector4d(max_x, max_y, min_z, 1.0);
-    vertexes_bbox[2] = Eigen::Vector4d(max_x, min_y, max_z, 1.0);
-    vertexes_bbox[3] = Eigen::Vector4d(max_x, min_y, min_z, 1.0);
-    vertexes_bbox[4] = Eigen::Vector4d(min_x, max_y, max_z, 1.0);
-    vertexes_bbox[5] = Eigen::Vector4d(min_x, max_y, min_z, 1.0);
-    vertexes_bbox[6] = Eigen::Vector4d(min_x, min_y, max_z, 1.0);
-    vertexes_bbox[7] = Eigen::Vector4d(min_x, min_y, min_z, 1.0);
-
-    // for (size_t i = 0; i < vertexes_bbox.size(); i++)
-    // {
-    //   // std::cout << "vertex " << i << " = " << vertexes_bbox[i].transpose() << std::endl;
-    // }
-
-    // std::cout << "w_T_b.translation()= " << w_T_b.translation() << std::endl;
-    // std::cout << "w_T_b.rotation()= " << w_T_b.rotation() << std::endl;
-
-    // apply r_T_w to the vertexes of the bbox (this is much faster than transforming the whole point cloud, although a
-    // little bit conservative (because it's the AABB of a AABB))
-
-    // for (size_t i = 0; i < vertexes_bbox.size(); i++)
-    // {
-    //   vertexes_bbox[i] = w_T_b * vertexes_bbox[i];
-    // }
-    // https://stackoverflow.com/questions/9070752/getting-the-bounding-box-of-a-vector-of-points
-    auto xExtremes =
-        std::minmax_element(vertexes_bbox.begin(), vertexes_bbox.end(),
-                            [](const Eigen::Vector4d& lhs, const Eigen::Vector4d& rhs) { return lhs.x() < rhs.x(); });
-
-    auto yExtremes =
-        std::minmax_element(vertexes_bbox.begin(), vertexes_bbox.end(),
-                            [](const Eigen::Vector4d& lhs, const Eigen::Vector4d& rhs) { return lhs.y() < rhs.y(); });
-
-    auto zExtremes =
-        std::minmax_element(vertexes_bbox.begin(), vertexes_bbox.end(),
-                            [](const Eigen::Vector4d& lhs, const Eigen::Vector4d& rhs) { return lhs.z() < rhs.z(); });
-
-    max_x = xExtremes.second->x();
-    max_y = yExtremes.second->y();
-    max_z = zExtremes.second->z();
-
-    min_x = xExtremes.first->x();
-    min_y = yExtremes.first->y();
-    min_z = zExtremes.first->z();
-
-    // std::cout << std::endl;
-
-    // std::cout << "min_x= " << min_x << std::endl;
-    // std::cout << "min_y= " << min_y << std::endl;
-    // std::cout << "min_z= " << min_z << std::endl;
-    // std::cout << "max_x= " << max_x << std::endl;
-    // std::cout << "max_y= " << max_y << std::endl;
-    // std::cout << "max_z= " << max_z << std::endl;
-
-    // min_x = std::numeric_limits<double>::max();
-    // max_x = -std::numeric_limits<double>::max();
-    // min_y = std::numeric_limits<double>::max();
-    // max_y = -std::numeric_limits<double>::max();
-    // min_z = std::numeric_limits<double>::max();
-    // max_z = -std::numeric_limits<double>::max();
-
-    // for (auto& vertex : vertexes_bbox)
-    // {
-    //   std::cout << "vertex before= " << vertex.transpose() << std::endl;
-
-    //   if (vertex.x() <= min_x)
-    //     min_x = vertex.x();
-    //   if (vertex.y() <= min_y)
-    //     min_y = vertex.y();
-    //   if (vertex.z() <= min_z)
-    //     min_z = vertex.z();
-    //   if (vertex.x() >= max_x)
-    //     max_x = vertex.x();
-    //   if (vertex.y() >= max_y)
-    //     max_y = vertex.y();
-    //   if (vertex.z() >= max_z)
-    //     max_z = vertex.z();
-    // }
-
-    tp::cluster tmp;
-    tmp.bbox = Eigen::Vector3d(max_x - min_x, max_y - min_y, max_z - min_z);
-
-    assert(tmp.bbox.x() >= 0 && "Must hold: tmp.bbox.x() >= 0");
-    assert(tmp.bbox.y() >= 0 && "Must hold: tmp.bbox.y() >= 0");
-    assert(tmp.bbox.z() >= 0 && "Must hold: tmp.bbox.z() >= 0");
-
-    if (tmp.bbox.x() < min_dim_cluster_size_ && tmp.bbox.y() < min_dim_cluster_size_ &&
-        tmp.bbox.z() < min_dim_cluster_size_)
+    for (std::vector<int>::const_iterator pit = it->indices.begin(); pit != it->indices.end(); pit++)
     {
-      continue;  // cluster too small --> noise
+
+     sum_x+=input_cloud_->points[*pit].x;
+     sum_y+=input_cloud_->points[*pit].y;
+     sum_z+=input_cloud_->points[*pit].z;
     }
 
-    // std::cout << bold << magenta << "bbox= " << tmp.bbox << reset << std::endl;
+    double mean_x=sum_x/(it->indices).size();
+    double mean_y=sum_y/(it->indices).size();
+    double mean_z=sum_z/(it->indices).size();
 
-    tmp.centroid = Eigen::Vector3d((max_x + min_x) / 2.0, (max_y + min_y) / 2.0,
-                                   (max_z + min_z) / 2.0);  // This is the centroid of the bbox, not the
-                                                            // centroid of the point cloud
+    tp::cluster tmp;
+    tmp.centroid=Eigen::Vector3d(mean_x, mean_y, mean_z);
 
-    // std::cout << red << "tmp.centroid= " << tmp.centroid.transpose() << reset << std::endl;
+    tmp.bbox = Eigen::Vector3d(2*(std::max(fabs(max_x-mean_x),fabs(min_x-mean_x) )),
+                               2*(std::max(fabs(max_y-mean_y),fabs(min_y-mean_y) )),
+                               2*(std::max(fabs(max_z-mean_z),fabs(min_z-mean_z) )));
 
     tmp.time = time_pcloud;
-
-    // std::cout << red << tmp.centroid.transpose() << reset << std::endl;
     clusters.push_back(tmp);
+
+    // ////////////////////////
+    // ////////////////////////
+
+    // std::vector<Eigen::Vector4d> vertexes_bbox(8);
+    // vertexes_bbox[0] = Eigen::Vector4d(max_x, max_y, max_z, 1.0);
+    // vertexes_bbox[1] = Eigen::Vector4d(max_x, max_y, min_z, 1.0);
+    // vertexes_bbox[2] = Eigen::Vector4d(max_x, min_y, max_z, 1.0);
+    // vertexes_bbox[3] = Eigen::Vector4d(max_x, min_y, min_z, 1.0);
+    // vertexes_bbox[4] = Eigen::Vector4d(min_x, max_y, max_z, 1.0);
+    // vertexes_bbox[5] = Eigen::Vector4d(min_x, max_y, min_z, 1.0);
+    // vertexes_bbox[6] = Eigen::Vector4d(min_x, min_y, max_z, 1.0);
+    // vertexes_bbox[7] = Eigen::Vector4d(min_x, min_y, min_z, 1.0);
+
+    // // for (size_t i = 0; i < vertexes_bbox.size(); i++)
+    // // {
+    // //   // std::cout << "vertex " << i << " = " << vertexes_bbox[i].transpose() << std::endl;
+    // // }
+
+    // // std::cout << "w_T_b.translation()= " << w_T_b.translation() << std::endl;
+    // // std::cout << "w_T_b.rotation()= " << w_T_b.rotation() << std::endl;
+
+    // // apply r_T_w to the vertexes of the bbox (this is much faster than transforming the whole point cloud, although a
+    // // little bit conservative (because it's the AABB of a AABB))
+
+    // // for (size_t i = 0; i < vertexes_bbox.size(); i++)
+    // // {
+    // //   vertexes_bbox[i] = w_T_b * vertexes_bbox[i];
+    // // }
+    // // https://stackoverflow.com/questions/9070752/getting-the-bounding-box-of-a-vector-of-points
+    // auto xExtremes =
+    //     std::minmax_element(vertexes_bbox.begin(), vertexes_bbox.end(),
+    //                         [](const Eigen::Vector4d& lhs, const Eigen::Vector4d& rhs) { return lhs.x() < rhs.x(); });
+
+    // auto yExtremes =
+    //     std::minmax_element(vertexes_bbox.begin(), vertexes_bbox.end(),
+    //                         [](const Eigen::Vector4d& lhs, const Eigen::Vector4d& rhs) { return lhs.y() < rhs.y(); });
+
+    // auto zExtremes =
+    //     std::minmax_element(vertexes_bbox.begin(), vertexes_bbox.end(),
+    //                         [](const Eigen::Vector4d& lhs, const Eigen::Vector4d& rhs) { return lhs.z() < rhs.z(); });
+
+    // max_x = xExtremes.second->x();
+    // max_y = yExtremes.second->y();
+    // max_z = zExtremes.second->z();
+
+    // min_x = xExtremes.first->x();
+    // min_y = yExtremes.first->y();
+    // min_z = zExtremes.first->z();
+
+    // // std::cout << std::endl;
+
+    // // std::cout << "min_x= " << min_x << std::endl;
+    // // std::cout << "min_y= " << min_y << std::endl;
+    // // std::cout << "min_z= " << min_z << std::endl;
+    // // std::cout << "max_x= " << max_x << std::endl;
+    // // std::cout << "max_y= " << max_y << std::endl;
+    // // std::cout << "max_z= " << max_z << std::endl;
+
+    // // min_x = std::numeric_limits<double>::max();
+    // // max_x = -std::numeric_limits<double>::max();
+    // // min_y = std::numeric_limits<double>::max();
+    // // max_y = -std::numeric_limits<double>::max();
+    // // min_z = std::numeric_limits<double>::max();
+    // // max_z = -std::numeric_limits<double>::max();
+
+    // // for (auto& vertex : vertexes_bbox)
+    // // {
+    // //   std::cout << "vertex before= " << vertex.transpose() << std::endl;
+
+    // //   if (vertex.x() <= min_x)
+    // //     min_x = vertex.x();
+    // //   if (vertex.y() <= min_y)
+    // //     min_y = vertex.y();
+    // //   if (vertex.z() <= min_z)
+    // //     min_z = vertex.z();
+    // //   if (vertex.x() >= max_x)
+    // //     max_x = vertex.x();
+    // //   if (vertex.y() >= max_y)
+    // //     max_y = vertex.y();
+    // //   if (vertex.z() >= max_z)
+    // //     max_z = vertex.z();
+    // // }
+
+    // tp::cluster tmp;
+    // tmp.bbox = Eigen::Vector3d(max_x - min_x, max_y - min_y, max_z - min_z);
+
+    // assert(tmp.bbox.x() >= 0 && "Must hold: tmp.bbox.x() >= 0");
+    // assert(tmp.bbox.y() >= 0 && "Must hold: tmp.bbox.y() >= 0");
+    // assert(tmp.bbox.z() >= 0 && "Must hold: tmp.bbox.z() >= 0");
+
+    // if (tmp.bbox.x() < min_dim_cluster_size_ && tmp.bbox.y() < min_dim_cluster_size_ &&
+    //     tmp.bbox.z() < min_dim_cluster_size_)
+    // {
+    //   continue;  // cluster too small --> noise
+    // }
+
+    // // std::cout << bold << magenta << "bbox= " << tmp.bbox << reset << std::endl;
+
+    // tmp.centroid = Eigen::Vector3d((max_x + min_x) / 2.0, (max_y + min_y) / 2.0,
+    //                                (max_z + min_z) / 2.0);  // This is the centroid of the bbox, not the
+    //                                                         // centroid of the point cloud
+
+    // // std::cout << red << "tmp.centroid= " << tmp.centroid.transpose() << reset << std::endl;
+
+    // tmp.time = time_pcloud;
+
+    // // std::cout << red << tmp.centroid.transpose() << reset << std::endl;
+    // clusters.push_back(tmp);
   }
   log_.tim_bbox.toc();
 
@@ -519,8 +546,9 @@ void TrackerPredictor::cloud_cb(const sensor_msgs::PointCloud2ConstPtr& pcl2ptr_
     }
   }
 
-  // std::cout << "Creating= " << indexes_costs_too_big.size() << " new clusters because cost row is too big" <<
-  // std::endl; If the minimum of each of the rows is too large --> create new track
+  // std::cout << "Creating= " << indexes_costs_too_big.size() << " new clusters because cost row is too big" <<  std::endl; 
+
+  //If the minimum of each of the rows is too large --> create new track
   for (auto i : indexes_costs_too_big)
   {
     // clusters[i].print();
@@ -573,12 +601,18 @@ void TrackerPredictor::cloud_cb(const sensor_msgs::PointCloud2ConstPtr& pcl2ptr_
       {
         // std::cout << "cluster " << i << " unassigned, creating new track for it" << std::endl;
         std::cout << clusters[i].centroid.transpose() << std::endl;
-        // std::cout << "calling addNewTrack()" << std::endl;
         addNewTrack(clusters[i]);
       }
       else
       {  // add an element to the history of the track
-        all_tracks_[track_assigned_to_cluster[i]].addToHistory(clusters[i]);
+        if(all_tracks_[track_assigned_to_cluster[i]].is_new==true)
+        {
+            all_tracks_[track_assigned_to_cluster[i]].is_new=false;
+        }
+        else
+        {
+             all_tracks_[track_assigned_to_cluster[i]].addToHistory(clusters[i]);
+        }
       }
     }
     std::cout << "\n";
@@ -610,15 +644,19 @@ void TrackerPredictor::cloud_cb(const sensor_msgs::PointCloud2ConstPtr& pcl2ptr_
   int j = 0;
   for (auto& track_j : all_tracks_)
   {
-    // std::cout << "--" << std::endl;
+    // std::cout << "----" << std::endl;
+    // std::cout<<"==================TIME PCLOUD: "<<std::endl;
+    // std::streamsize ss = std::cout.precision();  // original precision
+    // std::cout << " time_pcloud= " << std::setprecision(20) << time_pcloud  << std::setprecision(ss) << std::endl;
+    // std::cout<<"==================HISTORY: "<<std::endl;
+    // track_j.printHistory();
+    // std::cout<<"==================PREDICTION: "<<std::endl;
+    // track_j.printPrediction(3.0, 5);
 
     if (track_j.shouldPublish() == false)
     {
       continue;
     }
-
-    // track_j.printHistory();
-    // track_j.printPrediction(3.0, 5);
 
     // track_j.pwp.print();
 
@@ -697,44 +735,60 @@ void TrackerPredictor::printAllTracks()
 
 void TrackerPredictor::generatePredictedPwpForTrack(tp::track& track_j)
 {
-   std::cout << "Creating the matrices" << std::endl;
+   // std::cout << "Creating the matrices" << std::endl;
   casadi::DM all_pos = casadi::DM::zeros(3, track_j.getSizeSW());  //(casadi::Sparsity::dense(3, track_j.getSizeSW()));
   casadi::DM all_t = casadi::DM::zeros(1, track_j.getSizeSW());    //(casadi::Sparsity::dense(1, track_j.getSizeSW()));
 
-  std::cout << "Matrices created" << std::endl;
+  // std::cout << "Matrices created" << std::endl;
 
   int current_ssw = track_j.getSizeSW();
+
+// std::cout<<"getTotalTimeSW= "<<track_j.getTotalTimeSW()<<std::endl;
 
   for (int i = 0; i < current_ssw; i++)
   {
     // Conversion DM <--> Eigen:  https://github.com/casadi/casadi/issues/2563
+    Eigen::Vector3d centroid_i_filtered;
 
-    Eigen::Vector3d centroid_i = track_j.getCentroidHistory(i);
-    all_pos(0, i) = centroid_i.x();
-    all_pos(1, i) = centroid_i.y();
-    all_pos(2, i) = centroid_i.z();
+      Eigen::Vector3d centroid_i = track_j.getCentroidHistory(i);
+    
+    // if(i>=1){ //low-pass filter
+    //     Eigen::Vector3d centroid_im1 = track_j.getCentroidHistory(i-1);
+    //     double alpha=0.95;
+    //     centroid_i_filtered = (1-alpha)*centroid_i + alpha*centroid_im1;
+    //   }
+    // else
+    // {
+        centroid_i_filtered = centroid_i;
+    // }
+    all_pos(0, i) = centroid_i_filtered.x();
+    all_pos(1, i) = centroid_i_filtered.y();
+    all_pos(2, i) = centroid_i_filtered.z();
     // std::cout << "track_j.getTimeHistory(i)= " << track_j.getTimeHistory(i) << std::endl;
    // std::cout << "Going to add, i=" << i << " cols= " << track_j.getSizeSW() << std::endl;
     all_t(0, i) = track_j.getTimeHistory(i);
     //std::cout << "Added" << std::endl;
   }
 
-  std::cout << "Matrices assigned" << std::endl;
+  // std::cout << "Matrices assigned" << std::endl;
+
+// track_j.printHistory();
 
   std::map<std::string, casadi::DM> map_arguments;
   map_arguments["all_t"] = all_t;
   map_arguments["all_pos"] = all_pos;
 
-std::cout<<"current_ssw= "<<current_ssw<<std::endl;
+// std::cout<<"current_ssw= "<<current_ssw<<std::endl;
 
   // std::cout << "all_pos.size()=\n " << all_pos.rows() << ", " << all_pos.columns() << std::endl;
   // std::cout << "all_pos:\n " << all_pos << std::endl;
   // std::cout << "all_t:\n " << all_t << std::endl;
   // std::cout << "all_t.size()=\n " << all_t.rows() << ", " << all_t.columns() << std::endl;
 
-  std::cout << "Calling casadi!" << std::endl;
+  // std::cout << "Calling casadi!" << std::endl;
+  //Note that Casadi may crash (with the error "Evaluation failed") if secs_prediction (in prediction_one_segment.m) is very big (like 100)
   std::map<std::string, casadi::DM> result = cf_get_mean_variance_pred_[current_ssw](map_arguments);
-  std::cout << "Called casadi " << std::endl;
+  // std::cout << "Called casadi " << std::endl;
 
   // std::cout << "RESULT Before: " << std::endl;
 
