@@ -58,7 +58,7 @@ struct cluster  // one observation
   Eigen::Vector3d bbox;  // Total side x, total side y, total side z;
   double time;           // in seconds
 
-  void print()
+  void print() const
   {
     std::streamsize ss = std::cout.precision();  // original precision
     std::cout << termcolor::bold << "Centroid= " << termcolor::reset << centroid.transpose() << ", " << termcolor::bold
@@ -70,10 +70,13 @@ struct cluster  // one observation
 class track
 {
 public:
+  bool is_new=true;
   track(const tp::cluster& c, const int& min_ssw_tmp, const int& max_ssw_tmp)
   {
     max_ssw = max_ssw_tmp;
     min_ssw = min_ssw_tmp;
+
+    is_new=true;
 
     history = std::deque<tp::cluster>(min_ssw, c);  // Constant initialization
 
@@ -111,13 +114,21 @@ public:
 
   void addToHistory(const tp::cluster& c)
   {
+
+
     history.push_back(c);
+
+    if(num_diff_samples<min_ssw){
+      history.pop_front();  // Delete the oldest element
+    }
+
     if (history.size() > max_ssw)
     {
       history.pop_front();  // Delete the oldest element
     }
     num_diff_samples = num_diff_samples + 1;
   }
+
 
   unsigned int getSizeSW()
   {
