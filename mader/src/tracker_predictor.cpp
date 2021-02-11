@@ -276,11 +276,11 @@ void TrackerPredictor::cloud_cb(const sensor_msgs::PointCloud2ConstPtr& pcl2ptr_
 
   if (input_cloud_->points.size() == 0)
   {
-    std::cout << "Point cloud is empty, doing nothing" << std::endl;
+    //std::cout << "Point cloud is empty, doing nothing" << std::endl;
     return;
   }
 
-  std::cout << "Filtering:" << input_cloud1->points.size() << " -->" << input_cloud_->points.size() << " points";
+  //std::cout << "Filtering:" << input_cloud1->points.size() << " -->" << input_cloud_->points.size() << " points";
 
   log_.tim_tree.tic();
   tree_->setInputCloud(input_cloud_);
@@ -296,7 +296,7 @@ void TrackerPredictor::cloud_cb(const sensor_msgs::PointCloud2ConstPtr& pcl2ptr_
 
   /* Extract the clusters out of pc and save indices in cluster_indices.*/
 
-  std::cout << "Doing the clustering..." << std::endl;
+  //std::cout << "Doing the clustering..." << std::endl;
   log_.tim_clustering.tic();
   ec.extract(cluster_indices);
   log_.tim_clustering.toc();
@@ -564,7 +564,7 @@ void TrackerPredictor::cloud_cb(const sensor_msgs::PointCloud2ConstPtr& pcl2ptr_
 
   if (clusters.size() > 0)
   {
-    std::cout << "Running Hungarian Algorithm" << std::endl;
+    //std::cout << "Running Hungarian Algorithm" << std::endl;
 
     // std::cout << "Creating the cost matrix!" << std::endl;
     // Create the cost matrix
@@ -619,7 +619,7 @@ void TrackerPredictor::cloud_cb(const sensor_msgs::PointCloud2ConstPtr& pcl2ptr_
   }
   else
   {
-    std::cout << "No clusters detected" << std::endl;
+    //std::cout << "No clusters detected" << std::endl;
   }
   // printAllTracks();
 
@@ -695,7 +695,7 @@ void TrackerPredictor::cloud_cb(const sensor_msgs::PointCloud2ConstPtr& pcl2ptr_
 
   log_.tim_pub.toc();
 
-  std::cout << "End of cloud_cb" << std::endl;
+  //std::cout << "End of cloud_cb" << std::endl;
   log_.tim_total_tp.toc();
 
   pub_log_.publish(logtp2LogtpMsg(log_));
