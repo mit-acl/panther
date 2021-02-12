@@ -278,7 +278,15 @@ private:
 
   int num_seg_prediction_;  // Comes from Matlab
 
-  double z_ground_;
+  double x_min_;
+  double x_max_;
+
+  double y_min_;
+  double y_max_;
+
+  double z_min_;
+  double z_max_;
+
   int min_size_sliding_window_;
   int max_size_sliding_window_;
   double meters_to_create_new_track_;

@@ -56,13 +56,23 @@
 // #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include <tf2_sensor_msgs/tf2_sensor_msgs.h>
 #include <pcl/filters/passthrough.h>
+#include <pcl/filters/crop_box.h>
 #include <pcl/common/transforms.h>
 
 using namespace termcolor;
 
 TrackerPredictor::TrackerPredictor(ros::NodeHandle nh) : nh_(nh)
 {
-  safeGetParam(nh_, "z_ground", z_ground_);
+  // safeGetParam(nh_, "z_ground", z_ground_);
+  safeGetParam(nh_, "x_min", x_min_);
+  safeGetParam(nh_, "x_max", x_max_);
+
+  safeGetParam(nh_, "y_min", y_min_);
+  safeGetParam(nh_, "y_max", y_max_);
+
+  safeGetParam(nh_, "z_min", z_min_);
+  safeGetParam(nh_, "z_max", z_max_);
+
   safeGetParam(nh_, "min_size_sliding_window", min_size_sliding_window_);
   safeGetParam(nh_, "max_size_sliding_window", max_size_sliding_window_);
   safeGetParam(nh_, "meters_to_create_new_track", meters_to_create_new_track_);
@@ -206,15 +216,28 @@ void TrackerPredictor::cloud_cb(const sensor_msgs::PointCloud2ConstPtr& pcl2ptr_
   pcl::removeNaNFromPointCloud(*input_cloud2_, *input_cloud3_, indices);
   log_.tim_remove_nans.toc();
 
-  // PassThrough Filter (remove the ground)
+
   log_.tim_passthrough.tic();
-  pcl::PassThrough<pcl::PointXYZ> pass;
-  pass.setInputCloud(input_cloud3_);
-  pass.setFilterFieldName("z");
-  pass.setFilterLimits(z_ground_, 1e6);  // TODO: use z_ground
-  // pass.filter(*input_cloud4_);
-  pass.filter(*input_cloud_);
+
+
+  // // PassThrough Filter (remove the ground)
+  // pcl::PassThrough<pcl::PointXYZ> pass;
+  // pass.setInputCloud(input_cloud3_);
+  // pass.setFilterFieldName("z");
+  // pass.setFilterLimits(z_ground_, 1e6); 
+  // // pass.filter(*input_cloud4_);
+  // pass.filter(*input_cloud_);
+
+
+  // Box filter https://stackoverflow.com/questions/45790828/remove-points-outside-defined-3d-box-inside-pcl-visualizer
+  pcl::CropBox<pcl::PointXYZ> boxFilter;
+  boxFilter.setMin(Eigen::Vector4f(x_min_, y_min_, z_min_, 1.0));
+  boxFilter.setMax(Eigen::Vector4f(x_max_, y_max_, z_max_, 1.0));
+  boxFilter.setInputCloud(input_cloud3_);
+  boxFilter.filter(*input_cloud_);
+
   log_.tim_passthrough.toc();
+  
 
   // Voxel grid filter
   log_.tim_voxel_grid.tic();
@@ -276,11 +299,11 @@ void TrackerPredictor::cloud_cb(const sensor_msgs::PointCloud2ConstPtr& pcl2ptr_
 
   if (input_cloud_->points.size() == 0)
   {
-    std::cout << "Point cloud is empty, doing nothing" << std::endl;
+    //std::cout << "Point cloud is empty, doing nothing" << std::endl;
     return;
   }
 
-  std::cout << "Filtering:" << input_cloud1->points.size() << " -->" << input_cloud_->points.size() << " points";
+  //std::cout << "Filtering:" << input_cloud1->points.size() << " -->" << input_cloud_->points.size() << " points";
 
   log_.tim_tree.tic();
   tree_->setInputCloud(input_cloud_);
@@ -296,7 +319,7 @@ void TrackerPredictor::cloud_cb(const sensor_msgs::PointCloud2ConstPtr& pcl2ptr_
 
   /* Extract the clusters out of pc and save indices in cluster_indices.*/
 
-  std::cout << "Doing the clustering..." << std::endl;
+  //std::cout << "Doing the clustering..." << std::endl;
   log_.tim_clustering.tic();
   ec.extract(cluster_indices);
   log_.tim_clustering.toc();
@@ -564,7 +587,7 @@ void TrackerPredictor::cloud_cb(const sensor_msgs::PointCloud2ConstPtr& pcl2ptr_
 
   if (clusters.size() > 0)
   {
-    std::cout << "Running Hungarian Algorithm" << std::endl;
+    //std::cout << "Running Hungarian Algorithm" << std::endl;
 
     // std::cout << "Creating the cost matrix!" << std::endl;
     // Create the cost matrix
@@ -619,7 +642,7 @@ void TrackerPredictor::cloud_cb(const sensor_msgs::PointCloud2ConstPtr& pcl2ptr_
   }
   else
   {
-    std::cout << "No clusters detected" << std::endl;
+    //std::cout << "No clusters detected" << std::endl;
   }
   // printAllTracks();
 
@@ -695,7 +718,7 @@ void TrackerPredictor::cloud_cb(const sensor_msgs::PointCloud2ConstPtr& pcl2ptr_
 
   log_.tim_pub.toc();
 
-  std::cout << "End of cloud_cb" << std::endl;
+  //std::cout << "End of cloud_cb" << std::endl;
   log_.tim_total_tp.toc();
 
   pub_log_.publish(logtp2LogtpMsg(log_));

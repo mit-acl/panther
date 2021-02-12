@@ -157,6 +157,11 @@ struct state
 // TODO: move this to a class (so that no one can modify these matrices)
 struct basisConverter
 {
+
+  Eigen::Matrix<double, 2, 2> A_mv_deg1_rest;
+  Eigen::Matrix<double, 2, 2> A_be_deg1_rest;
+  Eigen::Matrix<double, 2, 2> A_bs_deg1_rest;
+
   Eigen::Matrix<double, 3, 3> A_mv_deg2_rest;
   Eigen::Matrix<double, 3, 3> A_be_deg2_rest;
   Eigen::Matrix<double, 3, 3> A_bs_deg2_rest;
@@ -195,6 +200,10 @@ struct basisConverter
     -2.9999999984656637863622563600074,  2.9999999984656637863622563600074,                                   0,
      1.4999999992328318931811281800037, -0.6339745950054685996732928288111, 0.066987297886318325490506708774774;
 
+      A_mv_deg1_rest <<   
+           -1.0, 1.0,
+            1.0, 0.0;
+
         //////MATRICES A FOR Bezier Degree 2 and 3///////// (there is only one per degree)
         A_be_deg3_rest << 
 
@@ -208,6 +217,10 @@ struct basisConverter
              1.0, -2.0, 1.0,
             -2.0,  2.0,   0,
              1.0,    0,   0;
+
+      A_be_deg1_rest <<   
+           -1.0, 1.0,
+            1.0, 0.0;
 
         //////MATRICES A FOR BSPLINE Degree 2 and 3/////////
         A_bs_deg3_seg0 <<
@@ -249,6 +262,10 @@ struct basisConverter
            0.5, -1.0, 0.5,
           -1.0,  1.0, 0.5,
            0.5,    0,   0;
+
+      A_bs_deg1_rest <<   
+           -1.0, 1.0,
+            1.0, 0.0;
 
         //TODO: Add also 2_seg_last,.... for degree = 2 (although I'm not using them right now)
 
@@ -370,6 +387,11 @@ struct basisConverter
   }
 
   //////MATRIX A FOR MINVO Deg 2 and 3/////////
+  Eigen::Matrix<double, 2, 2> getArestMinvoDeg1()
+  {
+    return A_mv_deg1_rest;
+  }
+
   Eigen::Matrix<double, 3, 3> getArestMinvoDeg2()
   {
     return A_mv_deg2_rest;
@@ -380,6 +402,10 @@ struct basisConverter
     return A_mv_deg3_rest;
   }
   //////MATRIX A FOR Bezier Deg 2 and 3/////////
+  Eigen::Matrix<double, 2, 2> getArestBezierDeg1()
+  {
+    return A_be_deg1_rest;
+  }
 
   Eigen::Matrix<double, 3, 3> getArestBezierDeg2()
   {
@@ -392,6 +418,10 @@ struct basisConverter
   }
 
   //////MATRIX A FOR BSPLINE Deg 2 and 3/////////
+  Eigen::Matrix<double, 2, 2> getArestBSplineDeg1()
+  {
+    return A_bs_deg1_rest;
+  }
 
   Eigen::Matrix<double, 3, 3> getArestBSplineDeg2()
   {
