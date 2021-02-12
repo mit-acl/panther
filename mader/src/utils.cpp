@@ -27,6 +27,14 @@ mader_msgs::Log log2LogMsg(mt::log log)
   log_msg.final_pos_cost = log.final_pos_cost;
   log_msg.final_yaw_cost = log.final_yaw_cost;
 
+  log_msg.tracking_now_pos.x = log.tracking_now_pos.x();
+  log_msg.tracking_now_pos.y = log.tracking_now_pos.y();
+  log_msg.tracking_now_pos.z = log.tracking_now_pos.z();
+
+  log_msg.tracking_now_vel.x = log.tracking_now_vel.x();
+  log_msg.tracking_now_vel.y = log.tracking_now_vel.y();
+  log_msg.tracking_now_vel.z = log.tracking_now_vel.z();
+
   log_msg.success_guess_pos = log.success_guess_pos;
   log_msg.success_guess_yaw = log.success_guess_yaw;
   log_msg.success_opt = log.success_opt;

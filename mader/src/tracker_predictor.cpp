@@ -204,7 +204,7 @@ void TrackerPredictor::cloud_cb(const sensor_msgs::PointCloud2ConstPtr& pcl2ptr_
   }
   catch (tf2::TransformException& ex)
   {
-    ROS_WARN("[world_database_master_ros] OnGetTransform failed with %s", ex.what());
+    ROS_DEBUG("[world_database_master_ros] OnGetTransform failed with %s", ex.what());
     return;
   }
   pcl::transformPointCloud(*input_cloud1, *input_cloud2_, w_T_b);
@@ -638,7 +638,7 @@ void TrackerPredictor::cloud_cb(const sensor_msgs::PointCloud2ConstPtr& pcl2ptr_
         }
       }
     }
-    std::cout << "\n";
+    //std::cout << "\n";
   }
   else
   {

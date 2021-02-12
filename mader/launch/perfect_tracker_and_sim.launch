@@ -31,7 +31,7 @@
     </group>
 
      <!-- Camera to body tf -->
-    <node pkg="tf" type="static_transform_publisher" name="camera2body" args="0 0 0 -1.57 0 -1.57 $(arg quad) $(arg quad)/camera 100" />
+    <node pkg="tf" type="static_transform_publisher" name="camera2body" args="0 0 0 -1.57 0 -1.57 $(arg quad) $(arg quad)/camera_depth_optical_frame 100" />
 
        
     <!-- Vicon to world tf -->

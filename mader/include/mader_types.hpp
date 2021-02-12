@@ -43,6 +43,9 @@ struct log
   double final_pos_cost = 0.0;
   double final_yaw_cost = 0.0;
 
+  Eigen::Vector3d tracking_now_pos;
+  Eigen::Vector3d tracking_now_vel;
+
   bool success_guess_pos = false;   //
   bool success_guess_yaw = false;   //
   bool success_opt = false;         //

@@ -38,7 +38,7 @@ MaderRos::MaderRos(ros::NodeHandle nh1, ros::NodeHandle nh2, ros::NodeHandle nh3
   ////////////////////////// This has to be done before creating a new MADER object
   // wait for body transform to be published before initializing
 
-  std::string name_camera_tf = name_drone_ + "/camera";
+  std::string name_camera_depth_optical_frame_tf = name_drone_ + "/camera_depth_optical_frame";
 
   while (true)
   {
@@ -47,7 +47,7 @@ MaderRos::MaderRos(ros::NodeHandle nh1, ros::NodeHandle nh2, ros::NodeHandle nh3
     geometry_msgs::TransformStamped transform_stamped;
     try
     {
-      transform_stamped = tf_buffer.lookupTransform(name_drone_, name_camera_tf, ros::Time(0),
+      transform_stamped = tf_buffer.lookupTransform(name_drone_, name_camera_depth_optical_frame_tf, ros::Time(0),
                                                     ros::Duration(0.5));  // TODO: change this duration time?
                                                                           // Note that ros::Time(0) will just get us the
                                                                           // latest available transform.
@@ -61,7 +61,7 @@ MaderRos::MaderRos(ros::NodeHandle nh1, ros::NodeHandle nh2, ros::NodeHandle nh3
     }
     catch (tf2::TransformException& ex)
     {
-      ROS_WARN_THROTTLE(1.0, "Trying to find transform %s --> %s", name_drone_.c_str(), name_camera_tf.c_str());
+      ROS_WARN_THROTTLE(1.0, "Trying to find transform %s --> %s", name_drone_.c_str(), name_camera_depth_optical_frame_tf.c_str());
     }
   }
   ROS_INFO("Found transform");

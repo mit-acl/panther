@@ -5,10 +5,10 @@
   <arg name="perfect_prediction" default="false"/>
 
   <!-- COMMANDS -->
-  <node ns="$(arg quad)" name="commands" pkg="mader_other" type="commands.py" output="screen"/>
+<!--   <node ns="$(arg quad)" name="commands" pkg="mader_other" type="commands.py" output="screen"/> -->
  
   <!-- RUN CAMERA AND TRACKER-->
-  <group unless="$(arg perfect_prediction)">
+<!--   <group unless="$(arg perfect_prediction)">
        <include file="$(find mader)/launch/tracker_predictor.launch">
           <arg name="quad" value="$(arg quad)"/>
        </include> 
@@ -18,7 +18,7 @@
           <arg name="record" value="false"/>
           <arg name="pub_tf_drone2camera" value="false"/>
        </include> 
-  </group>  
+  </group>   -->
 
   <!-- BEHAVIOUR SELECTOR  
   <node pkg="behavior_selector" type="behavior_selector_node.py" name="behavior_selector" output="screen" />
@@ -27,14 +27,14 @@
 <!-- NOt using tf2_ros here because of all the issues with /tf_static and rosbags -->
 <!-- See https://github.com/ros/robot_state_publisher/issues/105#issuecomment-467406420 -->
 
-<node pkg="tf" type="static_transform_publisher" name="drone2camera" args="0.1 0.0 0.09 0.0 -0.22 0.0 $(arg quad) $(arg quad)/camera_link 10" />
-<!-- <node pkg="tf" type="static_transform_publisher" name="camera2camera_link" args="0.0 0.0 0.0 0.0 0 0.0 $(arg quad)/camera $(arg quad)/camera_link 10" /> -->
+<!-- <node pkg="tf" type="static_transform_publisher" name="drone2camera" args="0.1 0.0 0.09 0.0 -0.22 0.0 $(arg quad) $(arg quad)/camera 10" />
+<node pkg="tf" type="static_transform_publisher" name="camera2camera_link" args="0.0 0.0 0.0 0.0 0 0.0 $(arg quad)/camera $(arg quad)/camera_link 10" /> -->
 
 <!-- <node pkg="tf2_ros" type="static_transform_publisher" name="link1_broadcaster" args="0.2 0.0 0.0 0.0 0.0 3.14 SQ04 SQ04/camera" />
 <node pkg="tf2_ros" type="static_transform_publisher" name="link2_broadcaster" args="0.0 0.0 0.0 0.0 0 0.0 SQ04/camera SQ04/camera_link" />
  -->
 
-
+<!-- 
  <node pkg="rosbag" type="record" name="rosbag_record_mader"
        args="record -o /home/ubuntu/Desktop/bags/mader 
 
@@ -68,7 +68,7 @@
 /rviz_visual_tools
 /tf
 /tf_static"
-        />  <!--if="$(arg record)"--> 
+        />   -->
 
   <!-- MADER --> 
   <node ns="$(arg quad)" name="mader" pkg="mader" type="mader_node" output="screen" clear_params="false"> 

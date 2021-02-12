@@ -545,6 +545,13 @@ bool SolverIpopt::optimize()
                                                 final_state_.dyaw, t_init_, t_final_);
   map_arguments["guess_CPs_Yaw"] = matrix_qy_guess;
 
+
+//   std::cout<<"GOING TO CALL OPTIMIZATION"<<std::endl;
+// for(std::map<std::string, casadi::DM>::const_iterator it = map_arguments.begin();
+//     it != map_arguments.end(); ++it)
+// {
+//     std::cout << it->first << " " << it->second<< "\n";
+// }
   ////////////////////////// CALL THE SOLVER
   std::map<std::string, casadi::DM> result;
   log_ptr_->tim_opt.tic();
@@ -608,6 +615,9 @@ bool SolverIpopt::optimize()
       qp.push_back(Eigen::Vector3d(double(qp_casadi(0, i)), double(qp_casadi(1, i)), double(qp_casadi(2, i))));
     }
 
+    // std::cout<<"SOLUTION OPTIMIZATION: "<<result["all_yCPs"]<<std::endl;
+    // std::cout<<"all_w_fe="<<map_arguments["all_w_fe"]<<std::endl;
+    // std::cout<<"all_w_velfewrtworld="<<map_arguments["all_w_velfewrtworld"]<<std::endl;
     qy = static_cast<std::vector<double>>(result["all_yCPs"]);
   }
   else

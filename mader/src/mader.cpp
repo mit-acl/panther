@@ -644,6 +644,18 @@ void Mader::sampleFeaturePosVel(int argmax_prob_collision, double t_start, doubl
 
   last_state_tracked_.pos =pos.front();// pos.back();
   last_state_tracked_.vel =pos.front();// vel.back();
+
+
+  // //HACK, DELETE THIS!!
+  // pos.clear();
+  // vel.clear();
+  // for (int i = 0; i < par_.num_samples_simpson; i++)
+  // {
+  //   pos.push_back(Eigen::Vector3d(0.0,0.0,2.0));
+  //   vel.push_back(Eigen::Vector3d(0.0,0.0,0.0));
+  // }
+  // //END OF HACK
+
   // mtx_t_.unlock();
   // std::cout << red << bold << "in sampleFeaturePositions, mtx_t_ unlocked" << reset << std::endl;
   // mtx_trajs_.unlock();
@@ -679,7 +691,7 @@ void Mader::setTerminalGoal(mt::state& term_goal)
     double diff = desired_yaw - last_state.yaw;
     angle_wrap(diff);
 
-    double dyaw = copysign(1, diff) * par_.ydot_max;
+    double dyaw = copysign(1, diff) * 0.5; //par_.ydot_max; Changed to 0.5 (in HW the drone stops the motors when status==YAWING and ydot_max is too high, probably because of too much current?)
 
     int num_of_el = (int)fabs(diff / (par_.dc * dyaw));
 
@@ -1077,6 +1089,9 @@ bool Mader::replan(mt::Edges& edges_obstacles_out, std::vector<mt::state>& X_saf
   sampleFeaturePosVel(argmax_prob_collision, t_start, t_final, w_posfeature,
                       w_velfeaturewrtw);  // need to do it here so that argmax_prob_collision does not become invalid
                                           // with new updates
+
+  log_ptr_->tracking_now_pos=w_posfeature.front();
+  log_ptr_->tracking_now_vel=w_velfeaturewrtw.front();
   std::cout << bold << "Chosen Trajectory " << argmax_prob_collision << reset << std::endl;
 
   mtx_trajs_.unlock();
