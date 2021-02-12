@@ -17,7 +17,7 @@ dim_pos=3;
 % num_seg_prediction =1; %Not used (in this file we fit a polynomial, not a
 % spline)
 min_size_sliding_window=4; %This is the number of observations
-max_size_sliding_window=25;
+max_size_sliding_window=50;
 secs_prediction=10; %BE CAREFUL: If it's too big (like 100), casadi will crash sometimes (because all_t will be very similar)
 
 my_file=fopen('params_casadi_prediction.yaml','w'); %Overwrite content. This will clear its content
