@@ -57,7 +57,7 @@
 /$(arg quad)/tracker_predictor_node/pcloud_filtered
 /$(arg quad)/tracker_predictor_node/trajs_predicted
 /$(arg quad)/who_plans
-/$(arg quad)/camera/color/image_raw/compressed
+/$(arg quad)/camera/color/image_raw
 /$(arg quad)/camera/color/camera_info  
 /$(arg quad)/camera/depth/color/points 
 /$(arg quad)/log
