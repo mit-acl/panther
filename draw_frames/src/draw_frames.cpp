@@ -84,7 +84,7 @@ public:
       // cv:
       //   putText(image, frame_id.c_str(), origin, cv::FONT_HERSHEY_SIMPLEX, 12, CV_RGB(255, 0, 0));
 
-      // std::cout << "Drawing at " << uv.x << ", " << uv.y << std::endl;
+      std::cout << "Drawing at " << uv.x << ", " << uv.y << std::endl;
     }
 
     pub_.publish(input_bridge->toImageMsg());
