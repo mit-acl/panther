@@ -50,18 +50,15 @@
 /$(arg quad)/mader/polys
 /$(arg quad)/mader/traj_obtained
 /$(arg quad)/setpoint
-/$(arg quad)/state
 /$(arg quad)/tracker_predictor_node/logtp
 /$(arg quad)/tracker_predictor_node/marker_bbox_obstacles
 /$(arg quad)/tracker_predictor_node/marker_predicted_traj
 /$(arg quad)/tracker_predictor_node/pcloud_filtered
 /$(arg quad)/tracker_predictor_node/trajs_predicted
 /$(arg quad)/who_plans
-/$(arg quad)/camera/color/image_raw
+/$(arg quad)/camera/color/image_raw/compressed
 /$(arg quad)/camera/color/camera_info  
 /$(arg quad)/camera/depth/color/points 
-/$(arg quad)/log
-/$(arg quad)/motors
 /globalflightmode
 /rosout
 /rosout_agg
