@@ -87,7 +87,7 @@ alpha_shrink: 0.95 #\in [0,1] Only used for MINVO/Bezier
 norminv_prob: 0.6 #For x% bands, set this to norminv(x). #70.0% band <--> 0.524
                                                           #80.0% band <--> 0.841
                                                           #90.0% band <--> 1.282
-                                                          #97.5% band <--> 1.96 
+                                                          #97.5% band <--> 1.96 (i.e. total area is 95%)
 
 # distance_to_force_final_pos: 2.0
 print_graph_yaw_info: false

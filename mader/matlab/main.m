@@ -346,11 +346,11 @@ for j=1:sp.num_seg
       %%%%%%%%%%%%%%%%%%
      %Simpler [but no simplification made!] version of version 1 (cone):
     gamma=100;
-    w_beta=w_fevar(1:3)-w_T_c(1:3,4);
-    w_beta=w_beta/norm(w_beta);
-    is_in_FOV1=-cos(thetax_half_FOV_deg*pi/180.0)+w_beta'*w_T_c(1:3,3); %This has to be >=0
+%     w_beta=w_fevar(1:3)-w_T_c(1:3,4);
+%     w_beta=w_beta/norm(w_beta);
+%     is_in_FOV1=-cos(thetax_half_FOV_deg*pi/180.0)+w_beta'*w_T_c(1:3,3); %This has to be >=0
+    is_in_FOV1=-cos(thetax_half_FOV_deg*pi/180.0) + (c_P(1:3)'/norm(c_P((1:3))))*[0;0;1];
     isInFOV_smooth=  (   1/(1+exp(-gamma*is_in_FOV1))  );
-
     
     %     %%%%%%%%%%%%%%%%%%%
       %FOV version 3: [Squicular cone]
@@ -613,8 +613,8 @@ sol=my_function( names_value{:});
 toc();
 
 statistics=get_stats(my_function); %See functions defined below
-full(sol.all_pCPs);
-full(sol.all_yCPs);
+full(sol.all_pCPs)
+full(sol.all_yCPs)
 
 %Write param file with the characteristics of the casadi function generated
 my_file=fopen('params_casadi.yaml','w'); %Overwrite content. This will clear its content
