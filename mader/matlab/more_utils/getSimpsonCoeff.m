@@ -2,7 +2,7 @@ function result=getSimpsonCoeff(j,total)
 
     j_is_even = (rem(j, 2) == 0);
 
-    %https://en.wikipedia.org/wiki/Simpson%27s_rule
+    %See Composite Simpson's rule in https://en.wikipedia.org/wiki/Simpson%27s_rule
 
     if(j==1 || j==total)  %Beginning or end
         result=1.0;
