@@ -110,7 +110,7 @@
             <depthImageTopicName>${name}/depth/image_rect_raw</depthImageTopicName>
             <depthImageCameraInfoTopicName>${name}/depth/camera_info</depthImageCameraInfoTopicName>
             <pointCloudTopicName>${name}/depth/color/points</pointCloudTopicName>
-            <frameName>${name}</frameName>
+            <frameName>${name}_depth_optical_frame</frameName>
             <pointCloudCutoff>0.06</pointCloudCutoff>
             <pointCloudCutoffMax>7.0</pointCloudCutoffMax> <!--this is the clipping distance for the Depth image and Point Cloud-->
           </plugin>
