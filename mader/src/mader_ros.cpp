@@ -61,7 +61,8 @@ MaderRos::MaderRos(ros::NodeHandle nh1, ros::NodeHandle nh2, ros::NodeHandle nh3
     }
     catch (tf2::TransformException& ex)
     {
-      ROS_WARN_THROTTLE(1.0, "Trying to find transform %s --> %s", name_drone_.c_str(), name_camera_depth_optical_frame_tf.c_str());
+      ROS_WARN_THROTTLE(1.0, "Trying to find transform %s --> %s", name_drone_.c_str(),
+                        name_camera_depth_optical_frame_tf.c_str());
     }
   }
   ROS_INFO("Found transform");
@@ -127,6 +128,8 @@ MaderRos::MaderRos(ros::NodeHandle nh1, ros::NodeHandle nh2, ros::NodeHandle nh3
   safeGetParam(nh1_, "a_star_bias", par_.a_star_bias);
 
   safeGetParam(nh1_, "basis", par_.basis);
+
+  safeGetParam(nh1_, "mode", par_.mode);
 
   safeGetParam(nh1_, "res_plot_traj", par_.res_plot_traj);
 
@@ -233,7 +236,6 @@ MaderRos::MaderRos(ros::NodeHandle nh1, ros::NodeHandle nh2, ros::NodeHandle nh3
   ///
   if (perfect_prediction == false)
   {
-
     ROS_INFO("NOT using ground truth trajectories (subscribed to trajs_predicted)");
     sub_traj_ = nh1_.subscribe("trajs_predicted", 20, &MaderRos::trajCB, this);  // number is queue size
 

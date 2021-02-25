@@ -160,7 +160,6 @@ struct state
 // TODO: move this to a class (so that no one can modify these matrices)
 struct basisConverter
 {
-
   Eigen::Matrix<double, 2, 2> A_mv_deg1_rest;
   Eigen::Matrix<double, 2, 2> A_be_deg1_rest;
   Eigen::Matrix<double, 2, 2> A_bs_deg1_rest;
@@ -805,6 +804,7 @@ struct parameters
   double a_star_bias = 1.0;
 
   std::string basis;
+  std::string mode;
 
   double res_plot_traj;
 

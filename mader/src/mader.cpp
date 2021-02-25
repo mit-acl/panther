@@ -389,15 +389,13 @@ std::vector<Eigen::Vector3d> Mader::vertexesOfInterval(mt::PieceWisePol& pwp, do
     }
     else if (deg == 1)
     {
-      V = P*A_basis_deg1_rest_inverse_;
+      V = P * A_basis_deg1_rest_inverse_;
     }
     else
     {
-     
-     // TODO
+      // TODO
       std::cout << "Not implemented yet. Aborting" << std::endl;
       abort();
-
     }
 
     // std::cout << "P= \n" << P << std::endl;
@@ -642,9 +640,8 @@ void Mader::sampleFeaturePosVel(int argmax_prob_collision, double t_start, doubl
     std::cout << bold << "There is no dynamic obstacle to track, using last_pos_tracked_" << reset << std::endl;
   }
 
-  last_state_tracked_.pos =pos.front();// pos.back();
-  last_state_tracked_.vel =pos.front();// vel.back();
-
+  last_state_tracked_.pos = pos.front();  // pos.back();
+  last_state_tracked_.vel = pos.front();  // vel.back();
 
   // //HACK, DELETE THIS!!
   // pos.clear();
@@ -691,7 +688,9 @@ void Mader::setTerminalGoal(mt::state& term_goal)
     double diff = desired_yaw - last_state.yaw;
     angle_wrap(diff);
 
-    double dyaw = copysign(1, diff) * 0.5; //par_.ydot_max; Changed to 0.5 (in HW the drone stops the motors when status==YAWING and ydot_max is too high, probably because of too much current?)
+    double dyaw =
+        copysign(1, diff) * 0.5;  // par_.ydot_max; Changed to 0.5 (in HW the drone stops the motors when status==YAWING
+                                  // and ydot_max is too high, probably because of too much current?)
 
     int num_of_el = (int)fabs(diff / (par_.dc * dyaw));
 
@@ -935,7 +934,7 @@ bool Mader::replan(mt::Edges& edges_obstacles_out, std::vector<mt::state>& X_saf
 
   log_ptr_->tim_initial_setup.tic();
 
-  removeOldTrajectories();
+  // removeOldTrajectories();
 
   //////////////////////////////////////////////////////////////////////////
   ///////////////////////// Select mt::state A /////////////////////////////////
@@ -1090,8 +1089,8 @@ bool Mader::replan(mt::Edges& edges_obstacles_out, std::vector<mt::state>& X_saf
                       w_velfeaturewrtw);  // need to do it here so that argmax_prob_collision does not become invalid
                                           // with new updates
 
-  log_ptr_->tracking_now_pos=w_posfeature.front();
-  log_ptr_->tracking_now_vel=w_velfeaturewrtw.front();
+  log_ptr_->tracking_now_pos = w_posfeature.front();
+  log_ptr_->tracking_now_vel = w_velfeaturewrtw.front();
   std::cout << bold << "Chosen Trajectory " << argmax_prob_collision << reset << std::endl;
 
   mtx_trajs_.unlock();

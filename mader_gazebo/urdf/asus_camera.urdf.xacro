@@ -89,15 +89,34 @@
       <!-- ASUS Xtion PRO camera for simulation -->
       <gazebo reference="${name}_depth_frame">
         <sensor type="depth" name="${name}">
-          <update_rate>30</update_rate>
+          <update_rate>60</update_rate>
           <camera>
-            <horizontal_fov>${90 * M_PI/180.0}</horizontal_fov>
+            <horizontal_fov>${60 * M_PI/180.0}</horizontal_fov>
             <image>
               <format>R8G8B8</format>
 <!--               <width>120</width>  320, 240
               <height>90</height> -->
-              <width>320</width>
-              <height>240</height>
+              <width>480</width>
+              <height>480</height> <!--Note that the focal length is given by f = (width/2) / tan( horizontal_fov/2) 
+                                                     vertical_fov is given by 2*arctan(height/(2*f))
+                                                    
+                                                    Also, the camera_info msg will have:
+
+                                                      info_msg.K[0] = f;
+                                                      info_msg.K[4] = f;
+                                                      info_msg.K[2] = info_msg.width * 0.5;
+                                                      info_msg.K[5] = info_msg.height * 0.5;
+                                                      info_msg.K[8] = 1.;
+
+                                                      info_msg.P[0] = info_msg.K[0];
+                                                      info_msg.P[5] = info_msg.K[4];
+                                                      info_msg.P[2] = info_msg.K[2];
+                                                      info_msg.P[6] = info_msg.K[5];
+                                                      info_msg.P[10] = info_msg.K[8];
+
+                                                      (see https://github.com/SyrianSpock/realsense_gazebo_plugin/blob/master/src/gazebo_ros_realsense.cpp#L145)
+                                                      and https://answers.ros.org/question/12658/how-to-change-gazebo-gui-focal-lengthfov/#js-post-body-18700:~:text=f%20%3D%20(width%2F2)%20%2F%20tan(%20deg2rad(hfov)%2F2)%20%3D%20(640%2F2)%20%2F%20tan(deg2rad(90)%2F2)%20%3D%20320
+                                                    --> 
             </image>
             <clip>
               <near>0.06</near>

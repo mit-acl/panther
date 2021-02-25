@@ -43,7 +43,7 @@ class FakeSim:
         if(self.getType(i)=="dynamic"):
             mesh=random.choice(self.available_meshes_dynamic);
             bbox=self.bbox_dynamic;
-            [x_string, y_string, z_string] = self.trefoil(x,y,z, s,s,s, offset, slower)
+            [x_string, y_string, z_string] = self.trefoil(x,y,z, s,s,2.5, offset, slower)
         else:
             mesh=random.choice(self.available_meshes_static);
             bbox=self.bbox_static_vert;
@@ -73,8 +73,8 @@ class FakeSim:
         self.z_min= 1.0 
         self.z_max= 2.0
         self.scale=1.0;
-        self.slower_min=1.1
-        self.slower_max= 1.1
+        self.slower_min=2.5
+        self.slower_max= 2.5
         self.bbox_dynamic=[0.8, 0.8, 0.8] 
         self.bbox_static_vert=[0.4, 0.4, 4]
         self.bbox_static_horiz=[0.4, 8, 0.4]
@@ -82,12 +82,15 @@ class FakeSim:
         self.name_obs="obs_"
    
         #HACK
-        self.num_of_dyn_objects=2;
+        self.num_of_dyn_objects=1;
         self.num_of_stat_objects=0;
-        self.x_min= 2.0
-        self.x_max= 3.0
-        self.y_min= -2.0 
-        self.y_max= 2.0
+        self.x_min= 4.0
+        self.x_max= 4.0
+        self.y_min= 4.0 
+        self.y_max= 4.0
+        self.z_min= 1.0 
+        self.z_max= 1.0
+        self.scale= 1.0
         #END OF HACK
 
         self.available_meshes_static=["package://mader/meshes/ConcreteDamage01b/model3.dae", "package://mader/meshes/ConcreteDamage01b/model2.dae"]

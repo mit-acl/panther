@@ -228,17 +228,17 @@ void TrackerPredictor::cloud_cb(const sensor_msgs::PointCloud2ConstPtr& pcl2ptr_
   boxFilter.setMin(Eigen::Vector4f(x_min_, y_min_, z_min_, 1.0));
   boxFilter.setMax(Eigen::Vector4f(x_max_, y_max_, z_max_, 1.0));
   boxFilter.setInputCloud(input_cloud3_);
-  boxFilter.filter(*input_cloud_);
+  boxFilter.filter(*input_cloud4_);
 
   log_.tim_passthrough.toc();
 
   // Voxel grid filter
   log_.tim_voxel_grid.tic();
   // // pcl::ApproximateVoxelGrid<pcl::PointXYZ> sor; //this one crashes randomly on the NUC and Jetson
-  // pcl::VoxelGrid<pcl::PointXYZ> sor;
-  // sor.setInputCloud(input_cloud4_);
-  // sor.setLeafSize(leaf_size_filter_, leaf_size_filter_, leaf_size_filter_);
-  // sor.filter(*input_cloud_);
+  pcl::VoxelGrid<pcl::PointXYZ> sor;
+  sor.setInputCloud(input_cloud4_);
+  sor.setLeafSize(leaf_size_filter_, leaf_size_filter_, leaf_size_filter_);
+  sor.filter(*input_cloud_);
   log_.tim_voxel_grid.toc();
 
   log_.tim_pub_filtered.tic();

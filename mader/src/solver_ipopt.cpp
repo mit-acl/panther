@@ -103,6 +103,7 @@ SolverIpopt::SolverIpopt(mt::parameters &par, std::shared_ptr<mt::log> log_ptr)
   // m_casadi_ptr_ = std::unique_ptr<PImpl>(new PImpl());
 
   cf_op_ = casadi::Function::load(ros::package::getPath("mader") + "/matlab/op.casadi");
+  cf_only_yaw_op_ = casadi::Function::load(ros::package::getPath("mader") + "/matlab/op_only_yaw.casadi");
   // cf_op_force_final_pos_ = casadi::Function::load(ros::package::getPath("mader") +
   // "/matlab/op_force_final_pos.casadi");
   cf_fit_yaw_ = casadi::Function::load(ros::package::getPath("mader") + "/matlab/fit_yaw.casadi");
@@ -505,11 +506,6 @@ bool SolverIpopt::optimize()
   // std::cout << "Using par_.c_fov= \n" << par_.c_fov << std::endl;
   map_arguments["all_w_fe"] = all_w_fe_;
   map_arguments["all_w_velfewrtworld"] = all_w_velfewrtworld_;
-  map_arguments["c_pos_smooth"] = par_.c_pos_smooth;
-  map_arguments["c_yaw_smooth"] = par_.c_yaw_smooth;
-  map_arguments["c_fov"] = par_.c_fov;
-  map_arguments["c_final_pos"] = par_.c_final_pos;  // / pow((final_state_.pos - initial_state_.pos).norm(), 4);
-  map_arguments["c_final_yaw"] = par_.c_final_yaw;
 
   // std::cout << "Total time= " << (t_final_ - t_init_) << std::endl;
 
@@ -545,25 +541,71 @@ bool SolverIpopt::optimize()
                                                 final_state_.dyaw, t_init_, t_final_);
   map_arguments["guess_CPs_Yaw"] = matrix_qy_guess;
 
+  //   std::cout<<"GOING TO CALL OPTIMIZATION"<<std::endl;
+  // for(std::map<std::string, casadi::DM>::const_iterator it = map_arguments.begin();
+  //     it != map_arguments.end(); ++it)
+  // {
+  //     std::cout << it->first << " " << it->second<< "\n";
+  // }
 
-//   std::cout<<"GOING TO CALL OPTIMIZATION"<<std::endl;
-// for(std::map<std::string, casadi::DM>::const_iterator it = map_arguments.begin();
-//     it != map_arguments.end(); ++it)
-// {
-//     std::cout << it->first << " " << it->second<< "\n";
-// }
-  ////////////////////////// CALL THE SOLVER
+  map_arguments["c_pos_smooth"] = par_.c_pos_smooth;
+  map_arguments["c_final_pos"] = par_.c_final_pos;  // / pow((final_state_.pos - initial_state_.pos).norm(), 4);
+  map_arguments["c_final_yaw"] = par_.c_final_yaw;
+
   std::map<std::string, casadi::DM> result;
+
   log_ptr_->tim_opt.tic();
-  // if (par_.force_final_pos == true)
-  // {
-  //   result = cf_op_force_final_pos_(map_arguments);
-  // }
-  // else
-  // {
-  result = cf_op_(map_arguments);
-  // }
+
+  if (par_.mode == "mader")
+  {
+    map_arguments["c_yaw_smooth"] = par_.c_yaw_smooth;
+    map_arguments["c_fov"] = par_.c_fov;
+
+    std::cout << bold << green << "Optimizing for YAW and POSITION!" << reset << std::endl;
+
+    result = cf_op_(map_arguments);
+  }
+  else if (par_.mode == "no_perception_aware")
+  {
+    map_arguments["c_yaw_smooth"] = 0.0;
+    map_arguments["c_fov"] = 0.0;
+
+    std::cout << bold << green << "Optimizing for YAW!" << reset << std::endl;
+
+    result = cf_op_(map_arguments);
+  }
+  else if (par_.mode == "first_pos_then_yaw")
+  {
+    // first sove for the position spline
+    map_arguments["c_yaw_smooth"] = 0.0;
+    map_arguments["c_fov"] = 0.0;
+
+    std::cout << bold << green << "Optimizing first for POSITION!" << reset << std::endl;
+
+    result = cf_op_(map_arguments);
+
+    // Use the position control points obtained for solve for yaw. Note that here the pos spline is FIXED
+    map_arguments["c_yaw_smooth"] = par_.c_yaw_smooth;
+    map_arguments["c_fov"] = par_.c_fov;
+    map_arguments["guess_CPs_Pos"] = result["all_pCPs"];
+
+    std::cout << bold << green << "and then for YAW!" << reset << std::endl;
+
+    std::map<std::string, casadi::DM> result_for_yaw = cf_only_yaw_op_(map_arguments);
+
+    result["all_yCPs"] = result_for_yaw["all_yCPs"];
+
+    // The costs logged will not be the right ones, so don't use them in this mode
+  }
+  else
+  {
+    std::cout << "Mode not implemented yet. Aborting" << std::endl;
+    abort();
+  }
+
   log_ptr_->tim_opt.toc();
+
+  ////////////////////////// CALL THE SOLVER
 
   ///////////////// GET STATUS FROM THE SOLVER
   // Very hacky solution, see discussion at https://groups.google.com/g/casadi-users/c/1061E0eVAXM/m/dFHpw1CQBgAJ
@@ -618,7 +660,24 @@ bool SolverIpopt::optimize()
     // std::cout<<"SOLUTION OPTIMIZATION: "<<result["all_yCPs"]<<std::endl;
     // std::cout<<"all_w_fe="<<map_arguments["all_w_fe"]<<std::endl;
     // std::cout<<"all_w_velfewrtworld="<<map_arguments["all_w_velfewrtworld"]<<std::endl;
-    qy = static_cast<std::vector<double>>(result["all_yCPs"]);
+
+    if (par_.mode == "mader" || par_.mode == "first_pos_then_yaw")
+    {
+      qy = static_cast<std::vector<double>>(result["all_yCPs"]);
+    }
+    else if (par_.mode == "no_perception_aware")
+    {  // constant yaw
+      qy.clear();
+      for (int i = 0; i < result["all_yCPs"].columns(); i++)
+      {
+        qy.push_back(initial_state_.yaw);
+      }
+    }
+    else
+    {
+      std::cout << "Mode not implemented yet. Aborting" << std::endl;
+      abort();
+    }
   }
   else
   {

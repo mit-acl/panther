@@ -176,6 +176,7 @@ private:
   std::unique_ptr<OctopusSearch> octopusSolver_ptr_;
 
   casadi::Function cf_op_;
+  casadi::Function cf_only_yaw_op_;
   // casadi::Function cf_op_force_final_pos_;
   casadi::Function cf_fit_yaw_;
   casadi::Function cf_visibility_;

@@ -27,7 +27,7 @@ deg_yaw=2;
 num_seg =4; %number of segments
 num_max_of_obst=10; %This is the maximum num of the obstacles 
 num_samples_simpson=14;  %This will also be the num_of_layers in the graph yaw search of C++
-num_of_yaw_per_layer=70; %This will be used in the graph yaw search of C++
+num_of_yaw_per_layer=40; %This will be used in the graph yaw search of C++
                          %Note that the initial layer will have only one yaw (which is given) 
 basis="MINVO"; %MINVO OR B_SPLINE or BEZIER. This is the basis used for collision checking (in position, velocity, accel and jerk space), both in Matlab and in C++
 linear_solver_name='ma57'; %mumps [default, comes when installing casadi], ma27, ma57, ma77, ma86, ma97 
@@ -104,7 +104,7 @@ total_time=opti.parameter(1,1); %This allows a different t0 and tf than the one 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%% CREATION OF THE SPLINES! %%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-sp=MyClampedUniformSpline(t0,tf,deg_pos, dim_pos, num_seg, opti); %spline position.
+sp=MyClampedUniformSplinePar(t0,tf,deg_pos, dim_pos, num_seg, opti); %spline position.
 sy=MyClampedUniformSpline(t0,tf,deg_yaw, dim_yaw, num_seg, opti); %spline yaw.
 
 
@@ -130,100 +130,18 @@ j_max_scaled=j_max/(scaling^3); %TODO: check if it should be ^3, I think so
 ydot_max_scaled=ydot_max/scaling; %v_max for yaw
 
 %Initial conditions
-opti.subject_to( sp.getPosT(t0)== p0 );
-opti.subject_to( sp.getVelT(t0)== v0_scaled );
-opti.subject_to( sp.getAccelT(t0)== a0_scaled );
+% opti.subject_to( sp.getPosT(t0)== p0 );
+% opti.subject_to( sp.getVelT(t0)== v0_scaled );
+% opti.subject_to( sp.getAccelT(t0)== a0_scaled );
 opti.subject_to( sy.getPosT(t0)== y0 );
 opti.subject_to( sy.getVelT(t0)== ydot0_scaled );
 
 %Final conditions
 % opti.subject_to( sp.getPosT(tf)== pf );
-opti.subject_to( sp.getVelT(tf)== vf_scaled );
-opti.subject_to( sp.getAccelT(tf)== af_scaled );
+% opti.subject_to( sp.getVelT(tf)== vf_scaled );
+% opti.subject_to( sp.getAccelT(tf)== af_scaled );
 opti.subject_to( sy.getVelT(tf)==ydotf_scaled); % Needed: if not (and if you are minimizing ddyaw), dyaw=cte --> yaw will explode
 
-
-% epsilon=1;
-for j=1:(sp.num_seg)
-
-    %Get the control points of the interval
-    Q=sp.getCPs_XX_Pos_ofInterval(basis, j);
-
-    %Plane constraints
-    for obst_index=1:num_max_of_obst
-      ip = (obst_index-1) * sp.num_seg + j;  % index plane
-       
-%       init_int=min(sp.timeSpanOfInterval(j)); 
-%       end_int=max(sp.timeSpanOfInterval(j)); 
-%       %impose that all the vertexes of the obstacle are on one side of the plane
-%       vertexes=getVertexesMovingObstacle(init_int,end_int); %This call should depend on the obstacle itself
-% 
-%       for r=1:size(vertexes,2) %vertex=vertexes
-%           vertex=vertexes(:,r);
-%           opti.subject_to( (-(n{tm(ip)}'*vertex + d{tm(ip)} - epsilon))<= 0);
-%       end
-      
-      %and the control points on the other side
-      for kk=1:size(Q,2)
-        opti.subject_to( n{ip}'*Q{kk} + d{ip} <= 0);
-      end
-    end  
- 
-%     %Sphere constraints
-%     for kk=1:size(Q,2) 
-%         tmp=(Q{kk}-p0);
-%         opti.subject_to( (tmp'*tmp)<=(Ra*Ra) );
-%     end
-    
-%     %Min max xyz constraints
-%     for kk=1:size(Q,2) 
-%         tmp=Q{kk};
-% %         opti.subject_to( x_lim(1)<=tmp(1) );
-% %         opti.subject_to( x_lim(2)>=tmp(1) );
-% %         
-% %         opti.subject_to( y_lim(1)<=tmp(2) );
-% %         opti.subject_to( y_lim(2)>=tmp(2) );
-% 
-%         opti.subject_to( z_lim(1)<=tmp(3) ); %For now let's use only this constraint (z_ground). The more ineq constraints --> The more comp time usually
-% %         opti.subject_to( z_lim(2)>=tmp(3) );
-%     end
-end
-
-%Max vel constraints (position)
-for j=1:sp.num_seg
-    vel_cps=sp.getCPs_XX_Vel_ofInterval(basis, j);
-    dim=size(vel_cps, 1);
-    for u=1:size(vel_cps,2)
-        for xyz=1:3
-            opti.subject_to( vel_cps{u}(xyz) <= v_max_scaled(xyz)  )
-            opti.subject_to( vel_cps{u}(xyz) >= -v_max_scaled(xyz) )
-        end
-    end
-end
-
-%Max accel constraints (position)
-for j=1:sp.num_seg
-    accel_cps=sp.getCPs_XX_Accel_ofInterval(basis, j);
-    dim=size(accel_cps, 1);
-    for u=1:size(accel_cps,2)
-        for xyz=1:3
-            opti.subject_to( accel_cps{u}(xyz) <= a_max_scaled(xyz)  )
-            opti.subject_to( accel_cps{u}(xyz) >= -a_max_scaled(xyz) )
-        end
-    end
-end
-
-%Max jerk constraints (position)
-for j=1:sp.num_seg
-    jerk_cps=sp.getCPs_MV_Jerk_ofInterval(j);
-    dim=size(jerk_cps, 1);
-    for u=1:size(jerk_cps,2)
-        for xyz=1:3
-            opti.subject_to( jerk_cps{u}(xyz) <= j_max_scaled(xyz)  )
-            opti.subject_to( jerk_cps{u}(xyz) >= -j_max_scaled(xyz) )
-        end
-    end
-end
 
 %Max vel constraints (yaw)
 for j=1:sy.num_seg
@@ -385,7 +303,7 @@ for j=1:sp.num_seg
     
     %Costs (following the convention of "minimize" )
     isInFOV=(target_isInFOV_substituted_yawcps{j});
-    fov_cost_j=-isInFOV /(offset_vel+4*s_dot2);
+    fov_cost_j=-isInFOV /(offset_vel+s_dot2);
 %     fov_cost_j=-isInFOV + 1500000*(isInFOV)*s_dot2;
 %     fov_cost_j=100000*s_dot2/(isInFOV);
 %      fov_cost_j=-isInFOV+1000000000000000000*(1-isInFOV)*s_dot2;
@@ -598,14 +516,14 @@ results_names={'all_pCPs','all_yCPs','pos_smooth_cost','yaw_smooth_cost','fov_co
 
 my_function = opti.to_function('my_function', vars, results_vars,...
                                               names, results_names);
-my_function.save('op.casadi') %Optimization Problam. The file generated is quite big
+my_function.save('op_only_yaw.casadi') %Optimization Problam. The file generated is quite big
 
 
-opti_tmp=opti;
-opti_tmp.subject_to( sp.getPosT(tf)== pf );
-my_function_tmp = opti_tmp.to_function('my_function_tmp', vars, results_vars,...
-                                                        names, results_names);
-my_function_tmp.save('op_force_final_pos.casadi') %The file generated is quite big
+% opti_tmp=opti;
+% opti_tmp.subject_to( sp.getPosT(tf)== pf );
+% my_function_tmp = opti_tmp.to_function('my_function_tmp', vars, results_vars,...
+%                                                         names, results_names);
+% my_function_tmp.save('op_force_final_pos.casadi') %The file generated is quite big
                                                     
 % my_function=my_function.expand();
 tic();
@@ -810,8 +728,8 @@ function [stats] = get_stats(f)
       fprintf("Found k= %d\n", k)
       d = f.instruction_MX(k).which_function();
       if d.name()=='solver'
-        my_file=fopen('index_instruction.txt','w'); %Overwrite content
-        fprintf(my_file,'%d\n',k);
+%         my_file=fopen('index_instruction.txt','w'); %Overwrite content
+%         fprintf(my_file,'%d\n',k);
         dep = d;
         break
       end
