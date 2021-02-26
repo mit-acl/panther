@@ -71,7 +71,11 @@ sudo ln -s libcoinhsl.so libhsl.so #(This creates a symbolic link `libhsl.so` po
 echo "export LD_LIBRARY_PATH='\${LD_LIBRARY_PATH}:/usr/local/lib'" >> ~/.bashrc
 ```
 
+
 ##### Optional (only if you want to modify the optimization problem)
+<details>
+  <summary>Click to expand!</summary>
+
 The easiest way to do this is to install casadi from binaries by simply following these commands:
 
 ````bash
@@ -92,9 +96,10 @@ disp(jacobian(sin(x),x))
 ```
 
 > Note: Instead of the binary installation explained in this section, another (but not so straightforward) way would be to use the installation `from source` done above, but it requires some patches to swig, see [this](https://github.com/casadi/casadi/wiki/matlab).
+</details>
 
 
-### Compilation
+### <ins>Compilation<ins>
 ```bash
 cd ~/Desktop && mkdir ws && cd ws && mkdir src && cd src
 git clone https://github.com/mit-acl/panther.git
