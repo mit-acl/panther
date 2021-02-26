@@ -20,9 +20,9 @@ When using PANTHER, please PANTHER:
 PANTHER has been tested with 
 * Ubuntu 18.04/ROS Melodic 
 
-### Dependencies
+### <ins>Dependencies<ins>
 
-#### * CGAL
+#### CGAL
 ```bash
 sudo apt-get install libgmp3-dev libmpfr-dev -y
 mkdir -p ~/installations/cgal
