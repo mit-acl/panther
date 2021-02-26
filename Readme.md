@@ -4,7 +4,7 @@
 
 ## Citation
 
-When using PANTHER, please PANTHER:
+When using PANTHER, please cite PANTHER:
 
 ```bibtex
 @article{tordesillas2020panther,
@@ -17,8 +17,7 @@ When using PANTHER, please PANTHER:
 
 ## General Setup
 
-PANTHER has been tested with 
-* Ubuntu 18.04/ROS Melodic 
+PANTHER has been tested with Ubuntu 18.04/ROS Melodic 
 
 ### <ins>Dependencies<ins>
 
@@ -40,6 +39,7 @@ sudo make install
 Install CasADi from source (see [this](https://github.com/casadi/casadi/wiki/InstallationLinux) for more details) and the solver IPOPT:
 ```bash
 sudo apt-get install gcc g++ gfortran git cmake liblapack-dev pkg-config --install-recommends
+sudo apt-get install swig
 sudo apt-get install coinor-libipopt-dev
 cd ~/installations #Or any other folder of your choice
 git clone https://github.com/casadi/casadi.git -b master casadi
@@ -120,23 +120,3 @@ Now you can press `G` (or click the option `2D Nav Goal` on the top bar of RVIZ)
 
 ## Credits:
 This package uses some C++ classes from the [DecompROS](https://github.com/sikang/DecompROS) repo (included in the `thirdparty` folder), so credit to it as well. 
-
-========================
-To download the repo, install all the dependencies and compile simply run these commands:
-
-```bash
-cd ~/ && mkdir ws && cd ws && mkdir src && cd src
-git clone https://github.com/mit-acl/panther.git
-cd ..
-bash panther/install_and_compile.sh
-```
-
-The [bash script](https://github.com/mit-acl/panther/blob/master/install_and_compile.sh) will install [NLopt v2.6.2](https://nlopt.readthedocs.io/en/latest/), [CGAL v4.12.4](https://www.cgal.org/), [GLPK](https://www.gnu.org/software/glpk/) and other ROS packages (check the script for details). This bash script assumes that you already have ROS installed in your machine. 
-
-
-roslaunch panther single_agent_simulation.launch gazebo:=false perfect_tracker:=false use_gui_mission:=true
-
-----
-Sim without gui: `roslaunch panther single_agent_simulation.launch use_gui_mission:=false`
-Sim with gui: `roslaunch panther single_agent_simulation.launch use_gui_mission:=true`. You can also the z value of `panther_specific.launch` to set the initial position of the drone
-----
