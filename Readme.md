@@ -47,7 +47,8 @@ cmake . -DCMAKE_BUILD_TYPE=Release -DWITH_PYTHON=ON -DWITH_IPOPT=ON ..
 sudo make install
 ``` 
 
-##### Optional (recommended for better performance)
+<details>
+  <summary> <b>Optional (recommended for better performance)</b></summary>
 To achieve better performance, you can use other linear solvers for Ipopt (instead of the default `mumps` solver). Specifically, we found that `MA27` and `MA57` are usually faster than the default `mumps` solver.
 
 Go to [http://www.hsl.rl.ac.uk/ipopt/](http://www.hsl.rl.ac.uk/ipopt/), and then 
@@ -70,9 +71,9 @@ cd /usr/local/lib
 sudo ln -s libcoinhsl.so libhsl.so #(This creates a symbolic link `libhsl.so` pointing to `libcoinhsl.so`). See https://github.com/casadi/casadi/issues/1437
 echo "export LD_LIBRARY_PATH='\${LD_LIBRARY_PATH}:/usr/local/lib'" >> ~/.bashrc
 ```
+</details>
 
 
-##### Optional (only if you want to modify the optimization problem)
 <details>
   <summary> <b>Optional (only if you want to modify the optimization problem)</b></summary>
 
