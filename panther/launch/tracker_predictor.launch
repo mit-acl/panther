@@ -1,0 +1,20 @@
+<launch>
+
+	<arg name="quad" default="SQ01s"/>
+	<arg name="cloud_topic" default="camera/depth/color/points"  />   <!--camera/cloud -->
+
+
+	<node ns="$(arg quad)" name="tracker_predictor_node" pkg="panther" type="tracker_predictor_node" output="screen" clear_params="false" respawn="true"> 
+		<rosparam file="$(find panther)/matlab/params_casadi_prediction.yaml" command="load"/>
+		<rosparam file="$(find panther)/param/predictor.yaml" command="load"/>
+		<remap from="~cloud" to="$(arg cloud_topic)"/>
+	</node>
+
+	<!-- <node pkg="rviz" type="rviz" name="rviz" args="-d $(find panther)/rviz_cfgs/panther.rviz"/> -->
+
+</launch>
+
+
+
+<!-- launch-prefix="xterm -e gdb -ex run XXargs" -->
+<!--  launch-prefix="valgrind" -->

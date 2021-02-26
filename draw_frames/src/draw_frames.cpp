@@ -26,16 +26,16 @@ public:
   {
     std::string image_topic = nh_.resolveName("image");
 
-    std::string param_name = "/SQ01s/mader/mode";
+    std::string param_name = "/SQ01s/panther/mode";
 
-    if (!nh_.getParam("/SQ01s/mader/mode", mode_))
+    if (!nh_.getParam("/SQ01s/panther/mode", mode_))
     {
       ROS_ERROR("Failed to find parameter: %s", nh_.resolveName(param_name, true).c_str());
       exit(1);
     }
 
-    name_file_pos_ = "/home/jtorde/Desktop/ws/src/mader/" + mode_ + "_projection_positions.txt";
-    name_file_vel_ = "/home/jtorde/Desktop/ws/src/mader/" + mode_ + "_projection_velocities.txt";
+    name_file_pos_ = "/home/jtorde/Desktop/ws/src/panther/" + mode_ + "_projection_positions.txt";
+    name_file_vel_ = "/home/jtorde/Desktop/ws/src/panther/" + mode_ + "_projection_velocities.txt";
 
     // ros::NodeHandle nh;
     // image_transport::ImageTransport it(nh);

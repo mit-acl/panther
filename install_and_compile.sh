@@ -4,7 +4,7 @@
 #This file should be called from the root of the workspace 
 
 #Example: If the structure is
-# ws --> src --> mader
+# ws --> src --> panther
 # This file should be called from the directory ws
 
 source ~/.bashrc
@@ -42,7 +42,7 @@ sudo apt-get install python-catkin-tools -y
 
 #CLONE SUBMODULES, INSTALL DEPENDENCIES AND COMPILE
 ##########################################
-cd $path_to_ws/src/mader && git submodule init && git submodule update && cd ../../
+cd $path_to_ws/src/panther && git submodule init && git submodule update && cd ../../
 rosdep install --from-paths src --ignore-src -r -y
 catkin config -DCMAKE_BUILD_TYPE=Release
 catkin build #GLPK will be installed when the `separator` package is compiled (see its CMakeList.txt)

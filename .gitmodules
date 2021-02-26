@@ -18,5 +18,5 @@
 	path = submodules/minvo
 	url = git@github.com:mit-acl/minvo.git
 [submodule "mader_extra"]
-	path = submodules/mader_extra
+	path = submodules/panther_extra
 	url = git@github.com:jtorde/mader_extra.git
