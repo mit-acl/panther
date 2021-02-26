@@ -58,7 +58,7 @@ Go to [http://www.hsl.rl.ac.uk/ipopt/](http://www.hsl.rl.ac.uk/ipopt/), and then
 
 And fill and submit the form. Then download the compressed file from the link of the email you receive. Uncompress that file, and place it in a folder `~/installations` (for example). Then execute the following commands:
 
-> Note: the instructions below follows [this](https://github.com/casadi/casadi/wiki/Obtaining-HSL) closely
+> Note: the instructions below follow [this](https://github.com/casadi/casadi/wiki/Obtaining-HSL) closely
 
 ```bash
 cd ~/installations/coinhsl-2015.06.23
@@ -87,7 +87,7 @@ tar xvzf casadi-linux-matlabR2014b-v3.5.5.tar.gz
 
 Open Matlab, execute the command `edit(fullfile(userpath,'startup.m'))`, and add the line `addpath('/usr/local/lib')` in that file. (This file is executed every time Matlab starts)
 
-Then you can restart Matlab (or run the file above), and this should work: 
+Then you can restart Matlab (or run the file above), and make sure this works: 
 
 ```bash
 import casadi.*
@@ -95,6 +95,8 @@ x = MX.sym('x')
 disp(jacobian(sin(x),x))
 
 ```
+
+Then, to use a specific linear solver, you simply need to change the name of `linear_solver_name` in the file `main.m`, and then run that file.
 
 > Note: Instead of the binary installation explained in this section, another (but not so straightforward) way would be to use the installation `from source` done above, but it requires some patches to swig, see [this](https://github.com/casadi/casadi/wiki/matlab).
 </details>
