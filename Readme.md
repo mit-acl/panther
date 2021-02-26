@@ -74,7 +74,7 @@ echo "export LD_LIBRARY_PATH='\${LD_LIBRARY_PATH}:/usr/local/lib'" >> ~/.bashrc
 
 ##### Optional (only if you want to modify the optimization problem)
 <details>
-  <summary>##### Optional (only if you want to modify the optimization problem)</summary>
+  <summary> **Optional (only if you want to modify the optimization problem)**</summary>
 
 The easiest way to do this is to install casadi from binaries by simply following these commands:
 
