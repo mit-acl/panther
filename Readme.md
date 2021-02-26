@@ -1,89 +1,119 @@
-roslaunch panther single_agent_simulation.launch gazebo:=false perfect_tracker:=false use_gui_mission:=true
-
-----
-Sim without gui: `roslaunch panther single_agent_simulation.launch use_gui_mission:=false`
-Sim with gui: `roslaunch panther single_agent_simulation.launch use_gui_mission:=true`. You can also the z value of `panther_specific.launch` to set the initial position of the drone
-----
-
-Make sure you have BLAS installed: run this command to make sure
-	locate libblas.so
-
-
-Note: The part below follows essentially https://github.com/casadi/casadi/wiki/Obtaining-HSL
-(but I put -O3 instead)
-
-Go to http://www.hsl.rl.ac.uk/ipopt/ and click on "Coin-HSL Full(Stable)". Note: I think I could also select RC
-Fill the form, and wait one day, and download the link in the email you receive
-Extract it
-cd coinhsl-XXXX
-Note that the name of a subfolder is called 'metis-XXXX'. 
-(la version tambien la puedes ver en el archivo "configure", esta hand-coded all'i)
-Download metis-XXXX.tar.gz from http://glaros.dtc.umn.edu/gkhome/metis/metis/download, extract it, and place it inside the folder `coinhsl-XXXX`
-
-[
-You can also use the MKL libraries:
-1.- Make sure you have an Intel processor (run `lscpu`), and if so, install the Intel MLK libraries using the script of the section "installing the Intel MKL" of https://csantill.github.io/RPerformanceWBLAS/
-
-2.- adding this to the bashrc
-source /opt/intel/parallel_studio_xe_2018.2.046/psxevars.sh intel64
-
-3.- and then, in the command below, use this flag
---with-blas=' -L${MKLROOT}/lib/intel64 -lmkl_intel_ilp64 -lmkl_core -lmkl_intel_thread -lpthread -lm -ldl'
-But right now Matlab crashes when doing that
-]
-
-cd coinhsl-XXXX
-`sudo make uninstall`
-`sudo make clean`
-`./configure LIBS="-llapack" --with-blas="-L/usr/lib -lblas" CXXFLAGS="-g -O3 -fopenmp" FCFLAGS="-g -O3 -fopenmp" CFLAGS="-g -O3 -fopenmp"` (make sure the output says `checking for metis to compile... yes`)
-`sudo make install` (the files will go to /usr/local/lib)
-`cd /usr/local/lib`
-`sudo ln -s libcoinhsl.so libhsl.so` (This creates a symbolic link `libhsl.so` pointing to `libcoinhsl.so`). It's needed because Casadi expects to find `libhsl.so`, see https://github.com/casadi/casadi/issues/1437
-
-And at the end of your `~/.bashrc`, add `export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:/usr/local/lib"`
-
-(note that you could also run simply `sudo make` (without install), then create the symbolic link, in the folder that contains the `libhsl.so` and then export LD_LIBRARY_PATH=path_to_that_folder)
-
-
---------------NOT NEEDED
-Download metis-5.1.0.tar.gz from http://glaros.dtc.umn.edu/gkhome/metis/metis/download
-Extract it
-[Move it if you want to, for example, the installation folder that I usually use]
-cd metis-5.1.0
-make config shared=1
-sudo make install  //File now availble at /usr/local/lib/libmetis.so
------------END OF NOT NEEDED
-
-
-
 ----
 
 # PANTHER: Trajectory Planner in Multi-Agent and Dynamic Environments #
 
-Single-Agent               |  Multi-Agent           | 
-:-------------------------:|:-------------------------:|
-[![PANTHER: Trajectory Planner in Multi-Agent and Dynamic Environments](./panther/imgs/single_agent1.gif)](https://www.youtube.com/user/AerospaceControlsLab "PANTHER: Trajectory Planner in Multi-Agent and Dynamic Environments")      |  [![PANTHER: Trajectory Planner in Multi-Agent and Dynamic Environments](./panther/imgs/circle.gif)](https://www.youtube.com/user/AerospaceControlsLab "PANTHER: Trajectory Planner in Multi-Agent and Dynamic Environments") |  
-[![PANTHER: Trajectory Planner in Multi-Agent and Dynamic Environments](./panther/imgs/single_agent2.gif)](https://www.youtube.com/user/AerospaceControlsLab "PANTHER: Trajectory Planner in Multi-Agent and Dynamic Environments")       |  [![PANTHER: Trajectory Planner in Multi-Agent and Dynamic Environments](./panther/imgs/sphere.gif)](https://www.youtube.com/user/AerospaceControlsLab "PANTHER: Trajectory Planner in Multi-Agent and Dynamic Environments")    |  
-
 ## Citation
 
-When using PANTHER, please cite [this paper](https://www.google.com/):
+When using PANTHER, please PANTHER:
 
 ```bibtex
 @article{tordesillas2020panther,
-  title={{PANTHER}: Trajectory Planner in Multi-Agent and Dynamic Environments},
+  title={{PANTHER}: Perception-Aware Trajectory Planner in Dynamic Environments},
   author={Tordesillas, Jesus and How, Jonathan P},
   journal={arXiv preprint},
-  year={2020}
+  year={2021}
 }
 ```
 
 ## General Setup
 
 PANTHER has been tested with 
-* Ubuntu 16.04/ROS Kinetic
 * Ubuntu 18.04/ROS Melodic 
 
+### Dependencies
+
+#### CGAL
+```bash
+sudo apt-get install libgmp3-dev libmpfr-dev -y
+mkdir -p ~/installations/cgal
+cd ~/installations/cgal
+wget https://github.com/CGAL/cgal/releases/download/releases%2FCGAL-4.14.2/CGAL-4.14.2.tar.xz
+tar -xf CGAL-4.14.2.tar.xz
+cd CGAL-4.14.2/
+cmake . -DCMAKE_BUILD_TYPE=Release
+sudo make install
+```
+
+#### CasADi and IPOPT
+
+Install CasADi from source (see [this](https://github.com/casadi/casadi/wiki/InstallationLinux) for more details) and the solver IPOPT:
+```bash
+sudo apt-get install gcc g++ gfortran git cmake liblapack-dev pkg-config --install-recommends
+sudo apt-get install coinor-libipopt-dev
+cd ~/installations #Or any other folder of your choice
+git clone https://github.com/casadi/casadi.git -b master casadi
+cd casadi && mkdir build && cd build
+cmake . -DCMAKE_BUILD_TYPE=Release -DWITH_PYTHON=ON -DWITH_IPOPT=ON .. 
+sudo make install
+``` 
+
+##### Optional (recommended for better performance)
+To achieve better performance, you can use other linear solvers for Ipopt (instead of the default `mumps` solver). Specifically, we found that `MA27` and `MA57` are usually faster than the default `mumps` solver.
+
+Go to [http://www.hsl.rl.ac.uk/ipopt/](http://www.hsl.rl.ac.uk/ipopt/), and then 
+
+* If you want the solver `MA57` (or `MA27`, or both), click on `Coin-HSL Full (Stable) Source`. This is free for academia. 
+* If you only want the solver `MA27`, click on `Personal Licence, Source`. This is free for everyone
+
+And fill and submit the form. Then download the compressed file from the link of the email you receive. Uncompress that file, and place it in a folder `~/installations` (for example). Then execute the following commands:
+
+> Note: the instructions below follows [this](https://github.com/casadi/casadi/wiki/Obtaining-HSL) closely
+
+```bash
+cd ~/installations/coinhsl-2015.06.23
+wget http://glaros.dtc.umn.edu/gkhome/fetch/sw/metis/OLD/metis-4.0.3.tar.gz #This is the metis version used in the configure file of coinhsl
+tar xvzf metis-4.0.3.tar.gz
+#sudo make uninstall && sudo make clean #Only needed if you have installed it before
+./configure LIBS="-llapack" --with-blas="-L/usr/lib -lblas" CXXFLAGS="-g -O3 -fopenmp" FCFLAGS="-g -O3 -fopenmp" CFLAGS="-g -O3 -fopenmp" #the output should say `checking for metis to compile... yes`
+sudo make install #(the files will go to /usr/local/lib)
+cd /usr/local/lib
+sudo ln -s libcoinhsl.so libhsl.so #(This creates a symbolic link `libhsl.so` pointing to `libcoinhsl.so`). See https://github.com/casadi/casadi/issues/1437
+echo "export LD_LIBRARY_PATH='\${LD_LIBRARY_PATH}:/usr/local/lib'" >> ~/.bashrc
+```
+
+##### Optional (only if you want to modify the optimization problem)
+The easiest way to do this is to install casadi from binaries by simply following these commands:
+
+````bash
+cd ~/installations
+wget https://github.com/casadi/casadi/releases/download/3.5.5/casadi-linux-matlabR2014b-v3.5.5.tar.gz
+tar xvzf casadi-linux-matlabR2014b-v3.5.5.tar.gz
+````
+
+Open Matlab, execute the command `edit(fullfile(userpath,'startup.m'))`, and add the line `addpath('/usr/local/lib')` in that file. (This file is executed every time Matlab starts)
+
+Then you can restart Matlab (or run the file above), and this should work: 
+
+```bash
+import casadi.*
+x = MX.sym('x')
+disp(jacobian(sin(x),x))
+
+```
+
+> Note: Instead of the binary installation explained in this section, another (but not so straightforward) way would be to use the installation `from source` done above, but it requires some patches to swig, see [this](https://github.com/casadi/casadi/wiki/matlab).
+
+
+### Compilation
+```bash
+cd ~/Desktop && mkdir ws && cd ws && mkdir src && cd src
+git clone https://github.com/mit-acl/panther.git
+cd panther
+git submodule init && git submodule update
+catkin build
+echo "source /home/YOUR_USER/Desktop/ws/devel/setup.bash" >> ~/.bashrc 
+```
+
+### Running Simulations
+
+`roslaunch panther single_agent_simulation.launch use_gui_mission:=true`. You can also the z value of `panther_specific.launch` to set the initial position of the drone
+
+Now you can press `G` (or click the option `2D Nav Goal` on the top bar of RVIZ) and click any goal for the drone. 
+
+## Credits:
+This package uses some C++ classes from the [DecompROS](https://github.com/sikang/DecompROS) repo (included in the `thirdparty` folder), so credit to it as well. 
+
+========================
 To download the repo, install all the dependencies and compile simply run these commands:
 
 ```bash
@@ -95,50 +125,10 @@ bash panther/install_and_compile.sh
 
 The [bash script](https://github.com/mit-acl/panther/blob/master/install_and_compile.sh) will install [NLopt v2.6.2](https://nlopt.readthedocs.io/en/latest/), [CGAL v4.12.4](https://www.cgal.org/), [GLPK](https://www.gnu.org/software/glpk/) and other ROS packages (check the script for details). This bash script assumes that you already have ROS installed in your machine. 
 
-### Running Simulations
 
-#### Single-agent
-```
-roslaunch panther single_agent_simulation.launch
-```
-Now you can press `G` (or click the option `2D Nav Goal` on the top bar of RVIZ) and click any goal for the drone. 
+roslaunch panther single_agent_simulation.launch gazebo:=false perfect_tracker:=false use_gui_mission:=true
 
-To run many single-agent simulations in different random environments, you can go to the `scripts` folder and execute `python run_many_sims_single_agent.py`.
-
-#### Multi-agent
-
-Change these parameters in `panther.yaml`:
-
-```yaml
-drone_radius: 0.05
-v_max: [2.5, 2.5, 2.5]     
-a_max: [30.0, 30.0, 9.6]  
-num_pol: 3
-a_star_fraction_voxel_size: 0.0
-a_star_bias: 7.0
-```
-
-and then open four terminals and run these commands:
-
-```
-roslaunch panther panther_general.launch type_of_environment:="dynamic_forest"
-roslaunch panther many_drones.launch action:=start
-roslaunch panther many_drones.launch action:=panther
-roslaunch panther many_drones.launch action:=send_goal
-```
-
-#### Octopus Search
-You can run the octopus search with a dynamic obstacle by simply running
-
-```
-roslaunch panther octopus_search.launch
-```
-And you should obtain this:
-
-![](./panther/imgs/octopus_search.png) 
-
-(note that the octopus search has some randomness in it, so you may obtain a different result each time you run it).
-
-## Credits:
-This package uses some C++ classes from the [DecompROS](https://github.com/sikang/DecompROS) repo (included in the `thirdparty` folder), so credit to it as well. 
-
+----
+Sim without gui: `roslaunch panther single_agent_simulation.launch use_gui_mission:=false`
+Sim with gui: `roslaunch panther single_agent_simulation.launch use_gui_mission:=true`. You can also the z value of `panther_specific.launch` to set the initial position of the drone
+----
