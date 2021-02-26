@@ -23,6 +23,7 @@ PANTHER has been tested with
 ### <ins>Dependencies<ins>
 
 #### CGAL
+These commands will install [CGAL v4.12.4](https://www.cgal.org/):
 ```bash
 sudo apt-get install libgmp3-dev libmpfr-dev -y
 mkdir -p ~/installations/cgal
