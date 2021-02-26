@@ -1,6 +1,4 @@
-----
-
-# PANTHER: Trajectory Planner in Multi-Agent and Dynamic Environments #
+# PANTHER: Perception-Aware Trajectory Planner in Dynamic Environments #
 
 ## Citation
 
