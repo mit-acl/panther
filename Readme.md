@@ -22,7 +22,7 @@ PANTHER has been tested with
 
 ### Dependencies
 
-#### CGAL
+#### * CGAL
 ```bash
 sudo apt-get install libgmp3-dev libmpfr-dev -y
 mkdir -p ~/installations/cgal
