@@ -50,7 +50,8 @@ sudo make install
 
 <details>
   <summary> <b>Optional (recommended for better performance)</b></summary>
-To achieve better performance, you can use other linear solvers for Ipopt (instead of the default `mumps` solver). Specifically, we found that <code>MA27</code> and <code>MA57</code> are usually faster than the default `mumps` solver.
+  
+To achieve better performance, you can use other linear solvers for Ipopt (instead of the default <code>mumps</code> solver). Specifically, we found that <code>MA27</code> and <code>MA57</code> are usually faster than the default `mumps` solver.
 
 Go to [http://www.hsl.rl.ac.uk/ipopt/](http://www.hsl.rl.ac.uk/ipopt/), and then 
 
