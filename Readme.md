@@ -23,7 +23,7 @@ PANTHER has been tested with Ubuntu 18.04/ROS Melodic
 These commands will install [CGAL v4.12.4](https://www.cgal.org/):
 ```bash
 sudo apt-get install libgmp3-dev libmpfr-dev -y
-mkdir -p ~/installations/cgal &&cd ~/installations/cgal
+mkdir -p ~/installations/cgal && cd ~/installations/cgal
 wget https://github.com/CGAL/cgal/releases/download/releases%2FCGAL-4.14.2/CGAL-4.14.2.tar.xz
 tar -xf CGAL-4.14.2.tar.xz && cd CGAL-4.14.2/ && cmake . -DCMAKE_BUILD_TYPE=Release && sudo make install
 ```
@@ -71,7 +71,7 @@ echo "export LD_LIBRARY_PATH='\${LD_LIBRARY_PATH}:/usr/local/lib'" >> ~/.bashrc
 
 
 <details>
-  <summary> <b>Optional (only if you want to modify the optimization problem)</b></summary>
+  <summary> <b>Optional (only if you want to modify the optimization problem, MATLAB needed)</b></summary>
 
 The easiest way to do this is to install casadi from binaries by simply following these commands:
 
