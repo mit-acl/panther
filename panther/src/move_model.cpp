@@ -77,12 +77,14 @@ public:
   // Called by the world_ update start event
   void OnUpdate()
   {
-    // TODO: Use here a macro to detect the GAZEBO version:
-    // http://docs.ros.org/en/jade/api/gazebo_plugins/html/gazebo__ros__camera_8cpp_source.html#navrow2:~:text=00079%20%23%20if%20GAZEBO_MAJOR_VERSION%20%3E%3D%207
-    // https://github.com/roboticsgroup/roboticsgroup_gazebo_plugins/blob/master/src/mimic_joint_plugin.cpp#L25
-
+// http://gazebosim.org/tutorials/?tut=ros_wrapper_versions
+// See example at
+// http://docs.ros.org/en/jade/api/gazebo_plugins/html/gazebo__ros__camera_8cpp_source.html#navrow2:~:text=00079%20%23%20if%20GAZEBO_MAJOR_VERSION%20%3E%3D%207
+#if GAZEBO_MAJOR_VERSION >= 8
     t_ = world_->SimTime().Double();
-
+#else
+    t_ = world_->GetSimTime().Double();
+#endif
     // https://osrf-distributions.s3.amazonaws.com/ign-math/api/1.0.0/classignition_1_1math_1_1Pose3.html
     ignition::math::Pose3d pose(traj_compiled_[0].value(), traj_compiled_[1].value(), traj_compiled_[2].value(), 0.0,
                                 0.0,

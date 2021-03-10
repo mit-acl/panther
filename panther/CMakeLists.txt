@@ -1,18 +1,9 @@
-cmake_minimum_required(VERSION 2.8.3)
+cmake_minimum_required(VERSION 2.8.12)
 project(panther)
 
 ## Add support for C++11, supported in ROS Kinetic and newer
 add_definitions(-std=c++11)
 #add_definitions(-std=c99)
-
-# See http://manpages.ubuntu.com/manpages/bionic/man1/ccache.1.html#precompiled%20headers
-# Note also that we have added in the ~/.bashrc the line export CCACHE_SLOPPINESS=pch_defines,time_macros  
-# add_compile_options(-fpch-preprocess)
-
-
-# set (CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake_cotire")
-# include(cotire)
-
 
 find_package( Eigen3 REQUIRED )
 include_directories(${EIGEN3_INCLUDE_DIR})
@@ -22,7 +13,6 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake_finders")
 find_package(CGAL REQUIRED)
 include(${CGAL_USE_FILE})
 
-
 find_package ( Boost COMPONENTS graph REQUIRED )
 include_directories ( ${Boost_INCLUDE_DIR} )
 
@@ -31,9 +21,6 @@ include_directories( ${CASADI_INCLUDE_DIR} )
 
 #From terminal: catkin config -DCMAKE_BUILD_TYPE=Release (or RelWithDebInfo or Debug)
 set(CMAKE_BUILD_TYPE Release) 
-
-#https://stackoverflow.com/questions/41361631/optimize-in-cmake-by-default
-#set(CMAKE_CXX_FLAGS "-O1")
 
 find_package(catkin REQUIRED COMPONENTS 
 	roscpp
@@ -45,9 +32,8 @@ find_package(catkin REQUIRED COMPONENTS
 	decomp_ros_utils
 	rviz_visual_tools
 	separator
-  #jsk_rviz_plugins
-  pcl_ros
-  hungarian
+    pcl_ros
+    hungarian
 )
 
 find_package(gazebo REQUIRED)
@@ -58,13 +44,56 @@ find_package(decomp_util REQUIRED)
 include_directories(${DECOMP_UTIL_INCLUDE_DIRS})
 
 # find_package(hungarian REQUIRED)
-# include_directories(${HUNGARIAN_INCLUDE_DIRS}) //TODO!!
+# include_directories(${HUNGARIAN_INCLUDE_DIRS}) //TODO
 
 catkin_package()
 
 include_directories(${catkin_INCLUDE_DIRS} include)
 
+add_executable(${PROJECT_NAME}_node src/panther_node.cpp src/panther_ros.cpp src/panther.cpp src/solver_ipopt.cpp src/solver_ipopt_utils.cpp src/utils.cpp src/solver_ipopt_guess.cpp src/yaw_guess_generator.cpp src/octopus_search.cpp src/bspline_utils.cpp src/cgal_utils.cpp)
+target_include_directories (${PROJECT_NAME}_node PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${DECOMP_UTIL_INCLUDE_DIRS} ${Boost_INCLUDE_DIR})
+target_link_libraries(${PROJECT_NAME}_node PUBLIC ${CASADI_LIBRARIES} ${catkin_LIBRARIES} ${CMAKE_CURRENT_SOURCE_DIR} ${DECOMP_UTIL_LIBRARIES} ${Boost_LIBRARIES})  #${CGAL_LIBS}
+add_dependencies(${PROJECT_NAME}_node ${catkin_EXPORTED_TARGETS} )
 
+add_executable(test_octopus_search src/examples/test_octopus_search.cpp src/octopus_search.cpp src/bspline_utils.cpp src/utils.cpp src/cgal_utils.cpp) 
+add_dependencies(test_octopus_search ${catkin_EXPORTED_TARGETS} )
+target_link_libraries(test_octopus_search ${catkin_LIBRARIES}) 
+
+add_executable(test_utils src/examples/test_utils.cpp src/utils.cpp)
+add_dependencies(test_utils ${catkin_EXPORTED_TARGETS})
+target_link_libraries(test_utils ${catkin_LIBRARIES})
+
+add_executable(test_bspline_utils src/examples/test_bspline_utils.cpp src/bspline_utils.cpp)
+add_dependencies(test_bspline_utils ${catkin_EXPORTED_TARGETS})
+target_link_libraries(test_bspline_utils ${catkin_LIBRARIES})
+
+add_executable(tracker_predictor_node src/tracker_predictor_node.cpp src/tracker_predictor.cpp src/utils.cpp)
+add_dependencies(tracker_predictor_node ${catkin_EXPORTED_TARGETS})
+target_link_libraries(tracker_predictor_node ${catkin_LIBRARIES} ${CASADI_LIBRARIES})
+
+add_executable(test_tracker_predictor src/examples/test_tracker_predictor.cpp src/tracker_predictor.cpp src/utils.cpp)
+add_dependencies(test_tracker_predictor ${catkin_EXPORTED_TARGETS})
+target_link_libraries(test_tracker_predictor ${catkin_LIBRARIES} ${CASADI_LIBRARIES})
+
+add_library(move_model src/move_model.cpp)
+add_library(disable_physics src/disable_physics.cpp)
+
+target_link_libraries(disable_physics ${catkin_LIBRARIES} ${GAZEBO_LIBRARIES})
+target_link_libraries(move_model ${catkin_LIBRARIES} ${GAZEBO_LIBRARIES})
+
+#############################################################################
+
+
+#https://stackoverflow.com/questions/41361631/optimize-in-cmake-by-default
+#set(CMAKE_CXX_FLAGS "-O1")
+
+# See http://manpages.ubuntu.com/manpages/bionic/man1/ccache.1.html#precompiled%20headers
+# Note also that we have added in the ~/.bashrc the line export CCACHE_SLOPPINESS=pch_defines,time_macros  
+# add_compile_options(-fpch-preprocess)
+
+
+# set (CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake_cotire")
+# include(cotire)
 
 #For precompile headers see example here
 #https://gitlab.kitware.com/cmake/cmake/tree/375d01c6808713a0cfeef9ea092c8236ba063525/Tests/PrecompileHeaders
@@ -109,10 +138,6 @@ include_directories(${catkin_INCLUDE_DIRS} include)
 # cotire(solver_ipopt)
 
 # enable_unity_build(UNITY_BUILD_NAME src/panther_node.cpp)
-add_executable(${PROJECT_NAME}_node src/panther_node.cpp src/panther_ros.cpp src/panther.cpp src/solver_ipopt.cpp src/solver_ipopt_utils.cpp src/utils.cpp src/solver_ipopt_guess.cpp src/yaw_guess_generator.cpp src/octopus_search.cpp src/bspline_utils.cpp src/cgal_utils.cpp)
-target_include_directories (${PROJECT_NAME}_node PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${DECOMP_UTIL_INCLUDE_DIRS} ${Boost_INCLUDE_DIR})
-target_link_libraries(${PROJECT_NAME}_node PUBLIC ${CASADI_LIBRARIES} ${catkin_LIBRARIES} ${CMAKE_CURRENT_SOURCE_DIR} ${DECOMP_UTIL_LIBRARIES} ${Boost_LIBRARIES})  #${CGAL_LIBS}
-add_dependencies(${PROJECT_NAME}_node ${catkin_EXPORTED_TARGETS} )
 
 # if (CMAKE_VERSION VERSION_LESS 3.16)
 #   message(WARNING "Not using_precompiled headers")
@@ -122,45 +147,15 @@ add_dependencies(${PROJECT_NAME}_node ${catkin_EXPORTED_TARGETS} )
 # #   target_precompile_headers(${PROJECT_NAME}_node REUSE_FROM cgal_utils)
 # #   target_precompile_headers(${PROJECT_NAME}_node REUSE_FROM utils)
 # endif()
+#if("$ENV{ROS_DISTRO}" STREQUAL "melodic")
+##	
+#elseif("$ENV{ROS_DISTRO}" STREQUAL "kinetic")
+##
+#else()
+#	message(WARNING "Using the disable_physics kinetic version")
+##
+#endif() 
 
-add_executable(test_octopus_search src/examples/test_octopus_search.cpp src/octopus_search.cpp src/bspline_utils.cpp src/utils.cpp src/cgal_utils.cpp) 
-add_dependencies(test_octopus_search ${catkin_EXPORTED_TARGETS} )
-target_link_libraries(test_octopus_search ${catkin_LIBRARIES}) 
-
-add_executable(test_utils src/examples/test_utils.cpp src/utils.cpp)
-add_dependencies(test_utils ${catkin_EXPORTED_TARGETS})
-target_link_libraries(test_utils ${catkin_LIBRARIES})
-
-add_executable(test_bspline_utils src/examples/test_bspline_utils.cpp src/bspline_utils.cpp)
-add_dependencies(test_bspline_utils ${catkin_EXPORTED_TARGETS})
-target_link_libraries(test_bspline_utils ${catkin_LIBRARIES})
-
-
-add_executable(tracker_predictor_node src/tracker_predictor_node.cpp src/tracker_predictor.cpp src/utils.cpp)
-add_dependencies(tracker_predictor_node ${catkin_EXPORTED_TARGETS})
-target_link_libraries(tracker_predictor_node ${catkin_LIBRARIES} ${CASADI_LIBRARIES})
-
-
-add_executable(test_tracker_predictor src/examples/test_tracker_predictor.cpp src/tracker_predictor.cpp src/utils.cpp)
-add_dependencies(test_tracker_predictor ${catkin_EXPORTED_TARGETS})
-target_link_libraries(test_tracker_predictor ${catkin_LIBRARIES} ${CASADI_LIBRARIES})
-
-
-if("$ENV{ROS_DISTRO}" STREQUAL "melodic")
-	add_library(disable_physics src/disable_physics_melodic.cpp)
-  add_library(move_model src/move_model_melodic.cpp)
-elseif("$ENV{ROS_DISTRO}" STREQUAL "kinetic")
-	add_library(disable_physics src/disable_physics_kinetic.cpp)
-  add_library(move_model src/move_model_kinetic.cpp)
-else()
-	message(WARNING "Using the disable_physics kinetic version")
-	add_library(disable_physics src/disable_physics_kinetic.cpp)
-endif() 
-
-target_link_libraries(disable_physics ${catkin_LIBRARIES} ${GAZEBO_LIBRARIES})
-target_link_libraries(move_model ${catkin_LIBRARIES} ${GAZEBO_LIBRARIES})
-
-#############################################################################
 # add_executable(solver_ipopt src/solver_ipopt.cpp)
 # target_link_libraries(solver_ipopt ${CASADI_LIBRARIES})
 
