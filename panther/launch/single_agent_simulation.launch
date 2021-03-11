@@ -1,29 +1,134 @@
 <launch>
 
 	<arg name="quad" default="SQ01s"/>
-  <arg name="perfect_tracker" default="true"/>
+  <arg name="perfect_controller" default="true"/>
   <arg name="gazebo" default="true"/>
   <arg name="use_gui_mission" default="false"/>
   <arg name="perfect_prediction" default="false"/>
   <arg name="rviz" default="true"/>
   <arg name="environment" default="true"/>
+  <arg name="world_name" default="$(find panther)/meshes/empty.world"/>
 
- <include file="$(find panther)/launch/panther_specific_and_general.launch">
-      <arg name="quad" value="$(arg quad)"/>
-      <arg name="perfect_tracker" value="$(arg perfect_tracker)"/>
-      <arg name="gazebo" value="$(arg gazebo)"/>
-      <arg name="use_gui_mission" value="$(arg use_gui_mission)"/>
-      <arg name="perfect_prediction" value="$(arg perfect_prediction)"/>
-      <arg name="rviz" value="$(arg rviz)"/>
-      <arg name="environment" value="$(arg environment)"/>
-  </include> 
+
+  <!-- ///////////////////////////////////////////////// -->
+  <!-- ///////  PANTHER specific   //////////// -->
+  <arg name="x" default="0" />
+  <arg name="y" default="0" />
+  <arg name="z" default="0.0" />
+  <arg name="yaw" default="0.0" />
+
+  <node ns="$(arg quad)" name="commands" pkg="panther_other" type="commands.py" output="screen"/>
+
+  <group unless="$(arg perfect_prediction)">
+    <include file="$(find panther)/launch/tracker_predictor.launch">
+        <arg name="quad" value="$(arg quad)"/>
+     </include> 
+  </group>
+
+    <!-- Spawn vehicle in Gazebo -->
+    <group if="$(arg gazebo)">
+        <include file="$(find panther_gazebo)/launch/spawn_quadrotor_with_asus.launch">
+            <arg name="name" value="$(arg quad)"/>
+            <arg name="tf_prefix" default="$(optenv ROS_NAMESPACE)"/>
+            <arg name="x" value="$(arg x)"/>
+            <arg name="y" value="$(arg y)"/>
+            <arg name="z" value="$(arg z)"/>
+            <arg name="yaw" default="$(arg yaw)"/>
+        </include>
+
+        <node ns="$(arg quad)" name="publish_in_gazebo" pkg="panther" type="publish_in_gazebo.py" output="screen">
+        </node>
+
+    </group>
+
+     <!-- Camera to body tf -->
+    <node pkg="tf" type="static_transform_publisher" name="camera2body" args="0 0 0 -1.57 0 -1.57 $(arg quad) $(arg quad)/camera_depth_optical_frame 100" />
+    <!-- Vicon to world tf -->
+    <node ns="$(arg quad)" pkg="tf" type="static_transform_publisher" name="vicon2world" args="0 0 0 0 0 0 /world /vicon 100" />  <!-- The namespace is needed only for the multi-agent simulations. If not, each agent kills the node of the other one-->
+
+    <group if="$(arg perfect_controller)">
+      <node ns="$(arg quad)" name="perfect_controller" pkg="panther" type="perfect_controller.py" output="screen">
+            <param name="x" value="$(arg x)"/>
+            <param name="y" value="$(arg y)"/>
+            <param name="z" value="$(arg z)"/>
+            <param name="yaw" value="$(arg yaw)"/>
+        </node>
+    </group>
+
+    <group unless="$(arg perfect_controller)">
+        <include file="$(find snap_sim)/launch/sim.launch">
+         </include> 
+    </group>
+  <!-- ///////////////////////////////////////////////// -->
+  <!-- ///////////////////////////////////////////////// -->
+
+  <!-- ///////////////////////////////////////////////// -->
+  <!-- ///////  PANTHER general   //////////// -->
+
+  <!-- Start Behaviour Selector-->
+  <node pkg="behavior_selector" type="behavior_selector_node.py" name="behavior_selector" output="screen" />
+
+  <group if="$(arg gazebo)">
+    <include file="$(find gazebo_ros)/launch/empty_world.launch">
+      <arg name="world_name" value="$(arg world_name)"/>
+      <arg name="gui" value="false"/> <!-- Set to false if you only want gzserver (and NOT gzclient) -->
+    </include>
+  </group>
+
+  <!-- Disable, for instance, for ssh connections -->
+  <group if="$(arg rviz)">
+    <node pkg="rviz" type="rviz" name="rviz" args="-d $(find panther)/rviz_cfgs/panther.rviz"/>
+  </group>
+
+  <!-- Disable, for instance, for ssh connections -->
+  <group if="$(arg use_gui_mission)"> 
+    <node pkg="rqt_gui" type="rqt_gui" name="rqt_gui" args="--perspective-file $(find panther)/rqt_cfgs/demo_interface.perspective"/>
+  </group>
+
+  <group if="$(arg environment)">
+    <node name="dynamic_corridor" pkg="panther" type="dynamic_corridor.py" output="screen" args="10"/>  <!--  args is not used in dynamic_forest (TODO)-->
+  </group>  
+
+  <!-- ///////////////////////////////////////////////// -->
+  <!-- ///////////////////////////////////////////////// -->
  
-  <include file="$(find panther)/launch/panther.launch">
-      <arg name="quad" value="$(arg quad)"/>
-      <arg name="use_gui_mission" value="$(arg use_gui_mission)"/>
-      <arg name="perfect_prediction" value="$(arg perfect_prediction)"/>
-  </include> 
 
+  <!-- ///////////////////////////////////////////////// -->
+  <!-- ///////  PANTHER launch   //////////// -->
+
+  <node ns="$(arg quad)" name="panther" pkg="panther" type="panther_node" output="screen" clear_params="false"> 
+
+    <!-- Parameters -->
+      <rosparam file="$(find panther)/param/panther.yaml" command="load"/>
+      <rosparam file="$(find panther)/matlab/params_casadi.yaml" command="load"/>
+      <param name="use_gui_mission" value="$(arg use_gui_mission)" /> 
+      <param name="perfect_prediction" value="$(arg perfect_prediction)" /> 
+
+        <!-- Subscriptions -->
+    <remap from="~state" to="state"/>
+    <remap from="~who_plans" to="who_plans"/>
+    <remap from="~term_goal" to="term_goal" />
+    <remap from="~trajs_predicted" to="tracker_predictor_node/trajs_predicted" />
+
+    <!-- Publications -->
+    <remap from="~traj" to="traj"/>
+    <remap from="~goal" to="goal" />
+    <remap from="~setpoint" to="setpoint" />
+
+  </node>
+
+  <!-- ///////////////////////////////////////////////// -->
+  <!-- ///////////////////////////////////////////////// -->
+
+<!--   <node ns="$(arg quad)" pkg="jsk_rviz_plugins"
+        type="rosconsole_overlay_text.py"
+        respawn="false"
+        name="rosconsole_overlay_text">
+
+        <param name="nodes" value="/$(arg quad)/panther" /> 
+        <param name="reverse_lines" value="false" /> 
+
+      </node> -->
 
 <!-- Uncomment the part below to generate a camera from RViz -->
 <!-- More info at https://roboticsknowledgebase.com/wiki/tools/stream-rviz/ -->
