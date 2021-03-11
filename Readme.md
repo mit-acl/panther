@@ -146,7 +146,7 @@ You can also change the following arguments when executing `roslaunch`
 
 You can see the default values of these arguments in `simulation.launch`.
 
-> **_NOTE (TODO):_**  Right now the radius of the drone plotted in Gazebo (which comes from the `scale` field of `quadrotor_base_urdf.xacro`) does not correspond with the radius specified in `mader.yaml`. 
+> **_NOTE:_**  (TODO) Right now the radius of the drone plotted in Gazebo (which comes from the `scale` field of `quadrotor_base_urdf.xacro`) does not correspond with the radius specified in `mader.yaml`. 
 
 
 ## Credits:

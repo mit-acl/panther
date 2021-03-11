@@ -639,12 +639,12 @@ bool SolverIpopt::optimize()
   int param_pp = 3;
   int param_py = 2;
   // std::cout << "qy.size()= " << qy.size() << std::endl;
-  CPs2TrajAndPwp_cleaner(qp, qy, traj_solution_, pwp_solution_, param_pp, param_py, knots_, par_.dc);
+  CPs2TrajAndPwp(qp, qy, traj_solution_, pwp_solution_, param_pp, param_py, knots_, par_.dc);
 
-  std::cout << "Called CPs2TrajAndPwp!" << std::endl;
+  // std::cout << "Called CPs2TrajAndPwp!" << std::endl;
 
-  std::cout << bold << red << "traj_solution_.back().pos= " << traj_solution_.back().pos.transpose() << reset
-            << std::endl;
+  // std::cout << bold << red << "traj_solution_.back().pos= " << traj_solution_.back().pos.transpose() << reset
+  //           << std::endl;
 
   // std::cout << bold << red << "traj_solution_.[-2].accel= " << traj_solution_.end()[-2].accel.transpose() << reset
   //           << std::endl;
