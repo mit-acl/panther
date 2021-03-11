@@ -19,4 +19,4 @@
 	url = git@github.com:mit-acl/minvo.git
 [submodule "panther_extra"]
 	path = submodules/panther_extra
-	url = git@github.com:jtorde/panther_extra.git
+	url = git@github.com:mit-acl/panther_extra.git
