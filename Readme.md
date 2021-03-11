@@ -135,6 +135,9 @@ You can also change the following arguments when executing `roslaunch`
 You can see the default values of these arguments in `simulation.launch`.
 
 
-
 ## Credits:
 This package uses some the [hungarian-algorithm-cpp](https://github.com/mcximing/hungarian-algorithm-cpp) and some C++ classes from the [DecompROS](https://github.com/sikang/DecompROS) and  repos (both included in the `thirdparty` folder), so credit to them as well. 
+
+---------
+
+> **Approval for release**: This code was approved for release by The Boeing Company in March 2021. 
