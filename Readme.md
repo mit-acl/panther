@@ -1,12 +1,12 @@
 # PANTHER: Perception-Aware Trajectory Planner in Dynamic Environments #
 
-[![PANTHER: Perception-Aware Trajectory Planner in Dynamic Environments](./panther/imgs/four_compressed.gif)](https://www.youtube.com/watch?v=jKmyW6v73tY "MADER: Trajectory Planner in Multi-Agent and Dynamic Environments")      |  [![PANTHER: Perception-Aware Trajectory Planner in Dynamic Environments](./panther/imgs/five_compressed.gif)](https://www.youtube.com/watch?v=jKmyW6v73tY "MADER: Trajectory Planner in Multi-Agent and Dynamic Environments") |  
+[![PANTHER: Perception-Aware Trajectory Planner in Dynamic Environments](./panther/imgs/four_compressed.gif)](https://www.youtube.com/watch?v=jKmyW6v73tY "PANTHER: Perception-Aware Trajectory Planner in Dynamic Environments")      |  [![PANTHER: Perception-Aware Trajectory Planner in Dynamic Environments](./panther/imgs/five_compressed.gif)](https://www.youtube.com/watch?v=jKmyW6v73tY "PANTHER: Perception-Aware Trajectory Planner in Dynamic Environments") |  
 :-------------------------:|:-------------------------:|
-[![PANTHER: Perception-Aware Trajectory Planner in Dynamic Environments](./panther/imgs/eight_compressed.gif)](https://www.youtube.com/watch?v=jKmyW6v73tY "MADER: Trajectory Planner in Multi-Agent and Dynamic Environments")       |  [![PANTHER: Perception-Aware Trajectory Planner in Dynamic Environments](./panther/imgs/sim_compressed.gif)](https://www.youtube.com/watch?v=jKmyW6v73tY "MADER: Trajectory Planner in Multi-Agent and Dynamic Environments")    |  
+[![PANTHER: Perception-Aware Trajectory Planner in Dynamic Environments](./panther/imgs/eight_compressed.gif)](https://www.youtube.com/watch?v=jKmyW6v73tY "PANTHER: Perception-Aware Trajectory Planner in Dynamic Environments")       |  [![PANTHER: Perception-Aware Trajectory Planner in Dynamic Environments](./panther/imgs/sim_compressed.gif)](https://www.youtube.com/watch?v=jKmyW6v73tY "PANTHER: Perception-Aware Trajectory Planner in Dynamic Environments")    |  
 
 ## Citation
 
-When using PANTHER, please cite PANTHER:
+When using PANTHER, please cite [PANTHER: Perception-Aware Trajectory Planner in Dynamic Environments](https://arxiv.org/abs/2010.11061) ([pdf](https://arxiv.org/), [video](https://www.youtube.com/watch?v=jKmyW6v73tY)):
 
 ```bibtex
 @article{tordesillas2020panther,
