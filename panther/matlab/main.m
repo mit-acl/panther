@@ -3,9 +3,6 @@
 
 close all; clc;clear;
 
-% setenv('LD_LIBRARY_PATH', '/usr/local/lib:/home/jtorde/Desktop/ws/devel/lib:/opt/ros/melodic/lib:/opt/gurobi910/linux64/lib:/opt/gurobi910/linux64/lib:/opt/gurobi910/linux64/lib:/opt/gurobi910/linux64/lib:/opt/gurobi910/linux64/lib:/opt/gurobi910/linux64/lib:/usr/local/lib:/usr/local/MATLAB/R2020b/sys/os/glnxa64:/usr/local/MATLAB/R2020b/bin/glnxa64:/usr/local/MATLAB/R2020b/extern/lib/glnxa64:/usr/local/MATLAB/R2020b/cefclient/sys/os/glnxa64:/usr/local/MATLAB/R2020b/runtime/glnxa64:/usr/local/MATLAB/R2020b/sys/java/jre/glnxa64/jre/lib/amd64/native_threads:/usr/local/MATLAB/R2020b/sys/java/jre/glnxa64/jre/lib/amd64/server:/home/jtorde/Desktop/ws/devel/lib:/opt/ros/melodic/lib:/opt/gurobi910/linux64/lib:/opt/gurobi910/linux64/lib:/opt/gurobi910/linux64/lib:/usr/local/lib:/usr/local/lib')
-% set(0,'DefaultFigureWindowStyle','docked') %'normal' 'docked'
-% setenv('LD_LIBRARY_PATH', '/usr/local/lib:/home/jtorde/Desktop/ws/devel/lib:/opt/ros/melodic/lib:/opt/gurobi910/linux64/lib:/opt/gurobi910/linux64/lib:/opt/gurobi910/linux64/lib:/opt/gurobi910/linux64/lib:/opt/gurobi910/linux64/lib:/opt/gurobi910/linux64/lib:/usr/local/lib:/usr/local/MATLAB/R2020b/sys/os/glnxa64:/usr/local/MATLAB/R2020b/bin/glnxa64:/usr/local/MATLAB/R2020b/extern/lib/glnxa64:/usr/local/MATLAB/R2020b/cefclient/sys/os/glnxa64:/usr/local/MATLAB/R2020b/runtime/glnxa64:/usr/local/MATLAB/R2020b/sys/java/jre/glnxa64/jre/lib/amd64/native_threads:/usr/local/MATLAB/R2020b/sys/java/jre/glnxa64/jre/lib/amd64/server:/home/jtorde/Desktop/ws/devel/lib:/opt/ros/melodic/lib:/opt/gurobi910/linux64/lib:/opt/gurobi910/linux64/lib:/opt/gurobi910/linux64/lib:/usr/local/lib:/usr/local/lib')
 set(0,'DefaultFigureWindowStyle','docked') %'normal' 'docked'
 set(0,'defaulttextInterpreter','latex');
 set(groot, 'defaultAxesTickLabelInterpreter','latex'); set(groot, 'defaultLegendInterpreter','latex');
@@ -124,8 +121,8 @@ af_scaled=af/(scaling^2);
 ydotf_scaled=ydotf/scaling;
 
 v_max_scaled=v_max/scaling;
-a_max_scaled=a_max/(scaling^2); %TODO: check if it should be ^2, I think so
-j_max_scaled=j_max/(scaling^3); %TODO: check if it should be ^3, I think so
+a_max_scaled=a_max/(scaling^2); 
+j_max_scaled=j_max/(scaling^3);
 
 ydot_max_scaled=ydot_max/scaling; %v_max for yaw
 
@@ -281,7 +278,7 @@ for j=1:sp.num_seg
     
     
     %%%%% Option B (same as option 1, but this saves ~0.2 seconds of computation (ONLY IF expand=FALSE) (due to the fact that Casadi doesn't simplify, and simply keeps concatenating operations)     
-    %if expand=true, option 1 and two give very similar comp. time
+    %if expand=true, option A and B give very similar comp. time
     t=[accel(1); accel(2); accel(3)+9.81];
     norm_t=sqrt(t(1)^2+t(2)^2+t(3)^2);
     
@@ -388,15 +385,10 @@ for j=1:sp.num_seg
     fov_cost_j=-isInFOV /(offset_vel+s_dot2);
 %     fov_cost_j=-isInFOV + 1500000*(isInFOV)*s_dot2;
 %     fov_cost_j=100000*s_dot2/(isInFOV);
-%      fov_cost_j=-isInFOV+1000000000000000000*(1-isInFOV)*s_dot2;
+%      fov_cost_j=-isInFOV+1e6*(1-isInFOV)*s_dot2;
     
-    %End of simpler version
       %%%%%%%%%%%%%%%%%%
-     
-
-
-
-    
+      
     span_interval=sp.timeSpanOfInterval(j);
     t_init_interval=min(span_interval);   
     t_final_interval=max(span_interval);
@@ -451,9 +443,6 @@ opti.minimize(simplify(total_cost));
 %%%%%%%%%%%%%%%%%%%%%%%%%%% SOLVE! %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % opti.callback(@(i) stairs(opti.debug.value(total_cost)));
-
-
-
 
 
 %%%%%%%%%%%%%%%% Example of how to create a casadi function from the solver and then call it
@@ -700,7 +689,7 @@ for t_i=t_simpson %t0:0.3:tf
     position=w_T_c(1:3,4);
     direction=w_T_c(1:3,3);
     length=1;
-    plotCone(position,direction,thetax_FOV_deg_value,length);  %opti.value(theta_FOV_deg) %NOTE THAT WE ARE PLOTTING IT AS A CIRCULAR CONE (in reality is has thetax and thetay, and it is a squircular cone) 
+    plotCone(position,direction,thetax_FOV_deg_value,length); 
 
 end
 

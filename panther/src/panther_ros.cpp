@@ -17,7 +17,6 @@
 
 #include <panther_msgs/Log.h>
 
-//#include <jsk_rviz_plugins/OverlayText.h>
 #include <assert.h> /* assert */
 
 #include <tf2_eigen/tf2_eigen.h>
@@ -35,8 +34,8 @@ PantherRos::PantherRos(ros::NodeHandle nh1, ros::NodeHandle nh2, ros::NodeHandle
   id.erase(0, 2);  // Erase SQ or HX i.e. SQ12 --> 12  HX8621 --> 8621 # TODO Hard-coded for this this convention
   id_ = std::stoi(id);
 
-  ////////////////////////// This has to be done before creating a new PANTHER object
-  // wait for body transform to be published before initializing
+  // wait for body transform to be published before initializing.  This has to be done before creating a new PANTHER
+  // object
 
   std::string name_camera_depth_optical_frame_tf = name_drone_ + "/camera_depth_optical_frame";
 
@@ -48,15 +47,11 @@ PantherRos::PantherRos(ros::NodeHandle nh1, ros::NodeHandle nh2, ros::NodeHandle
     try
     {
       transform_stamped = tf_buffer.lookupTransform(name_drone_, name_camera_depth_optical_frame_tf, ros::Time(0),
-                                                    ros::Duration(0.5));  // TODO: change this duration time?
-                                                                          // Note that ros::Time(0) will just get us the
+                                                    ros::Duration(0.5));  // Note that ros::Time(0) will just get us the
                                                                           // latest available transform.
-
       // std::cout << "Transformation found" << std::endl;
       // std::cout << "transform_stamped= " << transform_stamped << std::endl;
-
       par_.b_T_c = tf2::transformToEigen(transform_stamped);
-
       break;
     }
     catch (tf2::TransformException& ex)
@@ -131,8 +126,6 @@ PantherRos::PantherRos(ros::NodeHandle nh1, ros::NodeHandle nh2, ros::NodeHandle
 
   safeGetParam(nh1_, "res_plot_traj", par_.res_plot_traj);
 
-  // safeGetParam(nh1_, "alpha", par_.alpha);
-  // safeGetParam(nh1_, "beta", par_.beta);
   safeGetParam(nh1_, "norminv_prob", par_.norminv_prob);
   safeGetParam(nh1_, "gamma", par_.gamma);
 
@@ -152,14 +145,13 @@ PantherRos::PantherRos(ros::NodeHandle nh1, ros::NodeHandle nh2, ros::NodeHandle
   safeGetParam(nh1_, "c_fov", par_.c_fov);
   safeGetParam(nh1_, "c_final_pos", par_.c_final_pos);
   safeGetParam(nh1_, "c_final_yaw", par_.c_final_yaw);
-
-  // safeGetParam(nh1_, "distance_to_force_final_pos", par_.distance_to_force_final_pos);
-  // safeGetParam(nh1_, "factor_alloc_when_forcing_final_pos", par_.factor_alloc_when_forcing_final_pos);
   safeGetParam(nh1_, "print_graph_yaw_info", par_.print_graph_yaw_info);
 
   bool perfect_prediction;  // use_ground_truth_prediction
   safeGetParam(nh1_, "perfect_prediction", perfect_prediction);
 
+  // safeGetParam(nh1_, "distance_to_force_final_pos", par_.distance_to_force_final_pos);
+  // safeGetParam(nh1_, "factor_alloc_when_forcing_final_pos", par_.factor_alloc_when_forcing_final_pos);
   // par_.force_final_pos = false;
 
   if ((par_.basis != "B_SPLINE" || par_.basis != "BEZIER" || par_.basis != "MINVO") == false)
@@ -218,10 +210,8 @@ PantherRos::PantherRos(ros::NodeHandle nh1, ros::NodeHandle nh2, ros::NodeHandle
   pub_point_A_ = nh1_.advertise<visualization_msgs::Marker>("point_A", 1);
   pub_actual_traj_ = nh1_.advertise<visualization_msgs::Marker>("actual_traj", 1);
   poly_safe_pub_ = nh1_.advertise<decomp_ros_msgs::PolyhedronArray>("polys", 1, true);
-  // pub_text_ = nh1_.advertise<jsk_rviz_plugins::OverlayText>("text", 1);
   pub_traj_safe_colored_ = nh1_.advertise<visualization_msgs::MarkerArray>("traj_obtained", 1);
   pub_traj_ = nh1_.advertise<panther_msgs::DynTraj>("/trajs", 1, true);  // The last boolean is latched or not
-  // pub_text_ = nh1_.advertise<jsk_rviz_plugins::OverlayText>("text", 1);
   pub_fov_ = nh1_.advertise<visualization_msgs::Marker>("fov", 1);
   pub_obstacles_ = nh1_.advertise<visualization_msgs::Marker>("obstacles", 1);
   pub_log_ = nh1_.advertise<panther_msgs::Log>("log", 1);
@@ -238,7 +228,7 @@ PantherRos::PantherRos(ros::NodeHandle nh1, ros::NodeHandle nh2, ros::NodeHandle
     sub_traj_ = nh1_.subscribe("trajs_predicted", 20, &PantherRos::trajCB, this);  // number is queue size
 
     // obstacles --> topic trajs_predicted
-    // agents -->  //TODO: how to solve the common frame problem?
+    // agents -->  //Not implemented yet  (solve the common frame problem)
   }
   else
   {
@@ -273,9 +263,6 @@ PantherRos::PantherRos(ros::NodeHandle nh1, ros::NodeHandle nh2, ros::NodeHandle
   E_ = getMarkerSphere(0.35, RED_NORMAL);
   A_ = getMarkerSphere(0.35, RED_NORMAL);
 
-  // If you want another thread for the replanCB: replanCBTimer_ = nh_.createTimer(ros::Duration(par_.dc),
-  // &PantherRos::replanCB, this);
-
   timer_stop_.reset();
 
   clearMarkerActualTraj();
@@ -285,17 +272,13 @@ PantherRos::PantherRos(ros::NodeHandle nh1, ros::NodeHandle nh2, ros::NodeHandle
 
   std::cout << yellow << bold << "use_gui_mission= " << use_gui_mission << reset << std::endl;
   std::cout << yellow << bold << "perfect_prediction= " << perfect_prediction << reset << std::endl;
-  ////// to avoid having to click on the GUI (TODO)
+  // To avoid having to click on the GUI
   if (use_gui_mission == false)
   {
     panther_msgs::WhoPlans tmp;
     tmp.value = panther_msgs::WhoPlans::PANTHER;
     whoPlansCB(tmp);
   }
-  ////// ros::Duration(1.0).sleep();  // TODO
-  ////// bool success_service_call = system("rosservice call /change_mode 'mode: 1'");
-  ////
-
   constructFOVMarker();  // only needed once
 
   ROS_INFO("Planner initialized");
@@ -321,8 +304,6 @@ void PantherRos::pubObstacles(mt::Edges edges_obstacles)
 
 void PantherRos::trajCB(const panther_msgs::DynTraj& msg)
 {
-  // std::cout << on_green << "In trajCB" << reset << std::endl;
-
   if (msg.id == id_)
   {  // This is my own trajectory
     return;
@@ -331,26 +312,7 @@ void PantherRos::trajCB(const panther_msgs::DynTraj& msg)
   Eigen::Vector3d W_pos(msg.pos.x, msg.pos.y, msg.pos.z);  // position in world frame
   double dist = (state_.pos - W_pos).norm();
 
-  bool can_use_its_info;
-
-  // if (par_.impose_fov == false)
-  // {  // same as 360 deg of FOV
-  //   can_use_its_info = dist <= par_.R_local_map;
-  // }
-  // else
-  // {  // impose_fov==true
-
-  //   Eigen::Vector3d B_pos = W_T_B_.inverse() * W_pos;  // position of the obstacle in body frame
-  //   // check if it's inside the field of view.
-  //   can_use_its_info =
-  //       B_pos.x() < par_.fov_depth &&                                                       //////////////////////
-  //       fabs(atan2(B_pos.y(), B_pos.x())) < ((par_.fov_x_deg * M_PI / 180.0) / 2.0) &&  //////////////////////
-  //       fabs(atan2(B_pos.z(), B_pos.x())) < ((par_.fov_y_deg * M_PI / 180.0) / 2.0);     ///////////////////////
-
-  //   // std::cout << "inFOV= " << can_use_its_info << std::endl;
-  // }
-
-  can_use_its_info = (dist <= 4 * par_.Ra);  // See explanation of 4*Ra in Panther::updateTrajObstacles
+  bool can_use_its_info = (dist <= 4 * par_.Ra);  // See explanation of 4*Ra in Panther::updateTrajObstacles
 
   // if (can_use_its_info == false)
   // {
@@ -388,12 +350,6 @@ void PantherRos::trajCB(const panther_msgs::DynTraj& msg)
 // composition of pwp
 void PantherRos::publishOwnTraj(const mt::PieceWisePol& pwp)
 {
-  // std::vector<std::string> s;  // pieceWisePol2String(pwp); The rest of the agents will use the pwp field, not the
-  //                              // string
-  // s.push_back("");
-  // s.push_back("");
-  // s.push_back("");
-
   panther_msgs::DynTraj msg;
   msg.use_pwp_field = true;
   msg.pwp_mean = pwp2PwpMsg(pwp);
@@ -412,15 +368,11 @@ void PantherRos::publishOwnTraj(const mt::PieceWisePol& pwp)
   msg.id = id_;
 
   msg.is_agent = true;
-
-  // std::cout<<"msg.pwp.times[0]= "<<msg.pwp.times[0]
-
   pub_traj_.publish(msg);
 }
 
 void PantherRos::replanCB(const ros::TimerEvent& e)
 {
-  // std::cout << "In PantherRos::replanCB" << std::endl;
   if (ros::ok() && published_initial_position_ == true)
   {
     mt::Edges edges_obstacles;
@@ -447,7 +399,6 @@ void PantherRos::replanCB(const ros::TimerEvent& e)
       pubObstacles(edges_obstacles);
       pubTraj(X_safe);
       publishPlanes(planes);
-      // publishText();
     }
 
     if (replanned)
@@ -474,31 +425,8 @@ void PantherRos::replanCB(const ros::TimerEvent& e)
   }
 }
 
-/*
-void PantherRos::publishText()
-{
-  jsk_rviz_plugins::OverlayText text;
-  text.width = 600;
-  text.height = 133;
-  text.left = 1600;
-  text.top = 10;
-  text.text_size = 17;
-  text.line_width = 2;
-  text.font = "DejaVu Sans Mono";
-  text.text = "Num of LPs run= " + std::to_string(num_of_LPs_run_) + "\n" +  ///////////////////
-              "Num of QCQPs run= " + std::to_string(num_of_QCQPs_run_);
-
-  text.fg_color = color(TEAL_NORMAL);
-  text.bg_color = color(BLACK_TRANS);
-
-  pub_text_.publish(text);
-}
-*/
-
 void PantherRos::publishPlanes(std::vector<Hyperplane3D>& planes)
 {
-  //  int num_of_intervals = planes.size() / poly_safe.size();
-
   auto color = visual_tools_->getRandColor();
 
   int i = 0;
@@ -506,7 +434,7 @@ void PantherRos::publishPlanes(std::vector<Hyperplane3D>& planes)
   {
     if ((i % par_.num_seg) == 0)  // planes for a new obstacle --> new color
     {
-      color = visual_tools_->getRandColor();  // rviz_visual_tools::TRANSLUCENT_LIGHT;  //
+      color = visual_tools_->getRandColor();  // rviz_visual_tools::TRANSLUCENT_LIGHT;
     }
     Eigen::Isometry3d pose;
     pose.translation() = plane_i.p_;
@@ -544,14 +472,13 @@ void PantherRos::stateCB(const snapstack_msgs::State& msg)
   state_tmp.setPos(msg.pos.x, msg.pos.y, msg.pos.z);
   state_tmp.setVel(msg.vel.x, msg.vel.y, msg.vel.z);
   state_tmp.setAccel(0.0, 0.0, 0.0);
-  // std::cout << bold << red << "MSG_QUAT= " << msg.quat << reset << std::endl;
-  // TODO:  I should use here (for yaw) the convention PANTHER is using (Hopf fibration paper)
-  double roll, pitch, yaw;
-  quaternion2Euler(msg.quat, roll, pitch, yaw);
-  state_tmp.setYaw(yaw);
-  // END OF TODO
+  state_tmp.setYaw(0.0);  // This field is not used
+
+  // double roll, pitch, yaw;
+  // quaternion2Euler(msg.quat, roll, pitch, yaw);
+  // state_tmp.setYaw(yaw); TODO: use here (for yaw) the convention PANTHER is using (psi)
+
   state_ = state_tmp;
-  // std::cout << bold << red << "STATE_YAW= " << state_.yaw << reset << std::endl;
 
   // std::cout << bold << yellow << "PANTHER_ROS state= " << reset;
   // state_tmp.print();
@@ -575,7 +502,7 @@ void PantherRos::stateCB(const snapstack_msgs::State& msg)
 void PantherRos::whoPlansCB(const panther_msgs::WhoPlans& msg)
 {
   if (msg.value != msg.PANTHER)
-  {  // PANTHER DOES NOTHING
+  {  // PANTHER does nothing
     sub_state_.shutdown();
     sub_term_goal_.shutdown();
     pubCBTimer_.stop();
@@ -585,8 +512,8 @@ void PantherRos::whoPlansCB(const panther_msgs::WhoPlans& msg)
   }
   else
   {  // PANTHER is the one who plans now (this happens when the take-off is finished)
-    sub_term_goal_ = nh1_.subscribe("term_goal", 1, &PantherRos::terminalGoalCB, this);  // TODO duplicated from above
-    sub_state_ = nh1_.subscribe("state", 1, &PantherRos::stateCB, this);                 // TODO duplicated from above
+    sub_term_goal_ = nh1_.subscribe("term_goal", 1, &PantherRos::terminalGoalCB, this);  // TODO: duplicated from above
+    sub_state_ = nh1_.subscribe("state", 1, &PantherRos::stateCB, this);                 // TODO: duplicated from above
     pubCBTimer_.start();
     replanCBTimer_.start();
     std::cout << on_blue << "**************PANTHER STARTED" << reset << std::endl;
@@ -610,7 +537,6 @@ void PantherRos::pubCB(const ros::TimerEvent& e)
     goal.header.frame_id = world_name_;
     goal.power = true;  // allow the outer loop to send low-level autopilot commands
 
-    // std::cout << red << bold << "Publishing goal.z= " << goal.p.z << reset << std::endl;
     pub_goal_.publish(goal);
 
     setpoint_.header.stamp = ros::Time::now();

@@ -117,7 +117,6 @@ target_link_libraries(move_model ${catkin_LIBRARIES} ${GAZEBO_LIBRARIES})
 #   target_precompile_headers(utils PUBLIC include/utils.hpp)
 # endif()
 
-
 # add_library(octopus_search STATIC src/octopus_search.cpp src/bspline_utils.cpp) #src/solvers/cvxgen/solver_cvxgen.cpp
 # target_include_directories (octopus_search PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 # target_link_libraries(octopus_search PUBLIC ${catkin_LIBRARIES}) 

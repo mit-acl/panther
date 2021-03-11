@@ -77,13 +77,14 @@ The easiest way to do this is to install casadi from binaries by simply followin
 
 ````bash
 cd ~/installations
+mkdir casadi
 wget https://github.com/casadi/casadi/releases/download/3.5.5/casadi-linux-matlabR2014b-v3.5.5.tar.gz
-tar xvzf casadi-linux-matlabR2014b-v3.5.5.tar.gz
+tar xvzf casadi-linux-matlabR2014b-v3.5.5.tar.gz -C ./casadi
 ````
 
-Open Matlab, execute the command `edit(fullfile(userpath,'startup.m'))`, and add the line `addpath('/usr/local/lib')` in that file. (This file is executed every time Matlab starts)
+Open Matlab, execute the command `edit(fullfile(userpath,'startup.m'))`, and add the line `addpath(genpath('/home/YOUR_USERNAME/installations/casadi'))` in that file (changing `YOUR_USERNAME` with your username). This file `startup.m` is executed every time Matlab starts.
 
-Then you can restart Matlab (or run the file above), and make sure this works: 
+Then you can restart Matlab (or run the file `startup.m`), and make sure this works: 
 
 ```bash
 import casadi.*

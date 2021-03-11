@@ -17,8 +17,6 @@
 #include "timer.hpp"
 #include "termcolor.hpp"
 
-// #include "nlopt_utils.hpp"
-
 using namespace termcolor;
 
 // Uncomment the type of timer you want:
@@ -69,9 +67,6 @@ Panther::Panther(mt::parameters par) : par_(par)
   A_basis_deg1_rest_inverse_ = A_basis_deg1_rest_.inverse();
   A_basis_deg2_rest_inverse_ = A_basis_deg2_rest_.inverse();
   A_basis_deg3_rest_inverse_ = A_basis_deg3_rest_.inverse();
-
-  // solver_ = new SolverNlopt(par_for_solver);
-  // solver_ = new SolverGurobi(par_for_solver);
 
   log_ptr_ = std::shared_ptr<mt::log>(new mt::log);
 
@@ -151,16 +146,16 @@ Eigen::Vector3d Panther::evalMeanDynTrajCompiled(const mt::dynTrajCompiled& traj
   {
     mtx_t_.lock();
     t_ = t;
-    tmp << traj.s_mean[0].value(),  ////////////////////
+    tmp << traj.s_mean[0].value(),  ////////////////
         traj.s_mean[1].value(),     ////////////////
-        traj.s_mean[2].value();     /////////////////
+        traj.s_mean[2].value();     ////////////////
 
     mtx_t_.unlock();
   }
   return tmp;
 }
 
-// Note that this function is here because I need t_ for this evaluation
+// Note that this function is here because it needs t_ for this evaluation
 Eigen::Vector3d Panther::evalVarDynTrajCompiled(const mt::dynTrajCompiled& traj, double t)
 {
   Eigen::Vector3d tmp;
@@ -173,9 +168,9 @@ Eigen::Vector3d Panther::evalVarDynTrajCompiled(const mt::dynTrajCompiled& traj,
   {
     mtx_t_.lock();
     t_ = t;
-    tmp << traj.s_var[0].value(),  ////////////////////
+    tmp << traj.s_var[0].value(),  ////////////////
         traj.s_var[1].value(),     ////////////////
-        traj.s_var[2].value();     /////////////////
+        traj.s_var[2].value();     ////////////////
 
     mtx_t_.unlock();
   }
@@ -384,7 +379,6 @@ std::vector<Eigen::Vector3d> Panther::vertexesOfInterval(mt::PieceWisePol& pwp, 
     }
     else if (deg == 2)
     {
-      // std::cout << on_blue << "Using Deg=2!!!" << reset << std::endl;
       V = P * A_basis_deg2_rest_inverse_;
     }
     else if (deg == 1)
@@ -434,7 +428,7 @@ std::vector<Eigen::Vector3d> Panther::vertexesOfInterval(mt::PieceWisePol& pwp, 
 std::vector<Eigen::Vector3d> Panther::vertexesOfInterval(mt::dynTrajCompiled& traj, double t_start, double t_end)
 {
   // every side of the box will be increased by 2*delta (+delta on one end, -delta on the other)
-  // note that we use the variance at t_end (which is going to be worse that the one at t_start)
+  // note that we use the variance at t_end (which is going to be higher that the one at t_start)
   Eigen::Vector3d delta = traj.bbox / 2.0 + (par_.drone_radius) * Eigen::Vector3d::Ones() +  //////
                           par_.norminv_prob * (evalVarDynTrajCompiled(traj, t_end)).cwiseSqrt();
 
@@ -587,11 +581,6 @@ void Panther::sampleFeaturePosVel(int argmax_prob_collision, double t_start, dou
   pos.clear();
   vel.clear();
 
-  // std::cout << red << bold << "in sampleFeaturePositions, waiting to lock mtx_trajs_" << reset << std::endl;
-  // mtx_trajs_.lock(); //Already locked when this function is called
-  // std::cout << red << bold << "in sampleFeaturePositions, waiting to lock t_" << reset << std::endl;
-  // mtx_t_.lock();
-
   double delta = (t_end - t_start) / par_.num_samples_simpson;
 
   bool used_last_state_tracked = false;
@@ -606,7 +595,7 @@ void Panther::sampleFeaturePosVel(int argmax_prob_collision, double t_start, dou
       pos.push_back(pos_i);
 
       // MyTimer timer(true);
-      // This commented part always returns 0.0. why??
+      // This commented part always returns 0.0. TODO: find out why. For now, let's use finite differences
       // See also
       // https://github.com/ArashPartow/exprtk/blob/66bed77369557fe1872df4c999c9d9ccb3adc3f6/readme.txt#LC4010:~:text=This%20free%20function%20will%20attempt%20to%20perform%20a%20numerical%20differentiation
       // Eigen::Vector3d vel_i = Eigen::Vector3d(exprtk::derivative(trajs_[wt].function[0], "t"),  ////////////
@@ -614,7 +603,6 @@ void Panther::sampleFeaturePosVel(int argmax_prob_collision, double t_start, dou
       //                                         exprtk::derivative(trajs_[wt].function[2], t_));
       // std::cout << "time to take derivatives= " << timer << std::endl;
       // std::cout << on_green << bold << "vel= " << vel_i.transpose() << reset << std::endl;
-
       // std::cout << on_green << bold << "pos= " << pos[i].transpose() << reset << std::endl;
 
       // Use finite differences to obtain the derivative
@@ -642,21 +630,6 @@ void Panther::sampleFeaturePosVel(int argmax_prob_collision, double t_start, dou
 
   last_state_tracked_.pos = pos.front();  // pos.back();
   last_state_tracked_.vel = pos.front();  // vel.back();
-
-  // //HACK, DELETE THIS!!
-  // pos.clear();
-  // vel.clear();
-  // for (int i = 0; i < par_.num_samples_simpson; i++)
-  // {
-  //   pos.push_back(Eigen::Vector3d(0.0,0.0,2.0));
-  //   vel.push_back(Eigen::Vector3d(0.0,0.0,0.0));
-  // }
-  // //END OF HACK
-
-  // mtx_t_.unlock();
-  // std::cout << red << bold << "in sampleFeaturePositions, mtx_t_ unlocked" << reset << std::endl;
-  // mtx_trajs_.unlock();
-  // std::cout << red << bold << "in sampleFeaturePositions, mtx_trajs_ unlocked" << reset << std::endl;
 }
 
 void Panther::setTerminalGoal(mt::state& term_goal)
@@ -672,12 +645,9 @@ void Panther::setTerminalGoal(mt::state& term_goal)
   mtx_planner_status_.lock();
 
   G_term_.pos = term_goal.pos;
-  Eigen::Vector3d temp = state_.pos;
   G_.pos = G_term_.pos;
   if (drone_status_ == DroneStatus::GOAL_REACHED)
   {
-    /////////////////////////////////
-    /////////////////////////////////
     /////////////////////////////////
     mtx_plan_.lock();  // must be before changeDroneStatus
 
@@ -689,21 +659,16 @@ void Panther::setTerminalGoal(mt::state& term_goal)
     angle_wrap(diff);
 
     double dyaw =
-        copysign(1, diff) * 0.5;  // par_.ydot_max; Changed to 0.5 (in HW the drone stops the motors when status==YAWING
-                                  // and ydot_max is too high, probably because of too much current?)
+        copysign(1, diff) * 0.5;  // par_.ydot_max; Changed to 0.5 (in HW the drone stops the motors when
+                                  // status==YAWING and ydot_max is too high, due to saturation + calibration of the
+                                  // ESCs) see https://gitlab.com/mit-acl/fsw/snap-stack/snap/-/issues/3
 
     int num_of_el = (int)fabs(diff / (par_.dc * dyaw));
 
     assert((plan_.size() >= 1) && "plan_.size() must be >=1");
 
-    // std::cout << "num_of_el= " << num_of_el << std::endl;
-    // std::cout << "diff= " << diff << std::endl;
-    // std::cout << "par_.ydot_max= " << par_.ydot_max << std::endl;
-    // std::cout << "par_.dc= " << par_.dc << std::endl;
-
     for (int i = 1; i < (num_of_el + 1); i++)
     {
-      // std::cout << "Introducing Element " << i << " out of " << num_of_el << std::endl;
       mt::state state_i = plan_.get(i - 1);
       state_i.yaw = state_i.yaw + dyaw * par_.dc;
       if (i == num_of_el)
@@ -717,9 +682,6 @@ void Panther::setTerminalGoal(mt::state& term_goal)
       plan_.push_back(state_i);
     }
     mtx_plan_.unlock();
-    // abort();
-    /////////////////////////////////
-    /////////////////////////////////
     /////////////////////////////////
   }
   if (drone_status_ == DroneStatus::GOAL_SEEN)
@@ -754,7 +716,7 @@ void Panther::updateState(mt::state data)
 
   if (state_initialized_ == false)
   {
-    plan_.clear();  // just in case, (actually not needed because done in resetInitialization()
+    plan_.clear();  // (actually not needed because done in resetInitialization()
     mt::state tmp;
     tmp.pos = data.pos;
     tmp.yaw = data.yaw;
@@ -868,21 +830,15 @@ bool Panther::isReplanningNeeded()
 {
   if (initializedStateAndTermGoal() == false)
   {
-    // std::cout << "Not Replanning" << std::endl;
     return false;  // Note that log is not modified --> will keep its default values
   }
 
   //////////////////////////////////////////////////////////////////////////
-  //////////////////////////////////////////////////////////////////////////
-
-  // mtx_state.lock();
   mtx_G_term.lock();
 
-  // mt::state state_local = state_;
   mt::state G_term = G_term_;  // Local copy of the terminal terminal goal
 
   mtx_G_term.unlock();
-  // mtx_state.unlock();
 
   // Check if we have reached the goal
   double dist_to_goal = (G_term.pos - plan_.front().pos).norm();
@@ -937,7 +893,7 @@ bool Panther::replan(mt::Edges& edges_obstacles_out, std::vector<mt::state>& X_s
   removeOldTrajectories();
 
   //////////////////////////////////////////////////////////////////////////
-  ///////////////////////// Select mt::state A /////////////////////////////////
+  ///////////////////////// Select mt::state A /////////////////////////////
   //////////////////////////////////////////////////////////////////////////
 
   mtx_G_term.lock();
@@ -977,8 +933,7 @@ bool Panther::replan(mt::Edges& edges_obstacles_out, std::vector<mt::state>& X_s
   }
   else
   {
-    runtime_snlopt = par_.upper_bound_runtime_snlopt;  // I'm stopped at the end of the trajectory --> take my
-                                                       // time to replan
+    runtime_snlopt = par_.upper_bound_runtime_snlopt;  // I'm stopped at the end of the trajectory
   }
   saturate(runtime_snlopt, par_.lower_bound_runtime_snlopt, par_.upper_bound_runtime_snlopt);
 
@@ -993,13 +948,13 @@ bool Panther::replan(mt::Edges& edges_obstacles_out, std::vector<mt::state>& X_s
   G.pos = A.pos + ra * (G_term.pos - A.pos).normalized();
 
   //////////////////////////////////////////////////////////////////////////
-  ///////////////////////// Set Times in optimization! ////////////////////////////
+  ///////////////////////// Set Times in optimization //////////////////////
   //////////////////////////////////////////////////////////////////////////
 
   solver_->setMaxRuntimeKappaAndMu(runtime_snlopt, par_.kappa, par_.mu);
 
   //////////////////////
-  double time_now = ros::Time::now().toSec();  // TODO this ros dependency shouldn't be here
+  double time_now = ros::Time::now().toSec();
 
   double t_start = k_index * par_.dc + time_now;
 
@@ -1026,15 +981,8 @@ bool Panther::replan(mt::Edges& edges_obstacles_out, std::vector<mt::state>& X_s
   // }
 
   double time_allocated = getMinTimeDoubleIntegrator3D(A.pos, A.vel, G.pos, G.vel, par_.v_max, par_.a_max);
-  double time_allocated_old_version = (A.pos - G.pos).array().abs().maxCoeff() / (par_.v_max.x());
 
-  std::cout << green << bold << "Time allocated new version= " << time_allocated << reset << std::endl;
-  std::cout << green << bold << "Time allocated old version= " << time_allocated_old_version << reset << std::endl;
-
-  // double t_final = t_start + (A.pos - G.pos).array().abs().maxCoeff() /
-  //                                (factor_alloc_tmp * par_.v_max.x());  // time to execute the optimized path
-
-  // std::cout << red << bold << "TIME ALLOCATED= " << time_allocated << reset << std::endl;
+  // std::cout << green << bold << "Time allocated= " << time_allocated << reset << std::endl;
 
   double t_final = t_start + par_.factor_alloc * time_allocated;
 
@@ -1099,7 +1047,6 @@ bool Panther::replan(mt::Edges& edges_obstacles_out, std::vector<mt::state>& X_s
   ///////////////////////// Solve optimization! ////////////////////////////
   //////////////////////////////////////////////////////////////////////////
 
-  // std::cout << red << bold << "in replan(), waiting to lock mtx_trajs_" << reset << std::endl;
   mtx_trajs_.lock();
 
   time_init_opt_ = ros::Time::now().toSec();
@@ -1109,7 +1056,6 @@ bool Panther::replan(mt::Edges& edges_obstacles_out, std::vector<mt::state>& X_s
   log_ptr_->tim_convex_hulls.toc();
 
   mtx_trajs_.unlock();
-  // std::cout << red << bold << "in replan(), mtx_trajs_ unlocked" << reset << std::endl;
 
   ConvexHullsOfCurves_Std hulls_std = vectorGCALPol2vectorStdEigen(hulls);
   // poly_safe_out = vectorGCALPol2vectorJPSPol(hulls);
@@ -1123,10 +1069,7 @@ bool Panther::replan(mt::Edges& edges_obstacles_out, std::vector<mt::state>& X_s
   std::cout << on_cyan << bold << "Solved so far" << solutions_found_ << "/" << total_replannings_ << reset
             << std::endl;
 
-  std::cout << "[FA] Calling NL" << std::endl;
-
   log_ptr_->tim_initial_setup.toc();
-
   bool result = solver_->optimize();
 
   num_of_LPs_run = solver_->getNumOfLPsRun();
@@ -1172,22 +1115,16 @@ bool Panther::replan(mt::Edges& edges_obstacles_out, std::vector<mt::state>& X_s
     // std::cout << "plan_size= " << plan_size << std::endl;
     // std::cout << "k_index_end= " << k_index_end << std::endl;
     mtx_plan_.unlock();
-    log_ptr_->info_replan = "Point A already published";
     logAndTimeReplan("Point A already published", false, log);
     return false;
   }
   else
   {
-    // std::cout << "Appending" << std::endl;
-    // std::cout << "before, plan_size=" << plan_.size() << std::endl;
-    plan_.erase(plan_.end() - k_index_end - 1, plan_.end());  // this deletes also the initial condition...
-    // std::cout << "middle, plan_size=" << plan_.size() << " sol.size()=" << (solver_->traj_solution_).size()
-    // << std::endl;
+    plan_.erase(plan_.end() - k_index_end - 1, plan_.end());    // this deletes also the initial condition...
     for (int i = 0; i < (solver_->traj_solution_).size(); i++)  //... which is included in traj_solution_[0]
     {
       plan_.push_back(solver_->traj_solution_[i]);
     }
-    // std::cout << "after, plan_size=" << plan_.size() << std::endl;
   }
 
   mtx_plan_.unlock();
@@ -1273,7 +1210,7 @@ bool Panther::getNextGoal(mt::state& next_goal)
                                                // TODO: if included this part commented out, the last state (which is
                                                // the one that has zero accel) will never get published
   {
-    // std::cout << "Not publishing new goal!!" << std::endl;
+    // std::cout << "Not publishing new goal" << std::endl;
     // std::cout << "plan_.size() ==" << plan_.size() << std::endl;
     // std::cout << "plan_.content[0] ==" << std::endl;
     // plan_.content[0].print();
