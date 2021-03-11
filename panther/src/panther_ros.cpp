@@ -267,13 +267,13 @@ PantherRos::PantherRos(ros::NodeHandle nh1, ros::NodeHandle nh2, ros::NodeHandle
 
   clearMarkerActualTraj();
 
-  bool use_gui_mission;
-  safeGetParam(nh1_, "use_gui_mission", use_gui_mission);
+  bool gui_mission;
+  safeGetParam(nh1_, "gui_mission", gui_mission);
 
-  std::cout << yellow << bold << "use_gui_mission= " << use_gui_mission << reset << std::endl;
+  std::cout << yellow << bold << "gui_mission= " << gui_mission << reset << std::endl;
   std::cout << yellow << bold << "perfect_prediction= " << perfect_prediction << reset << std::endl;
   // To avoid having to click on the GUI
-  if (use_gui_mission == false)
+  if (gui_mission == false)
   {
     panther_msgs::WhoPlans tmp;
     tmp.value = panther_msgs::WhoPlans::PANTHER;

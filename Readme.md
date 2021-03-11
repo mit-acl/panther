@@ -111,6 +111,16 @@ echo "source /home/YOUR_USER/Desktop/ws/devel/setup.bash" >> ~/.bashrc
 
 ### Running Simulations
 
+| Syntax      | Description |
+| ----------- | ----------- |
+| `quad`      | Name of the drone (SQ01s for example)       |
+| `perfect_controller`      | If true, the drone will track perfectly the trajectories. Controller and physics engine of the drone will not be launched.       |
+| `perfect_prediction`      | If true, the drone will have access to the ground truth of the trajectories of the obstacles. If false, the drone will estimate their trajectories (it needs `gazebo=true` in this case.       |
+| `gui_mission`      | If true, a gui will be launched to start the experiment       |
+| `rviz`      | If true, Rviz will be launched for visualization       |
+| `gazebo`      | If true, Gazebo will be launched |
+| `gzclient`      | If true, the gui of Gazebo will be launched. If false, (and if `gazebo=true`) only gzserver will be launched. Note: right now there is some delay in the visualization of the drone the gui of Gazebo. But this doesn't affect the point clouds generated. |
+
 `roslaunch panther single_agent_simulation.launch use_gui_mission:=true`. You can also the z value of `panther_specific.launch` to set the initial position of the drone
 
 Now you can press `G` (or click the option `2D Nav Goal` on the top bar of RVIZ) and click any goal for the drone. 

@@ -2,12 +2,12 @@
 
 	<arg name="quad" default="SQ01s"/>
   <arg name="perfect_controller" default="true"/>
-  <arg name="gazebo" default="true"/>
-  <arg name="use_gui_mission" default="false"/>
   <arg name="perfect_prediction" default="false"/>
+  <arg name="gui_mission" default="true"/>
   <arg name="rviz" default="true"/>
-  <arg name="environment" default="true"/>
-  <arg name="world_name" default="$(find panther)/meshes/empty.world"/>
+  <arg name="gazebo" default="true"/>
+  <arg name="gzclient" default="false"/>
+  <!-- <arg name="environment" default="true"/> -->
 
 
   <!-- ///////////////////////////////////////////////// -->
@@ -70,8 +70,8 @@
 
   <group if="$(arg gazebo)">
     <include file="$(find gazebo_ros)/launch/empty_world.launch">
-      <arg name="world_name" value="$(arg world_name)"/>
-      <arg name="gui" value="false"/> <!-- Set to false if you only want gzserver (and NOT gzclient) -->
+      <arg name="world_name" value="$(find panther)/meshes/empty.world"/>
+      <arg name="gui" value="$(arg gzclient)"/> <!-- Set to false if you only want gzserver (and NOT gzclient) -->
     </include>
   </group>
 
@@ -81,13 +81,13 @@
   </group>
 
   <!-- Disable, for instance, for ssh connections -->
-  <group if="$(arg use_gui_mission)"> 
+  <group if="$(arg gui_mission)"> 
     <node pkg="rqt_gui" type="rqt_gui" name="rqt_gui" args="--perspective-file $(find panther)/rqt_cfgs/demo_interface.perspective"/>
   </group>
 
-  <group if="$(arg environment)">
-    <node name="dynamic_corridor" pkg="panther" type="dynamic_corridor.py" output="screen" args="10"/>  <!--  args is not used in dynamic_forest (TODO)-->
-  </group>  
+  <!-- <group if="$(arg environment)"> -->
+    <node name="dynamic_corridor" pkg="panther" type="dynamic_corridor.py" output="screen" args="10"/> 
+  <!-- </group>   -->
 
   <!-- ///////////////////////////////////////////////// -->
   <!-- ///////////////////////////////////////////////// -->
@@ -101,7 +101,7 @@
     <!-- Parameters -->
       <rosparam file="$(find panther)/param/panther.yaml" command="load"/>
       <rosparam file="$(find panther)/matlab/params_casadi.yaml" command="load"/>
-      <param name="use_gui_mission" value="$(arg use_gui_mission)" /> 
+      <param name="gui_mission" value="$(arg gui_mission)" /> 
       <param name="perfect_prediction" value="$(arg perfect_prediction)" /> 
 
         <!-- Subscriptions -->
