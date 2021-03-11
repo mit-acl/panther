@@ -17,7 +17,7 @@
 
 #include <panther_msgs/Log.h>
 
-#include <assert.h> /* assert */
+// #include <assert.h> /* assert */
 
 #include <tf2_eigen/tf2_eigen.h>
 #include <tf2_ros/transform_listener.h>
@@ -36,7 +36,6 @@ PantherRos::PantherRos(ros::NodeHandle nh1, ros::NodeHandle nh2, ros::NodeHandle
 
   // wait for body transform to be published before initializing.  This has to be done before creating a new PANTHER
   // object
-
   std::string name_camera_depth_optical_frame_tf = name_drone_ + "/camera_depth_optical_frame";
 
   while (true)
@@ -49,8 +48,6 @@ PantherRos::PantherRos(ros::NodeHandle nh1, ros::NodeHandle nh2, ros::NodeHandle
       transform_stamped = tf_buffer.lookupTransform(name_drone_, name_camera_depth_optical_frame_tf, ros::Time(0),
                                                     ros::Duration(0.5));  // Note that ros::Time(0) will just get us the
                                                                           // latest available transform.
-      // std::cout << "Transformation found" << std::endl;
-      // std::cout << "transform_stamped= " << transform_stamped << std::endl;
       par_.b_T_c = tf2::transformToEigen(transform_stamped);
       break;
     }
@@ -60,8 +57,8 @@ PantherRos::PantherRos(ros::NodeHandle nh1, ros::NodeHandle nh2, ros::NodeHandle
                         name_camera_depth_optical_frame_tf.c_str());
     }
   }
-  ROS_INFO("Found transform");
-  std::cout << "par_.b_T_c.matrix()= " << par_.b_T_c.matrix() << std::endl;
+  ROS_INFO("Found transform %s --> %s", name_drone_.c_str(), name_camera_depth_optical_frame_tf.c_str());
+  // std::cout << "par_.b_T_c.matrix()= " << par_.b_T_c.matrix() << std::endl;
 
   safeGetParam(nh1_, "use_ff", par_.use_ff);
   safeGetParam(nh1_, "visual", par_.visual);
@@ -167,36 +164,34 @@ PantherRos::PantherRos(ros::NodeHandle nh1, ros::NodeHandle nh2, ros::NodeHandle
   // CHECK parameters
   std::cout << bold << "Parameters obtained, checking them..." << reset << std::endl;
 
-  assert((par_.c_smooth_yaw_search >= 0) && "par_.c_smooth_yaw_search>=0 must hold");
-  assert((par_.c_visibility_yaw_search >= 0) && "par_.c_visibility_yaw_search>=0 must hold");
-  assert((par_.num_of_yaw_per_layer >= 1) && "par_.num_of_yaw_per_layer>=1 must hold");
+  verify((par_.c_smooth_yaw_search >= 0), "par_.c_smooth_yaw_search>=0 must hold");
+  verify((par_.c_visibility_yaw_search >= 0), "par_.c_visibility_yaw_search>=0 must hold");
+  verify((par_.num_of_yaw_per_layer >= 1), "par_.num_of_yaw_per_layer>=1 must hold");
 
-  assert((par_.c_pos_smooth >= 0) && "par_.c_pos_smooth>=0 must hold");
-  assert((par_.c_yaw_smooth >= 0) && "par_.c_yaw_smooth>=0 must hold");
-  assert((par_.c_fov >= 0) && "par_.c_fov>=0 must hold");
-  assert((par_.c_final_pos >= 0) && "par_.c_final_pos>=0 must hold");
-  assert((par_.c_final_yaw >= 0) && "par_.c_final_yaw>=0 must hold");
+  verify((par_.c_pos_smooth >= 0), "par_.c_pos_smooth>=0 must hold");
+  verify((par_.c_yaw_smooth >= 0), "par_.c_yaw_smooth>=0 must hold");
+  verify((par_.c_fov >= 0), "par_.c_fov>=0 must hold");
+  verify((par_.c_final_pos >= 0), "par_.c_final_pos>=0 must hold");
+  verify((par_.c_final_yaw >= 0), "par_.c_final_yaw>=0 must hold");
 
-  assert((par_.ydot_max >= 0) && "ydot_max>=0 must hold");
-  assert((par_.gamma <= 0) && "par_.gamma <= 0 must hold");
-  // assert((par_.beta < 0 || par_.alpha < 0) && " ");
-  assert((par_.a_max.z() >= 9.81) && "par_.a_max.z() >= 9.81, the drone will flip");
-  assert((par_.factor_alloc < 1.0) && "Needed: factor_alloc>=1");
-  assert((par_.kappa < 0 || par_.mu < 0) && "Needed: kappa and mu > 0");
-  assert(((par_.kappa + par_.mu) > 1) && "Needed: (par_.kappa + par_.mu) <= 1");
-  assert((par_.a_star_fraction_voxel_size < 0.0 || par_.a_star_fraction_voxel_size > 1.0) && "Needed: (par_.kappa + "
-                                                                                             "par_.mu) <= 1");
-  assert((par_.deg_pos == 3) && "PANTHER needs deg_pos==3");
-  assert((par_.deg_yaw == 2) && "PANTHER needs deg_yaw==2");
-  assert((par_.num_max_of_obst >= 0) && "num_max_of_obst>=0 must hold");
-  assert((par_.num_seg >= 1) && "num_seg>=1 must hold");
+  verify((par_.ydot_max >= 0), "ydot_max>=0 must hold");
+  verify((par_.gamma >= 0), "par_.gamma >= 0 must hold");
+  // verify((par_.beta < 0 || par_.alpha < 0), " ");
+  // verify((par_.a_max.z() <= 9.81), "par_.a_max.z() >= 9.81, the drone will flip");
+  verify((par_.factor_alloc >= 1.0), "Needed: factor_alloc>=1");
+  verify((par_.kappa >= 0 && par_.mu >= 0), "Needed: kappa and mu >= 0");
+  verify(((par_.kappa + par_.mu) <= 1), "Needed: (par_.kappa + par_.mu) <= 1");
+  verify((par_.a_star_fraction_voxel_size >= 0.0 && par_.a_star_fraction_voxel_size <= 1.0), "a_star_fraction_voxel_"
+                                                                                             "size is not in [0,1] ");
+  verify((par_.deg_pos == 3), "PANTHER needs deg_pos==3");
+  verify((par_.deg_yaw == 2), "PANTHER needs deg_yaw==2");
+  verify((par_.num_max_of_obst >= 0), "num_max_of_obst>=0 must hold");
+  verify((par_.num_seg >= 1), "num_seg>=1 must hold");
 
-  assert((par_.fov_x_deg >= 0) && "fov_x_deg>=0 must hold");
-  assert((par_.fov_y_deg >= 0) && "fov_y_deg>=0 must hold");
+  verify((par_.fov_x_deg >= 0), "fov_x_deg>=0 must hold");
+  verify((par_.fov_y_deg >= 0), "fov_y_deg>=0 must hold");
 
-  assert((par_.fov_y_deg == par_.fov_x_deg) && "par_.fov_y_deg == par_.fov_x_deg must hold");  // Remove this if
-                                                                                               // not using FOV
-                                                                                               // cone
+  verify((par_.fov_y_deg == par_.fov_x_deg), "par_.fov_y_deg == par_.fov_x_deg must hold");
 
   std::cout << bold << "Parameters checked" << reset << std::endl;
 
@@ -787,4 +782,14 @@ void PantherRos::publishFOV()
   marker_fov_.header.stamp = ros::Time::now();
   pub_fov_.publish(marker_fov_);
   return;
+}
+
+void PantherRos::verify(bool cond, std::string info_if_false)
+{
+  if (cond == false)
+  {
+    std::cout << termcolor::bold << termcolor::red << info_if_false << termcolor::reset << std::endl;
+    std::cout << termcolor::red << "Aborting" << termcolor::reset << std::endl;
+    abort();
+  }
 }

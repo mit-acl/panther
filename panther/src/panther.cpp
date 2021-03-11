@@ -1022,7 +1022,7 @@ bool Panther::replan(mt::Edges& edges_obstacles_out, std::vector<mt::state>& X_s
       prob_i += probMultivariateNormalDist(-R, R, pos_obs_mean - pos_drone, pos_obs_std);
     }
 
-    std::cout << "Trajectory " << i << " has P(collision)= " << prob_i * pow(10, 15) << "e-15" << std::endl;
+    // std::cout << "Trajectory " << i << " has P(collision)= " << prob_i * pow(10, 15) << "e-15" << std::endl;
 
     if (prob_i > max_prob_collision)
     {

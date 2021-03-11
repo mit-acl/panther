@@ -19,12 +19,12 @@ addpath(genpath('./../../submodules/minvo/src/solutions'));
 addpath(genpath('./more_utils'));
 
 opti = casadi.Opti();
-deg_pos_prediction=1;  
+deg_pos_prediction=2;  
 dim_pos=3;
 % num_seg_prediction =1; %Not used (in this file we fit a polynomial, not a
 % spline)
 min_size_sliding_window=4; %This is the number of observations
-max_size_sliding_window=50;
+max_size_sliding_window=40;
 secs_prediction=10; %BE CAREFUL: If it's too big (like 100), casadi will crash sometimes (because all_t will be very similar)
 
 my_file=fopen('./casadi_generated_files/params_casadi_prediction.yaml','w'); %Overwrite content. This will clear its content

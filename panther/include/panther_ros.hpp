@@ -42,6 +42,8 @@ public:
 private:
   std::unique_ptr<Panther> panther_ptr_;
 
+  void verify(bool cond, std::string info_if_false);
+
   void publishOwnTraj(const mt::PieceWisePol& pwp);
   void publishPlanes(std::vector<Hyperplane3D>& planes);
 

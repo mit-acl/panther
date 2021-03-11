@@ -550,7 +550,7 @@ bool SolverIpopt::optimize()
   // https://github.com/casadi/casadi/blob/fadc86444f3c7ab824dc3f2d91d4c0cfe7f9dad5/casadi/interfaces/ipopt/ipopt_interface.cpp
   if (optimstatus == "Solve_Succeeded" || optimstatus == "Solved_To_Acceptable_Level")
   {
-    std::cout << green << "IPOPT found a solution!" << reset << std::endl;
+    std::cout << green << "IPOPT found a solution" << reset << std::endl;
     log_ptr_->success_opt = true;
     // copy the solution
     auto qp_casadi = result["all_pCPs"];

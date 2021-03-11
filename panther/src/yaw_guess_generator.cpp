@@ -115,7 +115,7 @@ casadi::DM SolverIpopt::generateYawGuess(casadi::DM matrix_qp_guess, casadi::DM 
                                                     // It's a matrix of size (num_of_layers_)x(num_of_yaw_per_layer_)
                                                     // we won't use its 1st col  (since y0 is given)
 
-  std::cout << bold << yellow << "y0= " << y0 << reset << std::endl;
+  // std::cout << bold << yellow << "y0= " << y0 << reset << std::endl;
   // Set the value of the first node (initial yaw)
   mygraph_[all_vertexes_[0][0]].yaw = y0;
 
@@ -254,7 +254,7 @@ casadi::DM SolverIpopt::generateYawGuess(casadi::DM matrix_qp_guess, casadi::DM 
       }
       std::cout << reset;
     }
-    cout << endl << "\nTotal cost: " << d[fg.get_goal_found()] << endl;
+    // cout << endl << "\nTotal cost: " << d[fg.get_goal_found()] << endl;
 
     ///////////////////////////////////////////////////////////////
     // Now fit a spline to the yaws found

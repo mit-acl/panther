@@ -1,13 +1,13 @@
-x_min: -4.0
-x_max: 3.2
-y_min: -3.5
-y_max: 3.3
-z_min: 1.2
-z_max: 6.0
+x_min: -4000.0
+x_max: 4000.0
+y_min: -4000.0
+y_max: 4000.0
+z_min: -4000.0
+z_max: 4000.0
 meters_to_create_new_track: 2.0
 max_frames_skipped: 10
 cluster_tolerance: 0.3
 min_cluster_size: 15       #units= num of points
 max_cluster_size: 600     #units= num of points
 min_dim_cluster_size: 0.1 #units= meters
-leaf_size_filter: 0.1
+leaf_size_filter: 0.2
