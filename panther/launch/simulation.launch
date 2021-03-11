@@ -86,7 +86,7 @@
   </group>
 
   <!-- <group if="$(arg environment)"> -->
-    <node name="dynamic_corridor" pkg="panther" type="dynamic_corridor.py" output="screen" args="10"/> 
+    <node name="dynamic_corridor" pkg="panther" type="dynamic_corridor.py" output="screen" args="10 $(arg gazebo)"/> 
   <!-- </group>   -->
 
   <!-- ///////////////////////////////////////////////// -->

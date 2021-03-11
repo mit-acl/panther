@@ -57,7 +57,7 @@ class FakeSim:
         else:
             return "static"
 
-    def __init__(self, total_num_obs):
+    def __init__(self, total_num_obs,gazebo):
         self.state=State()
 
         name = rospy.get_namespace()
@@ -119,12 +119,13 @@ class FakeSim:
 
         self.pubTraj = rospy.Publisher('/trajs', DynTraj, queue_size=1, latch=True)
         self.pubShapes_dynamic_mesh = rospy.Publisher('/obstacles_mesh', MarkerArray, queue_size=1, latch=True)
-        self.pubGazeboState = rospy.Publisher('/gazebo/set_model_state', ModelState, queue_size=100)
+        #self.pubGazeboState = rospy.Publisher('/gazebo/set_model_state', ModelState, queue_size=100)
 
 
-        ## Spawn all the objects in Gazebo
-        for i in range(self.total_num_obs):
-            self.spawnGazeboObstacle(i)
+        if(gazebo):
+            # Spawn all the objects in Gazebo
+            for i in range(self.total_num_obs):
+                self.spawnGazeboObstacle(i)
 
 
         rospy.sleep(0.5)
@@ -271,7 +272,7 @@ class FakeSim:
             path_panther=rospack.get_path('panther');
             path_file=path_panther+"/meshes/tmp.urdf"
 
-            f = open(path_file, "w")
+            f = open(path_file, "w") #TODO: This works, but it'd better not having to create this file
             scale=self.marker_array.markers[i].scale;
             scale='"'+str(scale.x)+" "+str(scale.y)+" "+str(scale.z)+'"';
 
@@ -313,8 +314,8 @@ class FakeSim:
 
              
 
-def startNode(total_num_obs):
-    c = FakeSim(total_num_obs)
+def startNode(total_num_obs, gazebo):
+    c = FakeSim(total_num_obs,gazebo)
     rospy.Timer(rospy.Duration(0.01), c.pubTF)
     rospy.spin()
 
@@ -329,11 +330,13 @@ if __name__ == '__main__':
     else:
         total_num_obs=int(sys.argv[1])
 
-    # print("sys.argv[1]= ", sys.argv[1])
+
+    gazebo=((sys.argv[2]=='True') or (sys.argv[2]=='true'))
+
     # total_num_obs=140
     ns = rospy.get_namespace()
     try:
         rospy.init_node('dynamic_obstacles')
-        startNode(total_num_obs)
+        startNode(total_num_obs,gazebo)
     except rospy.ROSInterruptException:
         pass

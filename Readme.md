@@ -111,23 +111,30 @@ echo "source /home/YOUR_USER/Desktop/ws/devel/setup.bash" >> ~/.bashrc
 
 ### Running Simulations
 
-| Parameter      | Description |
+Simply execute
+
+```
+`roslaunch panther simulation.launch quad:=SQ01s`
+```
+
+Now you can click `Start` on the GUI, and then press `G` (or click the option `2D Nav Goal` on the top bar of RVIZ) and click any goal for the drone. 
+
+
+You can also change the following arguments when executing `roslaunch`
+
+| Argument      | Description |
 | ----------- | ----------- |
 | `quad`      | Name of the drone        |
 | `perfect_controller`      | If true, the drone will track perfectly the trajectories. Controller and physics engine of the drone will not be launched.       |
-| `perfect_prediction`      | If true, the drone will have access to the ground truth of the trajectories of the obstacles. If false, the drone will estimate their trajectories (it needs `gazebo=true` in this case.       |
+| `perfect_prediction`      | If true, the drone will have access to the ground truth of the trajectories of the obstacles. If false, the drone will estimate their trajectories (it needs `gazebo=true` in this case).       |
 | `gui_mission`      | If true, a gui will be launched to start the experiment       |
 | `rviz`      | If true, Rviz will be launched for visualization       |
-| `gazebo`      | If true, Gazebo will be launched |
+| `gazebo`      | If true, Gazebo will be launched  |
 | `gzclient`      | If true, the gui of Gazebo will be launched. If false, (and if `gazebo=true`) only gzserver will be launched. Note: right now there is some delay in the visualization of the drone the gui of Gazebo. But this doesn't affect the point clouds generated. |
 
-You can see the default values of these parametes in `simulation.launch`.
+You can see the default values of these arguments in `simulation.launch`.
 
-Example
 
-`roslaunch panther simulation.launch quad:=SQ01s`. You can also the z value of `panther_specific.launch` to set the initial position of the drone
-
-Now you can press `G` (or click the option `2D Nav Goal` on the top bar of RVIZ) and click any goal for the drone. 
 
 ## Credits:
 This package uses some the [hungarian-algorithm-cpp](https://github.com/mcximing/hungarian-algorithm-cpp) and some C++ classes from the [DecompROS](https://github.com/sikang/DecompROS) and  repos (both included in the `thirdparty` folder), so credit to them as well. 
