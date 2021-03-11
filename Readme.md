@@ -17,6 +17,8 @@ When using PANTHER, please cite [PANTHER: Perception-Aware Trajectory Planner in
 }
 ```
 
+**If you are looking for a Planner in Multi-Agent and Dynamic Environments, you may be interesed also in [MADER](https://github.com/mit-acl/mader)**
+
 ## General Setup
 
 PANTHER has been tested with Ubuntu 18.04/ROS Melodic. Other Ubuntu/ROS version may need some minor modifications, feel free to [create an issue](https://github.com/mit-acl/panther/issues) if you have any problems.
