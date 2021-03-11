@@ -46,6 +46,11 @@ cmake . -DCMAKE_BUILD_TYPE=Release -DWITH_PYTHON=ON -DWITH_IPOPT=ON ..
 sudo make install
 ``` 
 
+#### Git lfs
+``` bash
+
+```
+
 <details>
   <summary> <b>Optional (recommended for better performance)</b></summary>
 
@@ -108,6 +113,8 @@ Then, to use a specific linear solver, you simply need to change the name of `li
 cd ~/Desktop && mkdir ws && cd ws && mkdir src && cd src
 git clone https://github.com/mit-acl/panther.git
 cd panther
+sudo apt-get install git-lfs #Make sure you have git-lfs installed
+git lfs install
 git submodule init && git submodule update
 catkin build
 echo "source /home/YOUR_USER/Desktop/ws/devel/setup.bash" >> ~/.bashrc 

@@ -8,6 +8,6 @@
 # no .so .c or .casadi files (too big the ones produced by casadi)
 *.so
 *.c
-*.casadi
+#*.casadi
 
 **/build 
