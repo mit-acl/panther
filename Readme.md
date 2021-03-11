@@ -104,6 +104,8 @@ disp(jacobian(sin(x),x))
 
 Then, to use a specific linear solver, you simply need to change the name of `linear_solver_name` in the file `main.m`, and then run that file.
 
+> Note: When using a linear solver different from `mumps`, you need to start Matlab from the terminal (typing `matlab`).More info [in this issue](https://github.com/casadi/casadi/issues/2032).
+
 > Note: Instead of the binary installation explained in this section, another (but not so straightforward) way would be to use the installation `from source` done above, but it requires some patches to swig, see [this](https://github.com/casadi/casadi/wiki/matlab).
 </details>
 
