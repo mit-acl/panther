@@ -50,11 +50,6 @@ cmake . -DCMAKE_BUILD_TYPE=Release -DWITH_PYTHON=ON -DWITH_IPOPT=ON ..
 sudo make install
 ``` 
 
-#### Git lfs
-``` bash
-
-```
-
 <details>
   <summary> <b>Optional (recommended for better performance)</b></summary>
 
