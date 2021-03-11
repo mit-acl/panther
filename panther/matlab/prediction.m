@@ -44,6 +44,8 @@ fprintf(my_file,'deg_pos_prediction: %d\n',deg_pos_prediction);
 %%%%%%%    PREDICTION     %%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+delete casadi_generated_files/get_mean_variance_pred_*.casadi %Delete any existing file
+
 for size_sliding_window=min_size_sliding_window:1:max_size_sliding_window
 
     all_t=MX.sym('all_t',1,size_sliding_window);
