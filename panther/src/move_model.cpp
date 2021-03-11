@@ -1,3 +1,6 @@
+// Modified from https://github.com/osrf/gazebo/blob/gazebo8/examples/plugins/model_push/model_push.cc
+// which has the following coypright note:
+
 /*
  * Copyright (C) 2012-2014 Open Source Robotics Foundation
  *
@@ -26,7 +29,7 @@
 
 namespace gazebo
 {
-class ModelPush : public ModelPlugin
+class ModelMove : public ModelPlugin
 {
   typedef exprtk::symbol_table<double> symbol_table_t;
   typedef exprtk::expression<double> expression_t;
@@ -70,7 +73,7 @@ public:
 
     // Listen to the update event. This event is broadcast every
     // simulation iteration.
-    updateConnection = event::Events::ConnectWorldUpdateBegin(std::bind(&ModelPush::OnUpdate, this));
+    updateConnection = event::Events::ConnectWorldUpdateBegin(std::bind(&ModelMove::OnUpdate, this));
   }
 
 public:
@@ -109,5 +112,5 @@ private:
 };
 
 // Register this plugin with the simulator
-GZ_REGISTER_MODEL_PLUGIN(ModelPush)
+GZ_REGISTER_MODEL_PLUGIN(ModelMove)
 }  // namespace gazebo

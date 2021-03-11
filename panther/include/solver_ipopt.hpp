@@ -13,18 +13,16 @@
 #include <Eigen/StdVector>
 
 #include <iomanip>  //set precision
+#include <iostream>
+
 #include "panther_types.hpp"
 #include "utils.hpp"
 #include <casadi/casadi.hpp>
 #include "timer.hpp"
-#include <decomp_geometry/polyhedron.h>  //For Polyhedron  and Hyperplane definition
 #include "separator.hpp"
 #include "octopus_search.hpp"
-// #include "solver_params.hpp"
 
-#include <iostream>
-
-// Things for the yaw search
+// For the yaw search:
 #include <boost/graph/astar_search.hpp>
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/random.hpp>

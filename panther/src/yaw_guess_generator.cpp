@@ -2,8 +2,8 @@
 #include "solver_ipopt.hpp"
 #include "termcolor.hpp"
 
-// This file closely follows https://www.boost.org/doc/libs/1_53_0/libs/graph/example/astar-cities.cpp, which has the
-// following copyright note:
+// This file is a modification from https://www.boost.org/doc/libs/1_53_0/libs/graph/example/astar-cities.cpp, which has
+// the following copyright note:
 //=======================================================================
 // Copyright (c) 2004 Kristopher Beevers
 //
@@ -35,7 +35,7 @@ using namespace termcolor;
 
 ////////////////////////////////////////
 ////////////////////////////////////////
-// euclidean distance heuristic
+// heuristic
 template <class Graph, class CostType>
 class distance_heuristic : public astar_heuristic<Graph, CostType>
 {
@@ -47,8 +47,6 @@ public:
   }
   CostType operator()(vd u)
   {
-    // CostType dx = locations_[goal_].x - locations_[u].x;
-    // CostType dy = locations_[goal_].y - locations_[u].y;
     CostType heuristic = 0;
     return heuristic;
   }
@@ -155,14 +153,6 @@ casadi::DM SolverIpopt::generateYawGuess(casadi::DM matrix_qp_guess, casadi::DM 
 
   // std::cout << bold << yellow << "num_edges(mygraph_)= " << num_edges(mygraph_) << reset << std::endl;
 
-  ////DEBUGGING
-  // if (num_edges(mygraph_) < (num_of_layers_ - 1))
-  // {
-  //   std::cout << red << bold << "The layers are disconnected for sure, no solution will be found" << reset <<
-  //   std::endl; std::cout << red << bold << "Maybe ydot_max is too small?" << std::endl; abort();
-  // }
-  ///////////////
-
   vd start = all_vertexes_[0][0];
 
   std::vector<vd> p(num_vertices(mygraph_));
@@ -194,7 +184,6 @@ casadi::DM SolverIpopt::generateYawGuess(casadi::DM matrix_qp_guess, casadi::DM 
     }
     std::list<vd>::iterator spi = shortest_path_vd.begin();
     // std::cout << mygraph_[all_vertexes_[0][0]].yaw;
-
     // std::cout << "shortest_path_vd.size()= " << shortest_path_vd.size() << std::endl;
 
     casadi::DM vector_shortest_path(1, shortest_path_vd.size());  // TODO: do this just once?
@@ -211,8 +200,6 @@ casadi::DM SolverIpopt::generateYawGuess(casadi::DM matrix_qp_guess, casadi::DM 
       vector_shortest_path(i) = mygraph_[*spi].yaw;
       i = i + 1;
     }
-
-    // std::cout << "before vector_shortest_path.columns()" << vector_shortest_path.columns() << std::endl;
 
     // std::cout << "vector_yaw_samples_=\n" << vector_yaw_samples_ << std::endl;
     // std::cout << "vis_matrix_casadi=\n" << vis_matrix_casadi << std::endl;
@@ -337,9 +324,9 @@ casadi::DM SolverIpopt::generateYawGuess(casadi::DM matrix_qp_guess, casadi::DM 
   std::cout << red << bold << "Boost A* Didn't find a path!! " << std::endl;
   // This should never happen
 
-  // Only for debugging
+  //////// Debugging
   abort();
-  // End of for debugging
+  ///////////////////
 
   casadi::DM constant_yaw_matrix_casadi = y0 * casadi::DM::ones(1, Ny_ + 1);
 

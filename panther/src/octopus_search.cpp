@@ -237,7 +237,6 @@ void OctopusSearch::setMaxValuesAndSamples(Eigen::Vector3d& v_max, Eigen::Vector
     {
       for (int jz : indexes_samples_z_)
       {
-        // std::cout << "Pushing combination " << jx << ", " << jy << ", " << jz << std::endl;
         all_combinations_.push_back(std::tuple<int, int, int>(jx, jy, jz));
       }
     }
@@ -417,7 +416,6 @@ bool OctopusSearch::computeUpperAndLowerConstraints(const int i, const Eigen::Ve
   // // Now, if were are sampling vNm3, check that velocities are satisfied
   if (i == (N_ - 3))
   {
-    // std::cout << "doing this check!!!!, N=" << N_ << std::endl;
     ////////////////  [viM1 vi 0]
     Eigen::Matrix<double, 3, 3> tmp2 = viM1 * M_interv.row(0);
 

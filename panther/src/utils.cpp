@@ -56,7 +56,7 @@ double getMinTimeDoubleIntegrator1D(const double& p0, const double& v0, const do
                                     const double& v_max, const double& a_max)
 {
   // See also minimum_time.m
-  // %The notation of this function is based on the paper "Constrined time-optimal
+  // %The notation of this function is based on the paper "Constrained time-optimal
   // %control of double integrator system and its application in MPC"
   // % https://iopscience.iop.org/article/10.1088/1742-6596/783/1/012024
 
@@ -122,8 +122,10 @@ double probUnivariateNormalDistAB(double a, double b, double mu, double std_devi
 {
   if (b < a)
   {
+    /////// Debugging
     std::cout << "Needed: b>=a. ABORTING!" << std::endl;
     abort();
+    ////////////////
   }
 
   return (cdfUnivariateNormalDist(b, mu, std_deviation) - cdfUnivariateNormalDist(a, mu, std_deviation));
@@ -190,9 +192,6 @@ visualization_msgs::MarkerArray pwp2ColoredMarkerArray(mt::PieceWisePol& pwp, do
 
     m.pose.orientation.w = 1.0;
 
-    // std::cout << "t= " << std::setprecision(15) << t << std::endl;
-    // std::cout << "is " << pwp.eval(t).transpose() << std::endl;
-
     geometry_msgs::Point p = eigen2point(pwp.eval(t));
 
     m.points.push_back(p_last);
@@ -240,8 +239,6 @@ void linearTransformPoly(const Eigen::VectorXd& coeff_p, Eigen::VectorXd& coeff_
     for (int j = 0; j < Q.cols(); j++)
     {
       int jchoosei = (i > j) ? 0 : nChoosek(j, i);
-      // std::cout << "i= " << i << std::endl;
-      // std::cout << "j= " << j << std::endl;
       Q(i, j) = jchoosei * pow(a, i) * pow(b, j - i);
     }
   }
@@ -267,54 +264,6 @@ void changeDomPoly(const Eigen::VectorXd& coeff_p, double tp1, double tp2, Eigen
   double b = -(tp1 * tq2 - tp2 * tq1) / (tq1 - tq2);
   linearTransformPoly(coeff_p, coeff_q, a, b);
 }
-
-// // coeff_old are the coeff [a b c d]' of a polynomial p(t)
-// // coeff_new are the coeff [a b c d]' of a polynomial q(t) defined in [0,1] such that:
-// //     q((t-t0)/(tf-t0))=p(t) \forall t \in [t0,tf]  I.e. p(t0)=q(0) and p(tf)=q(1)
-// void rescaleCoeffPol(const Eigen::Matrix<double, 4, 1>& coeff_old, Eigen::Matrix<double, 4, 1>& coeff_new, double t0,
-//                      double tf)
-// {
-//   // if (t0 < 0 || t0 > 1 || tf < 0 || tf > 1)
-//   // {
-//   //   std::cout << "tf and t0 should be in [0,1]" << std::endl;
-//   //   std::cout << "t0= " << t0 << std::endl;
-//   //   std::cout << "tf= " << tf << std::endl;
-//   //   std::cout << "================================" << std::endl;
-//   //   abort();
-//   // }
-
-//   double a = coeff_old(0);
-//   double b = coeff_old(1);
-//   double c = coeff_old(2);
-//   double d = coeff_old(3);
-
-//   double delta = tf - t0;
-//   double delta_2 = delta * delta;
-//   double delta_3 = delta * delta * delta;
-
-//   // std::cout << "delta= " << delta << std::endl;
-
-//   // // if (isnan(delta))
-//   // // {
-//   // //   std::cout << "tf= " << tf << std::endl;
-//   // //   std::cout << "t0= " << tf << std::endl;
-//   // //   std::cout << "delta is NAN" << std::endl;
-//   // //   abort();
-//   // // }
-
-//   // std::cout << "a= " << a << std::endl;
-//   // std::cout << "b= " << b << std::endl;
-//   // std::cout << "c= " << c << std::endl;
-//   // std::cout << "d= " << d << std::endl;
-
-//   double t0_2 = t0 * t0;
-//   double t0_3 = t0 * t0 * t0;
-
-//   coeff_new(0) = a * delta_3;
-//   coeff_new(1) = b * delta_2 + 3 * a * delta_2 * t0;
-//   coeff_new(2) = c * delta + 2 * b * delta * t0 + 3 * a * delta * t0_2;
-//   coeff_new(3) = d + c * t0 + b * t0_2 + a * t0_3;
-// }
 
 panther_msgs::PieceWisePolTraj pwp2PwpMsg(const mt::PieceWisePol& pwp)
 {
@@ -490,16 +439,15 @@ mt::PieceWisePol composePieceWisePol(const double t, const double dc, mt::PieceW
 
   if (p1.times.back() < p2.times.front() || t > p2.times.back() || t < p1.times.front())
   {
-    // TODO: does this happen?
-
+    // TODO?
     // std::cout << "Error composing the piecewisePol" << std::endl;
     // std::cout << std::setprecision(30) << "t= " << t << std::endl;
     // std::cout << std::setprecision(30) << "p1.times.front()= " << p1.times.front() << std::endl;
     // std::cout << std::setprecision(30) << "p1.times.back()= " << p1.times.back() << std::endl;
     // std::cout << std::setprecision(30) << "p2.times.front() = " << p2.times.front() << std::endl;
     // std::cout << std::setprecision(30) << "p2.times.back() = " << p2.times.back() << std::endl;
-    mt::PieceWisePol dummy;
-    return dummy;
+    mt::PieceWisePol tmp;
+    return tmp;
   }
 
   std::vector<int> indexes1, indexes2;
@@ -972,144 +920,6 @@ geometry_msgs::Vector3 vectorUniform(double a)
   tmp.y = a;
   tmp.z = a;
   return tmp;
-}
-
-// given 2 points (A inside and B outside the sphere) it computes the intersection of the lines between
-// that 2 points and the sphere
-Eigen::Vector3d getIntersectionWithSphere(Eigen::Vector3d& A, Eigen::Vector3d& B, double r, Eigen::Vector3d& center)
-{
-  // http://www.ambrsoft.com/TrigoCalc/Sphere/SpherLineIntersection_.htm
-
-  float x1 = A[0];
-  float y1 = A[1];
-  float z1 = A[2];
-
-  float x2 = B[0];
-  float y2 = B[1];
-  float z2 = B[2];
-
-  float x3 = center[0];
-  float y3 = center[1];
-  float z3 = center[2];
-
-  float a = pow((x2 - x1), 2) + pow((y2 - y1), 2) + pow((z2 - z1), 2);
-  float b = 2 * ((x2 - x1) * (x1 - x3) + (y2 - y1) * (y1 - y3) + (z2 - z1) * (z1 - z3));
-  float c = x3 * x3 + y3 * y3 + z3 * z3 + x1 * x1 + y1 * y1 + z1 * z1 - 2 * (x3 * x1 + y3 * y1 + z3 * z1) - r * r;
-
-  float discrim = b * b - 4 * a * c;
-  if (discrim <= 0)
-  {
-    printf("The line is tangent or doesn't intersect, returning the intersection with the center and the first "
-           "point\n");
-
-    float x1 = center[0];
-    float y1 = center[1];
-    float z1 = center[2];
-
-    float x2 = A[0];
-    float y2 = A[1];
-    float z2 = A[2];
-
-    float x3 = center[0];
-    float y3 = center[1];
-    float z3 = center[2];
-
-    float a = pow((x2 - x1), 2) + pow((y2 - y1), 2) + pow((z2 - z1), 2);
-    float b = 2 * ((x2 - x1) * (x1 - x3) + (y2 - y1) * (y1 - y3) + (z2 - z1) * (z1 - z3));
-    float c = x3 * x3 + y3 * y3 + z3 * z3 + x1 * x1 + y1 * y1 + z1 * z1 - 2 * (x3 * x1 + y3 * y1 + z3 * z1) - r * r;
-
-    float t = (-b + sqrt(b * b - 4 * a * c)) / (2 * a);
-    float x_int = x1 + (x2 - x1) * t;
-    float y_int = y1 + (y2 - y1) * t;
-    float z_int = z1 + (z2 - z1) * t;
-    Eigen::Vector3d intersection(x_int, y_int, z_int);
-
-    return intersection;
-  }
-  else
-  {
-    float t = (-b + sqrt(b * b - 4 * a * c)) / (2 * a);
-    float x_int = x1 + (x2 - x1) * t;
-    float y_int = y1 + (y2 - y1) * t;
-    float z_int = z1 + (z2 - z1) * t;
-    Eigen::Vector3d intersection(x_int, y_int, z_int);
-    // std::cout << "Intersection=" << std::endl << intersection << std::endl;
-    return intersection;
-  }
-}
-
-// Given a path (starting inside the sphere and finishing outside of it) expressed by a vector of 3D-vectors (points),
-// it returns its first intersection with a sphere of radius=r and center=center
-// the center is added as the first point of the path to ensure that the first element of the path is inside the sphere
-// (to avoid issues with the first point of JPS2)
-Eigen::Vector3d getFirstIntersectionWithSphere(std::vector<Eigen::Vector3d>& path, double r, Eigen::Vector3d& center,
-                                               int* last_index_inside_sphere, bool* noPointsOutsideSphere)
-{
-  if (noPointsOutsideSphere != NULL)
-  {  // this argument has been provided
-    *noPointsOutsideSphere = false;
-  }
-
-  int index = -1;
-  for (int i = 0; i < path.size(); i++)
-  {
-    double dist = (path[i] - center).norm();
-
-    if (dist > r)
-    {
-      index = i;  // This is the first point outside the sphere
-      break;
-    }
-  }
-
-  Eigen::Vector3d A;
-  Eigen::Vector3d B;
-
-  Eigen::Vector3d intersection;
-  switch (index)
-  {
-    case -1:  // no points are outside the sphere --> return last element
-      // std::cout << "Utils: no points are outside the sphere!!!" << std::endl;
-      A = center;
-      B = path[path.size() - 1];
-      if (last_index_inside_sphere != NULL)
-      {
-        *last_index_inside_sphere = path.size() - 1;
-      }
-      if (noPointsOutsideSphere != NULL)
-      {  // this argument has been provided
-        *noPointsOutsideSphere = true;
-      }
-
-      intersection = getIntersectionWithSphere(A, B, r, center);
-
-      if (last_index_inside_sphere != NULL)
-      {
-        *last_index_inside_sphere = path.size() - 1;
-      }
-      break;
-    case 0:  // First element is outside the sphere
-      printf("First element is still oustide the sphere, there is sth wrong, returning the first element\n");
-      intersection = path[0];
-
-      if (last_index_inside_sphere != NULL)
-      {
-        *last_index_inside_sphere = 1;
-      }
-      break;
-    default:
-      A = path[index - 1];
-      B = path[index];
-
-      intersection = getIntersectionWithSphere(A, B, r, center);
-      // printf("index-1=%d\n", index - 1);
-      if (last_index_inside_sphere != NULL)
-      {
-        *last_index_inside_sphere = index - 1;
-      }
-  }
-
-  return intersection;
 }
 
 visualization_msgs::MarkerArray trajectory2ColoredMarkerArray(const mt::trajectory& data, double max_value, int increm,

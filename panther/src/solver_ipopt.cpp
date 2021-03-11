@@ -13,7 +13,6 @@
 #include "bspline_utils.hpp"
 #include "ros/ros.h"
 
-#include <decomp_util/ellipsoid_decomp.h>  //For Polyhedron definition
 #include <unsupported/Eigen/Splines>
 #include <iostream>
 #include <list>
@@ -22,26 +21,9 @@
 #include <vector>
 #include <fstream>
 
-#include <ros/package.h>  //TODO: remove this ros dependency
+#include <ros/package.h>
 
 using namespace termcolor;
-
-// std::string getPathName(const std::string &s)
-// {
-//   char sep = '/';
-
-// #ifdef _WIN32
-//   sep = '\\';
-// #endif
-
-//   size_t i = s.rfind(sep, s.length());
-//   if (i != std::string::npos)
-//   {
-//     return (s.substr(0, i));
-//   }
-
-//   return ("");
-// }
 
 template <typename T>
 int sgn(T val)
@@ -60,7 +42,6 @@ SolverIpopt::SolverIpopt(mt::parameters &par, std::shared_ptr<mt::log> log_ptr)
   N_ = M_ - p_ - 1;
 
   Ny_ = (par_.num_seg + par_.deg_yaw - 1);
-  // num_seg = (M_ - 2 * p_);  // this is the same as par_.num_seg
   ///////////////////////////////////////
 
   mt::basisConverter basis_converter;
@@ -269,7 +250,7 @@ bool SolverIpopt::setInitStateFinalStateInitTFinalT(mt::state initial_state, mt:
 
   // here we saturate the value to ensure it is within the limits
   // the reason for this is the epsilon_tol_constraints (in the previous iteration, it may be slightly unfeasible)
-  saturate(v0, -par_.v_max, par_.v_max);  // TODO: but this changes are not reflected in initial_state_
+  saturate(v0, -par_.v_max, par_.v_max);  // TODO: should this change be also reflected in initial_state_?
   saturate(a0, -par_.a_max, par_.a_max);
   saturate(vf, -par_.v_max, par_.v_max);
   saturate(af, -par_.a_max, par_.a_max);
@@ -293,7 +274,6 @@ bool SolverIpopt::setInitStateFinalStateInitTFinalT(mt::state initial_state, mt:
 
   //////////////////////////////
   // Now make sure deltaT in knots_ is such that -v_max<=v1<=v_max is satisfied:
-  // std::cout << bold << "deltaT_ before= " << deltaT_ << reset << std::endl;
   for (int axis = 0; axis < 3; axis++)
   {
     double upper_bound, lower_bound;
@@ -302,16 +282,12 @@ bool SolverIpopt::setInitStateFinalStateInitTFinalT(mt::state initial_state, mt:
       upper_bound = ((p_ - 1) * (sgn(a0(axis)) * par_.v_max(axis) - v0(axis)) / (a0(axis)));
       lower_bound = ((p_ - 1) * (-sgn(a0(axis)) * par_.v_max(axis) - v0(axis)) / (a0(axis)));
 
-      // std::cout << "axis= " << axis << std::endl;
-      // std::cout << "lower_bound= " << lower_bound << std::endl;
-      // std::cout << "upper_bound= " << upper_bound << std::endl;
-
-      ////////////////// Just for debugging
-      if (upper_bound < lower_bound)
-      {
-        std::cout << red << bold << "This should never happen, aborting" << std::endl;
-        abort();
-      }
+      ////////////////// Debugging
+      // if (upper_bound < lower_bound)
+      // {
+      //   std::cout << red << bold << "This should never happen, aborting" << std::endl;
+      //   abort();
+      // }
       //////////////////
 
       if (upper_bound <= 0)
@@ -374,7 +350,7 @@ bool SolverIpopt::setInitStateFinalStateInitTFinalT(mt::state initial_state, mt:
 
   for (int i = (p_ + 1); i <= M_ - p_ - 1; i++)
   {
-    knots[i] = knots[i - 1] + deltaT_;  // Assumming a uniform b-spline (internal knots are equally spaced)
+    knots[i] = knots[i - 1] + deltaT_;  // Uniform b-spline (internal knots are equally spaced)
   }
 
   for (int i = (M_ - p_); i <= M_; i++)
@@ -388,7 +364,6 @@ bool SolverIpopt::setInitStateFinalStateInitTFinalT(mt::state initial_state, mt:
   //////////////////
 
   // See https://pages.mtu.edu/~shene/COURSES/cs3621/NOTES/spline/B-spline/bspline-derv.html
-  // See also eq. 15 of the paper "Robust and Efficent quadrotor..."
 
   double t1 = knots_(1);
   double t2 = knots_(2);
@@ -419,19 +394,6 @@ bool SolverIpopt::optimize()
 
   // reset some stuff
   traj_solution_.clear();
-  // // note that, for a v0 and a0 given, q2_ is not guaranteed to lie within the bounds. If that's the case --> keep
-  // // executing previous trajectory
-  // if (q2_.x() > par_.x_max || q2_.x() < par_.x_min ||  //////////////
-  //     q2_.y() > par_.y_max || q2_.y() < par_.y_min ||  /////////////////
-  //     q2_.z() > par_.z_max || q2_.z() < par_.z_min)
-  // {
-  //   std::cout << bold << red << "q2_ is not in [min, max]" << reset << std::endl;
-  //   std::cout << "q2_= " << q2_.transpose() << std::endl;
-  //   std::cout << "par_.x_min= " << par_.x_min << ", par_.x_max=" << par_.x_max << std::endl;
-  //   std::cout << "par_.y_min= " << par_.y_min << ", par_.y_max=" << par_.y_max << std::endl;
-  //   std::cout << "par_.z_min= " << par_.z_min << ", par_.z_max=" << par_.z_max << std::endl;
-  //   return false;
-  // }
   bool guess_found = generateAStarGuess();  // I obtain q_quess_, n_guess_, d_guess_
   if (guess_found == false)
   {
@@ -453,12 +415,7 @@ bool SolverIpopt::optimize()
   }
 
   ////////////////////////////////////
-  ////////////////////////////////////
-  //////////////////////////////////// CASADI!
-
-  // std::cout << "Casadi!" << std::endl;
-  // std::cout << "par_.v_max= " << par_.v_max.transpose() << std::endl;
-  // std::cout << "par_.a_max= " << par_.a_max.transpose() << std::endl;
+  //////////////////////////////////// CASADI
 
   // Conversion DM <--> Eigen:  https://github.com/casadi/casadi/issues/2563
   auto eigen2std = [](Eigen::Vector3d &v) { return std::vector<double>{ v.x(), v.y(), v.z() }; };
@@ -486,8 +443,6 @@ bool SolverIpopt::optimize()
   map_arguments["ydot0"] = initial_state_.dyaw;
   map_arguments["ydotf"] =
       final_state_.dyaw;  // Needed: if not (and if you are minimizing ddyaw), ddyaw=cte --> yaw will explode
-  // std::cout << bold << blue << "y0= " << initial_state_.yaw << reset << std::endl;
-  // std::cout << bold << blue << "ydot0= " << initial_state_.dyaw << reset << std::endl;
   map_arguments["v_max"] = eigen2std(par_.v_max);
   map_arguments["a_max"] = eigen2std(par_.a_max);
   map_arguments["j_max"] = eigen2std(par_.j_max);
@@ -498,21 +453,14 @@ bool SolverIpopt::optimize()
   map_arguments["total_time"] = (t_final_ - t_init_);
   // all_w_fe is a matrix whose columns are the positions of the feature (in world frame) in the times [t0,t0+XX,
   // ...,tf-XX, tf] (i.e. uniformly distributed and including t0 and tf)
-  // std::cout << "Using all_w_fe_= \n" << all_w_fe_ << std::endl;
-  // std::cout << "Using all_w_velfewrtworld= \n" << all_w_velfewrtworld_ << std::endl;
-  // std::cout << "Using par_.c_fov= \n" << par_.c_fov << std::endl;
   map_arguments["all_w_fe"] = all_w_fe_;
   map_arguments["all_w_velfewrtworld"] = all_w_velfewrtworld_;
   map_arguments["c_pos_smooth"] = par_.c_pos_smooth;
   map_arguments["c_yaw_smooth"] = par_.c_yaw_smooth;
   map_arguments["c_fov"] = par_.c_fov;
-  map_arguments["c_final_pos"] = par_.c_final_pos;  // / pow((final_state_.pos - initial_state_.pos).norm(), 4);
+  map_arguments["c_final_pos"] = par_.c_final_pos;
   map_arguments["c_final_yaw"] = par_.c_final_yaw;
 
-  // std::cout << "Total time= " << (t_final_ - t_init_) << std::endl;
-
-  //  casadi::DM all_nd(casadi::Sparsity::dense(4, max_num_of_planes));
-  // casadi::DM::rand(4, 0);
   static casadi::DM all_nd(4, max_num_of_planes);
   all_nd = casadi::DM::zeros(4, max_num_of_planes);
   for (int i = 0; i < n_guess_.size(); i++)
@@ -543,7 +491,6 @@ bool SolverIpopt::optimize()
                                                 final_state_.dyaw, t_init_, t_final_);
   map_arguments["guess_CPs_Yaw"] = matrix_qy_guess;
 
-  //   std::cout<<"GOING TO CALL OPTIMIZATION"<<std::endl;
   // for(std::map<std::string, casadi::DM>::const_iterator it = map_arguments.begin();
   //     it != map_arguments.end(); ++it)
   // {
@@ -641,17 +588,6 @@ bool SolverIpopt::optimize()
   // std::cout << "qy.size()= " << qy.size() << std::endl;
   CPs2TrajAndPwp(qp, qy, traj_solution_, pwp_solution_, param_pp, param_py, knots_, par_.dc);
 
-  // std::cout << "Called CPs2TrajAndPwp!" << std::endl;
-
-  // std::cout << bold << red << "traj_solution_.back().pos= " << traj_solution_.back().pos.transpose() << reset
-  //           << std::endl;
-
-  // std::cout << bold << red << "traj_solution_.[-2].accel= " << traj_solution_.end()[-2].accel.transpose() << reset
-  //           << std::endl;
-
-  // std::cout << bold << red << "traj_solution_.back().accel= " << traj_solution_.back().accel.transpose() << reset
-  //           << std::endl; //This can be at most j_max*dc
-
   // Force last vel and jerk =final_state_ (which it's not guaranteed because of the discretization with par_.dc)
   traj_solution_.back().vel = final_state_.vel;
   traj_solution_.back().accel = final_state_.accel;
@@ -659,7 +595,7 @@ bool SolverIpopt::optimize()
   traj_solution_.back().ddyaw = final_state_.ddyaw;
 
   // Uncomment the following line if you wanna visualize the planes
-  // fillPlanesFromNDQ(n_, d_, qp);  // TODO: move this outside the SolverIpopt class
+  // fillPlanesFromNDQ(n_, d_, qp);
 
   return true;
 }
@@ -669,11 +605,6 @@ void SolverIpopt::getSolution(mt::PieceWisePol &solution)
   solution = pwp_solution_;
 }
 
-//////////////////////////////////////////
-//////////////////////////////////////////
-////////////////////////////////////////// THIS SHOULD GO TO A DIFFERENT PLACE
-//////////////////////////////////////////
-//////////////////////////////////////////
 void SolverIpopt::fillPlanesFromNDQ(const std::vector<Eigen::Vector3d> &n, const std::vector<double> &d,
                                     const std::vector<Eigen::Vector3d> &q)
 {
@@ -780,12 +711,22 @@ bool SolverIpopt::getIntersectionWithPlane(const Eigen::Vector3d &P1, const Eige
   return result;
 }
 
-// std::map<std::string, casadi::GenericType> tmp3 =
-//     cf_op_.instruction_MX(index_instruction_).which_function().stats(1)["iterations"];
-// auto tmp = cf_op_.instruction_MX(index_instruction_).which_function().stats(1);
-// for (auto it = tmp.begin(); it != tmp.end(); it++)
+//  casadi::DM all_nd(casadi::Sparsity::dense(4, max_num_of_planes));
+// casadi::DM::rand(4, 0);
+
+// std::string getPathName(const std::string &s)
 // {
-//   std::cout << it->first          // string (key)
-//             << ':' << it->second  // string's value
-//             << std::endl;
+//   char sep = '/';
+
+// #ifdef _WIN32
+//   sep = '\\';
+// #endif
+
+//   size_t i = s.rfind(sep, s.length());
+//   if (i != std::string::npos)
+//   {
+//     return (s.substr(0, i));
+//   }
+
+//   return ("");
 // }

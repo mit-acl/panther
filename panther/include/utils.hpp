@@ -78,9 +78,6 @@ panther_msgs::Log log2LogMsg(mt::log log);
 visualization_msgs::MarkerArray pwp2ColoredMarkerArray(mt::PieceWisePol& pwp, double t_init, double t_final,
                                                        int samples, std::string ns, Eigen::Vector3d& color);
 
-// void rescaleCoeffPol(const Eigen::Matrix<double, 4, 1>& coeff_old, Eigen::Matrix<double, 4, 1>& coeff_new, double t0,
-//                      double tf);
-
 mt::PieceWisePol createPwpFromStaticPosition(const mt::state& current_state);
 
 mt::PieceWisePol pwpMsg2Pwp(const panther_msgs::PieceWisePolTraj& pwp_msg);
@@ -151,18 +148,6 @@ double cdfUnivariateNormalDist(double x, double mu, double std_deviation);
 double probUnivariateNormalDistAB(double a, double b, double mu, double std_deviation);
 double probMultivariateNormalDist(const Eigen::VectorXd& a, const Eigen::VectorXd& b, const Eigen::VectorXd& mu,
                                   const Eigen::VectorXd& std_deviation);
-
-// given 2 points (A inside and B outside the sphere) it computes the intersection of the lines between
-// that 2 points and the sphere
-Eigen::Vector3d getIntersectionWithSphere(Eigen::Vector3d& A, Eigen::Vector3d& B, double r, Eigen::Vector3d& center);
-
-// Given a path (starting inside the sphere and finishing outside of it) expressed by a vector of 3D-vectors (points),
-// it returns its first intersection with a sphere of radius=r and center=center
-// the center is added as the first point of the path to ensure that the first element of the path is inside the sphere
-// (to avoid issues with the first point of JPS2)
-Eigen::Vector3d getFirstIntersectionWithSphere(std::vector<Eigen::Vector3d>& path, double r, Eigen::Vector3d& center,
-                                               int* last_index_inside_sphere = NULL,
-                                               bool* noPointsOutsideSphere = NULL);
 
 // Overload to be able to print a std::vector
 template <typename T>

@@ -64,8 +64,6 @@ ConvexHullsOfCurves_Std vectorGCALPol2vectorStdEigen(ConvexHullsOfCurves& convex
 {
   ConvexHullsOfCurves_Std convexHulls_of_curves_std;
 
-  // std::cout << "convexHulls.size()= " << convexHulls.size() << std::endl;
-
   for (int index_curve = 0; index_curve < convexHulls.size(); index_curve++)  // for each curve
   {
     ConvexHullsOfCurve_Std convexHulls_of_curve_std;
@@ -81,9 +79,7 @@ ConvexHullsOfCurves_Std vectorGCALPol2vectorStdEigen(ConvexHullsOfCurves& convex
       {
         Eigen::Vector3d vertex(v->point().x(), v->point().y(), v->point().z());
         convexHull_std.col(j) = vertex;
-        // convexHull_std.push_back(vertex);
         j = j + 1;
-        // std::cout << v->point() << std::endl;
       }
 
       convexHulls_of_curve_std.push_back(convexHull_std);
@@ -91,7 +87,6 @@ ConvexHullsOfCurves_Std vectorGCALPol2vectorStdEigen(ConvexHullsOfCurves& convex
 
     convexHulls_of_curves_std.push_back(convexHulls_of_curve_std);
   }
-  // std::cout << "convexHulls_of_curves_std.size()= " << convexHulls_of_curves_std.size() << std::endl;
 
   return convexHulls_of_curves_std;
 }
@@ -138,7 +133,6 @@ CGAL_Polyhedron_3 convexHullOfPoints(const std::vector<Point_3>& points)
   //   std::cout << points_i.x() << ", " << points_i.y() << ", " << points_i.z() << std::endl;
   // }
   CGAL::convex_hull_3(points.begin(), points.end(), ch_object);
-  // std::cout << "convexHullCgal Computed!" << std::endl;
 
   // determine what kind of object it is
   // if (CGAL::object_cast<Segment_3>(&ch_object))
