@@ -144,7 +144,7 @@ You can also change the following arguments when executing `roslaunch`
 | Argument      | Description |
 | ----------- | ----------- |
 | `quad`      | Name of the drone        |
-| `perfect_controller`      | If true, the drone will track perfectly the trajectories. Controller and physics engine of the drone will not be launched. If false, you will need to clone and compile [snap_sim](https://gitlab.com/mit-acl/fsw/snap-stack/snap_sim), [snap](https://gitlab.com/mit-acl/fsw/snap-stack/snap) and [outer_loop](https://gitlab.com/mit-acl/fsw/snap-stack/outer_loop)       |
+| `perfect_controller`      | If true, the drone will track perfectly the trajectories, and the controller and physics engine of the drone will not be launched. If false, you will need to clone and compile [snap_sim](https://gitlab.com/mit-acl/fsw/snap-stack/snap_sim), [snap](https://gitlab.com/mit-acl/fsw/snap-stack/snap) and [outer_loop](https://gitlab.com/mit-acl/fsw/snap-stack/outer_loop)       |
 | `perfect_prediction`      | If true, the drone will have access to the ground truth of the trajectories of the obstacles. If false, the drone will estimate their trajectories (it needs `gazebo=true` in this case).       |
 | `gui_mission`      | If true, a gui will be launched to start the experiment       |
 | `rviz`      | If true, Rviz will be launched for visualization       |
