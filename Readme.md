@@ -6,7 +6,7 @@
 
 ## Citation
 
-When using PANTHER, please cite [PANTHER: Perception-Aware Trajectory Planner in Dynamic Environments](https://arxiv.org/abs/2010.11061) ([pdf](https://arxiv.org/), [video](https://www.youtube.com/watch?v=jKmyW6v73tY)):
+When using PANTHER, please cite [PANTHER: Perception-Aware Trajectory Planner in Dynamic Environments](https://arxiv.org/) ([pdf](https://arxiv.org/), [video](https://www.youtube.com/watch?v=jKmyW6v73tY)):
 
 ```bibtex
 @article{tordesillas2020panther,
