@@ -2,7 +2,7 @@
 
 	<arg name="quad" default="SQ01s"/>
   <arg name="perfect_controller" default="true"/>
-  <arg name="perfect_prediction" default="false"/>
+  <arg name="perfect_prediction" default="true"/>
   <arg name="gui_mission" default="true"/>
   <arg name="rviz" default="true"/>
   <arg name="gazebo" default="true"/>
