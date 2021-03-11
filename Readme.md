@@ -21,9 +21,11 @@ When using PANTHER, please cite [PANTHER: Perception-Aware Trajectory Planner in
 
 PANTHER has been tested with Ubuntu 18.04/ROS Melodic. Other Ubuntu/ROS version may need some minor modifications, feel free to [create an issue](https://github.com/mit-acl/panther/issues) if you have any problems.
 
+**You can use PANTHER with only open-source packages**. 
+Matlab is only needed if you want to introduce modifications to the optimization problem.
+
 ### <ins>Dependencies<ins>
 
-**You can use PANTHER with only open-source packages**. Matlab is only needed if you want to introduce modifications to the optimization problem.
 
 #### CGAL
 These commands will install [CGAL v4.12.4](https://www.cgal.org/):
