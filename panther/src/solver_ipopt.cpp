@@ -98,17 +98,16 @@ SolverIpopt::SolverIpopt(mt::parameters &par, std::shared_ptr<mt::log> log_ptr)
   octopusSolver_ptr_ =
       std::unique_ptr<OctopusSearch>(new OctopusSearch(par_.basis, par_.num_seg, par_.deg_pos, par_.alpha_shrink));
 
-  std::fstream myfile(ros::package::getPath("panther") + "/matlab/index_instruction.txt", std::ios_base::in);
+  std::string folder = ros::package::getPath("panther") + "/matlab/casadi_generated_files/";
+  std::fstream myfile(folder + "index_instruction.txt", std::ios_base::in);
+  myfile >> index_instruction_;
+  cf_op_ = casadi::Function::load(folder + "op.casadi");
+  // cf_op_force_final_pos_ = casadi::Function::load(folder + "op_force_final_pos.casadi");
+  cf_fit_yaw_ = casadi::Function::load(folder + "fit_yaw.casadi");
+  cf_visibility_ = casadi::Function::load(folder + "visibility.casadi");
+
   // OTHER OPTION:    std::cout << bold << red << getPathName(__FILE__) << reset << std::endl;
   // getPathName() is defined above in this file
-  myfile >> index_instruction_;
-  // std::cout << "index_instruction_= " << index_instruction_ << std::endl;
-
-  cf_op_ = casadi::Function::load(ros::package::getPath("panther") + "/matlab/op.casadi");
-  // cf_op_force_final_pos_ = casadi::Function::load(ros::package::getPath("panther") +
-  // "/matlab/op_force_final_pos.casadi");
-  cf_fit_yaw_ = casadi::Function::load(ros::package::getPath("panther") + "/matlab/fit_yaw.casadi");
-  cf_visibility_ = casadi::Function::load(ros::package::getPath("panther") + "/matlab/visibility.casadi");
 
   all_w_fe_ = casadi::DM(3, par_.num_samples_simpson);
   all_w_velfewrtworld_ = casadi::DM(3, par_.num_samples_simpson);

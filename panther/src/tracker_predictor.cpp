@@ -93,8 +93,10 @@ TrackerPredictor::TrackerPredictor(ros::NodeHandle nh) : nh_(nh)
 
   for (int i = min_size_sliding_window_; i <= max_size_sliding_window_; i++)
   {
-    cf_get_mean_variance_pred_[i] = casadi::Function::load(
-        ros::package::getPath("panther") + "/matlab/get_mean_variance_pred_" + std::to_string(i) + ".casadi");
+    std::string folder = ros::package::getPath("panther") + "/matlab/casadi_generated_files/";
+
+    cf_get_mean_variance_pred_[i] =
+        casadi::Function::load(folder + "get_mean_variance_pred_" + std::to_string(i) + ".casadi");
   }
 
   tf_listener_ptr_ = std::unique_ptr<tf2_ros::TransformListener>(

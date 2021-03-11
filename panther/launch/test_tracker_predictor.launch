@@ -6,7 +6,7 @@
 
 
 	<node ns="$(arg quad)" name="test_tracker_predictor" pkg="panther" type="test_tracker_predictor" output="screen" clear_params="false"> 
-	<rosparam file="$(find panther)/matlab/params_casadi_prediction.yaml" command="load"/>
+	<rosparam file="$(find panther)/matlab/casadi_generated_files/params_casadi_prediction.yaml" command="load"/>
 	<rosparam file="$(find panther)/param/predictor.yaml" command="load"/>
 	<remap from="~cloud" to="$(arg cloud_topic)"/>
 	</node>

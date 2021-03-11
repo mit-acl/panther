@@ -72,7 +72,7 @@
 
     <!-- Parameters -->
     <rosparam file="$(find panther)/param/panther.yaml" command="load"/>
-    <rosparam file="$(find panther)/matlab/params_casadi.yaml" command="load"/>
+    <rosparam file="$(find panther)/matlab/casadi_generated_files/params_casadi.yaml" command="load"/>
     <param name="use_gui_mission" value="$(arg use_gui_mission)" /> 
     <param name="perfect_prediction" value="$(arg perfect_prediction)" /> 
 
