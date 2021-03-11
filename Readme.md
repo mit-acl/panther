@@ -23,6 +23,8 @@ PANTHER has been tested with Ubuntu 18.04/ROS Melodic. Other Ubuntu/ROS version 
 
 ### <ins>Dependencies<ins>
 
+**You can use PANTHER with only open-source packages**. Matlab is only needed if you want to introduce modifications to the optimization problem.
+
 #### CGAL
 These commands will install [CGAL v4.12.4](https://www.cgal.org/):
 ```bash
