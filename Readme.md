@@ -2,8 +2,8 @@
 
 Single-Agent               |  Multi-Agent           | 
 :-------------------------:|:-------------------------:|
-[![PANTHER: Perception-Aware Trajectory Planner in Dynamic Environments](./mader/imgs/four.gif)](https://www.youtube.com/watch?v=jKmyW6v73tY "MADER: Trajectory Planner in Multi-Agent and Dynamic Environments")      |  [![PANTHER: Perception-Aware Trajectory Planner in Dynamic Environments](./mader/imgs/five.gif)](https://www.youtube.com/watch?v=jKmyW6v73tY "MADER: Trajectory Planner in Multi-Agent and Dynamic Environments") |  
-[![PANTHER: Perception-Aware Trajectory Planner in Dynamic Environments](./mader/imgs/eight.gif)](https://www.youtube.com/watch?v=jKmyW6v73tY "MADER: Trajectory Planner in Multi-Agent and Dynamic Environments")       |  [![PANTHER: Perception-Aware Trajectory Planner in Dynamic Environments](./mader/imgs/sim.gif)](https://www.youtube.com/watch?v=jKmyW6v73tY "MADER: Trajectory Planner in Multi-Agent and Dynamic Environments")    |  
+[![PANTHER: Perception-Aware Trajectory Planner in Dynamic Environments](./panther/imgs/four.gif)](https://www.youtube.com/watch?v=jKmyW6v73tY "MADER: Trajectory Planner in Multi-Agent and Dynamic Environments")      |  [![PANTHER: Perception-Aware Trajectory Planner in Dynamic Environments](./panther/imgs/five.gif)](https://www.youtube.com/watch?v=jKmyW6v73tY "MADER: Trajectory Planner in Multi-Agent and Dynamic Environments") |  
+[![PANTHER: Perception-Aware Trajectory Planner in Dynamic Environments](./panther/imgs/eight.gif)](https://www.youtube.com/watch?v=jKmyW6v73tY "MADER: Trajectory Planner in Multi-Agent and Dynamic Environments")       |  [![PANTHER: Perception-Aware Trajectory Planner in Dynamic Environments](./panther/imgs/sim.gif)](https://www.youtube.com/watch?v=jKmyW6v73tY "MADER: Trajectory Planner in Multi-Agent and Dynamic Environments")    |  
 
 ## Citation
 
