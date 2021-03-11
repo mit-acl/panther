@@ -1,5 +1,10 @@
 # PANTHER: Perception-Aware Trajectory Planner in Dynamic Environments #
 
+Single-Agent               |  Multi-Agent           | 
+:-------------------------:|:-------------------------:|
+[![PANTHER: Perception-Aware Trajectory Planner in Dynamic Environments](./mader/imgs/four.gif)](https://www.youtube.com/watch?v=jKmyW6v73tY "MADER: Trajectory Planner in Multi-Agent and Dynamic Environments")      |  [![PANTHER: Perception-Aware Trajectory Planner in Dynamic Environments](./mader/imgs/five.gif)](https://www.youtube.com/watch?v=jKmyW6v73tY "MADER: Trajectory Planner in Multi-Agent and Dynamic Environments") |  
+[![PANTHER: Perception-Aware Trajectory Planner in Dynamic Environments](./mader/imgs/eight.gif)](https://www.youtube.com/watch?v=jKmyW6v73tY "MADER: Trajectory Planner in Multi-Agent and Dynamic Environments")       |  [![PANTHER: Perception-Aware Trajectory Planner in Dynamic Environments](./mader/imgs/sim.gif)](https://www.youtube.com/watch?v=jKmyW6v73tY "MADER: Trajectory Planner in Multi-Agent and Dynamic Environments")    |  
+
 ## Citation
 
 When using PANTHER, please cite PANTHER:
@@ -15,7 +20,7 @@ When using PANTHER, please cite PANTHER:
 
 ## General Setup
 
-PANTHER has been tested with Ubuntu 18.04/ROS Melodic 
+PANTHER has been tested with Ubuntu 18.04/ROS Melodic. Other Ubuntu/ROS version may need some minor modifications, feel free to [create an issue](https://github.com/mit-acl/panther/issues) if you have any problems.
 
 ### <ins>Dependencies<ins>
 
@@ -114,7 +119,7 @@ echo "source /home/YOUR_USER/Desktop/ws/devel/setup.bash" >> ~/.bashrc
 Simply execute
 
 ```
-`roslaunch panther simulation.launch quad:=SQ01s`
+roslaunch panther simulation.launch quad:=SQ01s
 ```
 
 Now you can click `Start` on the GUI, and then press `G` (or click the option `2D Nav Goal` on the top bar of RVIZ) and click any goal for the drone. 
