@@ -19,7 +19,10 @@ When using PANTHER, please cite [PANTHER: Perception-Aware Trajectory Planner in
 
 ---
 
-**If you are looking for a Planner in Multi-Agent and Dynamic Environments, you may be interesed also in [MADER](https://github.com/mit-acl/mader)**
+**If you are looking for a** 
+
+* **Planner in Multi-Agent and Dynamic Environments, you may be interesed also in [MADER](https://github.com/mit-acl/mader)**
+* **Planner in Static Unknown environments, you may be interesed also in [FASTER](https://github.com/mit-acl/faster)**
 
 ## General Setup
 
