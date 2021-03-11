@@ -16,7 +16,7 @@
 	branch = master
 [submodule "submodules/minvo"]
 	path = submodules/minvo
-	url = git@github.com:mit-acl/minvo.git
+	url = https://github.com/mit-acl/minvo.git
 [submodule "panther_extra"]
 	path = submodules/panther_extra
-	url = git@github.com:mit-acl/panther_extra.git
+	url = https://github.com/mit-acl/panther_extra.git
