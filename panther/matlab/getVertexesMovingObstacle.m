@@ -1,3 +1,11 @@
+% /* ----------------------------------------------------------------------------
+%  * Copyright 2021, Jesus Tordesillas Torres, Aerospace Controls Laboratory
+%  * Massachusetts Institute of Technology
+%  * All Rights Reserved
+%  * Authors: Jesus Tordesillas, et al.
+%  * See LICENSE file for the license information
+%  * -------------------------------------------------------------------------- */
+
 function vertexes=getVertexesMovingObstacle(t_init, t_end)
 
   hs=0.2; %half side of the box

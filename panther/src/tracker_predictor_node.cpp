@@ -1,4 +1,10 @@
-
+/* ----------------------------------------------------------------------------
+ * Copyright 2021, Jesus Tordesillas Torres, Aerospace Controls Laboratory
+ * Massachusetts Institute of Technology
+ * All Rights Reserved
+ * Authors: Jesus Tordesillas, et al.
+ * See LICENSE file for the license information
+ * -------------------------------------------------------------------------- */
 
 #include "tracker_predictor.hpp"
 
@@ -19,17 +25,17 @@ int main(int argc, char** argv)
 
   // markerPub = nh.advertise<visualization_msgs::MarkerArray>("viz", 1);
 
-// ros::Rate r(10); // 100 hz
-//   while (ros::ok()){
-//   	try {
-//   		ros::spinOnce();
-//   	}
-//   	catch(...){
-//   		std::cout<<"Exception!"<<std::endl;
-//   	}
-//   }
+  // ros::Rate r(10); // 100 hz
+  //   while (ros::ok()){
+  //   	try {
+  //   		ros::spinOnce();
+  //   	}
+  //   	catch(...){
+  //   		std::cout<<"Exception!"<<std::endl;
+  //   	}
+  //   }
 
-//   r.sleep();
+  //   r.sleep();
 
   ros::spin();
 }

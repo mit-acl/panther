@@ -1,5 +1,10 @@
-
-%Everything here is 1-based indexing (first element is one)
+% /* ----------------------------------------------------------------------------
+%  * Copyright 2021, Jesus Tordesillas Torres, Aerospace Controls Laboratory
+%  * Massachusetts Institute of Technology
+%  * All Rights Reserved
+%  * Authors: Jesus Tordesillas, et al.
+%  * See LICENSE file for the license information
+%  * -------------------------------------------------------------------------- */
 
 close all; clc;clear;
 

@@ -1,3 +1,11 @@
+/* ----------------------------------------------------------------------------
+ * Copyright 2021, Jesus Tordesillas Torres, Aerospace Controls Laboratory
+ * Massachusetts Institute of Technology
+ * All Rights Reserved
+ * Authors: Jesus Tordesillas, et al.
+ * See LICENSE file for the license information
+ * -------------------------------------------------------------------------- */
+
 #include <casadi/casadi.hpp>
 
 #include "solver_ipopt.hpp"
@@ -90,17 +98,11 @@ SolverIpopt::SolverIpopt(mt::parameters &par, std::shared_ptr<mt::log> log_ptr)
   octopusSolver_ptr_ =
       std::unique_ptr<OctopusSearch>(new OctopusSearch(par_.basis, par_.num_seg, par_.deg_pos, par_.alpha_shrink));
 
-  // hack
-
-  std::fstream myfile(ros::package::getPath("panther") + "/matlab/index_instruction.txt",
-                      std::ios_base::in);  // TODO: remove this ROS dependency
+  std::fstream myfile(ros::package::getPath("panther") + "/matlab/index_instruction.txt", std::ios_base::in);
   // OTHER OPTION:    std::cout << bold << red << getPathName(__FILE__) << reset << std::endl;
   // getPathName() is defined above in this file
   myfile >> index_instruction_;
-  std::cout << "index_instruction_= " << index_instruction_ << std::endl;
-  /// end of hack
-
-  // m_casadi_ptr_ = std::unique_ptr<PImpl>(new PImpl());
+  // std::cout << "index_instruction_= " << index_instruction_ << std::endl;
 
   cf_op_ = casadi::Function::load(ros::package::getPath("panther") + "/matlab/op.casadi");
   // cf_op_force_final_pos_ = casadi::Function::load(ros::package::getPath("panther") +
@@ -176,9 +178,9 @@ SolverIpopt::SolverIpopt(mt::parameters &par, std::shared_ptr<mt::log> log_ptr)
         vd index_vertex1 = all_vertexes_[i][j];
         vd index_vertex2 = all_vertexes_[i + 1][j_next];
 
-        // std::cout << "This should say " << mygraph_[index_vertex2].layer << ", " << mygraph_[index_vertex2].circle
+        // std::cout <<  mygraph_[index_vertex2].layer << ", " << mygraph_[index_vertex2].circle
         //           << std::endl;
-        // std::cout << "It says " << i + 1 << ", " << j_next << std::endl;
+        // std::cout <<  i + 1 << ", " << j_next << std::endl;
 
         edge_descriptor e;
         bool inserted;
@@ -189,9 +191,6 @@ SolverIpopt::SolverIpopt(mt::parameters &par, std::shared_ptr<mt::log> log_ptr)
 
   ////////////////////////////////////////
   ////////////////////////////////////////
-
-  // std::cout << "b_Tmatrixcasadi_c_= " << b_Tmatrixcasadi_c_ << std::endl;
-  // abort();
 }
 
 SolverIpopt::~SolverIpopt()

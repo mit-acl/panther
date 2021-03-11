@@ -2,7 +2,8 @@
 #include "solver_ipopt.hpp"
 #include "termcolor.hpp"
 
-//
+// This file closely follows https://www.boost.org/doc/libs/1_53_0/libs/graph/example/astar-cities.cpp, which has the
+// following copyright note:
 //=======================================================================
 // Copyright (c) 2004 Kristopher Beevers
 //
@@ -12,13 +13,12 @@
 //=======================================================================
 //
 
-// Difference astar_search vs astar_search_tree:
-// https://stackoverflow.com/questions/16201095/boost-graph-library-a-for-consistent-heuristic
-
-// Directed vs undirected: https://www.boost.org/doc/libs/1_54_0/libs/graph/doc/adjacency_list.html
-
-// When there are several
-// goals:http://theory.stanford.edu/~amitp/GameProgramming/Heuristics.html#multiple-goals:~:text=If%20you%20want%20to%20search%20for%20any%20of%20several%20goals%2C%20construct
+// Notes:
+// --> Difference astar_search vs astar_search_tree:
+//     https://stackoverflow.com/questions/16201095/boost-graph-library-a-for-consistent-heuristic
+// --> Directed vs undirected: https://www.boost.org/doc/libs/1_54_0/libs/graph/doc/adjacency_list.html
+// --> When there are several
+//     goals:http://theory.stanford.edu/~amitp/GameProgramming/Heuristics.html#multiple-goals:~:text=If%20you%20want%20to%20search%20for%20any%20of%20several%20goals%2C%20construct
 
 // #include <boost/graph/graphviz.hpp>
 #include <ctime>
@@ -27,8 +27,7 @@
 #include <iostream>
 #include <fstream>
 #include <math.h>  // for sqrt
-
-#include <ros/package.h>  //TODO: remove this ros dependency
+#include <ros/package.h>
 
 using namespace boost;
 using namespace std;
@@ -162,7 +161,7 @@ casadi::DM SolverIpopt::generateYawGuess(casadi::DM matrix_qp_guess, casadi::DM 
   //   std::cout << red << bold << "The layers are disconnected for sure, no solution will be found" << reset <<
   //   std::endl; std::cout << red << bold << "Maybe ydot_max is too small?" << std::endl; abort();
   // }
-  ////END OF DEBUGGING
+  ///////////////
 
   vd start = all_vertexes_[0][0];
 
@@ -275,11 +274,8 @@ casadi::DM SolverIpopt::generateYawGuess(casadi::DM matrix_qp_guess, casadi::DM 
     /////////////////////////////////////////////////////////////
 
     // First correct the angles so that the max absolute difference between two adjacent elements is <=pi
-
     // See "fit_to_angular_data.m"
     casadi::DM vsp_corrected = vector_shortest_path;
-
-    // std::cout << "vector_shortest_path.columns()" << vector_shortest_path.columns() << std::endl;
 
     vsp_corrected(0) = vector_shortest_path(0);
     for (size_t i = 1; i < vsp_corrected.columns(); i++)  // starts in 1, not in 0
@@ -301,21 +297,21 @@ casadi::DM SolverIpopt::generateYawGuess(casadi::DM matrix_qp_guess, casadi::DM 
       }
     }
 
-    ////////////////ONLY FOR DEBUGGING
-    for (size_t i = 1; i < vsp_corrected.columns(); i++)
-    {
-      double phi_mi = double(vsp_corrected(i - 1));
-      double phi_i = double(vsp_corrected(i));
+    //////////////// DEBUGGING
+    // for (size_t i = 1; i < vsp_corrected.columns(); i++)
+    // {
+    //   double phi_mi = double(vsp_corrected(i - 1));
+    //   double phi_i = double(vsp_corrected(i));
 
-      if (fabs(phi_i - phi_mi) > M_PI)
-      {
-        std::cout << red << bold << "This diff must be <= pi" << reset << std::endl;
-        abort();
-      }
+    //   if (fabs(phi_i - phi_mi) > M_PI)
+    //   {
+    //     std::cout << red << bold << "This diff must be <= pi" << reset << std::endl;
+    //     abort();
+    //   }
 
-      // assert(fabs(phi_i - phi_mi) <= M_PI && "This diff must be <= pi");
-    }
-    ////////////////END OF ONLY FOR DEBUGGING
+    //   // assert(fabs(phi_i - phi_mi) <= M_PI && "This diff must be <= pi");
+    // }
+    ////////////////////////////////
 
     // std::cout << "vsp_corrected.columns()" << vsp_corrected.columns() << std::endl;
 
@@ -334,8 +330,6 @@ casadi::DM SolverIpopt::generateYawGuess(casadi::DM matrix_qp_guess, casadi::DM 
     log_ptr_->success_guess_yaw = true;
 
     return yaw_qps_matrix_casadi;
-
-    // return 0;
   }
   log_ptr_->tim_guess_yaw_search_graph.toc();
   log_ptr_->success_guess_yaw = false;

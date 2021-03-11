@@ -1,39 +1,14 @@
+/* ----------------------------------------------------------------------------
+ * Copyright 2021, Jesus Tordesillas Torres, Aerospace Controls Laboratory
+ * Massachusetts Institute of Technology
+ * All Rights Reserved
+ * Authors: Jesus Tordesillas, et al.
+ * See LICENSE file for the license information
+ * -------------------------------------------------------------------------- */
+
 #include "utils.hpp"
 #include "exprtk.hpp"
-/*Eigen::Vector3d eval(mt::PieceWisePol pwp, double t)
-{
-  Eigen::Vector3d result;
 
-  if (t >= pwp.times[pwp.times.size() - 1])
-  {  // return the last value of the polynomial in the last interval
-    Eigen::Matrix<double, 4, 1> tmp;
-    double u = 1;
-    tmp << u * u * u, u * u, u, 1.0;
-    result.x() = pwp.all_coeff_x.back().transpose() * tmp;
-    result.y() = pwp.all_coeff_y.back().transpose() * tmp;
-    result.z() = pwp.all_coeff_z.back().transpose() * tmp;
-    return result;
-  }
-  //(pwp.pwp.times - 1) is the number of intervals
-  for (int i = 0; i < (pwp.times.size() - 1); i++)
-  {
-    if (pwp.times[i] <= t && t < pwp.times[i + 1])
-    {
-      double u = (t - pwp.times[i]) / (pwp.times[i + 1] - pwp.times[i]);
-
-      // TODO: This is hand-coded for a third-degree polynomial
-      Eigen::Matrix<double, 4, 1> tmp;
-      tmp << u * u * u, u * u, u, 1.0;
-
-      result.x() = pwp.all_coeff_x[i].transpose() * tmp;
-      result.y() = pwp.all_coeff_y[i].transpose() * tmp;
-      result.z() = pwp.all_coeff_z[i].transpose() * tmp;
-
-      break;
-    }
-  }
-  return result;
-}*/
 int main()
 {
   mt::PieceWisePol pwp;

@@ -1,9 +1,15 @@
+/* ----------------------------------------------------------------------------
+ * Copyright 2021, Jesus Tordesillas Torres, Aerospace Controls Laboratory
+ * Massachusetts Institute of Technology
+ * All Rights Reserved
+ * Authors: Jesus Tordesillas, et al.
+ * See LICENSE file for the license information
+ * -------------------------------------------------------------------------- */
 
 #include "solver_ipopt.hpp"
 #include "termcolor.hpp"
 #include "bspline_utils.hpp"
 #include "ros/ros.h"
-// #include "solver_gurobi_utils.hpp"
 
 #include <decomp_util/ellipsoid_decomp.h>  //For Polyhedron definition
 #include <unsupported/Eigen/Splines>
