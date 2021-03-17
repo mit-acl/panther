@@ -45,7 +45,7 @@ if __name__ == '__main__':
             rospy.logfatal("This is tyipcally accomplished in a launch file.")
             rospy.logfatal("Command line: ROS_NAMESPACE=mQ01 $ rosrun quad_control joy.py")
         else:
-            print ("GazeboPublisher: " + ns)
+            print ("Starting GazeboPublisher for " + ns)
             startNode()
     except rospy.ROSInterruptException:
         pass
