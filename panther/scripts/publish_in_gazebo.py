@@ -45,7 +45,7 @@ if __name__ == '__main__':
             rospy.logfatal("This is tyipcally accomplished in a launch file.")
             rospy.logfatal("Command line: ROS_NAMESPACE=mQ01 $ rosrun quad_control joy.py")
         else:
-            print "Starting joystick teleop node for: " + ns
+            print ("GazeboPublisher: " + ns)
             startNode()
     except rospy.ROSInterruptException:
         pass
