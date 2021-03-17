@@ -65,6 +65,7 @@ sudo make install
 #### Other dependencies
 ```bash
 sudo apt-get install ros-"${ROS_DISTRO}"-rviz-visual-tools  ros-"${ROS_DISTRO}"-tf2-sensor-msgs
+sudo apt-get install git-lfs ccache 
 ```
 To be able to use `catkin build`, run:
 ```bash
@@ -141,7 +142,6 @@ Then, to use a specific linear solver, you simply need to change the name of `li
 cd ~/Desktop && mkdir ws && cd ws && mkdir src && cd src
 git clone https://github.com/mit-acl/panther.git
 cd panther
-sudo apt-get install git-lfs ccache #Make sure you have git-lfs and ccache installed
 git lfs install
 git submodule init && git submodule update
 cd ../../ && catkin build
