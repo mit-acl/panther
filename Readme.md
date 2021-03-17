@@ -65,7 +65,6 @@ sudo make install
 #### Other dependencies
 ```bash
 sudo apt-get install ros-"${ROS_DISTRO}"-rviz-visual-tools  ros-"${ROS_DISTRO}"-tf2-sensor-msgs
-sudo apt-get install python-is-python3 -y
 ```
 To be able to use `catkin build`, run:
 ```bash
@@ -75,6 +74,8 @@ wget http://packages.ros.org/ros.key -O - | sudo apt-key add -
 And then
 * If you have Ubuntu 18.04, run `sudo apt-get install python-catkin-tools -y`
 * If you have Ubuntu 20.04 run `sudo apt-get install python3-osrf-pycommon python3-catkin-tools -y`
+
+Additionally, if you have Ubuntu 20.04, you'll need `sudo apt-get install python-is-python3 -y`
 
 <details>
   <summary> <b>Optional (recommended for better performance)</b></summary>
