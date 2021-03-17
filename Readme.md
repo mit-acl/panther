@@ -26,7 +26,12 @@ When using PANTHER, please cite [PANTHER: Perception-Aware Trajectory Planner in
 
 ## General Setup
 
-PANTHER has been tested with Ubuntu 18.04/ROS Melodic. Other Ubuntu/ROS version may need some minor modifications, feel free to [create an issue](https://github.com/mit-acl/panther/issues) if you have any problems.
+PANTHER has been tested with 
+
+* Ubuntu 18.04/ROS Melodic
+* Ubuntu 20.04/ROS Noetic
+
+Other Ubuntu/ROS version may need some minor modifications, feel free to [create an issue](https://github.com/mit-acl/panther/issues) if you have any problems.
 
 **You can use PANTHER with only open-source packages**. 
 Matlab is only needed if you want to introduce modifications to the optimization problem.
@@ -43,6 +48,16 @@ wget https://github.com/CGAL/cgal/releases/download/releases%2FCGAL-4.14.2/CGAL-
 tar -xf CGAL-4.14.2.tar.xz && cd CGAL-4.14.2/ && cmake . -DCMAKE_BUILD_TYPE=Release && sudo make install
 ```
 
+### Other dependencies
+```bash
+sudo sh -c 'echo "deb http://packages.ros.org/ros/ubuntu `lsb_release -sc` main" > /etc/apt/sources.list.d/ros-latest.list'
+wget http://packages.ros.org/ros.key -O - | sudo apt-key add -
+```
+And then
+* If you have Ubuntu 18.04, run `sudo apt-get install python-catkin-tools -y`
+* If you have Ubuntu 20.04 run `sudo apt-get install python3-osrf-pycommon python3-catkin-tools python-is-python3 -y`
+
+
 #### CasADi and IPOPT
 
 Install CasADi from source (see [this](https://github.com/casadi/casadi/wiki/InstallationLinux) for more details) and the solver IPOPT:
@@ -56,6 +71,11 @@ cd casadi && mkdir build && cd build
 cmake . -DCMAKE_BUILD_TYPE=Release -DWITH_PYTHON=ON -DWITH_IPOPT=ON .. 
 sudo make install
 ``` 
+
+### ROS packages
+```bash
+sudo apt-get install ros-"${ROS_DISTRO}"-rviz-visual-tools  ros-"${ROS_DISTRO}"-tf2-sensor-msgs
+```
 
 <details>
   <summary> <b>Optional (recommended for better performance)</b></summary>
@@ -121,11 +141,11 @@ Then, to use a specific linear solver, you simply need to change the name of `li
 cd ~/Desktop && mkdir ws && cd ws && mkdir src && cd src
 git clone https://github.com/mit-acl/panther.git
 cd panther
-sudo apt-get install git-lfs #Make sure you have git-lfs installed
+sudo apt-get install git-lfs ccache #Make sure you have git-lfs and ccache installed
 git lfs install
 git submodule init && git submodule update
-catkin build
-echo "source /home/YOUR_USER/Desktop/ws/devel/setup.bash" >> ~/.bashrc 
+cd ../../ && catkin build
+echo "source ~/Desktop/ws/devel/setup.bash" >> ~/.bashrc 
 ```
 
 ### Running Simulations
@@ -155,6 +175,7 @@ You can see the default values of these arguments in `simulation.launch`.
 
 > **_NOTE:_**  (TODO) Right now the radius of the drone plotted in Gazebo (which comes from the `scale` field of `quadrotor_base_urdf.xacro`) does not correspond with the radius specified in `mader.yaml`. 
 
+> **_NOTE:_**  (TODO)  The case `gazebo=true` has not been fully tested in Ubuntu 20.04.
 
 ## Credits:
 This package uses some the [hungarian-algorithm-cpp](https://github.com/mcximing/hungarian-algorithm-cpp) and some C++ classes from the [DecompROS](https://github.com/sikang/DecompROS) and  repos (both included in the `thirdparty` folder), so credit to them as well. 
