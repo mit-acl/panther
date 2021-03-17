@@ -3,6 +3,7 @@ project(panther)
 
 ## Add support for C++11, supported in ROS Kinetic and newer
 add_definitions(-std=c++14)
+# add_definitions(-std=c++11)
 #add_definitions(-std=c99)
 
 find_package( Eigen3 REQUIRED )
