@@ -48,16 +48,6 @@ wget https://github.com/CGAL/cgal/releases/download/releases%2FCGAL-4.14.2/CGAL-
 tar -xf CGAL-4.14.2.tar.xz && cd CGAL-4.14.2/ && cmake . -DCMAKE_BUILD_TYPE=Release && sudo make install
 ```
 
-### Other dependencies
-```bash
-sudo sh -c 'echo "deb http://packages.ros.org/ros/ubuntu `lsb_release -sc` main" > /etc/apt/sources.list.d/ros-latest.list'
-wget http://packages.ros.org/ros.key -O - | sudo apt-key add -
-```
-And then
-* If you have Ubuntu 18.04, run `sudo apt-get install python-catkin-tools -y`
-* If you have Ubuntu 20.04 run `sudo apt-get install python3-osrf-pycommon python3-catkin-tools python-is-python3 -y`
-
-
 #### CasADi and IPOPT
 
 Install CasADi from source (see [this](https://github.com/casadi/casadi/wiki/InstallationLinux) for more details) and the solver IPOPT:
@@ -72,10 +62,19 @@ cmake . -DCMAKE_BUILD_TYPE=Release -DWITH_PYTHON=ON -DWITH_IPOPT=ON ..
 sudo make install
 ``` 
 
-### ROS packages
+#### Other dependencies
 ```bash
 sudo apt-get install ros-"${ROS_DISTRO}"-rviz-visual-tools  ros-"${ROS_DISTRO}"-tf2-sensor-msgs
+sudo apt-get install python-is-python3 -y
 ```
+To be able to use `catkin build`, run:
+```bash
+sudo sh -c 'echo "deb http://packages.ros.org/ros/ubuntu `lsb_release -sc` main" > /etc/apt/sources.list.d/ros-latest.list'
+wget http://packages.ros.org/ros.key -O - | sudo apt-key add -
+```
+And then
+* If you have Ubuntu 18.04, run `sudo apt-get install python-catkin-tools -y`
+* If you have Ubuntu 20.04 run `sudo apt-get install python3-osrf-pycommon python3-catkin-tools -y`
 
 <details>
   <summary> <b>Optional (recommended for better performance)</b></summary>
