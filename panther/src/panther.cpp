@@ -869,6 +869,7 @@ bool Panther::isReplanningNeeded()
     // printDroneStatus();
     return false;
   }
+  return true;
 }
 
 bool Panther::replan(mt::Edges& edges_obstacles_out, std::vector<mt::state>& X_safe_out,
