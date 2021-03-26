@@ -191,8 +191,8 @@ void TrackerPredictor::cloud_cb(const sensor_msgs::PointCloud2ConstPtr& pcl2ptr_
 
   try
   {
-    transform_stamped = tf_buffer_.lookupTransform("world", header_pcloud.frame_id, header_pcloud.stamp,
-                                                   ros::Duration(0.02));  // TODO: change this duration time?
+    transform_stamped = tf_buffer_.lookupTransform("world", header_pcloud.frame_id, ros::Time(0),  // header_pcloud.stamp, When using VIO, tf is not published that frequently (TODO)--> lot of time wasted here if we use header_pcloud.stamp,
+                                                   ros::Duration(0.02));  
 
     // transform_stamped = tf_buffer_.lookupTransform("world", header_pcloud.frame_id,
     // header_pcloud.stamp,ros::Duration(0.02));
@@ -696,11 +696,12 @@ void TrackerPredictor::cloud_cb(const sensor_msgs::PointCloud2ConstPtr& pcl2ptr_
     // dynTraj_msg.s_mean = pieceWisePol2String(track_j.pwp_mean);
     // dynTraj_msg.s_var = pieceWisePol2String(track_j.pwp_var);
 
-    std::vector<double> tmp = eigen2std(track_j.getLatestBbox());
-    // std::vector<double> tmp = eigen2std(track_j.getMaxBbox());
+    // std::vector<double> tmp = eigen2std(track_j.getLatestBbox()); // TODO: Here I'm using the latest Bbox. Should I use the biggest one of the whole history?
+    // std::vector<double> tmp = eigen2std(track_j.getMaxBbox()); //Change it also in the function getBBoxesAsMarkerArray for visualization
+    std::vector<double> tmp = eigen2std(track_j.getMeanBbox()); //Change it also in the function getBBoxesAsMarkerArray for visualization
 
-    dynTraj_msg.bbox = std::vector<float>(tmp.begin(), tmp.end());  // TODO: Here I'm using the latest Bbox. Should I
-                                                                    // use the biggest one of the whole history?
+    dynTraj_msg.bbox = std::vector<float>(tmp.begin(), tmp.end());  
+  
     dynTraj_msg.pos = eigen2rosvector(track_j.pwp_mean.eval(ros::Time::now().toSec()));
     dynTraj_msg.id = track_j.id_int;
     dynTraj_msg.is_agent = false;
@@ -953,7 +954,8 @@ visualization_msgs::MarkerArray TrackerPredictor::getBBoxesAsMarkerArray()
     m.pose.position.z = centroid.z();
 
     // Eigen::Vector3d bbox = track_j.getLatestBbox();
-    Eigen::Vector3d bbox = track_j.getMaxBbox();
+    // Eigen::Vector3d bbox = track_j.getMaxBbox();
+    Eigen::Vector3d bbox = track_j.getMeanBbox();
 
     m.scale.x = bbox.x();
     m.scale.y = bbox.y();

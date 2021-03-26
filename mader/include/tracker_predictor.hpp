@@ -190,6 +190,23 @@ public:
     return history.back().bbox;
   }
 
+  Eigen::Vector3d getMeanBbox()
+  {
+
+    double sum_x=0.0;
+    double sum_y=0.0;
+    double sum_z=0.0;
+
+    for (auto& c : history)
+    {
+      sum_x+=c.bbox.x();
+      sum_y+=c.bbox.y();
+      sum_z+=c.bbox.z();
+    }
+
+    return (Eigen::Vector3d(sum_x,sum_y,sum_z)/history.size());
+  }
+
   Eigen::Vector3d getMaxBbox()
   {
 
