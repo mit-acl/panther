@@ -526,8 +526,8 @@ void PantherRos::pubCB(const ros::TimerEvent& e)
     goal.v = eigen2rosvector(next_goal.vel);
     goal.a = eigen2rosvector((par_.use_ff) * next_goal.accel);
     goal.j = eigen2rosvector((par_.use_ff) * next_goal.jerk);
-    goal.dyaw = next_goal.dyaw;
-    goal.yaw = next_goal.yaw;
+    goal.dpsi = next_goal.dyaw;
+    goal.psi = next_goal.yaw;
     goal.header.stamp = ros::Time::now();
     goal.header.frame_id = world_name_;
     goal.power = true;  // allow the outer loop to send low-level autopilot commands

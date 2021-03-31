@@ -85,10 +85,10 @@ class FakeSim:
         qabc[2] = 0         #z
 
         qpsi = random_quaternion();
-        qpsi[3] = math.cos(data.yaw/2.0);  #w
+        qpsi[3] = math.cos(data.psi/2.0);  #w
         qpsi[0] = 0;                       #x 
         qpsi[1] = 0;                       #y
-        qpsi[2] = math.sin(data.yaw/2.0);  #z
+        qpsi[2] = math.sin(data.psi/2.0);  #z
 
         w_q_b=quaternion_multiply(qabc,qpsi)
 
