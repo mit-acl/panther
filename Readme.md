@@ -9,10 +9,10 @@
 When using PANTHER, please cite [PANTHER: Perception-Aware Trajectory Planner in Dynamic Environments](https://arxiv.org/abs/2103.06372) ([pdf](https://arxiv.org/abs/2103.06372), [video](https://www.youtube.com/watch?v=jKmyW6v73tY)):
 
 ```bibtex
-@article{tordesillas2020panther,
+@article{tordesillas2021panther,
   title={{PANTHER}: Perception-Aware Trajectory Planner in Dynamic Environments},
   author={Tordesillas, Jesus and How, Jonathan P},
-  journal={arXiv preprint},
+  journal={arXiv preprint arXiv:2103.06372},
   year={2021}
 }
 ```
