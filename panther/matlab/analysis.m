@@ -43,6 +43,9 @@ dim_yaw=1;
 offset_vel=0.1;
 
 assert(tf>t0);
+
+const_p={};
+const_y={};
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%% PARAMETERS! %%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -132,24 +135,20 @@ j_max_scaled=j_max/(scaling^3);
 ydot_max_scaled=ydot_max/scaling; %v_max for yaw
 
 %Initial conditions
-opti.subject_to( sp.getPosT(t0)== p0 );
-opti.subject_to( sp.getVelT(t0)== v0_scaled );
-opti.subject_to( sp.getAccelT(t0)== a0_scaled );
-opti.subject_to( sy.getPosT(t0)== y0 );
-opti.subject_to( sy.getVelT(t0)== ydot0_scaled );
+const_p{end+1}=sp.getPosT(t0)== p0;
+const_p{end+1}=sp.getVelT(t0)== v0_scaled;
+const_p{end+1}=sp.getAccelT(t0)== a0_scaled;
+const_y{end+1}=sy.getPosT(t0)== y0;
+const_y{end+1}=sy.getVelT(t0)== ydot0_scaled ;
 
 %Final conditions
 % opti.subject_to( sp.getPosT(tf)== pf );
-opti.subject_to( sp.getVelT(tf)== vf_scaled );
-opti.subject_to( sp.getAccelT(tf)== af_scaled );
-opti.subject_to( sy.getVelT(tf)==ydotf_scaled); % Needed: if not (and if you are minimizing ddyaw), dyaw=cte --> yaw will explode
+const_p{end+1}=sp.getVelT(tf)== vf_scaled;
+const_p{end+1}=sp.getAccelT(tf)== af_scaled;
+const_y{end+1}=sy.getVelT(tf)==ydotf_scaled; % Needed: if not (and if you are minimizing ddyaw), dyaw=cte --> yaw will explode
 
 
-
-addDynLimConstraints(opti, sp, sy, basis, v_max_scaled, a_max_scaled, j_max_scaled, ydot_max_scaled)
-
-
-
+[const_p,const_y]=addDynLimConstraints(const_p,const_y, sp, sy, basis, v_max_scaled, a_max_scaled, j_max_scaled, ydot_max_scaled);
 
 g=9.81;
 %Compute perception cost
@@ -310,8 +309,12 @@ for i=1:num_samples_simpson
     all_w_velfewrtworld=[all_w_velfewrtworld w_velfewrtworld{i}];
 end
 
-all_pCPs=sp.getCPsAsMatrix();
-all_yCPs=sy.getCPsAsMatrix();
+pCPs=sp.getCPsAsMatrix();
+yCPs=sy.getCPsAsMatrix();
+
+
+yCPs_par=opti.parameter(1,size(yCPs,2));
+pCPs_par=opti.parameter(3,size(pCPs,2));
 
 % my_function = opti.to_function('panther_casadi_function',...
 %     [ {all_pCPs},     {all_yCPs},     {thetax_FOV_deg}, {thetay_FOV_deg},{Ra},{p0},{v0},{a0},{pf},{vf},{af},{y0}, {ydot0}, {ydotf}, {v_max}, {a_max}, {j_max}, {ydot_max}, {total_time}, {all_nd}, {all_w_fe}, {all_w_velfewrtworld}, {c_pos_smooth}, {c_yaw_smooth}, {c_fov}, {c_final_pos}], {all_pCPs,all_yCPs},...
@@ -384,7 +387,7 @@ all_params= [ {createStruct('thetax_FOV_deg', thetax_FOV_deg, thetax_FOV_deg_val
               {createStruct('c_pos_smooth', c_pos_smooth, 0.0)},...
               {createStruct('c_yaw_smooth', c_yaw_smooth, 0.0)},...
               {createStruct('c_fov', c_fov, 1.0)},...
-              {createStruct('c_final_pos', c_final_pos, 100)},...
+              {createStruct('c_final_pos', c_final_pos, 1)},...
               {createStruct('c_final_yaw', c_final_yaw, 0.0)}];
 
 
@@ -394,8 +397,10 @@ tmp1=[   -4.0000   -4.0000   -4.0000    0.7111    3.9997    3.9997    3.9997;
      
 tmp2=[   -0.0000   -0.0000    0.2754    2.1131    2.6791    2.6791];
 
-all_params_and_init_guesses=[{createStruct('guess_CPs_Pos', all_pCPs, tmp1)},...
-                             {createStruct('guess_CPs_Yaw', all_yCPs, tmp2)},...
+all_params_and_init_guesses=[{createStruct('pCPs', pCPs, tmp1)},...
+                             {createStruct('yCPs', yCPs, tmp2)},...
+                             {createStruct('pCPs_par', pCPs_par, tmp1)},...
+                             {createStruct('yCPs_par', yCPs_par, tmp2)},...
                              all_params];
 
 vars=[];
@@ -416,52 +421,100 @@ opts = struct;
 opts.expand=true; %When this option is true, it goes WAY faster!
 opts.print_time=true;
 opts.ipopt.print_level=print_level; 
-opts.ipopt.print_frequency_iter=1e10;%1e10 %Big if you don't want to print all the iteratons
+%opts.ipopt.print_frequency_iter=1e10;%1e10 %Big if you don't want to print all the iteratons
 opts.ipopt.linear_solver=linear_solver_name;
 opti.solver('ipopt',opts); %{"ipopt.hessian_approximation":"limited-memory"} 
-% if(strcmp(linear_solver_name,'ma57'))
-%    opts.ipopt.ma57_automatic_scaling='no';
-% end
-%opts.ipopt.hessian_approximation = 'limited-memory';
-% jit_compilation=false; %If true, when I call solve(), Matlab will automatically generate a .c file, convert it to a .mex and then solve the problem using that compiled code
-% opts.jit=jit_compilation;
-% opts.compiler='clang';
-% opts.jit_options.flags='-O0';  %Takes ~15 seconds to generate if O0 (much more if O1,...,O3)
-% opts.jit_options.verbose=true;  %See example in shallow_water.cpp
-% opts.enable_forward=false; %Seems this option doesn't have effect?
-% opts.enable_reverse=false;
-% opts.enable_jacobian=false;
-% opts.qpsol ='qrqp';  %Other solver
-% opti.solver('sqpmethod',opts);
 
-results_vars={all_pCPs,all_yCPs, pos_smooth_cost, yaw_smooth_cost, fov_cost, final_pos_cost, final_yaw_cost};
-results_names={'all_pCPs','all_yCPs','pos_smooth_cost','yaw_smooth_cost','fov_cost','final_pos_cost','final_yaw_cost'};
 
-my_function = opti.to_function('my_function', vars, results_vars,...
-                                              names, results_names);
-my_function.save('./casadi_generated_files/op.casadi') %Optimization Problam. The file generated is quite big
+opti.subject_to([const_p, const_y])
 
-% my_function=my_function.expand();
-tic();
-sol=my_function( names_value{:});
+results_vars={pCPs,yCPs, total_cost,pos_smooth_cost, yaw_smooth_cost, fov_cost, final_pos_cost, final_yaw_cost};
+results_names={'pCPs','yCPs','total_cost','pos_smooth_cost','yaw_smooth_cost','fov_cost','final_pos_cost','final_yaw_cost'};
+
+my_func = opti.to_function('my_func', vars, results_vars, names, results_names);
+sol=my_func( names_value{:});
+full(sol.pCPs)
+full(sol.yCPs)
+
+
+%SOLVE FOR POSITION, YAW IS FIXED
+opti_p=opti.copy;
+opti_p.subject_to(); %Remove all the constraints
+opti_p.subject_to(const_p);
+opti_p.minimize(substitute(total_cost,yCPs,yCPs_par)); 
+my_func_p = opti_p.to_function('my_func_p', vars, results_vars, names, results_names);
+    
+
+%SOLVE FOR YAW, POSITION IS FIXED
+opti_y=opti.copy;
+opti_y.subject_to(); %Remove all the constraints
+opti_y.subject_to(const_y);
+opti_y.minimize(substitute(total_cost,pCPs,pCPs_par)); 
+my_func_y = opti_y.to_function('my_func_y', vars, results_vars, names, results_names);
+           
+
+sol=my_func_p( names_value{:}); %Dummy call to avoid the overhead of the first iteration (not sure why it happens)
+sol=my_func_y( names_value{:}); %Dummy call to avoid the overhead of the first iteration (not sure why it happens)
+ 
+all_costs=[];
+ms_p=[];
+ms_y=[];
+for i=1:10
+    tic()
+    sol=my_func_p( names_value{:});     ms_p=[ms_p 1000*toc()];
+    names_value{2}= sol.pCPs;%Update Pos
+    names_value{6}= sol.pCPs;%Update Pos par
+
+    % all_costs=[all_costs full(sol.cost)];
+
+    tic()
+    sol=my_func_y( names_value{:});
+    ms_y=[ms_y 1000*toc()];
+    names_value{4}= sol.yCPs;%Update Pos
+    names_value{8}= sol.yCPs;%Update Pos
+
+    all_costs=[all_costs full(sol.total_cost)];
+
+end
+
 toc();
 
-statistics=get_stats(my_function); %See functions defined below
-full(sol.all_pCPs)
-full(sol.all_yCPs)
 
+tic();
+sol_single=my_func( names_value{:} );
+ms_single=1000*toc();
 
+figure; hold on;
+yline(full(sol_single.total_cost),'--')
+
+full(sol_single.pCPs)
+full(sol_single.yCPs)
+
+plot(all_costs); xlabel('Iteration'); ylabel('Cost');
+
+figure;
+plot(ms_p); hold on
+plot(ms_y); ylabel('time (ms)');
+yline(ms_single,'--')
+legend('opt. pos','opt. yaw','joint')
+
+                                          
+sol=my_func_p( names_value{:});
 %%
-
-function addDynLimConstraints(opti, sp, sy, basis, v_max_scaled, a_max_scaled, j_max_scaled, ydot_max_scaled)
+statistics=get_stats(my_function); %See functions defined below
+full(sol.pCPs)
+full(sol.yCPs)
+function [const_p,const_y]=addDynLimConstraints(const_p,const_y, sp, sy, basis, v_max_scaled, a_max_scaled, j_max_scaled, ydot_max_scaled)
 %Max vel constraints (position)
 for j=1:sp.num_seg
     vel_cps=sp.getCPs_XX_Vel_ofInterval(basis, j);
     dim=size(vel_cps, 1);
     for u=1:size(vel_cps,2)
         for xyz=1:3
-            opti.subject_to( vel_cps{u}(xyz) <= v_max_scaled(xyz)  )
-            opti.subject_to( vel_cps{u}(xyz) >= -v_max_scaled(xyz) )
+            const_p{end+1}=vel_cps{u}(xyz) <= v_max_scaled(xyz);
+            const_p{end+1}=vel_cps{u}(xyz) >= -v_max_scaled(xyz);
+%             opti.subject_to( vel_cps{u}(xyz) <= v_max_scaled(xyz)  )
+%             opti.subject_to( vel_cps{u}(xyz) >= -v_max_scaled(xyz) )
         end
     end
 end
@@ -472,8 +525,10 @@ for j=1:sp.num_seg
     dim=size(accel_cps, 1);
     for u=1:size(accel_cps,2)
         for xyz=1:3
-            opti.subject_to( accel_cps{u}(xyz) <= a_max_scaled(xyz)  )
-            opti.subject_to( accel_cps{u}(xyz) >= -a_max_scaled(xyz) )
+            const_p{end+1}=accel_cps{u}(xyz) <= a_max_scaled(xyz);
+            const_p{end+1}=accel_cps{u}(xyz) >= -a_max_scaled(xyz);
+%             opti.subject_to( accel_cps{u}(xyz) <= a_max_scaled(xyz)  )
+%             opti.subject_to( accel_cps{u}(xyz) >= -a_max_scaled(xyz) )
         end
     end
 end
@@ -484,8 +539,10 @@ for j=1:sp.num_seg
     dim=size(jerk_cps, 1);
     for u=1:size(jerk_cps,2)
         for xyz=1:3
-            opti.subject_to( jerk_cps{u}(xyz) <= j_max_scaled(xyz)  )
-            opti.subject_to( jerk_cps{u}(xyz) >= -j_max_scaled(xyz) )
+            const_p{end+1}=jerk_cps{u}(xyz) <= j_max_scaled(xyz) ;
+            const_p{end+1}=jerk_cps{u}(xyz) >= -j_max_scaled(xyz);
+%             opti.subject_to( jerk_cps{u}(xyz) <= j_max_scaled(xyz)  )
+%             opti.subject_to( jerk_cps{u}(xyz) >= -j_max_scaled(xyz) )
         end
     end
 end
@@ -495,8 +552,10 @@ for j=1:sy.num_seg
     minvo_vel_cps=sy.getCPs_MV_Vel_ofInterval(j);
     dim=size(minvo_vel_cps, 1);
     for u=1:size(minvo_vel_cps,2)
-        opti.subject_to( minvo_vel_cps{u} <= ydot_max_scaled  )
-        opti.subject_to( minvo_vel_cps{u}  >= -ydot_max_scaled )
+          const_y{end+1}= minvo_vel_cps{u} <= ydot_max_scaled  ;
+          const_y{end+1}= minvo_vel_cps{u}  >= -ydot_max_scaled;
+%         opti.subject_to( minvo_vel_cps{u} <= ydot_max_scaled  )
+%         opti.subject_to( minvo_vel_cps{u}  >= -ydot_max_scaled )
     end
 end
 
@@ -538,3 +597,18 @@ end
 function result=mySig(gamma,x)
     result=(1/(1+exp(-gamma*x)));
 end
+
+% if(strcmp(linear_solver_name,'ma57'))
+%    opts.ipopt.ma57_automatic_scaling='no';
+% end
+%opts.ipopt.hessian_approximation = 'limited-memory';
+% jit_compilation=false; %If true, when I call solve(), Matlab will automatically generate a .c file, convert it to a .mex and then solve the problem using that compiled code
+% opts.jit=jit_compilation;
+% opts.compiler='clang';
+% opts.jit_options.flags='-O0';  %Takes ~15 seconds to generate if O0 (much more if O1,...,O3)
+% opts.jit_options.verbose=true;  %See example in shallow_water.cpp
+% opts.enable_forward=false; %Seems this option doesn't have effect?
+% opts.enable_reverse=false;
+% opts.enable_jacobian=false;
+% opts.qpsol ='qrqp';  %Other solver
+% opti.solver('sqpmethod',opts);
