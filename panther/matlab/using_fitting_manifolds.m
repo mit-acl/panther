@@ -49,9 +49,17 @@ my_colormap=autumn;
 b_T_c= [roty(90)*rotz(-90) zeros(3,1); zeros(1,3) 1];
 w_fevar=[1 -2 3]';
 
-all_t=t0:0.6:tf;
+all_t=t0:0.1:tf;
+index_t=1;
+
+n_psi_samples=30;
+all_psi=linspace(0,2*pi,n_psi_samples);
+
+all_circles_all_values=zeros(numel(all_t),numel(all_psi)); %Each row is a different t. Each column in one row is the value for a specific psi
 
 for t=all_t
+    
+%     index_t
     
     pos=sp.getPosT(t);
     a=sp.getAccelT(t);
@@ -65,39 +73,47 @@ for t=all_t
     
     w_T_b=[toRotMat(qabc) pos; 0 0 0 1];
     plot3dcircleXY(w_T_b,0.3,my_colormap(2,:),0.5)
+           
     
     
-    n_psi_samples=30;
-    all_psi=linspace(0,2*pi,n_psi_samples);
-        
-    my_map=autumn;
-       
+    w_T_abc=[toRotMat(qabc) pos; 0 0 0 1];
+    
     all_values=[];
     all_projs=[];
     all_tmp=[];
+%     X=[];
+%     Y=[];
     for i=1:numel(all_psi)%=0:2*pi
         psi=all_psi(i);
         q=quatmultiply(qabc, [cos(psi/2.0) 0.0 0.0 sin(psi/2.0)]);
         R=toRotMat(q);
+        w_R_b=R;
+        w_T_b=[w_R_b pos; 0 0 0 1];
+       
+%         abc_T_b=(w_T_abc)^(-1)*w_T_b;
+%         assert(sum(abs(abc_T_b(3,1:2)))<1e-4);
+%         X=[X  abc_T_b(1:2,1)];
+%         Y=[Y  abc_T_b(1:2,2)];
+%          
         
         b0=R(:,1)*norm(a);
         
         value=norm(ee)*cosd(80)*norm(a)-b0'*ee; %This is the cost (the more negative it is--> the more in the FOV it is)
+        value=value/(norm(a)*norm(ee)); %This doesn't affect the constraint, and makes the value non-dimensional 
         all_values=[all_values value];
+        all_circles_all_values(index_t,i)=value;
 
         all_projs=[all_projs R(:,1)+pos]; %Assumming here that
        
     end
     
-    all_values= (all_values - min(all_values)) / ( max(all_values) - min(all_values) ); %normalize \in [0,1]
-    n=size(my_map,1);
-    all_values=  ceil((n-1)*all_values + 1); %normalize \in [1,n]
-    colors=my_map(all_values',:);
-
+    colors=getColors(all_values);
+   
 
 h=colormapline(all_projs(1,:),all_projs(2,:),all_projs(3,:),colors); axis equal;
 set(h,'linewidth',4,'linestyle','--')
     
+index_t=index_t+1;
 end
 
 plotSphere(w_fevar,0.2,'g');
@@ -107,6 +123,9 @@ plot3([ p1(1) p2(1)], [p1(2) p2(2)], [p1(3) p2(3)],'--');
 % plot([w_fevar(1:2);0],w_fevar,'--' )
 
 camlight
+
+
+
 
 angles_datapoints=[];
 dataPoints={};
@@ -151,13 +170,28 @@ end
 dataPoints=dataPoints';
 
 
+
+
+
+figure; hold on;
+[r,theta] = meshgrid(ones(1,numel(all_t)),all_psi);
+r=r'; theta=theta'; %Every row of the matrices r, theta, all_t_grid corresponds to a slice of the cilinder (i.e. a circunference)
+                    %Every column of the matrices .................corresponds to a longitudinal line of the cylinder
+all_t_grid=repmat(all_t',1,size(r,2));
+surf(all_t_grid,r.*cos(theta),r.*sin(theta),all_circles_all_values); xlabel('t'); axis equal
+colormap jet; colorbar; shading interp; % caxis([20 50])
+curve=[all_t;cell2mat(dataPoints)'];
+plot3(curve(1,:), curve(2,:), curve(3,:),'r','LineWidth',3)
+
+
+
 %%
 
 
-% n_d=100; %number of datapoints
-% f = @(phi) [cos(phi) , sin(phi)];
-% angles_datapoints     = linspace(0,2*pi-0.5,n_d)'+2*rand(1,n_d)';
-% dataPoints = mat2cell(f(phi),ones(1,length(phi)),2);
+n_d=100; %number of datapoints
+f = @(phi) [cos(phi) , sin(phi)];
+angles_datapoints     = linspace(0,2*pi-0.5,n_d)'+2*rand(1,n_d)';
+dataPoints = mat2cell(f(angles_datapoints),ones(1,length(angles_datapoints)),2);
 
 nData   = length(dataPoints);
 dataCoords = linspace(0,1,nData);
@@ -178,6 +212,14 @@ end
 %     angles_datapoints=[angles_datapoints atan2(S(i,1,1), S(i,1,2))]
 % end
 
-plot(t,angles,'-o'); hold on;
-scatter(dataCoords,angles_datapoints,60,'o','filled')
+scatter(dataCoords,angles_datapoints,80,'o','filled');hold on;
+% plot(t,angles,'-o'); 
 yline(pi,'--'); yline(-pi,'--'); xlabel('t'); ylabel('psi');
+
+function colors=getColors(all_values)
+    my_map=jet;
+    all_values= (all_values - min(all_values)) / ( max(all_values) - min(all_values) ); %normalize \in [0,1]
+    n=size(my_map,1);
+    all_values=  ceil((n-1)*all_values + 1); %normalize \in [1,n]
+    colors=my_map(all_values',:);
+end
