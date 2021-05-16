@@ -1,10 +1,4 @@
-% /* ----------------------------------------------------------------------------
-%  * Copyright 2021, Jesus Tordesillas Torres, Aerospace Controls Laboratory
-%  * Massachusetts Institute of Technology
-%  * All Rights Reserved
-%  * Authors: Jesus Tordesillas, et al.
-%  * See LICENSE file for the license information
-%  * -------------------------------------------------------------------------- */
+% This files implements block-coordinate descent on yaw and pos*/
 
 close all; clc;clear;
 
@@ -26,7 +20,7 @@ opti = casadi.Opti();
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 deg_pos=3;
 deg_yaw=2;
-num_seg =4; %number of segments
+num_seg =6; %number of segments
 num_max_of_obst=10; %This is the maximum num of the obstacles 
 num_samples_simpson=7;  %This will also be the num_of_layers in the graph yaw search of C++
 num_of_yaw_per_layer=40; %This will be used in the graph yaw search of C++
@@ -93,7 +87,6 @@ for i=1:num_samples_simpson
 end
 
 %%% Min/max x, y ,z
-
 x_lim=opti.parameter(2,1); %[min max]
 y_lim=opti.parameter(2,1); %[min max]
 z_lim=opti.parameter(2,1); %[min max]
@@ -150,6 +143,7 @@ const_y{end+1}=sy.getVelT(tf)==ydotf_scaled; % Needed: if not (and if you are mi
 
 [const_p,const_y]=addDynLimConstraints(const_p,const_y, sp, sy, basis, v_max_scaled, a_max_scaled, j_max_scaled, ydot_max_scaled);
 
+
 g=9.81;
 %Compute perception cost
 dist_im_cost=0;
@@ -173,6 +167,8 @@ all_target_isInFOV=[];
 
 s_logged={};
 
+f=0.05;%focal length in meters
+
 for j=1:sp.num_seg
     
     w_t_b{j} = sp.getPosU(u,j);
@@ -180,53 +176,33 @@ for j=1:sp.num_seg
     qpsi=[cos(yaw/2), 0, 0, sin(yaw/2)]; %Note that qpsi has norm=1
 
     
-      %%%%% Option A
-%     qabc=qabcFromAccel(accel,g);
-%     q=multquat(qabc,qpsi); %Note that q is guaranteed to have norm=1
-%     w_R_b=toRotMat(q);
-%     %%%%% 
-    
-    
-    %%%%% Option B (same as option 1, but this saves ~0.2 seconds of computation (ONLY IF expand=FALSE) (due to the fact that Casadi doesn't simplify, and simply keeps concatenating operations)     
-    %if expand=true, option A and B give very similar comp. time
-    t=[accel(1); accel(2); accel(3)+9.81];
-    norm_t=sqrt(t(1)^2+t(2)^2+t(3)^2);
-    
-    q_tmp= [qpsi(1)*(norm_t+t(3));
-            -qpsi(1)*t(2)+qpsi(4)*t(1);
-            qpsi(4)*t(2)+qpsi(1)*t(1);
-            qpsi(4)*(norm_t+t(3))];
+    %%%%%
+    qabc=qabcFromAccel(accel,g);
+    q=multquat(qabc,qpsi); %Note that q is guaranteed to have norm=1
+    w_R_b=toRotMat(q);
 
-    w_R_b=(1/(2*norm_t*(norm_t+t(3))))*toRotMat(q_tmp);
-    %%%%%%    
-   
-    
+    %%%%%
     w_T_b=[w_R_b w_t_b{j}; zeros(1,3) 1];
     w_T_c=w_T_b*b_T_c;
     c_T_b=invPose(b_T_c);
     b_T_w=invPose(w_T_b);
     c_P=c_T_b*b_T_w*[w_fevar;1]; %Position of the feature in the camera frame
-    s=c_P(1:2)/(c_P(3));  %Note that here we are not using f (the focal length in meters) because it will simply add a constant factor in ||s|| and in ||s_dot||
+    s=f*c_P(1:2)/(c_P(3));  %Note that here we are not using f (the focal length in meters) because it will simply add a constant factor in ||s|| and in ||s_dot||
 
 
-     %Simpler [but no simplification made!] version of version 1 (cone):
-    gamma=100;
+    % In FOV:
     is_in_FOV1=-cos(thetax_half_FOV_deg*pi/180.0) + (c_P(1:3)'/norm(c_P((1:3))))*[0;0;1];%This has to be >=0
-    isInFOV_smooth=  (   1/(1+exp(-gamma*is_in_FOV1))  );
-
-    
+    isInFOV_smooth= mySig(1,is_in_FOV1);
 
     target_isInFOV{j}=isInFOV_smooth; %This one will be used for the graph search in yaw
     
     %I need to substitute it here because s_dot should consider also the velocity caused by the fact that yaw=yaw(t)
     s=substitute(s, yaw, sy.getPosU(u,j));
-    target_isInFOV_substituted_yawcps{j}=substitute(target_isInFOV{j}, yaw, sy.getPosU(u,j));
+    target_isInFOV_substituted_yawcps{j}=substitute(isInFOV_smooth, yaw, sy.getPosU(u,j));
      
-    %TODO: should we include the scaling variable here below?
-    partial_s_partial_t=jacobian(s,u)*(1/sp.delta_t);% partial_s_partial_u * partial_u_partial_t
-    
-    %See Eq. 11.3 of https://www2.math.upenn.edu/~pemantle/110-public/notes11.pdf
-    partial_s_partial_posfeature=jacobian(s,w_fevar);
+    %VELOCITY ON THE IMAGE PLANE
+    partial_s_partial_t=jacobian(s,u)*(1/sp.delta_t);% partial_s_partial_u * partial_u_partial_t 
+    partial_s_partial_posfeature=jacobian(s,w_fevar); %See Eq. 11.3 of https://www2.math.upenn.edu/~pemantle/110-public/notes11.pdf
     partial_posfeature_partial_t=w_velfewrtworldvar/scaling;
     s_dot=partial_s_partial_t  + partial_s_partial_posfeature*partial_posfeature_partial_t; % partial_s_partial_u * partial_u_partial_t
     s_dot2=s_dot'*s_dot;
@@ -235,39 +211,25 @@ for j=1:sp.num_seg
     %Costs (following the convention of "minimize" )
     isInFOV=(target_isInFOV_substituted_yawcps{j});
     fov_cost_j=-isInFOV /(offset_vel+s_dot2);
-%     fov_cost_j=-isInFOV + 1500000*(isInFOV)*s_dot2;
-%     fov_cost_j=100000*s_dot2/(isInFOV);
-%      fov_cost_j=-isInFOV+1e6*(1-isInFOV)*s_dot2;
+%   fov_cost_j=-isInFOV + 1500000*(isInFOV)*s_dot2;
+%   fov_cost_j=100000*s_dot2/(isInFOV);
+%   fov_cost_j=-isInFOV+1e6*(1-isInFOV)*s_dot2;
+
+    fov_cost_j=-isInFOV;
     
-      %%%%%%%%%%%%%%%%%%
+    %%%%%%%%%%%%%%%%%%
       
     span_interval=sp.timeSpanOfInterval(j);
-    t_init_interval=min(span_interval);   
-    t_final_interval=max(span_interval);
-    delta_interval=t_final_interval-t_init_interval;
     
-    tsf=t_simpson; %tsf is a filtered version of  t_simpson
-    tsf=tsf(tsf>=min(t_init_interval));
-    if(j==(sp.num_seg))
-        tsf=tsf(tsf<=max(t_final_interval));
-    else
-        tsf=tsf(tsf<max(t_final_interval));
-    end
-    u_simpson{j}=(tsf-t_init_interval)/delta_interval;
-
+    u_simpson{j}=getUSimpsonJ(span_interval, sp,j, t_simpson);    
     
     for u_i=u_simpson{j}
                 
         simpson_coeff=getSimpsonCoeff(simpson_index,num_samples_simpson);
-        
-       
         fov_cost=fov_cost + (delta_simpson/3.0)*simpson_coeff*substitute( fov_cost_j,[u;w_fevar;w_velfewrtworldvar],[u_i;w_fe{simpson_index};w_velfewrtworld{simpson_index}]); 
 
-        all_target_isInFOV=[all_target_isInFOV  substitute(target_isInFOV{j},[u;w_fevar],[u_i;w_fe{simpson_index}])];
-        
-        simpson_coeffs=[simpson_coeffs simpson_coeff]; %Store simply for debugging. Should be [1 4 2 4 2 ... 4 2 1]
-        
-        
+       % all_target_isInFOV=[all_target_isInFOV  substitute(target_isInFOV{j},[u;w_fevar],[u_i;w_fe{simpson_index}])];
+       % simpson_coeffs=[simpson_coeffs simpson_coeff]; %Store simply for debugging. Should be [1 4 2 4 2 ... 4 2 1]
         s_logged{simpson_index}=substitute( s,[u;w_fevar;w_velfewrtworldvar],[u_i;w_fe{simpson_index};w_velfewrtworld{simpson_index}]);
         
         simpson_index=simpson_index+1;
@@ -384,18 +346,18 @@ all_params= [ {createStruct('thetax_FOV_deg', thetax_FOV_deg, thetax_FOV_deg_val
               {createStruct('all_nd', all_nd, zeros(4,num_max_of_obst*num_seg))},...
               {createStruct('all_w_fe', all_w_fe, all_w_fe_value)},...
               {createStruct('all_w_velfewrtworld', all_w_velfewrtworld, all_w_velfewrtworld_value)},...
-              {createStruct('c_pos_smooth', c_pos_smooth, 0.0)},...
-              {createStruct('c_yaw_smooth', c_yaw_smooth, 0.0)},...
-              {createStruct('c_fov', c_fov, 1.0)},...
+              {createStruct('c_pos_smooth', c_pos_smooth, 1.0)},...
+              {createStruct('c_yaw_smooth', c_yaw_smooth, 1.0)},...
+              {createStruct('c_fov', c_fov, 10.0)},...
               {createStruct('c_final_pos', c_final_pos, 1)},...
-              {createStruct('c_final_yaw', c_final_yaw, 0.0)}];
+              {createStruct('c_final_yaw', c_final_yaw, 1.0)}];
 
 
-tmp1=[   -4.0000   -4.0000   -4.0000    0.7111    3.9997    3.9997    3.9997;
-         0         0         0   -1.8953   -0.0131   -0.0131   -0.0131;
-         0         0         0    0.6275    0.0052    0.0052    0.0052];
+tmp1=[   -4.0000   -4.0000   -4.0000    0.7111  1.0 2.0  3.9997    3.9997    3.9997;
+         0         0         0   -1.8953   -1.0  -0.5 -0.0131   -0.0131   -0.0131;
+         0         0         0    0.6275    0.3  0.1  0.0052    0.0052    0.0052];
      
-tmp2=[   -0.0000   -0.0000    0.2754    2.1131    2.6791    2.6791];
+tmp2=[   -0.0000   -0.0000    0.2754  1.0 1.5  2.1131    2.6791    2.6791];
 
 all_params_and_init_guesses=[{createStruct('pCPs', pCPs, tmp1)},...
                              {createStruct('yCPs', yCPs, tmp2)},...
@@ -435,15 +397,27 @@ my_func = opti.to_function('my_func', vars, results_vars, names, results_names);
 sol=my_func( names_value{:});
 full(sol.pCPs)
 full(sol.yCPs)
-
-
+%%
+import casadi.*
+clc
 %SOLVE FOR POSITION, YAW IS FIXED
 opti_p=opti.copy;
+
+ 
+%See https://github.com/casadi/casadi/wiki/FAQ:-how-to-perform-jit-for-function-evaluations-of-my-optimization-problem%3F
+opts.jit=true;%If true, when I call solve(), Matlab will automatically generate a .c file, convert it to a .mex and then solve the problem using that compiled code
+opts.compiler='shell';
+opts.jit_options.flags='-O1';  %Takes ~15 seconds to generate if O0 (much more if O1,...,O3)
+opts.jit_options.verbose=true;  %See example in shallow_water.cpp
+opti.solver('ipopt',opts); 
+
 opti_p.subject_to(); %Remove all the constraints
 opti_p.subject_to(const_p);
 opti_p.minimize(substitute(total_cost,yCPs,yCPs_par)); 
 my_func_p = opti_p.to_function('my_func_p', vars, results_vars, names, results_names);
-    
+sol=my_func_p( names_value{:}); %Dummy call to avoid the overhead of the first iteration (not sure why it happens)
+    %%
+
 
 %SOLVE FOR YAW, POSITION IS FIXED
 opti_y=opti.copy;
@@ -451,8 +425,12 @@ opti_y.subject_to(); %Remove all the constraints
 opti_y.subject_to(const_y);
 opti_y.minimize(substitute(total_cost,pCPs,pCPs_par)); 
 my_func_y = opti_y.to_function('my_func_y', vars, results_vars, names, results_names);
-           
+           %%
 
+sol=my_func_p( names_value{:}); %Dummy call to avoid the overhead of the first iteration (not sure why it happens)
+sol=my_func_y( names_value{:}); %Dummy call to avoid the overhead of the first iteration (not sure why it happens)
+sol=my_func_p( names_value{:}); %Dummy call to avoid the overhead of the first iteration (not sure why it happens)
+sol=my_func_y( names_value{:}); %Dummy call to avoid the overhead of the first iteration (not sure why it happens)
 sol=my_func_p( names_value{:}); %Dummy call to avoid the overhead of the first iteration (not sure why it happens)
 sol=my_func_y( names_value{:}); %Dummy call to avoid the overhead of the first iteration (not sure why it happens)
  
@@ -494,70 +472,23 @@ plot(all_costs); xlabel('Iteration'); ylabel('Cost');
 
 figure;
 plot(ms_p); hold on
-plot(ms_y); ylabel('time (ms)');
+plot(ms_y); xlabel('Iteration'); ylabel('time (ms)');
 yline(ms_single,'--')
 legend('opt. pos','opt. yaw','joint')
 
                                           
 sol=my_func_p( names_value{:});
 %%
-statistics=get_stats(my_function); %See functions defined below
-full(sol.pCPs)
-full(sol.yCPs)
+% statistics=get_stats(my_function); %See functions defined below
+% full(sol.pCPs)
+% full(sol.yCPs)
+
 function [const_p,const_y]=addDynLimConstraints(const_p,const_y, sp, sy, basis, v_max_scaled, a_max_scaled, j_max_scaled, ydot_max_scaled)
-%Max vel constraints (position)
-for j=1:sp.num_seg
-    vel_cps=sp.getCPs_XX_Vel_ofInterval(basis, j);
-    dim=size(vel_cps, 1);
-    for u=1:size(vel_cps,2)
-        for xyz=1:3
-            const_p{end+1}=vel_cps{u}(xyz) <= v_max_scaled(xyz);
-            const_p{end+1}=vel_cps{u}(xyz) >= -v_max_scaled(xyz);
-%             opti.subject_to( vel_cps{u}(xyz) <= v_max_scaled(xyz)  )
-%             opti.subject_to( vel_cps{u}(xyz) >= -v_max_scaled(xyz) )
-        end
-    end
-end
 
-%Max accel constraints (position)
-for j=1:sp.num_seg
-    accel_cps=sp.getCPs_XX_Accel_ofInterval(basis, j);
-    dim=size(accel_cps, 1);
-    for u=1:size(accel_cps,2)
-        for xyz=1:3
-            const_p{end+1}=accel_cps{u}(xyz) <= a_max_scaled(xyz);
-            const_p{end+1}=accel_cps{u}(xyz) >= -a_max_scaled(xyz);
-%             opti.subject_to( accel_cps{u}(xyz) <= a_max_scaled(xyz)  )
-%             opti.subject_to( accel_cps{u}(xyz) >= -a_max_scaled(xyz) )
-        end
-    end
-end
-
-%Max jerk constraints (position)
-for j=1:sp.num_seg
-    jerk_cps=sp.getCPs_MV_Jerk_ofInterval(j);
-    dim=size(jerk_cps, 1);
-    for u=1:size(jerk_cps,2)
-        for xyz=1:3
-            const_p{end+1}=jerk_cps{u}(xyz) <= j_max_scaled(xyz) ;
-            const_p{end+1}=jerk_cps{u}(xyz) >= -j_max_scaled(xyz);
-%             opti.subject_to( jerk_cps{u}(xyz) <= j_max_scaled(xyz)  )
-%             opti.subject_to( jerk_cps{u}(xyz) >= -j_max_scaled(xyz) )
-        end
-    end
-end
-
-%Max vel constraints (yaw)
-for j=1:sy.num_seg
-    minvo_vel_cps=sy.getCPs_MV_Vel_ofInterval(j);
-    dim=size(minvo_vel_cps, 1);
-    for u=1:size(minvo_vel_cps,2)
-          const_y{end+1}= minvo_vel_cps{u} <= ydot_max_scaled  ;
-          const_y{end+1}= minvo_vel_cps{u}  >= -ydot_max_scaled;
-%         opti.subject_to( minvo_vel_cps{u} <= ydot_max_scaled  )
-%         opti.subject_to( minvo_vel_cps{u}  >= -ydot_max_scaled )
-    end
-end
+    const_p=addMaxVelConstraints(const_p, sp, basis, v_max_scaled);     %Max vel constraints (position)
+    const_p=addMaxAccelConstraints(const_p, sp, basis, a_max_scaled);   %Max accel constraints (position)
+    const_p=addMaxJerkConstraints(const_p, sp, basis, j_max_scaled);    %Max jerk constraints (position)
+    const_y=addMaxVelConstraints(const_y, sy, basis, ydot_max_scaled);  %Max vel constraints (yaw)
 
 end
 
@@ -598,6 +529,20 @@ function result=mySig(gamma,x)
     result=(1/(1+exp(-gamma*x)));
 end
 
+function result=getUSimpsonJ(span_interval, sp,j, t_simpson)
+    t_init_interval=min(span_interval);   
+    t_final_interval=max(span_interval);
+    delta_interval=t_final_interval-t_init_interval;
+    
+    tsf=t_simpson; %tsf is a filtered version of  t_simpson
+    tsf=tsf(tsf>=min(t_init_interval));
+    if(j==(sp.num_seg))
+        tsf=tsf(tsf<=max(t_final_interval));
+    else
+        tsf=tsf(tsf<max(t_final_interval));
+    end
+    result=(tsf-t_init_interval)/delta_interval;
+end
 % if(strcmp(linear_solver_name,'ma57'))
 %    opts.ipopt.ma57_automatic_scaling='no';
 % end
