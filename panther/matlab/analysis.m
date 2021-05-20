@@ -478,6 +478,15 @@ legend('opt. pos','opt. yaw','joint')
 
                                           
 sol=my_func_p( names_value{:});
+
+%% Visualization of the hessians
+figure;spy(hessian(opti.f,opti.x),15,'sk'); set(get(gca,'Children'),'MarkerFaceColor','b')
+% exportAsPdf(gcf,'hessian_coupled');
+% figure;spy(hessian(opti_y.f,opti_y.x),22,'sr'); set(get(gca,'Children'),'MarkerFaceColor','r')
+% figure;spy(hessian(opti_p.f,opti_p.x),22,'sr'); set(get(gca,'Children'),'MarkerFaceColor','r')
+
+
+ 
 %%
 % statistics=get_stats(my_function); %See functions defined below
 % full(sol.pCPs)
@@ -485,10 +494,10 @@ sol=my_func_p( names_value{:});
 
 function [const_p,const_y]=addDynLimConstraints(const_p,const_y, sp, sy, basis, v_max_scaled, a_max_scaled, j_max_scaled, ydot_max_scaled)
 
-    const_p=addMaxVelConstraints(const_p, sp, basis, v_max_scaled);     %Max vel constraints (position)
-    const_p=addMaxAccelConstraints(const_p, sp, basis, a_max_scaled);   %Max accel constraints (position)
-    const_p=addMaxJerkConstraints(const_p, sp, basis, j_max_scaled);    %Max jerk constraints (position)
-    const_y=addMaxVelConstraints(const_y, sy, basis, ydot_max_scaled);  %Max vel constraints (yaw)
+    const_p=[const_p sp.getMaxVelConstraints(basis, v_max_scaled)];      %Max vel constraints (position)
+    const_p=[const_p sp.getMaxAccelConstraints(basis, a_max_scaled)];    %Max accel constraints (position)
+    const_p=[const_p sp.getMaxJerkConstraints(basis, j_max_scaled)];     %Max jerk constraints (position)
+    const_y=[const_y sy.getMaxVelConstraints(basis, ydot_max_scaled)];   %Max vel constraints (yaw)
 
 end
 

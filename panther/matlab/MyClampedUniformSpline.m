@@ -567,6 +567,48 @@ classdef MyClampedUniformSpline < handle
             end
         end
         
+        function constraints=getMaxVelConstraints(obj, basis, v_max_scaled)
+            constraints={};
+            for j=1:obj.num_seg
+                cps=obj.getCPs_XX_Vel_ofInterval(basis, j);
+                for u=1:size(cps,2)
+                    for xyz=1:size(cps,1)
+                        constraints{end+1}=cps{u}(xyz) <= v_max_scaled(xyz);
+                        constraints{end+1}=cps{u}(xyz) >= -v_max_scaled(xyz);
+                    end
+                end
+            end
+        end
+        
+        function constraints=getMaxAccelConstraints(obj, basis, a_max_scaled)
+            constraints={};
+            for j=1:obj.num_seg
+                cps=obj.getCPs_XX_Accel_ofInterval(basis,j);
+                for u=1:size(cps,2)
+                    for xyz=1:size(cps,1)
+                        constraints{end+1}=cps{u}(xyz) <= a_max_scaled(xyz) ;
+                        constraints{end+1}=cps{u}(xyz) >= -a_max_scaled(xyz);
+                    end
+                end
+            end
+        end
+        
+        
+        function constraints=getMaxJerkConstraints(obj, basis, j_max_scaled)
+            constraints={};
+            for j=1:obj.num_seg
+                cps=obj.getCPs_XX_Jerk_ofInterval(basis,j);
+                for u=1:size(cps,2)
+                    for xyz=1:size(cps,1)
+                        constraints{end+1}=cps{u}(xyz) <= j_max_scaled(xyz) ;
+                        constraints{end+1}=cps{u}(xyz) >= -j_max_scaled(xyz);
+                    end
+                end
+            end
+        end
+        
+
+        
 %         function initialGuessForCPs(obj, Q_guess, opti_casadi)
 % %             for i=1:obj.num_cpoints
 % %                 opti_casadi.set_initial(Q{(i)},Q_guess{(i)}); %Control points
