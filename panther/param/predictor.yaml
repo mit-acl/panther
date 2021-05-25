@@ -10,4 +10,4 @@ cluster_tolerance: 0.3
 min_cluster_size: 15       #units= num of points
 max_cluster_size: 600     #units= num of points
 min_dim_cluster_size: 0.1 #units= meters
-leaf_size_filter: 0.2
+leaf_size_filter: 0.1

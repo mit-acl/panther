@@ -19,11 +19,18 @@ addpath(genpath('./../../submodules/minvo/src/utils'));
 addpath(genpath('./../../submodules/minvo/src/solutions'));
 addpath(genpath('./more_utils'));
 
+
+
+const_p={};
+const_y={};
 opti = casadi.Opti();
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%% CONSTANTS! %%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+pos_is_fixed=true;
+
 deg_pos=3;
 deg_yaw=2;
 num_seg =4; %number of segments
@@ -106,9 +113,14 @@ total_time=opti.parameter(1,1); %This allows a different t0 and tf than the one 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%% CREATION OF THE SPLINES! %%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-sp=MyClampedUniformSpline(t0,tf,deg_pos, dim_pos, num_seg, opti); %spline position.
+
 sy=MyClampedUniformSpline(t0,tf,deg_yaw, dim_yaw, num_seg, opti); %spline yaw.
 
+if(pos_is_fixed==true)
+    sp=MyClampedUniformSpline(t0,tf,deg_pos, dim_pos, num_seg, opti, false); %spline position, cPoints are fixed
+else
+    sp=MyClampedUniformSpline(t0,tf,deg_pos, dim_pos, num_seg, opti); %spline position.
+end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%% CONSTRAINTS! %%%%%%%%%%%%%%%%%%%%%%%
@@ -132,17 +144,17 @@ j_max_scaled=j_max/(scaling^3);
 ydot_max_scaled=ydot_max/scaling; %v_max for yaw
 
 %Initial conditions
-opti.subject_to( sp.getPosT(t0)== p0 );
-opti.subject_to( sp.getVelT(t0)== v0_scaled );
-opti.subject_to( sp.getAccelT(t0)== a0_scaled );
-opti.subject_to( sy.getPosT(t0)== y0 );
-opti.subject_to( sy.getVelT(t0)== ydot0_scaled );
+const_p{end+1}= sp.getPosT(t0)== p0 ;
+const_p{end+1}= sp.getVelT(t0)== v0_scaled ;
+const_p{end+1}= sp.getAccelT(t0)== a0_scaled ;
+const_p{end+1}= sy.getPosT(t0)== y0 ;
+const_y{end+1}= sy.getVelT(t0)== ydot0_scaled ;
 
 %Final conditions
 % opti.subject_to( sp.getPosT(tf)== pf );
-opti.subject_to( sp.getVelT(tf)== vf_scaled );
-opti.subject_to( sp.getAccelT(tf)== af_scaled );
-opti.subject_to( sy.getVelT(tf)==ydotf_scaled); % Needed: if not (and if you are minimizing ddyaw), dyaw=cte --> yaw will explode
+const_p{end+1}= sp.getVelT(tf)== vf_scaled ;
+const_p{end+1}= sp.getAccelT(tf)== af_scaled ;
+const_y{end+1}= sy.getVelT(tf)==ydotf_scaled ; % Needed: if not (and if you are minimizing ddyaw), dyaw=cte --> yaw will explode
 
 
 % epsilon=1;
@@ -167,75 +179,33 @@ for j=1:(sp.num_seg)
       
       %and the control points on the other side
       for kk=1:size(Q,2)
-        opti.subject_to( n{ip}'*Q{kk} + d{ip} <= 0);
+        const_p{end+1}= n{ip}'*Q{kk} + d{ip} <= 0;
       end
     end  
  
 %     %Sphere constraints
 %     for kk=1:size(Q,2) 
 %         tmp=(Q{kk}-p0);
-%         opti.subject_to( (tmp'*tmp)<=(Ra*Ra) );
+%         const_p{end+1}= (tmp'*tmp)<=(Ra*Ra) ;
 %     end
     
 %     %Min max xyz constraints
 %     for kk=1:size(Q,2) 
 %         tmp=Q{kk};
-% %         opti.subject_to( x_lim(1)<=tmp(1) );
-% %         opti.subject_to( x_lim(2)>=tmp(1) );
+% %         const_p{end+1}= x_lim(1)<=tmp(1) ;
+% %         const_p{end+1}= x_lim(2)>=tmp(1) ;
 % %         
-% %         opti.subject_to( y_lim(1)<=tmp(2) );
-% %         opti.subject_to( y_lim(2)>=tmp(2) );
+% %         const_p{end+1}= y_lim(1)<=tmp(2) ;
+% %         const_p{end+1}= y_lim(2)>=tmp(2) ;
 % 
-%         opti.subject_to( z_lim(1)<=tmp(3) ); %For now let's use only this constraint (z_ground). The more ineq constraints --> The more comp time usually
-% %         opti.subject_to( z_lim(2)>=tmp(3) );
+%           const_p{end+1}= z_lim(1)<=tmp(3) ; %For now let's use only this constraint (z_ground). The more ineq constraints --> The more comp time usually
+% %         const_p{end+1}= z_lim(2)>=tmp(3) ;
 %     end
 end
 
-%Max vel constraints (position)
-for j=1:sp.num_seg
-    vel_cps=sp.getCPs_XX_Vel_ofInterval(basis, j);
-    dim=size(vel_cps, 1);
-    for u=1:size(vel_cps,2)
-        for xyz=1:3
-            opti.subject_to( vel_cps{u}(xyz) <= v_max_scaled(xyz)  )
-            opti.subject_to( vel_cps{u}(xyz) >= -v_max_scaled(xyz) )
-        end
-    end
-end
 
-%Max accel constraints (position)
-for j=1:sp.num_seg
-    accel_cps=sp.getCPs_XX_Accel_ofInterval(basis, j);
-    dim=size(accel_cps, 1);
-    for u=1:size(accel_cps,2)
-        for xyz=1:3
-            opti.subject_to( accel_cps{u}(xyz) <= a_max_scaled(xyz)  )
-            opti.subject_to( accel_cps{u}(xyz) >= -a_max_scaled(xyz) )
-        end
-    end
-end
+[const_p,const_y]=addDynLimConstraints(const_p,const_y, sp, sy, basis, v_max_scaled, a_max_scaled, j_max_scaled, ydot_max_scaled);
 
-%Max jerk constraints (position)
-for j=1:sp.num_seg
-    jerk_cps=sp.getCPs_MV_Jerk_ofInterval(j);
-    dim=size(jerk_cps, 1);
-    for u=1:size(jerk_cps,2)
-        for xyz=1:3
-            opti.subject_to( jerk_cps{u}(xyz) <= j_max_scaled(xyz)  )
-            opti.subject_to( jerk_cps{u}(xyz) >= -j_max_scaled(xyz) )
-        end
-    end
-end
-
-%Max vel constraints (yaw)
-for j=1:sy.num_seg
-    minvo_vel_cps=sy.getCPs_MV_Vel_ofInterval(j);
-    dim=size(minvo_vel_cps, 1);
-    for u=1:size(minvo_vel_cps,2)
-        opti.subject_to( minvo_vel_cps{u} <= ydot_max_scaled  )
-        opti.subject_to( minvo_vel_cps{u}  >= -ydot_max_scaled )
-    end
-end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%% OBJECTIVE! %%%%%%%%%%%%%%%%%%%%%%%%%
@@ -441,8 +411,6 @@ total_cost=c_pos_smooth*pos_smooth_cost+...
            c_final_pos*final_pos_cost+...
            c_final_yaw*final_yaw_cost;
 
-opti.minimize(simplify(total_cost));
-
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%% SOLVE! %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -463,12 +431,12 @@ for i=1:num_samples_simpson
     all_w_velfewrtworld=[all_w_velfewrtworld w_velfewrtworld{i}];
 end
 
-all_pCPs=sp.getCPsAsMatrix();
-all_yCPs=sy.getCPsAsMatrix();
+pCPs=sp.getCPsAsMatrix();
+yCPs=sy.getCPsAsMatrix();
 
 % my_function = opti.to_function('panther_casadi_function',...
-%     [ {all_pCPs},     {all_yCPs},     {thetax_FOV_deg}, {thetay_FOV_deg},{Ra},{p0},{v0},{a0},{pf},{vf},{af},{y0}, {ydot0}, {ydotf}, {v_max}, {a_max}, {j_max}, {ydot_max}, {total_time}, {all_nd}, {all_w_fe}, {all_w_velfewrtworld}, {c_pos_smooth}, {c_yaw_smooth}, {c_fov}, {c_final_pos}], {all_pCPs,all_yCPs},...
-%     {'guess_CPs_Pos','guess_CPs_Yaw', 'thetax_FOV_deg','thetay_FOV_deg','Ra','p0','v0','a0','pf','vf','af','y0', 'ydot0', 'ydotf', 'v_max', 'a_max', 'j_max', 'ydot_max', 'total_time', 'all_nd', 'all_w_fe', 'all_w_velfewrtworld', 'c_pos_smooth', 'c_yaw_smooth', 'c_fov', 'c_final_pos'}, {'all_pCPs','all_yCPs'}...
+%     [ {pCPs},     {yCPs},     {thetax_FOV_deg}, {thetay_FOV_deg},{Ra},{p0},{v0},{a0},{pf},{vf},{af},{y0}, {ydot0}, {ydotf}, {v_max}, {a_max}, {j_max}, {ydot_max}, {total_time}, {all_nd}, {all_w_fe}, {all_w_velfewrtworld}, {c_pos_smooth}, {c_yaw_smooth}, {c_fov}, {c_final_pos}], {pCPs,yCPs},...
+%     {'guess_CPs_Pos','guess_CPs_Yaw', 'thetax_FOV_deg','thetay_FOV_deg','Ra','p0','v0','a0','pf','vf','af','y0', 'ydot0', 'ydotf', 'v_max', 'a_max', 'j_max', 'ydot_max', 'total_time', 'all_nd', 'all_w_fe', 'all_w_velfewrtworld', 'c_pos_smooth', 'c_yaw_smooth', 'c_fov', 'c_final_pos'}, {'pCPs','yCPs'}...
 %                                );
 
 for i=1:num_samples_simpson
@@ -547,8 +515,8 @@ tmp1=[   -4.0000   -4.0000   -4.0000    0.7111    3.9997    3.9997    3.9997;
      
 tmp2=[   -0.0000   -0.0000    0.2754    2.1131    2.6791    2.6791];
 
-all_params_and_init_guesses=[{createStruct('guess_CPs_Pos', all_pCPs, tmp1)},...
-                             {createStruct('guess_CPs_Yaw', all_yCPs, tmp2)},...
+all_params_and_init_guesses=[{createStruct('pCPs', pCPs, tmp1)},...
+                             {createStruct('yCPs', yCPs, tmp2)},...
                              all_params];
 
 vars=[];
@@ -587,28 +555,40 @@ opti.solver('ipopt',opts); %{"ipopt.hessian_approximation":"limited-memory"}
 % opts.qpsol ='qrqp';  %Other solver
 % opti.solver('sqpmethod',opts);
 
-results_vars={all_pCPs,all_yCPs, pos_smooth_cost, yaw_smooth_cost, fov_cost, final_pos_cost, final_yaw_cost};
-results_names={'all_pCPs','all_yCPs','pos_smooth_cost','yaw_smooth_cost','fov_cost','final_pos_cost','final_yaw_cost'};
+if(pos_is_fixed==true)
+    opti.subject_to([const_y]); %The control points are fixed (i.e., parameters)
+else
+    opti.subject_to([const_p, const_y]);
+end
+
+opti.minimize(simplify(total_cost));
+results_vars={pCPs,yCPs, pos_smooth_cost, yaw_smooth_cost, fov_cost, final_pos_cost, final_yaw_cost};
+results_names={'pCPs','yCPs','pos_smooth_cost','yaw_smooth_cost','fov_cost','final_pos_cost','final_yaw_cost'};
 
 my_function = opti.to_function('my_function', vars, results_vars,...
                                               names, results_names);
-my_function.save('./casadi_generated_files/op.casadi') %Optimization Problam. The file generated is quite big
+if(pos_is_fixed==true)
+    my_function.save('./casadi_generated_files/op_fixed_pos.casadi') %Optimization Problam. The file generated is quite big
+else
+    my_function.save('./casadi_generated_files/op.casadi') %Optimization Problam. The file generated is quite big
+end
 
 
-opti_tmp=opti;
-opti_tmp.subject_to( sp.getPosT(tf)== pf );
-my_function_tmp = opti_tmp.to_function('my_function_tmp', vars, results_vars,...
-                                                        names, results_names);
-my_function_tmp.save('./casadi_generated_files/op_force_final_pos.casadi') %The file generated is quite big
+% opti_tmp=opti.copy;
+% opti_tmp.subject_to( sp.getPosT(tf)== pf );
+% my_function_tmp = opti_tmp.to_function('my_function_tmp', vars, results_vars,...
+%                                                         names, results_names);
+% my_function_tmp.save('./casadi_generated_files/op_force_final_pos.casadi') %The file generated is quite big
                                                     
 % my_function=my_function.expand();
 tic();
 sol=my_function( names_value{:});
 toc();
-
-statistics=get_stats(my_function); %See functions defined below
-full(sol.all_pCPs)
-full(sol.all_yCPs)
+if(pos_is_fixed==false)
+    statistics=get_stats(my_function); %See functions defined below
+end
+full(sol.pCPs)
+full(sol.yCPs)
 
 %Write param file with the characteristics of the casadi function generated
 my_file=fopen('./casadi_generated_files/params_casadi.yaml','w'); %Overwrite content. This will clear its content
@@ -635,14 +615,14 @@ for yaw_sample_i=yaw_samples
 end
 all_target_isInFOV_for_different_yaw=all_target_isInFOV_for_different_yaw'; % Each row will be a layer. Each column will have yaw=constat
 
-all_pCPs=sp.getCPsAsMatrix();
-g = Function('g',{all_pCPs,        all_w_fe,    thetax_FOV_deg,  thetay_FOV_deg,  b_T_c,  yaw_samples},{all_target_isInFOV_for_different_yaw},...
-                 {'guess_CPs_Pos', 'all_w_fe', 'thetax_FOV_deg', 'thetay_FOV_deg','b_T_c', 'yaw_samples'},{'result'});
+pCPs=sp.getCPsAsMatrix();
+g = Function('g',{pCPs,        all_w_fe,    thetax_FOV_deg,  thetay_FOV_deg,  b_T_c,  yaw_samples},{all_target_isInFOV_for_different_yaw},...
+                 {'pCPs', 'all_w_fe', 'thetax_FOV_deg', 'thetay_FOV_deg','b_T_c', 'yaw_samples'},{'result'});
 g=g.expand();
 
 g.save('./casadi_generated_files/visibility.casadi') %The file generated is quite big
 
-g_result=g('guess_CPs_Pos',full(sol.all_pCPs),...
+g_result=g('pCPs',full(sol.pCPs),...
                          'all_w_fe', all_w_fe_value,...
                          'thetax_FOV_deg',thetax_FOV_deg_value,...  
                          'thetay_FOV_deg',thetay_FOV_deg_value,...
@@ -654,8 +634,8 @@ full(g_result.result);
 sp_cpoints_var=sp.getCPsAsMatrix();
 sy_cpoints_var=sy.getCPsAsMatrix();
 
-sp.updateCPsWithSolution(full(sol.all_pCPs))
-sy.updateCPsWithSolution(full(sol.all_yCPs))
+sp.updateCPsWithSolution(full(sol.pCPs))
+sy.updateCPsWithSolution(full(sol.yCPs))
 
 %% 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -792,6 +772,16 @@ f.save('./casadi_generated_files/fit_yaw.casadi') %The file generated is quite b
 % sy.updateCPsWithSolution(solution(1:end-3)');
 
 %% Functions
+
+
+function [const_p,const_y]=addDynLimConstraints(const_p,const_y, sp, sy, basis, v_max_scaled, a_max_scaled, j_max_scaled, ydot_max_scaled)
+
+    const_p=[const_p sp.getMaxVelConstraints(basis, v_max_scaled)];      %Max vel constraints (position)
+    const_p=[const_p sp.getMaxAccelConstraints(basis, a_max_scaled)];    %Max accel constraints (position)
+    const_p=[const_p sp.getMaxJerkConstraints(basis, j_max_scaled)];     %Max jerk constraints (position)
+    const_y=[const_y sy.getMaxVelConstraints(basis, ydot_max_scaled)];   %Max vel constraints (yaw)
+
+end
 
 %Taken from https://gist.github.com/jgillis/9d12df1994b6fea08eddd0a3f0b0737f
 %See discussion at https://groups.google.com/g/casadi-users/c/1061E0eVAXM/m/dFHpw1CQBgAJ

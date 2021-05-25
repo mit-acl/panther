@@ -804,6 +804,7 @@ struct parameters
   double a_star_bias = 1.0;
 
   std::string basis;
+  std::string mode;
 
   double res_plot_traj;
 

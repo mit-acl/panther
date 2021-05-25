@@ -84,6 +84,7 @@ SolverIpopt::SolverIpopt(mt::parameters &par, std::shared_ptr<mt::log> log_ptr)
   myfile >> index_instruction_;
   cf_op_ = casadi::Function::load(folder + "op.casadi");
   // cf_op_force_final_pos_ = casadi::Function::load(folder + "op_force_final_pos.casadi");
+  cf_fixed_pos_op_ = casadi::Function::load(folder + "op_fixed_pos.casadi");
   cf_fit_yaw_ = casadi::Function::load(folder + "fit_yaw.casadi");
   cf_visibility_ = casadi::Function::load(folder + "visibility.casadi");
 
@@ -455,10 +456,9 @@ bool SolverIpopt::optimize()
   // ...,tf-XX, tf] (i.e. uniformly distributed and including t0 and tf)
   map_arguments["all_w_fe"] = all_w_fe_;
   map_arguments["all_w_velfewrtworld"] = all_w_velfewrtworld_;
+
   map_arguments["c_pos_smooth"] = par_.c_pos_smooth;
-  map_arguments["c_yaw_smooth"] = par_.c_yaw_smooth;
-  map_arguments["c_fov"] = par_.c_fov;
-  map_arguments["c_final_pos"] = par_.c_final_pos;
+  map_arguments["c_final_pos"] = par_.c_final_pos;  // / pow((final_state_.pos - initial_state_.pos).norm(), 4);
   map_arguments["c_final_yaw"] = par_.c_final_yaw;
 
   static casadi::DM all_nd(4, max_num_of_planes);
@@ -484,12 +484,12 @@ bool SolverIpopt::optimize()
     matrix_qp_guess(1, i) = qp_guess_[i].y();
     matrix_qp_guess(2, i) = qp_guess_[i].z();
   }
-  map_arguments["guess_CPs_Pos"] = matrix_qp_guess;
+  map_arguments["pCPs"] = matrix_qp_guess;
 
   ////////////////////////////////Generate Yaw Guess
   casadi::DM matrix_qy_guess = generateYawGuess(matrix_qp_guess, all_w_fe_, initial_state_.yaw, initial_state_.dyaw,
                                                 final_state_.dyaw, t_init_, t_final_);
-  map_arguments["guess_CPs_Yaw"] = matrix_qy_guess;
+  map_arguments["yCPs"] = matrix_qy_guess;
 
   // for(std::map<std::string, casadi::DM>::const_iterator it = map_arguments.begin();
   //     it != map_arguments.end(); ++it)
@@ -505,8 +505,53 @@ bool SolverIpopt::optimize()
   // }
   // else
   // {
-  result = cf_op_(map_arguments);
+  // result = cf_op_(map_arguments);
   // }
+
+  /////////////////////////////////
+
+  if (par_.mode == "mader")
+  {
+    map_arguments["c_yaw_smooth"] = par_.c_yaw_smooth;
+    map_arguments["c_fov"] = par_.c_fov;
+    std::cout << bold << green << "Optimizing for YAW and POSITION!" << reset << std::endl;
+    result = cf_op_(map_arguments);
+  }
+  else if (par_.mode == "no_perception_aware")
+  {
+    map_arguments["c_yaw_smooth"] = 0.0;
+    map_arguments["c_fov"] = 0.0;
+    std::cout << bold << green << "Optimizing for YAW!" << reset << std::endl;
+    result = cf_op_(map_arguments);
+  }
+  else if (par_.mode == "first_pos_then_yaw")
+  {
+    // first solve for the position spline
+    map_arguments["c_yaw_smooth"] = 0.0;
+    map_arguments["c_fov"] = 0.0;
+    std::cout << bold << green << "Optimizing first for POSITION!" << reset << std::endl;
+    result = cf_op_(map_arguments);
+
+    // Use the position control points obtained for solve for yaw. Note that here the pos spline is FIXED
+    map_arguments["c_yaw_smooth"] = par_.c_yaw_smooth;
+    map_arguments["c_fov"] = par_.c_fov;
+    map_arguments["pCPs"] = result["pCPs"];
+
+    std::cout << bold << green << "and then for YAW!" << reset << std::endl;
+
+    std::map<std::string, casadi::DM> result_for_yaw = cf_fixed_pos_op_(map_arguments);
+
+    result["yCPs"] = result_for_yaw["yCPs"];
+
+    // The costs logged will not be the right ones, so don't use them in this mode
+  }
+  else
+  {
+    std::cout << "Mode not implemented yet. Aborting" << std::endl;
+    abort();
+  }
+  ////////////////////////////
+
   log_ptr_->tim_opt.toc();
 
   ///////////////// GET STATUS FROM THE SOLVER
@@ -553,16 +598,36 @@ bool SolverIpopt::optimize()
     std::cout << green << "IPOPT found a solution" << reset << std::endl;
     log_ptr_->success_opt = true;
     // copy the solution
-    auto qp_casadi = result["all_pCPs"];
+    auto qp_casadi = result["pCPs"];
     for (int i = 0; i < qp_casadi.columns(); i++)
     {
       qp.push_back(Eigen::Vector3d(double(qp_casadi(0, i)), double(qp_casadi(1, i)), double(qp_casadi(2, i))));
     }
 
-    // std::cout<<"SOLUTION OPTIMIZATION: "<<result["all_yCPs"]<<std::endl;
+    // std::cout<<"SOLUTION OPTIMIZATION: "<<result["yCps"]<<std::endl;
     // std::cout<<"all_w_fe="<<map_arguments["all_w_fe"]<<std::endl;
     // std::cout<<"all_w_velfewrtworld="<<map_arguments["all_w_velfewrtworld"]<<std::endl;
-    qy = static_cast<std::vector<double>>(result["all_yCPs"]);
+
+    ///////////////////////////////////
+    if (par_.mode == "mader" || par_.mode == "first_pos_then_yaw")
+    {
+      qy = static_cast<std::vector<double>>(result["yCPs"]);
+    }
+    else if (par_.mode == "no_perception_aware")
+    {  // constant yaw
+      qy.clear();
+      for (int i = 0; i < result["yCPs"].columns(); i++)
+      {
+        qy.push_back(initial_state_.yaw);
+      }
+    }
+    else
+    {
+      std::cout << "Mode not implemented yet. Aborting" << std::endl;
+      abort();
+    }
+
+    ///////////////////////////
   }
   else
   {

@@ -121,6 +121,8 @@ PantherRos::PantherRos(ros::NodeHandle nh1, ros::NodeHandle nh2, ros::NodeHandle
 
   safeGetParam(nh1_, "basis", par_.basis);
 
+  safeGetParam(nh1_, "mode", par_.mode);
+
   safeGetParam(nh1_, "res_plot_traj", par_.res_plot_traj);
 
   safeGetParam(nh1_, "norminv_prob", par_.norminv_prob);

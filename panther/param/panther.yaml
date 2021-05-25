@@ -20,10 +20,12 @@ y_max: 100.0   # [m] don't forget the .0
 z_min: -100.0        #[m] points below this are considered ground
 z_max: 100.0         #[m] 
 
+mode: "mader" #no_perception_aware, first_pos_then_yaw, mader
+
 #max limits
 v_max: [2.6, 2.6, 2.6]   #[m/s]  7.0
-a_max: [20.0, 20.0, 9.6]   #[m/s2] Note that if a_max.z() > 9.81, the drone may flip
-j_max: [50.0, 50.0, 50.0]   #[m/s3] Note that if a_max.z() > 9.81, the drone may flip
+a_max: [15.5, 15.5, 15.5]   #[m/s2] Note that if a_max.z() > 9.81, the drone may flip
+j_max: [20.0, 20.0, 20.0]   
 ydot_max: 5.0           # [rd/s] Maximum angular velocity. 0.4 for Hardware
 
 #parameters for Casadi
@@ -69,13 +71,13 @@ print_graph_yaw_info: false
 
 gamma: 0.1 #[seconds] >0 Time step between discretization points
 
-fov_x_deg: 70 #[deg] \in (0,180] ,  angle between two faces of the tetrahedron. Horizontal FOV
-fov_y_deg: 70 #[deg] \in (0,180] ,  angle between two faces of the tetrahedron. Vertical FOV
+fov_x_deg: 60 #[deg] \in (0,180] ,  angle between two faces of the tetrahedron. Horizontal FOV
+fov_y_deg: 60 #[deg] \in (0,180] ,  angle between two faces of the tetrahedron. Vertical FOV
 fov_depth: 4.5 #[m] Only used for visualization
 
 # TODO: some params here are not used
 # kappa + mu <=1 
-upper_bound_runtime_snlopt: 0.150 #[seconds] 
+upper_bound_runtime_snlopt: 0.350 #[seconds] 
 lower_bound_runtime_snlopt: 0.005 #[seconds] 
 kappa: 1.0 #% of time spent to find initial guess
 mu: 0.0    #% of time spent to solve the optimization. CURRENTLY NOT USED

@@ -891,7 +891,7 @@ bool Panther::replan(mt::Edges& edges_obstacles_out, std::vector<mt::state>& X_s
 
   log_ptr_->tim_initial_setup.tic();
 
-  removeOldTrajectories();
+  // removeOldTrajectories();
 
   //////////////////////////////////////////////////////////////////////////
   ///////////////////////// Select mt::state A /////////////////////////////
