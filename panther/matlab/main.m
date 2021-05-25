@@ -29,7 +29,7 @@ opti = casadi.Opti();
 %%%%%%%%%%%%%%%%%%%%%%%%%%% CONSTANTS! %%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-pos_is_fixed=true;
+pos_is_fixed=false;
 
 deg_pos=3;
 deg_yaw=2;
@@ -147,7 +147,7 @@ ydot_max_scaled=ydot_max/scaling; %v_max for yaw
 const_p{end+1}= sp.getPosT(t0)== p0 ;
 const_p{end+1}= sp.getVelT(t0)== v0_scaled ;
 const_p{end+1}= sp.getAccelT(t0)== a0_scaled ;
-const_p{end+1}= sy.getPosT(t0)== y0 ;
+const_y{end+1}= sy.getPosT(t0)== y0 ;
 const_y{end+1}= sy.getVelT(t0)== ydot0_scaled ;
 
 %Final conditions

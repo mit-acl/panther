@@ -20,7 +20,7 @@ y_max: 100.0   # [m] don't forget the .0
 z_min: -100.0        #[m] points below this are considered ground
 z_max: 100.0         #[m] 
 
-mode: "mader" #no_perception_aware, first_pos_then_yaw, mader
+mode: "first_pos_then_yaw" #no_perception_aware, first_pos_then_yaw, mader
 
 #max limits
 v_max: [2.6, 2.6, 2.6]   #[m/s]  7.0
