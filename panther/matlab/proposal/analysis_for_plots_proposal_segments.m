@@ -1,5 +1,9 @@
 % This files implements block-coordinate descent on yaw and pos*/
 
+%NOTE: IF YOU SIMPLY WANNA GENERATE THE PLOTS WITH THE .MAT AVAILABLE,
+%there is no need to run this section, simply run "load different_segments.mat", and go to the second section of
+%this file
+
 close all; clc;clear;
 
 set(0,'DefaultFigureWindowStyle','docked') %'normal' 'docked'
@@ -425,8 +429,8 @@ end
 %For this plot, you can import "different_segments.mat" (or run the section above)
 figure;
 plot(total_seg(1:end-1),mean_solve_time_ms(1:end-1),'-o','MarkerFaceColor','b');
- xlabel('Number of intervals'); ylabel('Solve time (ms)'); yline(66,'--','< 15Hz'); xlim([3,inf]);xticks(total_seg); yline(66,'--','> 15Hz','LabelVerticalAlignment','bottom');
- 
+xlabel('Number of intervals'); ylabel('Solve time (ms)'); yline(66,'--','< 15Hz'); xlim([3,inf]);xticks(total_seg); yline(66,'--','> 15Hz','LabelVerticalAlignment','bottom');
+ylim([0,200]); 
 set(gcf, 'Position',[1278         637         559         341])
  
 exportAsPdf(gcf,'plot_diff_segments');

@@ -1,5 +1,9 @@
 % This files implements block-coordinate descent on yaw and pos*/
 
+%NOTE: IF YOU SIMPLY WANNA GENERATE THE PLOTS WITH THE .MAT AVAILABLE,
+%there is no need to run this section, simply run "load different_PA_terms.mat", and go to the second section of
+%this file
+
 close all; clc;clear;
 
 set(0,'DefaultFigureWindowStyle','docked') %'normal' 'docked'
@@ -442,10 +446,11 @@ full(sol.yCPs)
 end
 
 %%
-%For this plot, you can import "different_PA_terms.mat" (or run the section above)
+%For this plot, you can run "load different_PA_terms.mat" (or run the section above)
+
 figure;
 plot(total_pa_obstacles(1:1:6),mean_solve_time_ms(1:1:6),'-o','MarkerFaceColor','r','color',[255, 120, 120]/255);
-ylim([0,inf]); xlabel('Number of obstacles in the PA term'); ylabel('Solve time (ms)'); yline(66,'--','< 15Hz'); yline(66,'--','> 15Hz','LabelVerticalAlignment','bottom');
+ylim([0,200]); xlabel('Number of obstacles in the PA term'); ylabel('Solve time (ms)'); yline(66,'--','< 15Hz'); yline(66,'--','> 15Hz','LabelVerticalAlignment','bottom');
 
 set(gcf, 'Position',[1278         637         559         341])
 

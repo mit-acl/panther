@@ -17,9 +17,6 @@ eig(double(subs(h,p,rand(4,1))))
 
 
 
-
-
-
 %%
 syms s t real
 % s=sym('s',[1,1],'real');
