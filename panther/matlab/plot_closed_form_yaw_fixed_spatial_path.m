@@ -1,13 +1,15 @@
-close all;
-clear all;
-clc;
+
+%This file plots the cost as a function of yaw for a given fixed spatial
+%trajectory. It then uses the closed-form solution of this problem and
+%plots it.
+
+close all;  clear all; clc;
 
 set(0,'defaulttextInterpreter','latex');
 set(groot, 'defaultAxesTickLabelInterpreter','latex'); set(groot, 'defaultLegendInterpreter','latex');
 
-
-addpath(genpath('./../../../manint/manopt'));
-addpath(genpath('./../../../manint/methods'));
+% addpath(genpath('./../../../manint/manopt'));
+% addpath(genpath('./../../../manint/methods'));
 
 import casadi.*
 addpath(genpath('./../../submodules/minvo/src/utils'));
@@ -42,8 +44,6 @@ pCPs=[   -4.0000   -4.0000   8    5    3   2     -4;
      
 sp.setCPoints(mat2cell(pCPs,[3],[ones(1,size(pCPs,2))]))
 
-
-
 sp.plotPos3D(); grid on;
 
 
@@ -76,8 +76,6 @@ for t=all_t
     
     w_T_b=[toRotMat(qabc) pos; 0 0 0 1];
     plot3dcircleXY(w_T_b,0.3,my_colormap(2,:),0.5)
-           
-    
     
     w_T_abc=[toRotMat(qabc) pos; 0 0 0 1];
     
@@ -128,8 +126,6 @@ plot3([ p1(1) p2(1)], [p1(2) p2(2)], [p1(3) p2(3)],'--');
 camlight
 
 
-
-
 angles_datapoints=[];
 dataPoints={};
 for t=all_t
@@ -165,7 +161,6 @@ for t=all_t
 %     
 %     dataPoints=[dataPoints  (u'*v)*v u-(u'*v)*v];
 %     
-%     
 %     w_T_b=[toRotMat(qabc) pos; 0 0 0 1];
     
 end
@@ -173,8 +168,7 @@ end
 dataPoints=dataPoints';
 
 
-%%
-clc; close all;
+clc;
 figure; hold on;
 [r,theta] = meshgrid(ones(1,numel(all_t)),all_psi);
 r=r'; theta=theta'; %Every row of the matrices r, theta, all_t_grid corresponds to a slice of the cilinder (i.e. a circunference)
@@ -198,116 +192,7 @@ xlabel('t'); ylabel('$\psi(t)$')
 
 % angles_datapoints=shiftToEnsureNoMoreThan2Pi(angles_datapoints);
 
-
 plot(all_t,angles_datapoints,'-r','LineWidth',3);
-
-%%
-
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%    FUNCTION TO FIT A SPLINE TO SAMPLES     %%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-clc;
-import casadi.*;
-opti2 = casadi.Opti();
-num_seg=4;
-deg_yaw=2;
-sy_tmp=MyClampedUniformSpline(t0,tf,deg_yaw, dim_yaw, num_seg, opti2);  %creating another object to not mess up with sy
-
-lambda=1000.0;
-% all_yaw=MX.sym('all_yaw',1,numel(t_simpson));
-cost_function=lambda*sy_tmp.getControlCost();
-for i=1:numel(angles_datapoints)
-    cost_function = cost_function + (sy_tmp.getPosT(all_t(i))-angles_datapoints(i))^2; 
-end
-
-
-v_max_scaled=8.0;
-ydot0=-3;
-ydotf=0.0;
-
-constraints={};
-constraints=addMaxVelConstraints(constraints, sy_tmp, basis, v_max_scaled);
-
-%Initial conditions
-constraints{end+1}= sy_tmp.getPosT(t0)==angles_datapoints(1);
-constraints{end+1}= sy_tmp.getVelT(t0)==ydot0;
-constraints{end+1}= sy_tmp.getVelT(tf)==ydotf;
-
-
-opti2.minimize(  cost_function   );
-opti2.subject_to( constraints);
-opti2.solver('ipopt');
-sol = opti2.solve();
-sy_tmp.updateCPsWithSolution(opti2.value(sy_tmp.getCPsAsMatrix));
-sy_tmp.plotPos();
-%%
-
-solution=opti2.value(sy_tmp.getCPsAsMatrix);
-sy_tmp.setCPoints(opti2.value(sy_tmp.CPoints));
-
-%%
-
-
-
-lagrangian = cost_function  +  lambda1*c1 + lambda2*c2 + lambda3*c3;
-
-variables=[sy_tmp.getCPsAsMatrix() lambda1 lambda2  lambda3];
-
-kkt_eqs=jacobian(lagrangian, variables)'; %I want kkt=[0 0 ... 0]'
-
-%Obtain A and b
-b=-casadi.substitute(kkt_eqs, variables, zeros(size(variables))); %Note the - sign
-A=jacobian(kkt_eqs, variables);
-
-solution=A\b;  %Solve the system of equations
-
-f= Function('f', {all_yaw, ydot0, ydotf }, {solution(1:end-3)}, ...
-                 {'all_yaw', 'ydot0', 'ydotf'}, {'result'} );
-% f=f.expand();
-all_yaw_value=linspace(0,pi,numel(t_simpson));
-
-
-solution=f(all_yaw_value, ydot0_value, ydotf_value);
-sy_tmp=MyClampedUniformSpline(t0,tf,deg_yaw, dim_yaw, num_seg, opti);  %creating another object to not mess up with sy
-sy_tmp.updateCPsWithSolution(full(solution)');
-sy_tmp.plotPosVelAccelJerk();
-subplot(4,1,1); hold on;
-plot(t_simpson, all_yaw_value, 'o')
-
-
-
-%%
-
-
-n_d=100; %number of datapoints
-f = @(phi) [cos(phi) , sin(phi)];
-angles_datapoints     = linspace(0,2*pi-0.5,n_d)'+2*rand(1,n_d)';
-dataPoints = mat2cell(f(angles_datapoints),ones(1,length(angles_datapoints)),2);
-
-nData   = length(dataPoints);
-dataCoords = linspace(0,1,nData);
-M = spherefactory(2);
-t = linspace(0,1,(nData-1)*30);
-lambda = 300; % fitting
-S = blendedCurve(M,dataPoints,dataCoords,t,'lambda',lambda);
-
-figure;
-
-angles=[];
-for i=1:size(S,1)
-    angles=[angles atan2(S(i,1,2), S(i,1,1))];
-end
-
-% angles_datapoints=[];
-% for i=1:size(S,1)
-%     angles_datapoints=[angles_datapoints atan2(S(i,1,1), S(i,1,2))]
-% end
-
-scatter(dataCoords,angles_datapoints,80,'o','filled');hold on;
-% plot(t,angles,'-o'); 
-yline(pi,'--'); yline(-pi,'--'); xlabel('t'); ylabel('psi');
 
 function colors=getColors(all_values)
     my_map=jet;
@@ -316,3 +201,109 @@ function colors=getColors(all_values)
     all_values=  ceil((n-1)*all_values + 1); %normalize \in [1,n]
     colors=my_map(all_values',:);
 end
+
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%    FUNCTION TO FIT A SPLINE TO SAMPLES     %%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% clc;
+% import casadi.*;
+% opti2 = casadi.Opti();
+% num_seg=4;
+% deg_yaw=2;
+% sy_tmp=MyClampedUniformSpline(t0,tf,deg_yaw, dim_yaw, num_seg, opti2);  %creating another object to not mess up with sy
+% 
+% lambda=1000.0;
+% % all_yaw=MX.sym('all_yaw',1,numel(t_simpson));
+% cost_function=lambda*sy_tmp.getControlCost();
+% for i=1:numel(angles_datapoints)
+%     cost_function = cost_function + (sy_tmp.getPosT(all_t(i))-angles_datapoints(i))^2; 
+% end
+% 
+% 
+% v_max_scaled=8.0;
+% ydot0=-3;
+% ydotf=0.0;
+% 
+% constraints={};
+% constraints=addMaxVelConstraints(constraints, sy_tmp, basis, v_max_scaled);
+% 
+% %Initial conditions
+% constraints{end+1}= sy_tmp.getPosT(t0)==angles_datapoints(1);
+% constraints{end+1}= sy_tmp.getVelT(t0)==ydot0;
+% constraints{end+1}= sy_tmp.getVelT(tf)==ydotf;
+% 
+% 
+% opti2.minimize(  cost_function   );
+% opti2.subject_to( constraints);
+% opti2.solver('ipopt');
+% sol = opti2.solve();
+% sy_tmp.updateCPsWithSolution(opti2.value(sy_tmp.getCPsAsMatrix));
+% sy_tmp.plotPos();
+% %%
+% 
+% solution=opti2.value(sy_tmp.getCPsAsMatrix);
+% sy_tmp.setCPoints(opti2.value(sy_tmp.CPoints));
+% 
+% %%
+% 
+% 
+% 
+% lagrangian = cost_function  +  lambda1*c1 + lambda2*c2 + lambda3*c3;
+% 
+% variables=[sy_tmp.getCPsAsMatrix() lambda1 lambda2  lambda3];
+% 
+% kkt_eqs=jacobian(lagrangian, variables)'; %I want kkt=[0 0 ... 0]'
+% 
+% %Obtain A and b
+% b=-casadi.substitute(kkt_eqs, variables, zeros(size(variables))); %Note the - sign
+% A=jacobian(kkt_eqs, variables);
+% 
+% solution=A\b;  %Solve the system of equations
+% 
+% f= Function('f', {all_yaw, ydot0, ydotf }, {solution(1:end-3)}, ...
+%                  {'all_yaw', 'ydot0', 'ydotf'}, {'result'} );
+% % f=f.expand();
+% all_yaw_value=linspace(0,pi,numel(t_simpson));
+% 
+% 
+% solution=f(all_yaw_value, ydot0_value, ydotf_value);
+% sy_tmp=MyClampedUniformSpline(t0,tf,deg_yaw, dim_yaw, num_seg, opti);  %creating another object to not mess up with sy
+% sy_tmp.updateCPsWithSolution(full(solution)');
+% sy_tmp.plotPosVelAccelJerk();
+% subplot(4,1,1); hold on;
+% plot(t_simpson, all_yaw_value, 'o')
+% 
+% 
+% 
+% %%
+% 
+% 
+% n_d=100; %number of datapoints
+% f = @(phi) [cos(phi) , sin(phi)];
+% angles_datapoints     = linspace(0,2*pi-0.5,n_d)'+2*rand(1,n_d)';
+% dataPoints = mat2cell(f(angles_datapoints),ones(1,length(angles_datapoints)),2);
+% 
+% nData   = length(dataPoints);
+% dataCoords = linspace(0,1,nData);
+% M = spherefactory(2);
+% t = linspace(0,1,(nData-1)*30);
+% lambda = 300; % fitting
+% S = blendedCurve(M,dataPoints,dataCoords,t,'lambda',lambda);
+% 
+% figure;
+% 
+% angles=[];
+% for i=1:size(S,1)
+%     angles=[angles atan2(S(i,1,2), S(i,1,1))];
+% end
+% 
+% % angles_datapoints=[];
+% % for i=1:size(S,1)
+% %     angles_datapoints=[angles_datapoints atan2(S(i,1,1), S(i,1,2))]
+% % end
+% 
+% scatter(dataCoords,angles_datapoints,80,'o','filled');hold on;
+% % plot(t,angles,'-o'); 
+% yline(pi,'--'); yline(-pi,'--'); xlabel('t'); ylabel('psi');
+% 
