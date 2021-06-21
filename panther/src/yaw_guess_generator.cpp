@@ -254,6 +254,7 @@ casadi::DM SolverIpopt::generateYawGuess(casadi::DM matrix_qp_guess, casadi::DM 
       }
       std::cout << reset;
     }
+    std::cout<<std::endl;
     // cout << endl << "\nTotal cost: " << d[fg.get_goal_found()] << endl;
 
     ///////////////////////////////////////////////////////////////

@@ -20,6 +20,21 @@ typedef Eigen::Matrix<double, 3, Eigen::Dynamic> Polyhedron_Std;
 typedef std::vector<Polyhedron_Std> ConvexHullsOfCurve_Std;
 typedef std::vector<ConvexHullsOfCurve_Std> ConvexHullsOfCurves_Std;
 
+enum DroneStatus
+{
+  YAWING = 0,
+  TRAVELING = 1,
+  GOAL_SEEN = 2,
+  GOAL_REACHED = 3
+};
+
+enum PlannerStatus
+{
+  FIRST_PLAN = 0,
+  START_REPLANNING = 1,
+  REPLANNED = 2
+};
+
 namespace mt  // panther_types
 {
 typedef std::pair<Eigen::Vector3d, Eigen::Vector3d> Edge;
@@ -46,11 +61,15 @@ struct log
   Eigen::Vector3d tracking_now_pos;
   Eigen::Vector3d tracking_now_vel;
 
+  Eigen::Vector3d pos;         // Current position of the UAV
+  Eigen::Vector3d G_term_pos;  // Position of the terminal goal
+
   bool success_guess_pos = false;   //
   bool success_guess_yaw = false;   //
   bool success_opt = false;         //
   bool success_replanning = false;  //
   std::string info_replan = "";     //
+  int drone_status;                 //
 };
 
 struct state
@@ -764,6 +783,8 @@ struct parameters
   double fov_x_deg = 60;  //[deg] angle between two faces of the tetrahedron
   double fov_y_deg = 60;  //[deg] angle between two faces of the tetrahedron
   double fov_depth = 3.0;
+
+  double angle_deg_focus_front = 90;
 
   // double R_local_map;
 

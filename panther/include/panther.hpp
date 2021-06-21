@@ -22,21 +22,6 @@
 
 // status_ : YAWING-->TRAVELING-->GOAL_SEEN-->GOAL_REACHED-->YAWING-->TRAVELING-->...
 
-enum DroneStatus
-{
-  YAWING = 0,
-  TRAVELING = 1,
-  GOAL_SEEN = 2,
-  GOAL_REACHED = 3
-};
-
-enum PlannerStatus
-{
-  FIRST_PLAN = 0,
-  START_REPLANNING = 1,
-  REPLANNED = 2
-};
-
 using namespace termcolor;
 
 class Panther

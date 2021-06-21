@@ -13,6 +13,8 @@ panther_msgs::Log log2LogMsg(mt::log log)
 {
   panther_msgs::Log log_msg;
 
+  log_msg.replanning_was_needed = log.replanning_was_needed;
+
   log_msg.ms_initial_setup = log.tim_initial_setup.getMsSaved();
   log_msg.ms_convex_hulls = log.tim_convex_hulls.getMsSaved();
   log_msg.ms_opt = log.tim_opt.getMsSaved();
@@ -35,6 +37,14 @@ panther_msgs::Log log2LogMsg(mt::log log)
   log_msg.tracking_now_vel.y = log.tracking_now_vel.y();
   log_msg.tracking_now_vel.z = log.tracking_now_vel.z();
 
+  log_msg.pos.x = log.pos.x();
+  log_msg.pos.y = log.pos.y();
+  log_msg.pos.z = log.pos.z();
+
+  log_msg.G_term_pos.x = log.G_term_pos.x();
+  log_msg.G_term_pos.y = log.G_term_pos.y();
+  log_msg.G_term_pos.z = log.G_term_pos.z();
+
   log_msg.success_guess_pos = log.success_guess_pos;
   log_msg.success_guess_yaw = log.success_guess_yaw;
   log_msg.success_opt = log.success_opt;
@@ -42,6 +52,25 @@ panther_msgs::Log log2LogMsg(mt::log log)
 
   log_msg.info_replan = log.info_replan;
   log_msg.header.stamp = ros::Time::now();
+
+  switch (log.drone_status)
+  {
+    case DroneStatus::YAWING:
+      log_msg.drone_status = "YAWING";
+      break;
+    case DroneStatus::TRAVELING:
+      log_msg.drone_status = "TRAVELING";
+      break;
+    case DroneStatus::GOAL_SEEN:
+      log_msg.drone_status = "GOAL_SEEN";
+      break;
+    case DroneStatus::GOAL_REACHED:
+      log_msg.drone_status = "GOAL_REACHED";
+      break;
+    default:
+      log_msg.drone_status = "";
+      break;
+  }
 
   return log_msg;
 }

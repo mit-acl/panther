@@ -35,12 +35,12 @@ deg_pos=3;
 deg_yaw=2;
 num_seg =4; %number of segments
 num_max_of_obst=10; %This is the maximum num of the obstacles 
-num_samples_simpson=7;  %This will also be the num_of_layers in the graph yaw search of C++
+num_samples_simpson=14;  %This will also be the num_of_layers in the graph yaw search of C++
 num_of_yaw_per_layer=40; %This will be used in the graph yaw search of C++
                          %Note that the initial layer will have only one yaw (which is given) 
 basis="MINVO"; %MINVO OR B_SPLINE or BEZIER. This is the basis used for collision checking (in position, velocity, accel and jerk space), both in Matlab and in C++
 linear_solver_name='mumps'; %mumps [default, comes when installing casadi], ma27, ma57, ma77, ma86, ma97 
-print_level=5; %From 0 (no verbose) to 12 (very verbose), default is 5
+print_level=0; %From 0 (no verbose) to 12 (very verbose), default is 5
 t0=0; 
 tf=10.5;
 

@@ -82,12 +82,12 @@ class FakeSim:
         self.name_obs="obs_"
    
         #HACK
-        self.num_of_dyn_objects=10;
+        self.num_of_dyn_objects=1;
         self.num_of_stat_objects=0;
         self.x_min= 2.0
-        self.x_max= 30.0
-        self.y_min= -2.0 
-        self.y_max= 2.0
+        self.x_max= 2.0
+        self.y_min= 0.0 
+        self.y_max= 0.0
         #END OF HACK
 
         self.available_meshes_static=["package://panther/meshes/ConcreteDamage01b/model3.dae", "package://panther/meshes/ConcreteDamage01b/model2.dae"]
@@ -107,7 +107,7 @@ class FakeSim:
             dynamic_trajectory_msg.is_agent=False;
             dynamic_trajectory_msg.header.stamp= rospy.Time.now();
             dynamic_trajectory_msg.s_mean = [traj_x, traj_y, traj_z]
-            dynamic_trajectory_msg.s_var = ["0.0", "0.0", "0.0"]
+            dynamic_trajectory_msg.s_var = ["0.00001", "0.00001", "0.00001"]
             dynamic_trajectory_msg.bbox = [bbox[0], bbox[1], bbox[2]];
             dynamic_trajectory_msg.pos.x=x #Current position, will be updated later
             dynamic_trajectory_msg.pos.y=y #Current position, will be updated later

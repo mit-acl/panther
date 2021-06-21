@@ -874,6 +874,15 @@ bool Panther::replan(mt::Edges& edges_obstacles_out, std::vector<mt::state>& X_s
                      mt::PieceWisePol& pwp_out, mt::log& log)
 {
   (*log_ptr_) = {};  // Reset the struct with the default values
+
+  mtx_G_term.lock();
+  mt::state G_term = G_term_;  // Local copy of the terminal terminal goal
+  mtx_G_term.unlock();
+
+  log_ptr_->pos = state_.pos;
+  log_ptr_->G_term_pos = G_term.pos;
+  log_ptr_->drone_status = drone_status_;
+
   if (isReplanningNeeded() == false)
   {
     log_ptr_->replanning_was_needed = false;
@@ -893,10 +902,6 @@ bool Panther::replan(mt::Edges& edges_obstacles_out, std::vector<mt::state>& X_s
   //////////////////////////////////////////////////////////////////////////
   ///////////////////////// Select mt::state A /////////////////////////////
   //////////////////////////////////////////////////////////////////////////
-
-  mtx_G_term.lock();
-  mt::state G_term = G_term_;  // Local copy of the terminal terminal goal
-  mtx_G_term.unlock();
 
   mt::state A;
   int k_index_end, k_index;
@@ -996,6 +1001,8 @@ bool Panther::replan(mt::Edges& edges_obstacles_out, std::vector<mt::state>& X_s
   double delta = 1.0 / num_samplesp1;
   Eigen::Vector3d R = par_.drone_radius * Eigen::Vector3d::Ones();
 
+  std::vector<double> all_probs;
+
   mtx_trajs_.lock();
   for (int i = 0; i < trajs_.size(); i++)
   {
@@ -1011,7 +1018,9 @@ bool Panther::replan(mt::Edges& edges_obstacles_out, std::vector<mt::state>& X_s
       prob_i += probMultivariateNormalDist(-R, R, pos_obs_mean - pos_drone, pos_obs_std);
     }
 
-    std::cout << "[Selection] Trajectory " << i << " has P(collision)= " << prob_i * pow(10, 15) << "e-15" << std::endl;
+    all_probs.push_back(prob_i);
+    // std::cout << "[Selection] Trajectory " << i << " has P(collision)= " << prob_i * pow(10, 15) << "e-15" <<
+    // std::endl;
 
     if (prob_i > max_prob_collision)
     {
@@ -1019,6 +1028,13 @@ bool Panther::replan(mt::Edges& edges_obstacles_out, std::vector<mt::state>& X_s
       argmax_prob_collision = i;
     }
   }
+
+  std::cout << "[Selection] Probs of coll --> ";
+  for (int i = 0; i < all_probs.size(); i++)
+  {
+    std::cout << all_probs[i] * pow(10, 15) << "e-15,   ";
+  }
+  std::cout << std::endl;
 
   // std::cout.precision(30);
   std::cout << bold << "[Selection] Chosen Trajectory " << argmax_prob_collision
@@ -1036,9 +1052,12 @@ bool Panther::replan(mt::Edges& edges_obstacles_out, std::vector<mt::state>& X_s
 
   bool focus_on_obstacle = true;
 
-  if (angle > 1.57)
+  double angle_deg = angle * 180 / 3.14;
+
+  if (fabs(angle_deg) > par_.angle_deg_focus_front)
   {  //
-    std::cout << bold << yellow << "[Selection] Focusing on front of me, angle=" << angle << reset << std::endl;
+    std::cout << bold << yellow << "[Selection] Focusing on front of me, angle=" << angle_deg << " deg" << reset
+              << std::endl;
     focus_on_obstacle = false;
     solver_->par_.c_final_yaw = 10.0;
     // solver_->use_straight_yaw_guess_ = true;
@@ -1048,7 +1067,8 @@ bool Panther::replan(mt::Edges& edges_obstacles_out, std::vector<mt::state>& X_s
   }
   else
   {
-    std::cout << bold << yellow << "[Selection] Focusing on obstacle, angle=" << angle << reset << std::endl;
+    std::cout << bold << yellow << "[Selection] Focusing on obstacle, angle=" << angle_deg << " deg" << reset
+              << std::endl;
     focus_on_obstacle = true;
     solver_->par_.c_fov = par_.c_fov;
     solver_->par_.c_final_yaw = par_.c_final_yaw;

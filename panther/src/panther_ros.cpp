@@ -123,6 +123,8 @@ PantherRos::PantherRos(ros::NodeHandle nh1, ros::NodeHandle nh2, ros::NodeHandle
 
   safeGetParam(nh1_, "mode", par_.mode);
 
+  safeGetParam(nh1_, "angle_deg_focus_front", par_.angle_deg_focus_front);
+
   safeGetParam(nh1_, "res_plot_traj", par_.res_plot_traj);
 
   safeGetParam(nh1_, "norminv_prob", par_.norminv_prob);
@@ -382,7 +384,7 @@ void PantherRos::replanCB(const ros::TimerEvent& e)
     bool replanned =
         panther_ptr_->replan(edges_obstacles, X_safe, planes, num_of_LPs_run_, num_of_QCQPs_run_, pwp, log);
 
-    if (log.replanning_was_needed)
+    if (log.drone_status != DroneStatus::GOAL_REACHED)  // log.replanning_was_needed
     {
       pub_log_.publish(log2LogMsg(log));
     }
