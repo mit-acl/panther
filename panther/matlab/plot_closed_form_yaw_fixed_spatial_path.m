@@ -52,10 +52,10 @@ my_colormap=autumn;
 b_T_c= [roty(90)*rotz(-90) zeros(3,1); zeros(1,3) 1];
 w_fevar=[1 -2 3]';
 
-all_t=t0:0.1:tf;
+all_t=t0:0.4:tf;
 index_t=1;
 
-n_psi_samples=30;
+n_psi_samples=60;
 all_psi=linspace(0,2*pi,n_psi_samples);
 
 all_circles_all_values=zeros(numel(all_t),numel(all_psi)); %Each row is a different t. Each column in one row is the value for a specific psi
@@ -121,6 +121,8 @@ plotSphere(w_fevar,0.2,'g');
 p1=[w_fevar(1:2);0];
 p2=w_fevar;
 plot3([ p1(1) p2(1)], [p1(2) p2(2)], [p1(3) p2(3)],'--');
+
+view([-59.11,21.95]); xlabel('\textbf{x}','fontsize',14); ylabel('\textbf{y}','fontsize',14); zlabel('\textbf{z}','fontsize',14)
 % plot([w_fevar(1:2);0],w_fevar,'--' )
 
 camlight
@@ -142,7 +144,7 @@ for t=all_t
 %     r2=cross(r3,r0_star);
     
     tmp=pos+r0_star;
-    arrow3dWithColor(pos',tmp',30,'cylinder',[0.2,0.1],'b');
+     arrow3dWithColor(pos',tmp',30,'cylinder',[0.2,0.1],'b');
 
     qabc=qabcFromAccel(a, 9.81);
     Rabc=toRotMat(qabc);
@@ -174,7 +176,7 @@ figure; hold on;
 r=r'; theta=theta'; %Every row of the matrices r, theta, all_t_grid corresponds to a slice of the cilinder (i.e. a circunference)
                     %Every column of the matrices .................corresponds to a longitudinal line of the cylinder
 all_t_grid=repmat(all_t',1,size(r,2));
-surf(all_t_grid,r.*cos(theta),r.*sin(theta),all_circles_all_values); xlabel('t'); axis equal
+surf(all_t_grid,r.*cos(theta),r.*sin(theta),all_circles_all_values); xlabel('\textbf{t}','fontsize',14); axis equal
 % colormap jet; 
 colorbar; shading interp; % caxis([20 50])
 curve=[all_t;cell2mat(dataPoints)'];
@@ -188,14 +190,14 @@ surf(all_t_grid,theta-4*pi,all_circles_all_values-8);
 yline(0,'--'); yline(2*pi,'--'); yline(-2*pi,'--')
 % colormap jet;
 colorbar; shading interp; % caxis([20 50])
-xlabel('t'); ylabel('$\psi(t)$')
+xlabel('\textbf{t}','fontsize',14); ylabel('$\psi(t)$')
 
 % angles_datapoints=shiftToEnsureNoMoreThan2Pi(angles_datapoints);
 
 plot(all_t,angles_datapoints,'-r','LineWidth',3);
 
 function colors=getColors(all_values)
-    my_map=jet;
+    my_map=parula; %jet
     all_values= (all_values - min(all_values)) / ( max(all_values) - min(all_values) ); %normalize \in [0,1]
     n=size(my_map,1);
     all_values=  ceil((n-1)*all_values + 1); %normalize \in [1,n]
