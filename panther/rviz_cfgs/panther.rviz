@@ -70,26 +70,6 @@ Visualization Manager:
           Value: true
         SQ01s/camera_depth_optical_frame:
           Value: false
-        obs_4000:
-          Value: true
-        obs_4001:
-          Value: true
-        obs_4002:
-          Value: true
-        obs_4003:
-          Value: true
-        obs_4004:
-          Value: true
-        obs_4005:
-          Value: true
-        obs_4006:
-          Value: true
-        obs_4007:
-          Value: true
-        obs_4008:
-          Value: true
-        obs_4009:
-          Value: true
         vicon:
           Value: false
         world:
@@ -101,26 +81,6 @@ Visualization Manager:
       Show Names: true
       Tree:
         world:
-          obs_4000:
-            {}
-          obs_4001:
-            {}
-          obs_4002:
-            {}
-          obs_4003:
-            {}
-          obs_4004:
-            {}
-          obs_4005:
-            {}
-          obs_4006:
-            {}
-          obs_4007:
-            {}
-          obs_4008:
-            {}
-          obs_4009:
-            {}
           vicon:
             SQ01s:
               SQ01s/camera_depth_optical_frame:
@@ -198,7 +158,7 @@ Visualization Manager:
       Marker Topic: /SQ01s/panther/fov
       Name: FOV
       Namespaces:
-        marker_fov: true
+        {}
       Queue Size: 100
       Value: true
     - Class: rviz/MarkerArray
@@ -206,7 +166,7 @@ Visualization Manager:
       Marker Topic: /obstacles_mesh
       Name: Obstacles
       Namespaces:
-        mesh: true
+        {}
       Queue Size: 100
       Value: true
     - Class: rviz/MarkerArray
@@ -222,7 +182,7 @@ Visualization Manager:
       Marker Topic: /SQ01s/tracker_predictor_node/marker_bbox_obstacles
       Name: bbox_obstacles_predictor
       Namespaces:
-        predictor: true
+        {}
       Queue Size: 100
       Value: true
     - Class: rviz/Image
@@ -296,7 +256,7 @@ Visualization Manager:
       Marker Topic: /SQ01s/panther/actual_traj
       Name: ActTraj
       Namespaces:
-        ActualTraj_SQ01s: true
+        {}
       Queue Size: 100
       Value: true
     - Class: rviz/MarkerArray
@@ -304,7 +264,7 @@ Visualization Manager:
       Marker Topic: /SQ01s/panther/traj_obtained
       Name: TrajObtained
       Namespaces:
-        SQ01s: true
+        {}
       Queue Size: 100
       Value: true
     - Class: rviz/Marker
@@ -359,25 +319,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/ThirdPersonFollower
-      Distance: 33.48543930053711
+      Distance: 24.67876625061035
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 10.753780364990234
-        Y: -2.700416326522827
-        Z: -6.857230800960679e-6
+        X: 3.035081148147583
+        Y: -4.999703407287598
+        Z: -8.764579433773179e-6
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.8697967529296875
+      Pitch: 0.2997971773147583
       Target Frame: <Fixed Frame>
       Value: ThirdPersonFollower (rviz)
-      Yaw: 3.8349857330322266
+      Yaw: 3.669983386993408
     Saved: ~
 Window Geometry:
   DepthImage:
