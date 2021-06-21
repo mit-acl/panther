@@ -576,18 +576,17 @@ ConvexHullsOfCurves Panther::convexHullsOfCurves(double t_start, double t_end)
 // argmax_prob_collision is the index of trajectory I should focus on
 // a negative value means that there are no trajectories to track
 void Panther::sampleFeaturePosVel(int argmax_prob_collision, double t_start, double t_end,
-                                  std::vector<Eigen::Vector3d>& pos, std::vector<Eigen::Vector3d>& vel)
+                                  std::vector<Eigen::Vector3d>& pos, std::vector<Eigen::Vector3d>& vel,
+                                  bool focus_on_obstacle)
 {
   pos.clear();
   vel.clear();
 
   double delta = (t_end - t_start) / par_.num_samples_simpson;
 
-  bool used_last_state_tracked = false;
-
   for (int i = 0; i < par_.num_samples_simpson; i++)
   {
-    if (argmax_prob_collision >= 0)
+    if (argmax_prob_collision >= 0 && focus_on_obstacle == true)
     {
       double ti = t_start + i * delta;  // which is constant along the trajectory
       Eigen::Vector3d pos_i = evalMeanDynTrajCompiled(trajs_[argmax_prob_collision], ti);
@@ -617,19 +616,18 @@ void Panther::sampleFeaturePosVel(int argmax_prob_collision, double t_start, dou
     }
     else
     {
-      pos.push_back(last_state_tracked_.pos);
-      vel.push_back(last_state_tracked_.vel);
-      used_last_state_tracked = true;
+      pos.push_back(G_term_.pos);              // last_state_tracked_.pos
+      vel.push_back(Eigen::Vector3d::Zero());  // last_state_tracked_.vel
     }
   }
 
-  if (used_last_state_tracked == true)
+  if (argmax_prob_collision < 0)
   {
-    std::cout << bold << "There is no dynamic obstacle to track, using last_pos_tracked_" << reset << std::endl;
+    std::cout << bold << "There is no dynamic obstacle to track" << reset << std::endl;
   }
 
   last_state_tracked_.pos = pos.front();  // pos.back();
-  last_state_tracked_.vel = pos.front();  // vel.back();
+  last_state_tracked_.vel = vel.front();  // vel.back();
 }
 
 void Panther::setTerminalGoal(mt::state& term_goal)
@@ -658,10 +656,9 @@ void Panther::setTerminalGoal(mt::state& term_goal)
     double diff = desired_yaw - last_state.yaw;
     angle_wrap(diff);
 
-    double dyaw =
-        copysign(1, diff) * 0.5;  // par_.ydot_max; Changed to 0.5 (in HW the drone stops the motors when
-                                  // status==YAWING and ydot_max is too high, due to saturation + calibration of the
-                                  // ESCs) see https://gitlab.com/mit-acl/fsw/snap-stack/snap/-/issues/3
+    double dyaw = copysign(1, diff) * 2;  // par_.ydot_max; Changed to 0.5 (in HW the drone stops the motors when
+                                          // status==YAWING and ydot_max is too high, due to saturation + calibration of
+                                          // the ESCs) see https://gitlab.com/mit-acl/fsw/snap-stack/snap/-/issues/3
 
     int num_of_el = (int)fabs(diff / (par_.dc * dyaw));
 
@@ -891,7 +888,7 @@ bool Panther::replan(mt::Edges& edges_obstacles_out, std::vector<mt::state>& X_s
 
   log_ptr_->tim_initial_setup.tic();
 
-  // removeOldTrajectories();
+  removeOldTrajectories();
 
   //////////////////////////////////////////////////////////////////////////
   ///////////////////////// Select mt::state A /////////////////////////////
@@ -987,15 +984,6 @@ bool Panther::replan(mt::Edges& edges_obstacles_out, std::vector<mt::state>& X_s
 
   double t_final = t_start + par_.factor_alloc * time_allocated;
 
-  bool correctInitialCond =
-      solver_->setInitStateFinalStateInitTFinalT(A, G, t_start,
-                                                 t_final);  // note that here t_final may have been updated
-
-  if (correctInitialCond == false)
-  {
-    logAndTimeReplan("Solver cannot guarantee feasibility for v1", false, log);
-    return false;
-  }
   /////////////////////////////////////////////////////////////////////////
   ////////////////////////Compute trajectory to focus on //////////////////
   /////////////////////////////////////////////////////////////////////////
@@ -1023,7 +1011,7 @@ bool Panther::replan(mt::Edges& edges_obstacles_out, std::vector<mt::state>& X_s
       prob_i += probMultivariateNormalDist(-R, R, pos_obs_mean - pos_drone, pos_obs_std);
     }
 
-    // std::cout << "Trajectory " << i << " has P(collision)= " << prob_i * pow(10, 15) << "e-15" << std::endl;
+    std::cout << "[Selection] Trajectory " << i << " has P(collision)= " << prob_i * pow(10, 15) << "e-15" << std::endl;
 
     if (prob_i > max_prob_collision)
     {
@@ -1032,17 +1020,66 @@ bool Panther::replan(mt::Edges& edges_obstacles_out, std::vector<mt::state>& X_s
     }
   }
 
+  // std::cout.precision(30);
+  std::cout << bold << "[Selection] Chosen Trajectory " << argmax_prob_collision
+            << ", P(collision)= " << max_prob_collision * pow(10, 5) << "e-5" << std::endl;
+
+  ////
+
+  double angle = 3.14;
+  if (argmax_prob_collision >= 0)
+  {
+    Eigen::Vector3d A2G = G_term.pos - A.pos;
+    Eigen::Vector3d A2Obstacle = evalMeanDynTrajCompiled(trajs_[argmax_prob_collision], t_start) - A.pos;
+    angle = angleBetVectors(A2G, A2Obstacle);
+  }
+
+  bool focus_on_obstacle = true;
+
+  if (angle > 1.57)
+  {  //
+    std::cout << bold << yellow << "[Selection] Focusing on front of me, angle=" << angle << reset << std::endl;
+    focus_on_obstacle = false;
+    solver_->par_.c_final_yaw = 10.0;
+    // solver_->use_straight_yaw_guess_ = true;
+    // solver_->par_.c_fov = 0.0;
+    solver_->par_.c_yaw_smooth = 0.0;
+    G.yaw = atan2(G_term_.pos[1] - A.pos[1], G_term_.pos[0] - A.pos[0]);
+  }
+  else
+  {
+    std::cout << bold << yellow << "[Selection] Focusing on obstacle, angle=" << angle << reset << std::endl;
+    focus_on_obstacle = true;
+    solver_->par_.c_fov = par_.c_fov;
+    solver_->par_.c_final_yaw = par_.c_final_yaw;
+    solver_->par_.c_yaw_smooth = par_.c_yaw_smooth;
+    // solver_->use_straight_yaw_guess_ = false;
+  }
+  ////
+
   std::vector<Eigen::Vector3d> w_posfeature;      // velocity of the feature expressed in w
   std::vector<Eigen::Vector3d> w_velfeaturewrtw;  // velocity of the feature wrt w, expressed in w
-  sampleFeaturePosVel(argmax_prob_collision, t_start, t_final, w_posfeature,
-                      w_velfeaturewrtw);  // need to do it here so that argmax_prob_collision does not become invalid
-                                          // with new updates
+  sampleFeaturePosVel(argmax_prob_collision, t_start, t_final, w_posfeature, w_velfeaturewrtw,
+                      focus_on_obstacle);  // need to do it here so that argmax_prob_collision does not become invalid
+                                           // with new updates
 
   log_ptr_->tracking_now_pos = w_posfeature.front();
   log_ptr_->tracking_now_vel = w_velfeaturewrtw.front();
-  std::cout << bold << "Chosen Trajectory " << argmax_prob_collision << reset << std::endl;
 
   mtx_trajs_.unlock();
+
+  //////////////////////////////////////////////////////////////////////////
+  ///////////////////////// Set init and final states //////////////////////
+  //////////////////////////////////////////////////////////////////////////
+  bool correctInitialCond =
+      solver_->setInitStateFinalStateInitTFinalT(A, G, t_start,
+                                                 t_final);  // note that here t_final may have been updated
+
+  if (correctInitialCond == false)
+  {
+    logAndTimeReplan("Solver cannot guarantee feasibility for v1", false, log);
+    return false;
+  }
 
   //////////////////////////////////////////////////////////////////////////
   ///////////////////////// Solve optimization! ////////////////////////////

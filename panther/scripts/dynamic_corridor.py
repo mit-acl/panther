@@ -82,10 +82,10 @@ class FakeSim:
         self.name_obs="obs_"
    
         #HACK
-        self.num_of_dyn_objects=2;
+        self.num_of_dyn_objects=10;
         self.num_of_stat_objects=0;
         self.x_min= 2.0
-        self.x_max= 3.0
+        self.x_max= 30.0
         self.y_min= -2.0 
         self.y_max= 2.0
         #END OF HACK

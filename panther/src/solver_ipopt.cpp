@@ -260,6 +260,26 @@ bool SolverIpopt::setInitStateFinalStateInitTFinalT(mt::state initial_state, mt:
   final_state_ = final_state;
 
   initial_state_.yaw = wrapFromMPitoPi(initial_state_.yaw);
+  final_state_.yaw = wrapFromMPitoPi(final_state_.yaw);
+
+  /// Now shift final_state_.yaw  so that the difference wrt initial_state_.yaw is <=pi
+
+  double previous_phi = initial_state_.yaw;
+  double phi_i = final_state_.yaw;
+  double difference = previous_phi - phi_i;
+
+  double phi_i_f = phi_i + floor(difference / (2 * M_PI)) * 2 * M_PI;
+  double phi_i_c = phi_i + ceil(difference / (2 * M_PI)) * 2 * M_PI;
+
+  final_state_.yaw = (fabs(previous_phi - phi_i_f) < fabs(previous_phi - phi_i_c)) ? phi_i_f : phi_i_c;
+
+  /// Just for debugging
+  if (fabs(initial_state_.yaw - final_state_.yaw) > M_PI)
+  {
+    std::cout << red << bold << "This diff must be <= pi" << reset << std::endl;
+    abort();
+  }
+  ///
 
   std::cout << "initial_state= " << std::endl;
   initial_state.printHorizontal();
@@ -435,11 +455,11 @@ bool SolverIpopt::optimize()
   map_arguments["y0"] = initial_state_.yaw;
   map_arguments["yf"] = final_state_.yaw;
 
-  if (fabs(final_state_.yaw) > 1e-5 || par_.c_final_yaw > 0.0)
-  {
-    std::cout << red << bold << "Implement this!" << std::endl;
-    abort();
-  }
+  // if (fabs(final_state_.yaw) > 1e-5 || par_.c_final_yaw > 0.0)
+  // {
+  //   std::cout << red << bold << "Implement this!" << std::endl;
+  //   abort();
+  // }
 
   map_arguments["ydot0"] = initial_state_.dyaw;
   map_arguments["ydotf"] =
@@ -487,8 +507,23 @@ bool SolverIpopt::optimize()
   map_arguments["pCPs"] = matrix_qp_guess;
 
   ////////////////////////////////Generate Yaw Guess
-  casadi::DM matrix_qy_guess = generateYawGuess(matrix_qp_guess, all_w_fe_, initial_state_.yaw, initial_state_.dyaw,
-                                                final_state_.dyaw, t_init_, t_final_);
+  casadi::DM matrix_qy_guess(1, N_);  // TODO: do this just once?
+
+  // if (use_straight_yaw_guess_ == false)
+  // {
+  matrix_qy_guess = generateYawGuess(matrix_qp_guess, all_w_fe_, initial_state_.yaw, initial_state_.dyaw,
+                                     final_state_.dyaw, t_init_, t_final_);
+  // }
+  // else
+  // {
+  //   std::cout << "Using straight line guess" << std::endl;
+  //   for (int i = 0; i < matrix_qy_guess.columns(); i++)
+  //   {
+  //     matrix_qy_guess(0, i) = initial_state_.yaw + i * (final_state_.yaw - initial_state_.yaw) / (1.0 * N_);
+  //   }
+  // }
+  // std::cout << bold << blue << "Guess for yaw\n" << matrix_qy_guess << reset << std::endl;
+
   map_arguments["yCPs"] = matrix_qy_guess;
 
   // for(std::map<std::string, casadi::DM>::const_iterator it = map_arguments.begin();
