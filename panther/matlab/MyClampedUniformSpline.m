@@ -301,6 +301,31 @@ classdef MyClampedUniformSpline < handle
                 result = obj.evalDerivativeT(3,t);               
         end
         
+%         function result = getAccelCost(obj)
+% 
+%             result=0;
+%             for j=1:obj.num_seg   
+%                 V=sp.getCPs_BS_Pos_ofInterval(j);
+%                 interv=sp.timeSpanOfInterval(j);
+%                 P=V*getA_BS(obj.p,interv);
+%                 
+%                 polyint(P(1,:))
+%                 %Work in progress...
+%             end
+%             
+%         end
+
+
+        function result=getApproxAccelCost(obj,delta)
+            result=0;
+            for j=1:obj.num_seg  
+                for u=0:delta:1
+                    accel=obj.getAccelU(u,j);
+                    result=result+ accel'*accel*delta;
+                end
+            end
+        end
+
         %For spline, control_cost=
         function result=getControlCost(obj)
             
@@ -453,7 +478,7 @@ classdef MyClampedUniformSpline < handle
             for j=1:obj.num_seg
                 interv=obj.timeSpanOfInterval(j);           
                 u=(t-min(interv))/(max(interv)-min(interv));
-                fplot(obj.evalDerivativeU(order,u,j),interv,'LineWidth',3); hold on;
+                fplot(sym(obj.evalDerivativeU(order,u,j)),interv,'LineWidth',3); hold on; %sym is needed to avoid the error "symvar>isquoted Quotes in S are not in pairs" that sometimes appears when content is constant 
             end        
         end
 
@@ -467,6 +492,18 @@ classdef MyClampedUniformSpline < handle
                 fplot3(pos(1),pos(2),pos(3),interv);
             end           
             axis equal; view([45,45])
+        end
+        
+        function plotPos2D(obj)
+            figure; hold on;
+            syms t real
+            for j=1:obj.num_seg
+                interv=obj.timeSpanOfInterval(j);           
+                u=(t-min(interv))/(max(interv)-min(interv));
+                pos=obj.evalDerivativeU(0,u,j);
+                fplot(pos(1),pos(2),interv);
+            end           
+            axis equal;% view([45,45])
         end
         
         function plotPos(obj)
@@ -485,9 +522,18 @@ classdef MyClampedUniformSpline < handle
             obj.plotDerivative(3)      
         end
         
-%         function getCoeffPoly01OfInterval(obj,j)
-%             obj.getCPs_BS_Pos_ofInterval
-%         end
+        function plotSnap(obj)
+            obj.plotDerivative(4)      
+        end
+        
+        function plotControl(obj)
+            obj.plotDerivative(obj.p)      
+        end
+        
+%          function P=getCoeffPoly01OfInterval(obj,j)
+%              V_BS= obj.getCPs_BS_Pos_ofInterval(j);
+%              P=V_BS*getA_BS()
+%          end
 
         function A=getA_BS_Derivative_Interval(obj,which_derivative,j) %which_derivative=0 for pos, 1 for vel, 2 for accel
             %the intervals are [0,1,2,...,num_seg-2,num_seg-1]
