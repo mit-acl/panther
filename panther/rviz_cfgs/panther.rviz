@@ -70,6 +70,8 @@ Visualization Manager:
           Value: true
         SQ01s/camera_depth_optical_frame:
           Value: false
+        obs_4000:
+          Value: true
         vicon:
           Value: false
         world:
@@ -81,6 +83,8 @@ Visualization Manager:
       Show Names: true
       Tree:
         world:
+          obs_4000:
+            {}
           vicon:
             SQ01s:
               SQ01s/camera_depth_optical_frame:
@@ -158,7 +162,7 @@ Visualization Manager:
       Marker Topic: /SQ01s/panther/fov
       Name: FOV
       Namespaces:
-        {}
+        marker_fov: true
       Queue Size: 100
       Value: true
     - Class: rviz/MarkerArray
@@ -166,23 +170,23 @@ Visualization Manager:
       Marker Topic: /obstacles_mesh
       Name: Obstacles
       Namespaces:
-        {}
+        mesh: true
       Queue Size: 100
       Value: true
     - Class: rviz/MarkerArray
-      Enabled: false
+      Enabled: true
       Marker Topic: /SQ01s/tracker_predictor_node/marker_predicted_traj
       Name: Predictions
       Namespaces:
-        {}
+        predicted_traj_0: true
       Queue Size: 100
-      Value: false
+      Value: true
     - Class: rviz/MarkerArray
       Enabled: true
       Marker Topic: /SQ01s/tracker_predictor_node/marker_bbox_obstacles
       Name: bbox_obstacles_predictor
       Namespaces:
-        {}
+        predictor: true
       Queue Size: 100
       Value: true
     - Class: rviz/Image
@@ -256,7 +260,7 @@ Visualization Manager:
       Marker Topic: /SQ01s/panther/actual_traj
       Name: ActTraj
       Namespaces:
-        {}
+        ActualTraj_SQ01s: true
       Queue Size: 100
       Value: true
     - Class: rviz/MarkerArray
@@ -264,7 +268,7 @@ Visualization Manager:
       Marker Topic: /SQ01s/panther/traj_obtained
       Name: TrajObtained
       Namespaces:
-        {}
+        SQ01s: true
       Queue Size: 100
       Value: true
     - Class: rviz/Marker
@@ -319,25 +323,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/ThirdPersonFollower
-      Distance: 24.67876625061035
+      Distance: 26.12019920349121
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 3.035081148147583
-        Y: -4.999703407287598
+        X: -0.5741584300994873
+        Y: 1.0477304458618164
         Z: -8.764579433773179e-6
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.2997971773147583
+      Pitch: 0.3897970914840698
       Target Frame: <Fixed Frame>
       Value: ThirdPersonFollower (rviz)
-      Yaw: 3.669983386993408
+      Yaw: 2.529979944229126
     Saved: ~
 Window Geometry:
   DepthImage:
