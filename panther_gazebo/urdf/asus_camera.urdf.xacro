@@ -95,7 +95,7 @@
             <image>
               <format>R8G8B8</format>
               <width>120</width> <!-- 120, 90 //320, 240 // 480, 480 -->
-              <height>90</height> <!--Note that the focal length is given by f = (width/2) / tan( horizontal_fov/2) 
+              <height>120</height> <!--Note that the focal length is given by f = (width/2) / tan( horizontal_fov/2) 
                                                      vertical_fov is given by 2*arctan(height/(2*f))
                                                     
                                                     Also, the camera_info msg will have:
@@ -117,7 +117,7 @@
                                                     --> 
             </image>
             <clip>
-              <near>0.06</near>
+              <near>0.02</near>
               <far>100.0</far>  <!--this is the clipping distance for the RGB image-->
             </clip>
           </camera>
@@ -129,7 +129,7 @@
             <pointCloudTopicName>${name}/depth/color/points</pointCloudTopicName>
             <frameName>${name}_depth_optical_frame</frameName>
             <pointCloudCutoff>0.06</pointCloudCutoff>
-            <pointCloudCutoffMax>7.0</pointCloudCutoffMax> <!--this is the clipping distance for the Depth image and Point Cloud-->
+            <pointCloudCutoffMax>70.0</pointCloudCutoffMax> <!--this is the clipping distance for the Depth image and Point Cloud-->
           </plugin>
         </sensor>
       </gazebo>

@@ -11,6 +11,7 @@
 #include <fstream>
 #include <algorithm>
 #include <iterator>
+#include <ctype.h>
 
 #include <ros/ros.h>
 // #include <pcl/io/pcd_io.h>
@@ -122,6 +123,26 @@ TrackerPredictor::TrackerPredictor(ros::NodeHandle nh) : nh_(nh)
   input_cloud4_ = pcl::PointCloud<pcl::PointXYZ>::Ptr(new pcl::PointCloud<pcl::PointXYZ>);
   input_cloud_ = pcl::PointCloud<pcl::PointXYZ>::Ptr(new pcl::PointCloud<pcl::PointXYZ>);
   input_cloud1 = pcl::PointCloud<pcl::PointXYZ>::Ptr(new pcl::PointCloud<pcl::PointXYZ>);
+  // ////////
+  std::string param_name = "/SQ01s/panther/mode";
+  std::string mode;
+
+  if (!nh_.getParam(param_name, mode))
+  {
+    ROS_ERROR("Failed to find parameter: %s", nh_.resolveName(param_name, true).c_str());
+    exit(1);
+  }
+
+  std::string folder = "/home/jtorde/Dropbox (MIT)/Research/Planning_project/PANTHER/bags_simulation/data/";
+
+  name_file_ = folder + mode + "_successive_detections.txt";
+
+  // // Delete content of the files
+  // // https://stackoverflow.com/questions/17032970/clear-data-inside-text-file-in-c
+  std::ofstream ofs;
+  ofs.open(name_file_, std::ofstream::out | std::ofstream::trunc);
+  ofs.close();
+  // ///////
 }
 
 double TrackerPredictor::getCostRowColum(tp::cluster& a, tp::track& b, double time)
@@ -171,13 +192,22 @@ void TrackerPredictor::cloud_cb(const sensor_msgs::PointCloud2ConstPtr& pcl2ptr_
 
   // Erase the tracks that haven't been detected in many frames
   int tracks_removed = 0;
+
+  std::fstream myfile;
+  myfile.open(name_file_, std::ios_base::app);
+
   all_tracks_.erase(std::remove_if(all_tracks_.begin(), all_tracks_.end(),
-                                   [this, tracks_removed](const tp::track& x) mutable {
+                                   [this, &tracks_removed, &myfile](const tp::track& x) mutable {
                                      tracks_removed++;
-                                     return x.num_frames_skipped > max_frames_skipped_;
+                                     bool should_be_removed = (x.num_frames_skipped > max_frames_skipped_);
+                                     if (should_be_removed)
+                                     {
+                                       myfile << x.getNumDiffSamples() << "\n";
+                                     }
+                                     return should_be_removed;
                                    }),
                     all_tracks_.end());
-
+  myfile.close();
   // std::cout << "Removed " << tracks_removed << " tracks because too many frames skipped" << std::endl;
 
   ///////////////////////////
@@ -513,7 +543,7 @@ void TrackerPredictor::cloud_cb(const sensor_msgs::PointCloud2ConstPtr& pcl2ptr_
       if (track_assigned_to_cluster[i] == -1)
       {
         // std::cout << "cluster " << i << " unassigned, creating new track for it" << std::endl;
-        std::cout << clusters[i].centroid.transpose() << std::endl;
+        // std::cout << clusters[i].centroid.transpose() << std::endl;
         addNewTrack(clusters[i]);
       }
       else
@@ -586,7 +616,7 @@ void TrackerPredictor::cloud_cb(const sensor_msgs::PointCloud2ConstPtr& pcl2ptr_
     dynTraj_msg.use_pwp_field = true;
     dynTraj_msg.pwp_mean = pwp2PwpMsg(track_j.pwp_mean);
     dynTraj_msg.pwp_var = pwp2PwpMsg(track_j.pwp_var);
-    // dynTraj_msg.s_mean = pieceWisePol2String(track_j.pwp_mean);
+    dynTraj_msg.s_mean = pieceWisePol2String(track_j.pwp_mean);  // uncommented for the simulation (to use it in Matlab)
     // dynTraj_msg.s_var = pieceWisePol2String(track_j.pwp_var);
 
     std::vector<double> tmp = eigen2std(track_j.getLatestBbox());
@@ -594,12 +624,42 @@ void TrackerPredictor::cloud_cb(const sensor_msgs::PointCloud2ConstPtr& pcl2ptr_
 
     dynTraj_msg.bbox = std::vector<float>(tmp.begin(), tmp.end());  // TODO: Here I'm using the latest Bbox. Should I
                                                                     // use the biggest one of the whole history?
-    dynTraj_msg.pos = eigen2rosvector(track_j.pwp_mean.eval(ros::Time::now().toSec()));
+    double t_now = ros::Time::now().toSec();
+    dynTraj_msg.pos = eigen2rosvector(track_j.pwp_mean.eval(t_now));
     dynTraj_msg.id = track_j.id_int;
     dynTraj_msg.is_agent = false;
 
     pub_traj_.publish(dynTraj_msg);
-    //////////////////
+
+    // //////////////////
+    // double freq_logging = 5.0;
+    // int num_samples = 10;
+    // double pred_horizon = 2.0;
+    // double delta = pred_horizon / (1.0 * num_samples);
+    // if (t_now - last_time_done_logging_ > 1 / freq_logging)
+    // {
+    //   std::fstream myfile;
+    //   myfile.open(name_file_, std::ios_base::app);
+    //   // myfile << j << " ";
+    //   // for (double t = t_now; t < t_now + 2.0; t = t + delta)
+    //   // {
+    //   //   Eigen::Vector3d pred_pos = track_j.pwp_mean.eval(t);
+
+    //   //   myfile << t << " " << pred_pos.x() << " " << pred_pos.y() << " " << pred_pos.z() << " ";
+    //   // }
+    //   // myfile << "\n";
+    //   // myfile.close();
+
+    //   // last_time_done_logging_ = t_now;
+
+    //   std::vector<std::string> tm = pieceWisePol2String(track_j.pwp_mean);
+    //   tm[0].erase(std::remove(tm[0].begin(), tm[0].end(), ' '), tm[0].end());
+    //   tm[1].erase(std::remove(tm[1].begin(), tm[1].end(), ' '), tm[1].end());
+    //   tm[2].erase(std::remove(tm[2].begin(), tm[2].end(), ' '), tm[2].end());
+
+    //   myfile << j << " " << t_now << " " << tm[0] << " " << tm[1] << " " << tm[2] << "\n";
+    // }
+    // //////////////////
 
     j++;
   }

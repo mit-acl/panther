@@ -43,12 +43,12 @@ class FakeSim:
         if(self.getType(i)=="dynamic"):
             mesh=random.choice(self.available_meshes_dynamic);
             bbox=self.bbox_dynamic;
-            [x_string, y_string, z_string] = self.trefoil(x,y,z, s,s,s, offset, slower)
+            [x_string, y_string, z_string] = self.trefoil(x,y,z, self.scale[0],self.scale[1],self.scale[2], offset, slower)
         else:
             mesh=random.choice(self.available_meshes_static);
             bbox=self.bbox_static_vert;
             z=bbox[2]/2.0;
-            [x_string, y_string, z_string] = self.wave_in_z(x, y, z, s, offset, 1.0)
+            [x_string, y_string, z_string] = self.wave_in_z(x, y, z, self.scale[2], offset, 1.0)
         return [x_string, y_string, z_string, x, y, z, mesh, bbox]
 
     def getType(self,i):
@@ -72,7 +72,7 @@ class FakeSim:
         self.y_max= 3.0
         self.z_min= 1.0 
         self.z_max= 2.0
-        self.scale=1.0;
+        self.scale= [1.0, 1.0, 1.0]
         self.slower_min=1.1
         self.slower_max= 1.1
         self.bbox_dynamic=[0.8, 0.8, 0.8] 
@@ -84,10 +84,13 @@ class FakeSim:
         #HACK
         self.num_of_dyn_objects=1;
         self.num_of_stat_objects=0;
-        self.x_min= 2.0
-        self.x_max= 2.0
-        self.y_min= 0.0 
-        self.y_max= 0.0
+        self.x_min= 4.0
+        self.x_max= 4.0
+        self.y_min= 4.0 
+        self.y_max= 4.0
+        self.z_min= 1.0 
+        self.z_max= 1.0
+        self.scale= [1.0, 1.0, 2.5]
         #END OF HACK
 
         self.available_meshes_static=["package://panther/meshes/ConcreteDamage01b/model3.dae", "package://panther/meshes/ConcreteDamage01b/model2.dae"]

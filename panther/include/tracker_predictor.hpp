@@ -138,6 +138,11 @@ public:
     return history[i].centroid;
   }
 
+  int getNumDiffSamples() const
+  {
+    return num_diff_samples;
+  }
+
   bool shouldPublish()
   {
     return (num_diff_samples >= min_ssw);
@@ -320,6 +325,8 @@ private:
   pcl::PointCloud<pcl::PointXYZ>::Ptr input_cloud1;
 
   ros::Subscriber sub_;
+  std::string name_file_;
+  // double last_time_done_logging_ = -100.0;
 };
 
 #endif

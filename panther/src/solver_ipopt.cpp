@@ -545,21 +545,21 @@ bool SolverIpopt::optimize()
 
   /////////////////////////////////
 
-  if (par_.mode == "mader")
+  if (par_.mode == "panther")
   {
     map_arguments["c_yaw_smooth"] = par_.c_yaw_smooth;
     map_arguments["c_fov"] = par_.c_fov;
     std::cout << bold << green << "Optimizing for YAW and POSITION!" << reset << std::endl;
     result = cf_op_(map_arguments);
   }
-  else if (par_.mode == "no_perception_aware")
+  else if (par_.mode == "noPA")
   {
     map_arguments["c_yaw_smooth"] = 0.0;
     map_arguments["c_fov"] = 0.0;
     std::cout << bold << green << "Optimizing for YAW!" << reset << std::endl;
     result = cf_op_(map_arguments);
   }
-  else if (par_.mode == "first_pos_then_yaw")
+  else if (par_.mode == "py")
   {
     // first solve for the position spline
     map_arguments["c_yaw_smooth"] = 0.0;
@@ -575,6 +575,16 @@ bool SolverIpopt::optimize()
     std::cout << bold << green << "and then for YAW!" << reset << std::endl;
 
     std::map<std::string, casadi::DM> result_for_yaw = cf_fixed_pos_op_(map_arguments);
+
+    //////////// Debugging
+    if (result["yCPs"].columns() != result_for_yaw["yCPs"].columns())
+    {
+      std::cout << "Sizes do not match. This is likely because you did not run main.m with both pos_is_fixed=true and "
+                   "pos_is_fixed=false"
+                << std::endl;
+      abort();
+    }
+    ///////////////////
 
     result["yCPs"] = result_for_yaw["yCPs"];
 
@@ -644,11 +654,11 @@ bool SolverIpopt::optimize()
     // std::cout<<"all_w_velfewrtworld="<<map_arguments["all_w_velfewrtworld"]<<std::endl;
 
     ///////////////////////////////////
-    if (par_.mode == "mader" || par_.mode == "first_pos_then_yaw")
+    if (par_.mode == "panther" || par_.mode == "py")
     {
       qy = static_cast<std::vector<double>>(result["yCPs"]);
     }
-    else if (par_.mode == "no_perception_aware")
+    else if (par_.mode == "noPA")
     {  // constant yaw
       qy.clear();
       for (int i = 0; i < result["yCPs"].columns(); i++)

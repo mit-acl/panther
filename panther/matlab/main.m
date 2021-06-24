@@ -29,7 +29,7 @@ opti = casadi.Opti();
 %%%%%%%%%%%%%%%%%%%%%%%%%%% CONSTANTS! %%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-pos_is_fixed=false;
+pos_is_fixed=false; %you need to run this file twice to produce the necessary casadi files: both with pos_is_fixed=false and pos_is_fixed=true. 
 
 deg_pos=3;
 deg_yaw=2;
@@ -357,7 +357,7 @@ for j=1:sp.num_seg
     
     %Costs (following the convention of "minimize" )
     isInFOV=(target_isInFOV_substituted_yawcps{j});
-    fov_cost_j=-isInFOV /(offset_vel+s_dot2);
+    fov_cost_j=-isInFOV /(offset_vel+4*s_dot2);
 %     fov_cost_j=-isInFOV + 1500000*(isInFOV)*s_dot2;
 %     fov_cost_j=100000*s_dot2/(isInFOV);
 %      fov_cost_j=-isInFOV+1e6*(1-isInFOV)*s_dot2;
