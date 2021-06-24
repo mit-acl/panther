@@ -271,6 +271,7 @@ PantherRos::PantherRos(ros::NodeHandle nh1, ros::NodeHandle nh2, ros::NodeHandle
 
   std::cout << yellow << bold << "gui_mission= " << gui_mission << reset << std::endl;
   std::cout << yellow << bold << "perfect_prediction= " << perfect_prediction << reset << std::endl;
+  std::cout << yellow << bold << "mode= " << par_.mode << reset << std::endl;
   // To avoid having to click on the GUI
   if (gui_mission == false)
   {
