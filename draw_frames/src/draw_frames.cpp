@@ -34,8 +34,11 @@ public:
       exit(1);
     }
 
-    name_file_pos_ = "/home/jtorde/Desktop/ws/src/panther/" + mode_ + "_projection_positions.txt";
-    name_file_vel_ = "/home/jtorde/Desktop/ws/src/panther/" + mode_ + "_projection_velocities.txt";
+    // home/jtorde/Desktop/ws/src/panther
+    std::string folder = "/home/jtorde/Dropbox (MIT)/Research/Planning_project/PANTHER/bags_simulation/data/";
+    // std::string folder = "/home/jtorde/Downloads/";
+    name_file_pos_ = folder + mode_ + "_projection_positions.txt";  //
+    name_file_vel_ = folder + mode_ + "_projection_velocities.txt";
 
     // ros::NodeHandle nh;
     // image_transport::ImageTransport it(nh);
