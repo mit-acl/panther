@@ -73,8 +73,8 @@ class FakeSim:
         self.z_min= 1.0 
         self.z_max= 2.0
         self.scale= [1.0, 1.0, 1.0]
-        self.slower_min=1.1
-        self.slower_max= 1.1
+        self.slower_min=2.5
+        self.slower_max= 2.5
         self.bbox_dynamic=[0.8, 0.8, 0.8] 
         self.bbox_static_vert=[0.4, 0.4, 4]
         self.bbox_static_horiz=[0.4, 8, 0.4]
@@ -91,6 +91,7 @@ class FakeSim:
         self.z_min= 1.0 
         self.z_max= 1.0
         self.scale= [1.0, 1.0, 2.5]
+        self.bbox_dynamic=[0.2, 0.2, 0.2] 
         #END OF HACK
 
         self.available_meshes_static=["package://panther/meshes/ConcreteDamage01b/model3.dae", "package://panther/meshes/ConcreteDamage01b/model2.dae"]
@@ -110,7 +111,7 @@ class FakeSim:
             dynamic_trajectory_msg.is_agent=False;
             dynamic_trajectory_msg.header.stamp= rospy.Time.now();
             dynamic_trajectory_msg.s_mean = [traj_x, traj_y, traj_z]
-            dynamic_trajectory_msg.s_var = ["0.00001", "0.00001", "0.00001"]
+            dynamic_trajectory_msg.s_var = ["0.0", "0.0", "0.0"]
             dynamic_trajectory_msg.bbox = [bbox[0], bbox[1], bbox[2]];
             dynamic_trajectory_msg.pos.x=x #Current position, will be updated later
             dynamic_trajectory_msg.pos.y=y #Current position, will be updated later
