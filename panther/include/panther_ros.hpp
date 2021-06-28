@@ -144,4 +144,6 @@ private:
   PANTHER_timers::Timer timer_stop_;
 
   visualization_msgs::Marker marker_fov_;
+
+  std::string name_camera_depth_optical_frame_tf_;
 };

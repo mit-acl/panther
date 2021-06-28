@@ -36,7 +36,7 @@ PantherRos::PantherRos(ros::NodeHandle nh1, ros::NodeHandle nh2, ros::NodeHandle
 
   // wait for body transform to be published before initializing.  This has to be done before creating a new PANTHER
   // object
-  std::string name_camera_depth_optical_frame_tf = name_drone_ + "/camera_depth_optical_frame";
+  name_camera_depth_optical_frame_tf_ = name_drone_ + "/camera_depth_optical_frame";
 
   while (true)
   {
@@ -45,7 +45,7 @@ PantherRos::PantherRos(ros::NodeHandle nh1, ros::NodeHandle nh2, ros::NodeHandle
     geometry_msgs::TransformStamped transform_stamped;
     try
     {
-      transform_stamped = tf_buffer.lookupTransform(name_drone_, name_camera_depth_optical_frame_tf, ros::Time(0),
+      transform_stamped = tf_buffer.lookupTransform(name_drone_, name_camera_depth_optical_frame_tf_, ros::Time(0),
                                                     ros::Duration(0.5));  // Note that ros::Time(0) will just get us the
                                                                           // latest available transform.
       par_.b_T_c = tf2::transformToEigen(transform_stamped);
@@ -54,10 +54,10 @@ PantherRos::PantherRos(ros::NodeHandle nh1, ros::NodeHandle nh2, ros::NodeHandle
     catch (tf2::TransformException& ex)
     {
       ROS_WARN_THROTTLE(1.0, "Trying to find transform %s --> %s", name_drone_.c_str(),
-                        name_camera_depth_optical_frame_tf.c_str());
+                        name_camera_depth_optical_frame_tf_.c_str());
     }
   }
-  ROS_INFO("Found transform %s --> %s", name_drone_.c_str(), name_camera_depth_optical_frame_tf.c_str());
+  ROS_INFO("Found transform %s --> %s", name_drone_.c_str(), name_camera_depth_optical_frame_tf_.c_str());
   // std::cout << "par_.b_T_c.matrix()= " << par_.b_T_c.matrix() << std::endl;
 
   safeGetParam(nh1_, "use_ff", par_.use_ff);
@@ -721,7 +721,7 @@ void PantherRos::terminalGoalCB(const geometry_msgs::PoseStamped& msg)
 
 void PantherRos::constructFOVMarker()
 {
-  marker_fov_.header.frame_id = name_drone_;
+  marker_fov_.header.frame_id = name_camera_depth_optical_frame_tf_;  // name_drone_;
   marker_fov_.header.stamp = ros::Time::now();
   marker_fov_.ns = "marker_fov";
   marker_fov_.id = 0;
@@ -734,10 +734,15 @@ void PantherRos::constructFOVMarker()
   double delta_z = par_.fov_depth * fabs(tan((par_.fov_y_deg * M_PI / 180) / 2.0));
 
   geometry_msgs::Point v0 = eigen2point(Eigen::Vector3d(0.0, 0.0, 0.0));
-  geometry_msgs::Point v1 = eigen2point(Eigen::Vector3d(par_.fov_depth, delta_y, -delta_z));
-  geometry_msgs::Point v2 = eigen2point(Eigen::Vector3d(par_.fov_depth, -delta_y, -delta_z));
-  geometry_msgs::Point v3 = eigen2point(Eigen::Vector3d(par_.fov_depth, -delta_y, delta_z));
-  geometry_msgs::Point v4 = eigen2point(Eigen::Vector3d(par_.fov_depth, delta_y, delta_z));
+  geometry_msgs::Point v1 = eigen2point(Eigen::Vector3d(-delta_y, delta_z, par_.fov_depth));
+  geometry_msgs::Point v2 = eigen2point(Eigen::Vector3d(delta_y, delta_z, par_.fov_depth));
+  geometry_msgs::Point v3 = eigen2point(Eigen::Vector3d(delta_y, -delta_z, par_.fov_depth));
+  geometry_msgs::Point v4 = eigen2point(Eigen::Vector3d(-delta_y, -delta_z, par_.fov_depth));
+
+  // geometry_msgs::Point v1 = eigen2point(Eigen::Vector3d(par_.fov_depth, delta_y, -delta_z));
+  // geometry_msgs::Point v2 = eigen2point(Eigen::Vector3d(par_.fov_depth, -delta_y, -delta_z));
+  // geometry_msgs::Point v3 = eigen2point(Eigen::Vector3d(par_.fov_depth, -delta_y, delta_z));
+  // geometry_msgs::Point v4 = eigen2point(Eigen::Vector3d(par_.fov_depth, delta_y, delta_z));
 
   marker_fov_.points.clear();
 

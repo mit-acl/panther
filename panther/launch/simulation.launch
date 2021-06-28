@@ -41,8 +41,13 @@
 
     </group>
 
-     <!-- Camera to body tf -->
-    <node pkg="tf" type="static_transform_publisher" name="camera2body" args="0 0 0 -1.57 0 -1.57 $(arg quad) $(arg quad)/camera_depth_optical_frame 100" />
+     <!-- Camera to body transformations: -->
+
+     <!-- This tf should be the same as line 17 of quadrotor_with_asus.urdf.xacro --> 
+    <node pkg="tf" type="static_transform_publisher" name="camera2body" args="0.1 0 0 0 0.0 0 $(arg quad) $(arg quad)/camera 100" />
+
+    <!-- This tf should be the same as line 56 of asus_camera.urf.xacro --> 
+    <node pkg="tf" type="static_transform_publisher" name="cameradepthoptframe2body" args="0.0 0 0 -1.57 0.0 -1.57 $(arg quad)/camera $(arg quad)/camera_depth_optical_frame 100" />
     <!-- Vicon to world tf -->
     <node ns="$(arg quad)" pkg="tf" type="static_transform_publisher" name="vicon2world" args="0 0 0 0 0 0 /world /vicon 100" />  <!-- The namespace is needed only for the multi-agent simulations. If not, each agent kills the node of the other one-->
 
