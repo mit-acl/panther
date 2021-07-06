@@ -139,8 +139,9 @@ casadi::DM SolverIpopt::generateYawGuess(casadi::DM matrix_qp_guess, casadi::DM 
     double distance = abs(wrapFromMPitoPi(mygraph_[index_vertex1].yaw - mygraph_[index_vertex2].yaw));
     double distance_squared = pow(distance, 2.0);
 
-    weightmap[*ed_ptr] = par_.c_smooth_yaw_search * distance_squared - par_.c_visibility_yaw_search * visibility + 1.0 +
-                         ((distance / deltaT) > par_.ydot_max) * 1e6;  //+1.0 to ensure it's >=0
+    weightmap[*ed_ptr] = par_.c_smooth_yaw_search * distance_squared +
+                         par_.c_visibility_yaw_search * (1.0 - visibility) +
+                         ((distance / deltaT) > par_.ydot_max) * 1e6;  //Note that edge cost is always >=0
 
     // if it doesn't satisfy the  ydot_maxconstraint --> very expensive edge. Note that with this option (instead of the
     // option of NOT creating an edge) there will always be a solution in the graph
@@ -254,7 +255,7 @@ casadi::DM SolverIpopt::generateYawGuess(casadi::DM matrix_qp_guess, casadi::DM 
       }
       std::cout << reset;
     }
-    std::cout<<std::endl;
+    std::cout << std::endl;
     // cout << endl << "\nTotal cost: " << d[fg.get_goal_found()] << endl;
 
     ///////////////////////////////////////////////////////////////
