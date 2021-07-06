@@ -90,6 +90,8 @@ private:
 
   void removeOldTrajectories();
 
+  void doStuffTermGoal();
+
   mt::parameters par_;
 
   double t_;  // variable where the expressions of the trajs of the dyn obs are evaluated
@@ -160,6 +162,8 @@ private:
   std::shared_ptr<mt::log> log_ptr_;
 
   mt::state last_state_tracked_;
+
+  bool need_to_do_stuff_term_goal_ = false;
 };
 
 #endif

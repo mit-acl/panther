@@ -793,13 +793,3 @@ void PantherRos::publishFOV()
   pub_fov_.publish(marker_fov_);
   return;
 }
-
-void PantherRos::verify(bool cond, std::string info_if_false)
-{
-  if (cond == false)
-  {
-    std::cout << termcolor::bold << termcolor::red << info_if_false << termcolor::reset << std::endl;
-    std::cout << termcolor::red << "Aborting" << termcolor::reset << std::endl;
-    abort();
-  }
-}

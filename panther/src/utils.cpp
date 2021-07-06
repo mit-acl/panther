@@ -342,6 +342,16 @@ panther_msgs::PieceWisePolTraj pwp2PwpMsg(const mt::PieceWisePol& pwp)
   return pwp_msg;
 }
 
+void verify(bool cond, std::string info_if_false)
+{
+  if (cond == false)
+  {
+    std::cout << termcolor::bold << termcolor::red << info_if_false << termcolor::reset << std::endl;
+    std::cout << termcolor::red << "Aborting" << termcolor::reset << std::endl;
+    abort();
+  }
+}
+
 mt::PieceWisePol pwpMsg2Pwp(const panther_msgs::PieceWisePolTraj& pwp_msg)
 {
   mt::PieceWisePol pwp;

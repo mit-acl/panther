@@ -67,6 +67,8 @@ bool safeGetParam(ros::NodeHandle& nh, std::string const& param_name, T& param_v
   return true;
 }
 
+void verify(bool cond, std::string info_if_false);
+
 double getMinTimeDoubleIntegrator1D(const double& p0, const double& v0, const double& pf, const double& vf,
                                     const double& v_max, const double& a_max);
 

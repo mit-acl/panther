@@ -632,17 +632,70 @@ void Panther::sampleFeaturePosVel(int argmax_prob_collision, double t_start, dou
 
 void Panther::setTerminalGoal(mt::state& term_goal)
 {
-  if (state_initialized_ == false)  // because I need plan_size()>=1
+  mtx_G_term.lock();
+  G_term_ = term_goal;
+  mtx_G_term.unlock();
+
+  if (state_initialized_ == true)  // because I need plan_size()>=1
   {
-    std::cout << "[Panther::setTerminalGoal] State not initized yet, doing nothing" << std::endl;
+    doStuffTermGoal();
+  }
+  else
+  {
+    std::cout << "need_to_do_stuff_term_goal_= " << need_to_do_stuff_term_goal_ << std::endl;
+    need_to_do_stuff_term_goal_ = true;  // will be done in updateState();
+  }
+}
+
+void Panther::getG(mt::state& G)
+{
+  G = G_;
+}
+
+void Panther::getState(mt::state& data)
+{
+  mtx_state.lock();
+  data = state_;
+  mtx_state.unlock();
+}
+
+void Panther::updateState(mt::state data)
+{
+  state_ = data;
+
+  if (state_initialized_ == false)
+  {
+    plan_.clear();  // (actually not needed because done in resetInitialization()
+    mt::state tmp;
+    tmp.pos = data.pos;
+    tmp.yaw = data.yaw;
+    plan_.push_back(tmp);
   }
 
-  std::cout << "Setting Terminal Goal" << std::endl;
+  state_initialized_ = true;
+
+  if (need_to_do_stuff_term_goal_)
+  {
+    // std::cout << "DOING STUFF TERM GOAL -----------" << std::endl;
+    doStuffTermGoal();
+    need_to_do_stuff_term_goal_ = false;
+  }
+}
+
+// This function needs to be called once the state has been initialized
+void Panther::doStuffTermGoal()
+{
+  // if (state_initialized_ == false)  // because I need plan_size()>=1
+  // {
+  //   std::cout << "[Panther::setTerminalGoal] State not initialized yet, doing nothing" << std::endl;
+  //   return;
+  // }
+
+  // std::cout << "[doStuffTermGoal]" << std::endl;
   mtx_G_term.lock();
   mtx_state.lock();
   mtx_planner_status_.lock();
 
-  G_term_.pos = term_goal.pos;
   G_.pos = G_term_.pos;
   if (drone_status_ == DroneStatus::GOAL_REACHED)
   {
@@ -662,7 +715,7 @@ void Panther::setTerminalGoal(mt::state& term_goal)
 
     int num_of_el = (int)fabs(diff / (par_.dc * dyaw));
 
-    assert((plan_.size() >= 1) && "plan_.size() must be >=1");
+    verify((plan_.size() >= 1), "plan_.size() must be >=1");
 
     for (int i = 1; i < (num_of_el + 1); i++)
     {
@@ -693,34 +746,6 @@ void Panther::setTerminalGoal(mt::state& term_goal)
   mtx_state.unlock();
   mtx_G_term.unlock();
   mtx_planner_status_.unlock();
-}
-
-void Panther::getG(mt::state& G)
-{
-  G = G_;
-}
-
-void Panther::getState(mt::state& data)
-{
-  mtx_state.lock();
-  data = state_;
-  mtx_state.unlock();
-}
-
-void Panther::updateState(mt::state data)
-{
-  state_ = data;
-
-  if (state_initialized_ == false)
-  {
-    plan_.clear();  // (actually not needed because done in resetInitialization()
-    mt::state tmp;
-    tmp.pos = data.pos;
-    tmp.yaw = data.yaw;
-    plan_.push_back(tmp);
-  }
-
-  state_initialized_ = true;
 }
 
 bool Panther::initializedAllExceptPlanner()
@@ -1108,7 +1133,7 @@ bool Panther::replan(mt::Edges& edges_obstacles_out, std::vector<mt::state>& X_s
   mtx_trajs_.lock();
 
   time_init_opt_ = ros::Time::now().toSec();
-  // removeTrajsThatWillNotAffectMe(A, t_start, t_final); //TODO: Commented (4-Feb-2021)
+  // removeTrajsThatWillNotAffectMe(A, t_start, t_final);  // TODO: Commented (4-Feb-2021)
   log_ptr_->tim_convex_hulls.tic();
   ConvexHullsOfCurves hulls = convexHullsOfCurves(t_start, t_final);
   log_ptr_->tim_convex_hulls.toc();
