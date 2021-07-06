@@ -68,9 +68,29 @@ Visualization Manager:
         All Enabled: false
         SQ01s:
           Value: true
+        SQ01s/camera:
+          Value: true
         SQ01s/camera_depth_optical_frame:
           Value: false
         obs_4000:
+          Value: true
+        obs_4001:
+          Value: true
+        obs_4002:
+          Value: true
+        obs_4003:
+          Value: true
+        obs_4004:
+          Value: true
+        obs_4005:
+          Value: true
+        obs_4006:
+          Value: true
+        obs_4007:
+          Value: true
+        obs_4008:
+          Value: true
+        obs_4009:
           Value: true
         vicon:
           Value: false
@@ -85,10 +105,29 @@ Visualization Manager:
         world:
           obs_4000:
             {}
+          obs_4001:
+            {}
+          obs_4002:
+            {}
+          obs_4003:
+            {}
+          obs_4004:
+            {}
+          obs_4005:
+            {}
+          obs_4006:
+            {}
+          obs_4007:
+            {}
+          obs_4008:
+            {}
+          obs_4009:
+            {}
           vicon:
             SQ01s:
-              SQ01s/camera_depth_optical_frame:
-                {}
+              SQ01s/camera:
+                SQ01s/camera_depth_optical_frame:
+                  {}
       Update Interval: 0
       Value: true
     - Alpha: 1
@@ -179,6 +218,8 @@ Visualization Manager:
       Name: Predictions
       Namespaces:
         predicted_traj_0: true
+        predicted_traj_1: true
+        predicted_traj_2: true
       Queue Size: 100
       Value: true
     - Class: rviz/MarkerArray
@@ -240,13 +281,13 @@ Visualization Manager:
       Queue Size: 100
       Value: false
     - Class: rviz/Marker
-      Enabled: false
+      Enabled: true
       Marker Topic: /SQ01s/panther/obstacles
       Name: CvxPolyObstacles
       Namespaces:
         {}
       Queue Size: 100
-      Value: false
+      Value: true
     - Class: rviz/MarkerArray
       Enabled: true
       Marker Topic: /SQ01s/panther/traj_safe_colored
@@ -323,25 +364,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/ThirdPersonFollower
-      Distance: 26.12019920349121
+      Distance: 89.06713104248047
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: -0.5741584300994873
-        Y: 1.0477304458618164
-        Z: -8.764579433773179e-6
+        X: 17.00262451171875
+        Y: 3.1077985763549805
+        Z: -1.1625602382991929e-5
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.3897970914840698
+      Pitch: 1.5697963237762451
       Target Frame: <Fixed Frame>
       Value: ThirdPersonFollower (rviz)
-      Yaw: 2.529979944229126
+      Yaw: 3.1399803161621094
     Saved: ~
 Window Geometry:
   DepthImage:
