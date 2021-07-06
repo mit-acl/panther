@@ -8,6 +8,7 @@
   <arg name="gazebo" default="true"/>
   <arg name="gzclient" default="false"/>
   <arg name="mode" default="panther" /> <!--  noPA (no_perception_aware), py (first_pos_then_yaw), panther (panther) -->
+  <arg name="num_of_obs" default="5" /> <!--  noPA (no_perception_aware), py (first_pos_then_yaw), panther (panther) -->
 
 
   <!-- ///////////////////////////////////////////////// -->
@@ -91,7 +92,7 @@
   </group>
 
   <!-- <group if="$(arg environment)"> -->
-    <node name="dynamic_corridor" pkg="panther" type="dynamic_corridor.py" output="screen" args="10 $(arg gazebo)"/> 
+    <node name="dynamic_corridor" pkg="panther" type="dynamic_corridor.py" output="screen" args="$(arg num_of_obs) $(arg gazebo)"/> 
   <!-- </group>   -->
 
   <!-- ///////////////////////////////////////////////// -->
