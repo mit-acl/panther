@@ -127,6 +127,8 @@ class FakeSim:
 
         self.pubTraj = rospy.Publisher('/trajs', DynTraj, queue_size=1, latch=True)
         self.pubShapes_dynamic_mesh = rospy.Publisher('/obstacles_mesh', MarkerArray, queue_size=1, latch=True)
+
+        self.pubShapes_dynamic_mesh_hkust = rospy.Publisher('/obstacles_mesh_hkust', MarkerArray, queue_size=1, latch=True)
         #self.pubGazeboState = rospy.Publisher('/gazebo/set_model_state', ModelState, queue_size=100)
 
 
@@ -236,8 +238,55 @@ class FakeSim:
 
             #If you want to see the objects in rviz
 
-
         self.pubShapes_dynamic_mesh.publish(self.marker_array)
+
+        #####################################################
+        # START (This is for the benchmark with the code from HKUST)
+        # In their code, the function EGOReplanFSM::marker_callback, has access to pos/vel from the obstacles through the marker array. The code below publishes the marker array with that info
+        ###################################################
+        marker_array_hkust=MarkerArray();
+        for i in range(len(self.marker_array.markers)): 
+
+            marker=Marker();
+            delta=1e-8;
+            t=rospy.get_time();
+            # print "t= ", t
+            x = eval(self.all_dyn_traj[i].s_mean[0])
+            y = eval(self.all_dyn_traj[i].s_mean[1])
+            z = eval(self.all_dyn_traj[i].s_mean[2])
+            t=t+delta;
+            xd = eval(self.all_dyn_traj[i].s_mean[0])
+            yd = eval(self.all_dyn_traj[i].s_mean[1])
+            zd = eval(self.all_dyn_traj[i].s_mean[2])
+            vel=[(xd-x)/delta, (yd-y)/delta, (zd-z)/delta];
+
+
+            # print "vel= ", vel
+            # print self.all_dyn_traj[i].s_mean
+
+            marker.pose.position.x=x;
+            marker.pose.position.y=y;
+            marker.pose.position.z=z;
+
+            marker.pose.orientation.x=vel[0];
+            marker.pose.orientation.y=vel[1];
+            marker.pose.orientation.z=vel[2];
+            marker.pose.orientation.w=1.0;
+
+            marker.color.r=vel[0];
+            marker.color.g=vel[1];
+            marker.color.b=vel[2];
+            marker.color.a=0.2;
+
+            marker.scale=self.marker_array.markers[i].scale;
+
+            marker_array_hkust.markers.append(marker)
+
+
+        self.pubShapes_dynamic_mesh_hkust.publish(marker_array_hkust)
+        #####################################################
+        # END
+        ###################################################
 
 
 

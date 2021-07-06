@@ -20,18 +20,12 @@ import subprocess
 if __name__ == '__main__':
 
 
-    #Let's start by commenting the visual and mode params (we will set them in this file)
-
-    #https://stackoverflow.com/questions/24889346/how-to-uncomment-a-line-that-contains-a-specific-string-using-sed/24889374
-    # os.system("sed -i '/visual/s/^/#/g' $(rospack find panther)/param/panther.yaml") #comment visual param
-    # os.system("sed -i '/mode/s/^/#/g' $(rospack find panther)/param/panther.yaml") #comment mode param
-
     num_of_sims=10;
     num_of_obs=[10]#[1000]#[50,400,500,600,700]#[150, 200, 250, 300, 350] #[340,380,420,460,500]; #140,180,220,260,300
     commands = []
 
     folder_bags="/home/jtorde/Desktop/ws/src/panther/panther/bags";
-    all_modes=["noPA", "py", "panther"] #or"MINVO", "BEZIER", "B_SPLINE"   
+    all_modes=["hkust"] #  "noPA", "py", "panther", "hkust"
     name_node_record="bag_recorder"
     kill_all="tmux kill-server & killall -9 gazebo & killall -9 gzserver  & killall -9 gzclient & killall -9 roscore & killall -9 rosmaster & pkill panther_node & pkill -f dynamic_obstacles & pkill -f rosout & pkill -f behavior_selector_node & pkill -f rviz & pkill -f rqt_gui & pkill -f perfect_tracker & pkill -f panther_commands"
 
@@ -54,7 +48,11 @@ if __name__ == '__main__':
 
                 time_sleep=max(0.2*num_of_obs[k], 2.0)
 
-                commands.append("roslaunch panther simulation.launch gazebo:=true perfect_tracker:=true perfect_prediction:=false quad:=SQ01s gui_mission:=false rviz:=false mode:="+mode+" num_of_obs:="+str(num_of_obs[k]));
+                if(mode=="hkust"):
+                   commands.append("roslaunch ego_planner swarm.launch mode:="+mode+" num_of_obs:="+str(num_of_obs[k]));
+                else:
+                   commands.append("roslaunch panther simulation.launch gazebo:=true perfect_tracker:=true perfect_prediction:=false quad:=SQ01s gui_mission:=false rviz:=false mode:="+mode+" num_of_obs:="+str(num_of_obs[k]));
+
                 commands.append("sleep "+str(time_sleep)+" && cd "+folder_bags+" && rosbag record -o "+mode+"_obs_"+str(num_of_obs[k])+"_sim_"+str(s)+" /SQ01s/goal /tf /obstacles_mesh __name:="+name_node_record);
                 #publishing the goal should be the last command
                 commands.append("sleep "+str(time_sleep)+" && rostopic pub /SQ01s/term_goal geometry_msgs/PoseStamped \'{header: {stamp: now, frame_id: \"world\"}, pose: {position: {x: 25, y: 0, z: 1}, orientation: {w: 1.0}}}\'");
