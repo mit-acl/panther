@@ -7,7 +7,7 @@ dc: 0.01            #(seconds) Duration for the interpolation=Value of the timer
 goal_radius: 0.5    #(m) Drone has arrived to the goal when distance_to_goal<GOAL_RADIUS
 drone_radius: 0.001  #(m) Used for collision checking
 
-Ra: 4.0           # [m] Radius of my planning sphere (planning horizon)
+Ra: 3.0           # [m] Radius of my planning sphere (planning horizon)
 
 #Be careful with setting these to extremely high values (they are used in the constraints, and may introduce numerical issues)
 #Right now only z_min is used (see main.m)
@@ -23,22 +23,22 @@ z_max: 100.0         #[m]
 # [IN THE LAUNCH FILE] mode: "py" #no_perception_aware (noPA), first_pos_then_yaw (py), panther (panther)
 
 #Angle to decide whether to focus on an obstacle or to focus on front of me
-angle_deg_focus_front: 8000 #Set to very big if you wanna focus always on obstacle
+angle_deg_focus_front: 100 #Set to very big if you wanna focus always on obstacle
 
 #max limits
-v_max: [2.6, 2.6, 2.6]   #[m/s]  7.0
+v_max: [3.0, 3.0, 3.0]   #[m/s]  7.0
 a_max: [15.5, 15.5, 15.5]   #[m/s2] Note that if a_max.z() > 9.81, the drone may flip
 j_max: [100.0, 100.0, 100.0]   #[m/s3] 
 ydot_max: 5.0           # [rd/s] Maximum angular velocity. 0.4 for Hardware
 
 #parameters for Casadi
-c_pos_smooth: 0.05
-c_yaw_smooth: 0.1
+c_pos_smooth: 0.0
+c_yaw_smooth: 0.0
 c_fov: 1.0
 c_final_pos: 2000.0
 c_final_yaw: 0.0
 
-factor_alpha: 1.5 #[-] DeltaT = factor_alpha*States_took_previous_replan
+factor_alpha: 1.0 #[-] DeltaT = factor_alpha*States_took_previous_replan
 
 #Parameters for the yaw search
 c_smooth_yaw_search: 0.0
@@ -46,7 +46,7 @@ c_visibility_yaw_search: 1.0
 # num_of_layers --> this one comes from Matlab, it's = num_samples_simpson 
 # num_of_yaw_per_layer --> this one comes from Matlab
 
-max_seconds_keeping_traj: 1.0     #% If a trajectory has been kept for this long (since its last update was received), it is deleted
+max_seconds_keeping_traj: 0.3     #% If a trajectory has been kept for this long (since its last update was received), it is deleted
 
 # Samples in velocity for the A* guess used in the nlopt optimization problem
 a_star_samp_x: 5
@@ -64,7 +64,7 @@ alpha_shrink: 0.95 #\in [0,1] Only used for MINVO/Bezier
 
 # alpha: 0.0 #[m] Error in position
 # beta: 0.0 #[m] Deviation between the trajectory and the segment between two discretization points
-norminv_prob: 0.4 #For x% bands, set this to norminv(x). #70.0% band <--> 0.524
+norminv_prob: 1.0 #For x% bands, set this to norminv(x). #70.0% band <--> 0.524
                                                           #80.0% band <--> 0.841
                                                           #90.0% band <--> 1.282
                                                           #97.5% band <--> 1.96 (i.e. total area is 95%)
