@@ -29,12 +29,15 @@ from math import sin, cos, tan
 import os
 import copy 
 import sys
+import glob
 import rospkg
+
 
 class FakeSim:
 
     def getTrajectoryPosMeshBBox(self, i):
-        x=random.uniform(self.x_min, self.x_max);
+        delta=(self.x_max-self.x_min)/(self.total_num_obs) + 3.0;
+        x=self.x_min + i*delta #random.uniform(self.x_min, self.x_max);
         y=random.uniform(self.y_min, self.y_max);
         z=random.uniform(self.z_min, self.z_max);
         offset=random.uniform(-2*math.pi, 2*math.pi);
@@ -64,17 +67,18 @@ class FakeSim:
         self.name = name[1:-1]
 
         print(total_num_obs)
-        self.num_of_dyn_objects=int(0.65*total_num_obs);
+        self.total_num_obs=total_num_obs;
+        self.num_of_dyn_objects=int(1.0*total_num_obs);
         self.num_of_stat_objects=total_num_obs-self.num_of_dyn_objects; 
         self.x_min= 2.0
-        self.x_max= 75.0
-        self.y_min= -3.0 
-        self.y_max= 3.0
+        self.x_max= 25.0
+        self.y_min= -0.0 
+        self.y_max= 0.0
         self.z_min= 1.0 
         self.z_max= 2.0
-        self.scale= [1.0, 1.0, 1.0]
-        self.slower_min=2.5
-        self.slower_max= 2.5
+        self.scale= [(self.x_max-self.x_min)/self.total_num_obs, 5.0, 1.0]
+        self.slower_min=0.8
+        self.slower_max= 0.8
         self.bbox_dynamic=[0.8, 0.8, 0.8] 
         self.bbox_static_vert=[0.4, 0.4, 4]
         self.bbox_static_horiz=[0.4, 8, 0.4]
@@ -82,16 +86,16 @@ class FakeSim:
         self.name_obs="obs_"
    
         #HACK
-        self.num_of_dyn_objects=1;
-        self.num_of_stat_objects=0;
-        self.x_min= 4.0
-        self.x_max= 4.0
-        self.y_min= 4.0 
-        self.y_max= 4.0
-        self.z_min= 1.0 
-        self.z_max= 1.0
-        self.scale= [1.0, 1.0, 2.5]
-        self.bbox_dynamic=[0.2, 0.2, 0.2] 
+        # self.num_of_dyn_objects=1;
+        # self.num_of_stat_objects=0;
+        # self.x_min= 4.0
+        # self.x_max= 4.0
+        # self.y_min= 4.0 
+        # self.y_max= 4.0
+        # self.z_min= 1.0 
+        # self.z_max= 1.0
+        # self.scale= [1.0, 1.0, 2.5]
+        # self.bbox_dynamic=[0.2, 0.2, 0.2] 
         #END OF HACK
 
         self.available_meshes_static=["package://panther/meshes/ConcreteDamage01b/model3.dae", "package://panther/meshes/ConcreteDamage01b/model2.dae"]
@@ -111,7 +115,7 @@ class FakeSim:
             dynamic_trajectory_msg.is_agent=False;
             dynamic_trajectory_msg.header.stamp= rospy.Time.now();
             dynamic_trajectory_msg.s_mean = [traj_x, traj_y, traj_z]
-            dynamic_trajectory_msg.s_var = ["0.0", "0.0", "0.0"]
+            dynamic_trajectory_msg.s_var = ["0.001", "0.001", "0.001"] #TODO (a nonzero variance is needed to choose the obstacle to focus on, see panther.cpp)
             dynamic_trajectory_msg.bbox = [bbox[0], bbox[1], bbox[2]];
             dynamic_trajectory_msg.pos.x=x #Current position, will be updated later
             dynamic_trajectory_msg.pos.y=y #Current position, will be updated later
@@ -246,12 +250,12 @@ class FakeSim:
         #slower=1.0; #The higher, the slower the obstacles move" 
         tt='t/' + str(slower)+'+';
 
-        x_string=str(scale_x)+'*(sin('+tt +str(offset)+') + 2 * sin(2 * '+tt +str(offset)+'))' +'+' + str(x); #'2*sin(t)' 
-        y_string=str(scale_y)+'*(cos('+tt +str(offset)+') - 2 * cos(2 * '+tt +str(offset)+'))' +'+' + str(y); #'2*cos(t)' 
-        z_string=str(scale_z)+'*(-sin(3 * '+tt +str(offset)+'))' + '+' + str(z);                               #'1.0'        
+        x_string=str(scale_x/6.0)+'*(sin('+tt +str(offset)+') + 2 * sin(2 * '+tt +str(offset)+'))' +'+' + str(x); #'2*sin(t)' 
+        y_string=str(scale_y/5.0)+'*(cos('+tt +str(offset)+') - 2 * cos(2 * '+tt +str(offset)+'))' +'+' + str(y); #'2*cos(t)' 
+        z_string=str(scale_z/2.0)+'*(-sin(3 * '+tt +str(offset)+'))' + '+' + str(z);                               #'1.0'        
 
         # x_string='1';
-        # y_string='1';
+        # y_string='0';
         # z_string='1';
 
         return [x_string, y_string, z_string]
@@ -274,7 +278,7 @@ class FakeSim:
 
             rospack = rospkg.RosPack();
             path_panther=rospack.get_path('panther');
-            path_file=path_panther+"/meshes/tmp.urdf"
+            path_file=path_panther+"/meshes/tmp_"+str(i)+".urdf"
 
             f = open(path_file, "w") #TODO: This works, but it'd better not having to create this file
             scale=self.marker_array.markers[i].scale;
@@ -313,8 +317,9 @@ class FakeSim:
   # <plugin name="pr2_pose_test" filename="libpr2_pose_test.so"/>
             f.close()
 
-            os.system("rosrun gazebo_ros spawn_model -file `rospack find panther`/meshes/tmp.urdf -urdf -x " + str(x) + " -y " + str(y) + " -z " + str(z) + " -model "+self.name_obs+str(i)); #all_
-            os.remove(path_file)
+            # os.system("rosrun gazebo_ros spawn_model -file `rospack find panther`/meshes/tmp.urdf -urdf -x " + str(x) + " -y " + str(y) + " -z " + str(z) + " -model "+self.name_obs+str(i)+" &"); #all_
+            os.system("rosrun gazebo_ros spawn_model -file "+path_file+" -urdf -x " + str(x) + " -y " + str(y) + " -z " + str(z) + " -model "+self.name_obs+str(i)+" && rm "+path_file + " &"); #all_
+            # os.remove(path_file)
 
              
 
