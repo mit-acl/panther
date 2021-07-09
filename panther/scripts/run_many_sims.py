@@ -9,6 +9,18 @@
 #  * See LICENSE file for the license information
 #  * -------------------------------------------------------------------------- */
 
+#####Before running a simulation, make sure these parameters match
+#===============
+# --> planning_horizon       (panther.yaml and run_in_sim.launch)
+# --> max_vel and max_accel  (panther.yaml and run_in_sim.launch and get_stats_from_bag.py)
+# --> fov size               (panther.yaml and run_in_sim.launch)
+#===============
+# --> drone radius           (panther.yaml and grid_map.cpp and get_stats_from_bag.py)
+
+# --> ydot_max               (panther.yaml and traj_server.cpp). Note that they use a different yaw convention though
+
+# --> obstacles size         (dynamic_corridor.py and get_stats_from_bag.py)
+
 import math
 import os
 import sys
@@ -21,11 +33,11 @@ if __name__ == '__main__':
 
 
     num_of_sims=10;
-    num_of_obs=[10]#[1000]#[50,400,500,600,700]#[150, 200, 250, 300, 350] #[340,380,420,460,500]; #140,180,220,260,300
+    num_of_obs=[7]#[1000]#[50,400,500,600,700]#[150, 200, 250, 300, 350] #[340,380,420,460,500]; #140,180,220,260,300
     commands = []
 
     folder_bags="/home/jtorde/Desktop/ws/src/panther/panther/bags";
-    all_modes=["hkust"] #  "noPA", "py", "panther", "hkust"
+    all_modes=["ysweep"] #  "panther", "noPA", "py", "hkust" "ysweep"
     name_node_record="bag_recorder"
     kill_all="tmux kill-server & killall -9 gazebo & killall -9 gzserver  & killall -9 gzclient & killall -9 roscore & killall -9 rosmaster & pkill panther_node & pkill -f dynamic_obstacles & pkill -f rosout & pkill -f behavior_selector_node & pkill -f rviz & pkill -f rqt_gui & pkill -f perfect_tracker & pkill -f panther_commands"
 
@@ -49,13 +61,13 @@ if __name__ == '__main__':
                 time_sleep=max(0.2*num_of_obs[k], 2.0)
 
                 if(mode=="hkust"):
-                   commands.append("roslaunch ego_planner swarm.launch mode:="+mode+" num_of_obs:="+str(num_of_obs[k]));
+                   commands.append("roslaunch ego_planner swarm.launch num_of_obs:="+str(num_of_obs[k]));
                 else:
-                   commands.append("roslaunch panther simulation.launch gazebo:=true perfect_tracker:=true perfect_prediction:=false quad:=SQ01s gui_mission:=false rviz:=false mode:="+mode+" num_of_obs:="+str(num_of_obs[k]));
+                   commands.append("roslaunch panther simulation.launch gazebo:=true perfect_tracker:=true perfect_prediction:=true quad:=SQ01s gui_mission:=false rviz:=true mode:="+mode+" num_of_obs:="+str(num_of_obs[k]));
 
-                commands.append("sleep "+str(time_sleep)+" && cd "+folder_bags+" && rosbag record -o "+mode+"_obs_"+str(num_of_obs[k])+"_sim_"+str(s)+" /SQ01s/goal /tf /obstacles_mesh __name:="+name_node_record);
+                commands.append("sleep "+str(time_sleep)+" && cd "+folder_bags+" && rosbag record -o "+mode+"_obs_"+str(num_of_obs[k])+"_sim_"+str(s)+" /SQ01s/goal /SQ01s/state /tf /SQ01s/panther/fov /obstacles_mesh __name:="+name_node_record);
                 #publishing the goal should be the last command
-                commands.append("sleep "+str(time_sleep)+" && rostopic pub /SQ01s/term_goal geometry_msgs/PoseStamped \'{header: {stamp: now, frame_id: \"world\"}, pose: {position: {x: 25, y: 0, z: 1}, orientation: {w: 1.0}}}\'");
+                commands.append("sleep "+str(time_sleep)+" && rostopic pub /SQ01s/term_goal geometry_msgs/PoseStamped \'{header: {stamp: now, frame_id: \"world\"}, pose: {position: {x: 40, y: 0, z: 1}, orientation: {w: 1.0}}}\'");
 
                 print("len(commands)= " , len(commands))
                 session_name="run_many_sims_single_agent_session"
@@ -74,7 +86,7 @@ if __name__ == '__main__':
 
                 time.sleep(3.0)
                 pos_string=""
-                while (pos_string.find('24.')==-1 and pos_string.find('25.')==-1): #note the point after the 49, to make sure they are the first two numbers, and not the decimals
+                while (pos_string.find('39.')==-1 and pos_string.find('40.')==-1): #note the point after the 49, to make sure they are the first two numbers, and not the decimals
                     try:
                         pos_string =str(subprocess.check_output(['rostopic', 'echo', '/SQ01s/state/pos/x', '-n', '1']))
                         print("Currently at ",pos_string, "[Sim "+str(s)+", with mode="+mode+", with num_of_obs="+str(num_of_obs[k])+"]");

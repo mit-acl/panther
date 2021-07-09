@@ -54,6 +54,16 @@ list_of_bags=glob.glob(sys.argv[1]);
 
 # for name_bag in list_of_bags:
 
+class Results:
+    def __init__(self):
+        self.num_of_collisions=0.0;
+        self.v_cost=0.0;
+        self.a_cost=0.0;
+        self.j_cost=0.0;
+        self.flight_time=0.0;
+        self.total_dist=0.0;
+
+
 
 
 def myfun(name_bag):
@@ -78,10 +88,11 @@ def myfun(name_bag):
     # num_of_agents=len(res); 
 
 
-    print "Detected ", num_of_obs, " obstacles in the bag"
+    print "Bag with ", num_of_obs, " obstacles"
 
-    drone_radius=0.001; #in panther.yaml
+    drone_radius=0.1; #in panther.yaml
     total_side_box_obstacle=0.8; #self.bbox_dynamic of dynamic_corridor.py
+    a_max=15.5; #In panther.yaml and in run_in_sim.launch
 
     threshold_distance=drone_radius+total_side_box_obstacle/2.0
 
@@ -139,7 +150,7 @@ def myfun(name_bag):
                 #This would be another option if we are using the Euclidean norm, but does not work when using the inf norm
                 # translation, quaternion = bag_transformer.lookupTransform(obs_i, agent, rospy.Time.from_sec(time)) #this is expressed in body frame
                 # print "Relative= ", relative
-                # print "Translation= ", translation
+                # print "translation2= ", translation2
 
                 dist=np.linalg.norm(translation, ord=float("inf")); #Note that, to correctly compute the closest distance, I must use ord=float("inf"), not ord=-float("inf")
 
@@ -179,6 +190,53 @@ def myfun(name_bag):
     print Style.RESET_ALL 
 
 
+
+    topic='/SQ01s/goal'
+    v_cost=0.0;
+    a_cost=0.0;
+    j_cost=0.0;
+    total_dist=0.0
+    num_of_infeasible_stops=0;
+
+    index=0
+    t_old=0
+
+    t_init=float("inf");
+    t_end=0.0;
+
+    for topic, msg, t in bag.read_messages(topics='/SQ01s/goal'):
+        
+
+        v=np.array([msg.v.x, msg.v.y, msg.v.z])
+        a=np.array([msg.a.x, msg.a.y, msg.a.z])
+        j=np.array([msg.j.x, msg.j.y, msg.j.z])
+
+        norm_v=np.linalg.norm(v);
+
+        t_i=msg.header.stamp.secs + msg.header.stamp.nsecs*1e-9;
+
+        t_init=min(t_init, t_i)
+        t_end=max(t_end, t_i)
+        p=np.array([msg.p.x, msg.p.y, msg.p.z])
+
+        if(index>0):
+            delta_t=(t_i-t_old);
+            v_cost=v_cost+((np.linalg.norm(v))**2)*delta_t;
+            a_cost=a_cost+((np.linalg.norm(a))**2)*delta_t;
+            j_cost=j_cost+((np.linalg.norm(j))**2)*delta_t;
+            
+            total_dist=total_dist+np.linalg.norm(p-p_old) #math.sqrt(delta_x*delta_x +delta_y*delta_y+ delta_z*delta_z)
+
+            if(abs(norm_v-norm_v_old)/delta_t>a_max and norm_v<1e-7):
+                num_of_infeasible_stops=num_of_infeasible_stops+1
+
+        t_old=t_i
+        p_old=p;
+        index=index+1
+        norm_v_old=norm_v;
+
+    flight_time=t_end-t_init;
+
     # safety_margin_ratio=min(all_min_distances)/(2*drone_radius); #Should be >=1 to ensure safety
     # print "Num of agents: ", num_of_agents
     # print "Safety Margin Ratio: ", safety_margin_ratio
@@ -200,13 +258,52 @@ def myfun(name_bag):
 
     bag.close()
 
-    return num_of_collisions
+
+    results=Results();
+    results.num_of_collisions=num_of_collisions;
+    results.v_cost=v_cost;
+    results.a_cost=a_cost;
+    results.j_cost=j_cost;
+    results.flight_time=flight_time;
+    results.total_dist=total_dist;
+    results.num_of_infeasible_stops=num_of_infeasible_stops;
+
+    return results
 
 num_jobs=multiprocessing.cpu_count();
 # num_jobs=1;
 results = Parallel(n_jobs=num_jobs)(map(delayed(myfun), list_of_bags)) #multiprocessing.cpu_count()
 
-print "NUMBER OF CRASHES-->", results
+
+all_num_of_collisions=np.array([])
+all_v_cost=np.array([])
+all_a_cost=np.array([])
+all_j_cost=np.array([])
+all_flight_time=np.array([])
+all_total_dist=np.array([])
+all_num_of_infeasible_stops=np.array([])
+
+for i in range(len(results)):
+    all_num_of_collisions= np.append(all_num_of_collisions, results[i].num_of_collisions)
+    all_v_cost= np.append(all_v_cost, results[i].v_cost)
+    all_a_cost= np.append(all_a_cost, results[i].a_cost)
+    all_j_cost= np.append(all_j_cost, results[i].j_cost)
+    all_flight_time= np.append(all_flight_time, results[i].flight_time)
+    all_total_dist= np.append(all_total_dist, results[i].total_dist)
+    all_num_of_infeasible_stops= np.append(all_num_of_infeasible_stops, results[i].num_of_infeasible_stops)
+
+
+print "====================================================="
+print "====================================================="
+
+print Fore.GREEN+"NUMBER OF COLLISIONS-->", np.mean(all_num_of_collisions), " +- ", np.std(all_num_of_collisions), Style.RESET_ALL+" #### ", all_num_of_collisions
+print Fore.GREEN+"SUCCESS RATE-->", 100*(all_num_of_collisions<0.1).sum()/len(all_num_of_collisions), '%'
+print Fore.GREEN+"V COST-->",  np.mean(all_v_cost), " +- ", np.std(all_v_cost), Style.RESET_ALL+ " #### ", all_v_cost
+print Fore.GREEN+"A COST-->",  np.mean(all_a_cost), " +- ", np.std(all_a_cost), Style.RESET_ALL+ " #### ", all_a_cost
+print Fore.GREEN+"J COST-->",  np.mean(all_j_cost), " +- ", np.std(all_j_cost), Style.RESET_ALL+ " #### ", all_j_cost
+print Fore.GREEN+"FLIGHT TIME-->",  np.mean(all_flight_time), " +- ", np.std(all_flight_time), Style.RESET_ALL+ " #### ", all_flight_time
+print Fore.GREEN+"FLIGHT DISTANCE-->",  np.mean(all_total_dist), " +- ", np.std(all_total_dist), Style.RESET_ALL+ " #### ", all_total_dist
+print Fore.GREEN+"INFEASIBLE STOPS-->",  np.mean(all_num_of_infeasible_stops), " +- ", np.std(all_num_of_infeasible_stops), Style.RESET_ALL+ " #### ", all_num_of_infeasible_stops
 
 
     # # total_time_bag=final_time_bag-t_go_bag;

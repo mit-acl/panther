@@ -25,7 +25,8 @@ from numpy import linalg as LA
 import random
 from tf.transformations import quaternion_from_euler, euler_from_quaternion
 import tf
-from math import sin, cos, tan
+from math import sin, cos, tan, floor
+from numpy import sign as sgn #Because https://github.com/ArashPartow/exprtk  uses sgn, not sign
 import os
 import copy 
 import sys
@@ -36,8 +37,9 @@ import rospkg
 class FakeSim:
 
     def getTrajectoryPosMeshBBox(self, i):
-        delta=(self.x_max-self.x_min)/(self.total_num_obs) + 3.0;
-        x=self.x_min + i*delta #random.uniform(self.x_min, self.x_max);
+        delta_beginning=2.0;
+        delta=(self.x_max-self.x_min-delta_beginning)/(self.total_num_obs);
+        x=delta_beginning + self.x_min + i*delta #random.uniform(self.x_min, self.x_max);
         y=random.uniform(self.y_min, self.y_max);
         z=random.uniform(self.z_min, self.z_max);
         offset=random.uniform(-2*math.pi, 2*math.pi);
@@ -70,15 +72,16 @@ class FakeSim:
         self.total_num_obs=total_num_obs;
         self.num_of_dyn_objects=int(1.0*total_num_obs);
         self.num_of_stat_objects=total_num_obs-self.num_of_dyn_objects; 
-        self.x_min= 2.0
-        self.x_max= 25.0
-        self.y_min= -0.0 
-        self.y_max= 0.0
-        self.z_min= 1.0 
-        self.z_max= 2.0
-        self.scale= [(self.x_max-self.x_min)/self.total_num_obs, 5.0, 1.0]
-        self.slower_min=0.8
-        self.slower_max= 0.8
+        self.x_min= 2.0 
+        self.x_max= 40.0
+        self.y_min= -1.0 
+        self.y_max= 1.0
+        self.z_min= 0.5 
+        self.z_max= 0.5
+        # self.scale= [(self.x_max-self.x_min)/self.total_num_obs, 5.0, 1.0]
+        self.scale= [2.0, 2.0, 2.0]
+        self.slower_min=1.2
+        self.slower_max=1.2
         self.bbox_dynamic=[0.8, 0.8, 0.8] 
         self.bbox_static_vert=[0.4, 0.4, 4]
         self.bbox_static_horiz=[0.4, 8, 0.4]
@@ -103,6 +106,7 @@ class FakeSim:
 
         self.marker_array=MarkerArray();
         self.all_dyn_traj=[]
+        self.all_dyn_traj_hkust=[]
 
         self.total_num_obs=self.num_of_dyn_objects + self.num_of_stat_objects
 
@@ -124,11 +128,14 @@ class FakeSim:
 
             self.all_dyn_traj.append(dynamic_trajectory_msg);
 
+        self.all_dyn_traj_hkust=copy.deepcopy(self.all_dyn_traj);
 
         self.pubTraj = rospy.Publisher('/trajs', DynTraj, queue_size=1, latch=True)
         self.pubShapes_dynamic_mesh = rospy.Publisher('/obstacles_mesh', MarkerArray, queue_size=1, latch=True)
 
         self.pubShapes_dynamic_mesh_hkust = rospy.Publisher('/obstacles_mesh_hkust', MarkerArray, queue_size=1, latch=True)
+        self.pubTraj_hkust = rospy.Publisher('/SQ01s/trajs_hkust', DynTraj, queue_size=1, latch=True)
+
         #self.pubGazeboState = rospy.Publisher('/gazebo/set_model_state', ModelState, queue_size=100)
 
 
@@ -248,8 +255,9 @@ class FakeSim:
         for i in range(len(self.marker_array.markers)): 
 
             marker=Marker();
-            delta=1e-8;
-            t=rospy.get_time();
+            delta=1e-6; #Don't make it smaller than this
+            t0=rospy.get_time();
+            t=t0
             # print "t= ", t
             x = eval(self.all_dyn_traj[i].s_mean[0])
             y = eval(self.all_dyn_traj[i].s_mean[1])
@@ -283,7 +291,21 @@ class FakeSim:
             marker_array_hkust.markers.append(marker)
 
 
+   
+            self.all_dyn_traj_hkust[i].s_mean[0]=str(x)+'+'+str(vel[0])+'*(t-'+str(t0)+')';
+            self.all_dyn_traj_hkust[i].s_mean[1]=str(y)+'+'+str(vel[1])+'*(t-'+str(t0)+')';
+            self.all_dyn_traj_hkust[i].s_mean[2]=str(z)+'+'+str(vel[2])+'*(t-'+str(t0)+')';
+
+            self.all_dyn_traj_hkust[i].pos.x=x;
+            self.all_dyn_traj_hkust[i].pos.y=y;
+            self.all_dyn_traj_hkust[i].pos.z=z;
+
+            self.pubTraj_hkust.publish(self.all_dyn_traj_hkust[i])
+
+
         self.pubShapes_dynamic_mesh_hkust.publish(marker_array_hkust)
+
+        
         #####################################################
         # END
         ###################################################
@@ -308,6 +330,39 @@ class FakeSim:
         # z_string='1';
 
         return [x_string, y_string, z_string]
+
+    def square(self,x,y,z,scale_x, scale_y, scale_z, offset, slower):
+
+        #slower=1.0; #The higher, the slower the obstacles move" 
+        tt='t/' + str(slower)+'+';
+
+        tt='(t+'+str(offset)+')'+'/' + str(slower);
+        cost='cos('+tt+')';
+        sint='sin('+tt+')';
+
+
+
+        #See https://math.stackexchange.com/questions/69099/equation-of-a-rectangle
+        x_string=str(scale_x)+'*0.5*(abs('+cost+')*'+cost + '+abs('+sint+')*'+sint+')';
+        y_string=str(scale_x)+'*0.5*(abs('+cost+')*'+cost + '-abs('+sint+')*'+sint+')';
+        z_string=x_string;
+
+        #Now let's rotate around the z axis
+        costheta='cos('+str(offset)+')';
+        sintheta='sin('+str(offset)+')';
+        x_rotated_string='('+costheta+'*'+x_string +'-'+ sintheta+'*'+y_string+')'; 
+        y_rotated_string='('+sintheta+'*'+x_string +'+'+ costheta+'*'+y_string+')'; 
+        z_rotated_string=z_string; 
+
+        x_rotated_string=x_rotated_string+'+' + str(x);
+        y_rotated_string=y_rotated_string+'+' + str(y);
+        z_rotated_string=z_rotated_string+'+' + str(z);
+
+        # x_rotated_string='1';
+        # y_rotated_string='0';
+        # z_rotated_string='1';
+
+        return [x_rotated_string, y_rotated_string, z_rotated_string]
 
     def wave_in_z(self,x,y,z,scale, offset, slower):
 
@@ -398,3 +453,24 @@ if __name__ == '__main__':
         startNode(total_num_obs,gazebo)
     except rospy.ROSInterruptException:
         pass
+
+
+
+        # See https://en.wikipedia.org/wiki/Triangle_wave
+        # x_string='2*abs('+tt+str(offset+0.5)+'+''-floor('+tt+str(offset+0.5)+'+'+'0.5))'+'+' + str(x); #'2*sin(t)' 
+        # y_string='2*abs('+tt+str(offset)+'+''-floor('+tt+str(offset)+'+'+'0.5))'+'+' + str(y); #'2*sin(t)' 
+        # z_string='2*abs('+tt+str(offset+1.0)+'+''-floor('+tt+str(offset+1.0)+'+'+'0.5))'+'+' + str(z); #'2*sin(t)' 
+
+        # x_string=x_string+'+'+x_string;
+        # y_string=y_string+'+'+y_string;
+        # z_string=z_string+'+'+z_string;
+
+        
+        # x_string=str(scale_x)+'*0.5*sgn(cos('+tt+str(offset)+'))';
+        # y_string=str(scale_y)+'*0.5*sgn(cos('+tt+str(offset)+'))';
+        # z_string=str(scale_z)+'*0.5*sgn(cos('+tt+str(offset)+'))';
+
+
+
+
+        # p=rotz(45)*[0.5*w*sign(cos(t));0.5*h*sign(sin(t));0.5*w*sign(cos(t))]
