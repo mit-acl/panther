@@ -141,7 +141,7 @@ casadi::DM SolverIpopt::generateYawGuess(casadi::DM matrix_qp_guess, casadi::DM 
 
     weightmap[*ed_ptr] = par_.c_smooth_yaw_search * distance_squared +
                          par_.c_visibility_yaw_search * (1.0 - visibility) +
-                         ((distance / deltaT) > par_.ydot_max) * 1e6;  //Note that edge cost is always >=0
+                         ((distance / deltaT) > par_.ydot_max) * 1e6;  // Note that edge cost is always >=0
 
     // if it doesn't satisfy the  ydot_maxconstraint --> very expensive edge. Note that with this option (instead of the
     // option of NOT creating an edge) there will always be a solution in the graph
@@ -267,7 +267,7 @@ casadi::DM SolverIpopt::generateYawGuess(casadi::DM matrix_qp_guess, casadi::DM 
     casadi::DM vsp_corrected = vector_shortest_path;
 
     vsp_corrected(0) = vector_shortest_path(0);
-    for (size_t i = 1; i < vsp_corrected.columns(); i++)  // starts in 1, not in 0
+    for (size_t i = 1; i < vsp_corrected.columns(); i++)  // starts at 1, not at 0
     {
       double previous_phi = double(vsp_corrected(i - 1));
       double phi_i = double(vsp_corrected(i));
@@ -306,7 +306,7 @@ casadi::DM SolverIpopt::generateYawGuess(casadi::DM matrix_qp_guess, casadi::DM 
 
     std::map<std::string, casadi::DM> map_arg2;
     map_arg2["all_yaw"] = vsp_corrected;
-    // map_arg2["y0"] = y0;
+    // map_arg2["y0"] = y0; %Note that all_yaw[0] is used as the initial condition
     map_arg2["ydot0"] = ydot0;
     map_arg2["ydotf"] = ydotf;
     log_ptr_->tim_guess_yaw_fit_poly.tic();
