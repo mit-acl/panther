@@ -46,7 +46,10 @@ public:
   void setHulls(ConvexHullsOfCurves_Std &hulls);
   void setSimpsonFeatureSamples(const std::vector<Eigen::Vector3d> &samples,
                                 const std::vector<Eigen::Vector3d> &w_velsampleswrtworld);
-
+  void setFocusOnObstacle(bool focus_on_obstacle)
+  {
+    focus_on_obstacle_ = focus_on_obstacle;
+  }
   mt::trajectory traj_solution_;
 
   // getters
@@ -225,6 +228,8 @@ private:
   std::shared_ptr<mt::log> log_ptr_;
 
   casadi::DM eigen2casadi(const Eigen::Vector3d &a);
+
+  bool focus_on_obstacle_;
 
   // std::unique_ptr<mygraph_t> mygraph_ptr;
   //////////////////////////////////

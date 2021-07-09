@@ -5,9 +5,8 @@ n_agents: 16 #only used for the color in the trajectory
 
 dc: 0.01            #(seconds) Duration for the interpolation=Value of the timer pubGoal
 goal_radius: 0.5    #(m) Drone has arrived to the goal when distance_to_goal<GOAL_RADIUS
-drone_radius: 0.001  #(m) Used for collision checking
-
-Ra: 3.0           # [m] Radius of my planning sphere (planning horizon)
+drone_radius: 0.1  #(m) Used for collision checking
+drone_radius_extra_safety: 0.1  #(m) Used for collision checking
 
 #Be careful with setting these to extremely high values (they are used in the constraints, and may introduce numerical issues)
 #Right now only z_min is used (see main.m)
@@ -23,17 +22,32 @@ z_max: 100.0         #[m]
 # [IN THE LAUNCH FILE] mode: "py" #no_perception_aware (noPA), first_pos_then_yaw (py), panther (panther)
 
 #Angle to decide whether to focus on an obstacle or to focus on front of me
-angle_deg_focus_front: 100 #Set to very big if you wanna focus always on obstacle
+angle_deg_focus_front: 90 #Set to very big if you wanna focus always on obstacle
+
+
+impose_FOV_in_trajCB: true
+#============================================
+#============================================
+#============================================
+Ra: 4.5           # [m] Radius of my planning sphere (planning horizon)
 
 #max limits
-v_max: [3.0, 3.0, 3.0]   #[m/s]  7.0
+v_max: [2.6, 2.6, 2.6]   #[m/s]  7.0
 a_max: [15.5, 15.5, 15.5]   #[m/s2] Note that if a_max.z() > 9.81, the drone may flip
 j_max: [100.0, 100.0, 100.0]   #[m/s3] 
-ydot_max: 5.0           # [rd/s] Maximum angular velocity. 0.4 for Hardware
+ydot_max: 3.1415926           # [rd/s] Maximum angular velocity. 0.4 for Hardware
+
+fov_x_deg: 70 #[deg] \in (0,180] ,  angle between two faces of the tetrahedron. Horizontal FOV
+fov_y_deg: 70 #[deg] \in (0,180] ,  angle between two faces of the tetrahedron. Vertical FOV
+fov_depth: 5.0 #[m] 
+
+#============================================
+#============================================
+#============================================
 
 #parameters for Casadi
-c_pos_smooth: 0.0
-c_yaw_smooth: 0.0
+c_pos_smooth: 1.0
+c_yaw_smooth: 0.05
 c_fov: 1.0
 c_final_pos: 2000.0
 c_final_yaw: 0.0
@@ -74,9 +88,7 @@ print_graph_yaw_info: false
 
 gamma: 0.1 #[seconds] >0 Time step between discretization points
 
-fov_x_deg: 60 #[deg] \in (0,180] ,  angle between two faces of the tetrahedron. Horizontal FOV
-fov_y_deg: 60 #[deg] \in (0,180] ,  angle between two faces of the tetrahedron. Vertical FOV
-fov_depth: 4.5 #[m] Only used for visualization
+
 
 # TODO: some params here are not used
 # kappa + mu <=1 

@@ -137,7 +137,7 @@ private:
 
   bool published_initial_position_ = false;
 
-  // Eigen::Affine3d W_T_B_;
+  Eigen::Affine3d W_T_B_;
 
   mt::PieceWisePol pwp_last_;
 

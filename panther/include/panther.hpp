@@ -86,7 +86,7 @@ private:
   void printDroneStatus();
 
   void sampleFeaturePosVel(int argmax_prob_collision, double t_start, double t_end, std::vector<Eigen::Vector3d>& pos,
-                           std::vector<Eigen::Vector3d>& vel, bool focus_on_obstacle);
+                           std::vector<Eigen::Vector3d>& vel);
 
   void removeOldTrajectories();
 

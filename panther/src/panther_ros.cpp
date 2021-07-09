@@ -68,8 +68,12 @@ PantherRos::PantherRos(ros::NodeHandle nh1, ros::NodeHandle nh2, ros::NodeHandle
   safeGetParam(nh1_, "dc", par_.dc);
   safeGetParam(nh1_, "goal_radius", par_.goal_radius);
   safeGetParam(nh1_, "drone_radius", par_.drone_radius);
+  double drone_radius_extra_safety;
+  safeGetParam(nh1_, "drone_radius_extra_safety", drone_radius_extra_safety);
+  par_.drone_radius = par_.drone_radius + drone_radius_extra_safety;
 
   safeGetParam(nh1_, "Ra", par_.Ra);
+  safeGetParam(nh1_, "impose_FOV_in_trajCB", par_.impose_FOV_in_trajCB);
 
   safeGetParam(nh1_, "ydot_max", par_.ydot_max);
 
@@ -197,6 +201,10 @@ PantherRos::PantherRos(ros::NodeHandle nh1, ros::NodeHandle nh2, ros::NodeHandle
 
   verify((par_.fov_y_deg == par_.fov_x_deg), "par_.fov_y_deg == par_.fov_x_deg must hold");
 
+  if(par_.impose_FOV_in_trajCB){
+        verify((par_.fov_depth > (par_.Ra + par_.drone_radius)), "(par_.fov_depth > (par_.Ra + par_.drone_radius) must hold");
+  }
+
   std::cout << bold << "Parameters checked" << reset << std::endl;
 
   panther_ptr_ = std::unique_ptr<Panther>(new Panther(par_));
@@ -233,7 +241,10 @@ PantherRos::PantherRos(ros::NodeHandle nh1, ros::NodeHandle nh2, ros::NodeHandle
   {
     ROS_INFO("Using ground truth trajectories (subscribed to /trajs)");
 
-    sub_traj_ = nh1_.subscribe("/trajs", 20, &PantherRos::trajCB, this);  // The number is the queue size
+    // sub_traj_ = nh1_.subscribe("/trajs", 20, &PantherRos::trajCB, this);  // COMMENTED ONLY FOR THE BENCHMARK WITH
+    // HKUST CODE
+    sub_traj_ =
+        nh1_.subscribe("trajs_hkust", 20, &PantherRos::trajCB, this);  // ADDED ONLY FOR THE BENCHMARK WITH HKUST CODE
     // obstacles --> topic /trajs
     // agents --> topic /trajs
     // Everything in the same world frame
@@ -313,6 +324,32 @@ void PantherRos::trajCB(const panther_msgs::DynTraj& msg)
   double dist = (state_.pos - W_pos).norm();
 
   bool can_use_its_info = (dist <= 4 * par_.Ra);  // See explanation of 4*Ra in Panther::updateTrajObstacles
+
+  //////
+
+  if (par_.impose_FOV_in_trajCB)
+  {
+    Eigen::Vector3d B_pos = W_T_B_.inverse() * W_pos;  // position of the obstacle in body frame
+                                                       // check if it's inside the field of view.
+    bool inFOV = B_pos.x() < par_.fov_depth &&         //////////////////////
+                 fabs(atan2(B_pos.y(), B_pos.x())) <
+                     ((par_.fov_x_deg * M_PI / 180.0) / 2.0) &&  ///// Note that fov_x_deg means x camera frame
+                 fabs(atan2(B_pos.z(), B_pos.x())) <
+                     ((par_.fov_y_deg * M_PI / 180.0) / 2.0);  ///// Note that fov_y_deg means x camera frame
+
+    if (inFOV == false)
+    {
+      // std::cout << "B_pos= " << B_pos.transpose() << " is NOT inFOV" << std::endl;
+      // std::cout << "W_pos= " << W_pos.transpose() << " is NOT inFOV" << std::endl;
+      // std::cout << "[inFOV] W_T_B_= " << W_T_B_.matrix() << std::endl;
+      return;
+    }
+    // else
+    // {
+    //   std::cout << "B_pos= " << B_pos.transpose() << " is inFOV!!!" << std::endl;
+    // }
+  }
+  /////
 
   // if (can_use_its_info == false)
   // {
@@ -484,8 +521,8 @@ void PantherRos::stateCB(const snapstack_msgs::State& msg)
   // state_tmp.print();
   panther_ptr_->updateState(state_tmp);
 
-  // W_T_B_ = Eigen::Translation3d(msg.pos.x, msg.pos.y, msg.pos.z) *
-  //          Eigen::Quaterniond(msg.quat.w, msg.quat.x, msg.quat.y, msg.quat.z);
+  W_T_B_ = Eigen::Translation3d(msg.pos.x, msg.pos.y, msg.pos.z) *
+           Eigen::Quaterniond(msg.quat.w, msg.quat.x, msg.quat.y, msg.quat.z);
 
   if (published_initial_position_ == false)
   {

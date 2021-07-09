@@ -545,21 +545,14 @@ bool SolverIpopt::optimize()
 
   /////////////////////////////////
 
-  if (par_.mode == "panther")
+  if (par_.mode == "panther" && focus_on_obstacle_ == true)
   {
     map_arguments["c_yaw_smooth"] = par_.c_yaw_smooth;
     map_arguments["c_fov"] = par_.c_fov;
     std::cout << bold << green << "Optimizing for YAW and POSITION!" << reset << std::endl;
     result = cf_op_(map_arguments);
   }
-  else if (par_.mode == "noPA")
-  {
-    map_arguments["c_yaw_smooth"] = 0.0;
-    map_arguments["c_fov"] = 0.0;
-    std::cout << bold << green << "Optimizing for YAW!" << reset << std::endl;
-    result = cf_op_(map_arguments);
-  }
-  else if (par_.mode == "py")
+  else if (par_.mode == "py" && focus_on_obstacle_ == true)
   {
     // first solve for the position spline
     map_arguments["c_yaw_smooth"] = 0.0;
@@ -589,6 +582,13 @@ bool SolverIpopt::optimize()
     result["yCPs"] = result_for_yaw["yCPs"];
 
     // The costs logged will not be the right ones, so don't use them in this mode
+  }
+  else if (par_.mode == "noPA" || par_.mode == "ysweep" || focus_on_obstacle_ == false)
+  {
+    map_arguments["c_yaw_smooth"] = 0.0;
+    map_arguments["c_fov"] = 0.0;
+    std::cout << bold << green << "Optimizing for POSITION!" << reset << std::endl;
+    result = cf_op_(map_arguments);
   }
   else
   {
@@ -656,10 +656,54 @@ bool SolverIpopt::optimize()
     ///////////////////////////////////
     if (par_.mode == "panther" || par_.mode == "py")
     {
-      qy = static_cast<std::vector<double>>(result["yCPs"]);
+      if (focus_on_obstacle_ == true)
+      {
+        qy = static_cast<std::vector<double>>(result["yCPs"]);
+      }
+      else
+      {  // find the yaw spline that goes to final_state_.yaw as fast as possible
+
+        double y0 = initial_state_.yaw;
+        double yf = final_state_.yaw;
+        double ydot0 = initial_state_.dyaw;
+        int p = par_.deg_yaw;
+
+        qy.clear();
+        qy.push_back(y0);
+        qy.push_back(y0 + deltaT_ * ydot0 / (double(p)));  // y0 and ydot0 fix the second control point
+
+        int num_cps_yaw = par_.num_seg + p;
+
+        for (int i = 0; i < (num_cps_yaw - 3); i++)
+        {
+          double v_needed = p * (yf - qy.back()) / (p * deltaT_);
+
+          saturate(v_needed, -par_.ydot_max, par_.ydot_max);  // Make sure it's within the limits
+
+          double next_qy = qy.back() + (p * deltaT_) * v_needed / (double(p));
+
+          qy.push_back(next_qy);
+        }
+
+        qy.push_back(qy.back());  // TODO: HERE I'M ASSUMMING FINAL YAW VELOCITY=0 (i.e., final_state_.dyaw==0)
+
+        // std::cout << "HERE 4!" << std::endl;
+        // std::cout << "qy= " << std::endl;
+        // for (auto qi : qy)
+        // {
+        //   std::cout << qi << " ";
+        // }
+
+        // std::cout << std::endl;
+        // std::cout << "deltaT_= " << deltaT_ << std::endl;
+
+        // std::cout << "yf= " << yf << std::endl;
+        // std::cout << "y0= " << y0 << std::endl;
+      }
     }
-    else if (par_.mode == "noPA")
+    else if (par_.mode == "noPA" || par_.mode == "ysweep")
     {  // constant yaw
+      // Note that in ysweep, the yaw will be a sinusoidal function, see Panther::getNextGoal
       qy.clear();
       for (int i = 0; i < result["yCPs"].columns(); i++)
       {

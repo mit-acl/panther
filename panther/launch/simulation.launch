@@ -7,7 +7,7 @@
   <arg name="rviz" default="true"/>
   <arg name="gazebo" default="true"/>
   <arg name="gzclient" default="false"/>
-  <arg name="mode" default="panther" /> <!--  noPA (no_perception_aware), py (first_pos_then_yaw), panther (panther) -->
+  <arg name="mode" default="panther" /> <!--  noPA (no_perception_aware), py (first_pos_then_yaw), panther (panther) ysweep (noPA but with sweep in yaw) -->
   <arg name="num_of_obs" default="5" /> <!--  noPA (no_perception_aware), py (first_pos_then_yaw), panther (panther) -->
 
 
@@ -119,6 +119,7 @@
 
     <!-- Publications -->
     <remap from="~traj" to="traj"/>
+    <remap from="~trajs_hkust" to="trajs_hkust"/>
     <remap from="~goal" to="goal" />
     <remap from="~setpoint" to="setpoint" />
 

@@ -776,6 +776,8 @@ struct parameters
 
   double Ra;
 
+  bool impose_FOV_in_trajCB = false;
+
   double ydot_max;
 
   // bool impose_fov = false;

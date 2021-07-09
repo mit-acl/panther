@@ -576,8 +576,7 @@ ConvexHullsOfCurves Panther::convexHullsOfCurves(double t_start, double t_end)
 // argmax_prob_collision is the index of trajectory I should focus on
 // a negative value means that there are no trajectories to track
 void Panther::sampleFeaturePosVel(int argmax_prob_collision, double t_start, double t_end,
-                                  std::vector<Eigen::Vector3d>& pos, std::vector<Eigen::Vector3d>& vel,
-                                  bool focus_on_obstacle)
+                                  std::vector<Eigen::Vector3d>& pos, std::vector<Eigen::Vector3d>& vel)
 {
   pos.clear();
   vel.clear();
@@ -586,7 +585,7 @@ void Panther::sampleFeaturePosVel(int argmax_prob_collision, double t_start, dou
 
   for (int i = 0; i < par_.num_samples_simpson; i++)
   {
-    if (argmax_prob_collision >= 0 && focus_on_obstacle == true)
+    if (argmax_prob_collision >= 0)
     {
       double ti = t_start + i * delta;  // which is constant along the trajectory
       Eigen::Vector3d pos_i = evalMeanDynTrajCompiled(trajs_[argmax_prob_collision], ti);
@@ -1075,7 +1074,7 @@ bool Panther::replan(mt::Edges& edges_obstacles_out, std::vector<mt::state>& X_s
     angle = angleBetVectors(A2G, A2Obstacle);
   }
 
-  bool focus_on_obstacle = true;
+  // bool focus_on_obstacle = true;
 
   double angle_deg = angle * 180 / 3.14;
 
@@ -1083,18 +1082,20 @@ bool Panther::replan(mt::Edges& edges_obstacles_out, std::vector<mt::state>& X_s
   {  //
     std::cout << bold << yellow << "[Selection] Focusing on front of me, angle=" << angle_deg << " deg" << reset
               << std::endl;
-    focus_on_obstacle = false;
-    solver_->par_.c_final_yaw = 10.0;
-    // solver_->use_straight_yaw_guess_ = true;
-    // solver_->par_.c_fov = 0.0;
+    // focus_on_obstacle = false;
+    solver_->par_.c_final_yaw = 0.0;
+    solver_->par_.c_fov = 0.0;
     solver_->par_.c_yaw_smooth = 0.0;
+    solver_->setFocusOnObstacle(false);
     G.yaw = atan2(G_term_.pos[1] - A.pos[1], G_term_.pos[0] - A.pos[0]);
+    // solver_->use_straight_yaw_guess_ = true;
   }
   else
   {
     std::cout << bold << yellow << "[Selection] Focusing on obstacle, angle=" << angle_deg << " deg" << reset
               << std::endl;
-    focus_on_obstacle = true;
+    // focus_on_obstacle = true;
+    solver_->setFocusOnObstacle(true);
     solver_->par_.c_fov = par_.c_fov;
     solver_->par_.c_final_yaw = par_.c_final_yaw;
     solver_->par_.c_yaw_smooth = par_.c_yaw_smooth;
@@ -1104,9 +1105,9 @@ bool Panther::replan(mt::Edges& edges_obstacles_out, std::vector<mt::state>& X_s
 
   std::vector<Eigen::Vector3d> w_posfeature;      // velocity of the feature expressed in w
   std::vector<Eigen::Vector3d> w_velfeaturewrtw;  // velocity of the feature wrt w, expressed in w
-  sampleFeaturePosVel(argmax_prob_collision, t_start, t_final, w_posfeature, w_velfeaturewrtw,
-                      focus_on_obstacle);  // need to do it here so that argmax_prob_collision does not become invalid
-                                           // with new updates
+  sampleFeaturePosVel(argmax_prob_collision, t_start, t_final, w_posfeature,
+                      w_velfeaturewrtw);  // need to do it here so that argmax_prob_collision does not become invalid
+                                          // with new updates
 
   log_ptr_->tracking_now_pos = w_posfeature.front();
   log_ptr_->tracking_now_vel = w_velfeaturewrtw.front();
@@ -1315,6 +1316,18 @@ bool Panther::getNextGoal(mt::state& next_goal)
   {
     changeDroneStatus(DroneStatus::TRAVELING);
   }
+
+  if (par_.mode == "ysweep")
+  {
+    double t = ros::Time::now().toSec();
+    // double T = 1.0;
+    double amplitude_deg = 90;
+    double amplitude_rd = (amplitude_deg * M_PI / 180);
+    next_goal.yaw = amplitude_rd * sin(t * (par_.ydot_max / amplitude_rd));
+    next_goal.dyaw = par_.ydot_max * cos(t * (par_.ydot_max / amplitude_rd));
+  }
+
+  verify(fabs(next_goal.dyaw) <= par_.ydot_max, "par_.ydot_max not satisfied!!");
 
   mtx_goals.unlock();
   mtx_plan_.unlock();
