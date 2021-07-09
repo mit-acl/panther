@@ -217,9 +217,7 @@ Visualization Manager:
       Marker Topic: /SQ01s/tracker_predictor_node/marker_predicted_traj
       Name: Predictions
       Namespaces:
-        predicted_traj_0: true
-        predicted_traj_1: true
-        predicted_traj_2: true
+        {}
       Queue Size: 100
       Value: true
     - Class: rviz/MarkerArray
@@ -227,7 +225,7 @@ Visualization Manager:
       Marker Topic: /SQ01s/tracker_predictor_node/marker_bbox_obstacles
       Name: bbox_obstacles_predictor
       Namespaces:
-        predictor: true
+        {}
       Queue Size: 100
       Value: true
     - Class: rviz/Image
@@ -285,7 +283,7 @@ Visualization Manager:
       Marker Topic: /SQ01s/panther/obstacles
       Name: CvxPolyObstacles
       Namespaces:
-        {}
+        markertacles: true
       Queue Size: 100
       Value: true
     - Class: rviz/MarkerArray
@@ -364,15 +362,15 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/ThirdPersonFollower
-      Distance: 89.06713104248047
+      Distance: 43.71935272216797
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 17.00262451171875
-        Y: 3.1077985763549805
+        X: 16.69393539428711
+        Y: -4.171898365020752
         Z: -1.1625602382991929e-5
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
@@ -382,7 +380,7 @@ Visualization Manager:
       Pitch: 1.5697963237762451
       Target Frame: <Fixed Frame>
       Value: ThirdPersonFollower (rviz)
-      Yaw: 3.1399803161621094
+      Yaw: 4.719984531402588
     Saved: ~
 Window Geometry:
   DepthImage:
