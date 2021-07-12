@@ -189,18 +189,18 @@ for j=1:(sp.num_seg)
 %         const_p{end+1}= (tmp'*tmp)<=(Ra*Ra) ;
 %     end
     
-%     %Min max xyz constraints
-%     for kk=1:size(Q,2) 
-%         tmp=Q{kk};
-% %         const_p{end+1}= x_lim(1)<=tmp(1) ;
-% %         const_p{end+1}= x_lim(2)>=tmp(1) ;
-% %         
-% %         const_p{end+1}= y_lim(1)<=tmp(2) ;
-% %         const_p{end+1}= y_lim(2)>=tmp(2) ;
-% 
-%           const_p{end+1}= z_lim(1)<=tmp(3) ; %For now let's use only this constraint (z_ground). The more ineq constraints --> The more comp time usually
-% %         const_p{end+1}= z_lim(2)>=tmp(3) ;
-%     end
+    %Min max xyz constraints
+    for kk=1:size(Q,2) 
+        tmp=Q{kk};
+%         const_p{end+1}= x_lim(1)<=tmp(1) ;
+%         const_p{end+1}= x_lim(2)>=tmp(1) ;
+%         
+        const_p{end+1}= y_lim(1)<=tmp(2) ;
+        const_p{end+1}= y_lim(2)>=tmp(2) ;
+
+%           const_p{end+1}= z_lim(1)<=tmp(3) ; 
+%         const_p{end+1}= z_lim(2)>=tmp(3) ;
+    end
 end
 
 
