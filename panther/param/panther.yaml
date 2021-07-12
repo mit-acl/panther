@@ -13,8 +13,8 @@ drone_radius_extra_safety: 0.1  #(m) Used for collision checking
 x_min: -100.0  # [m] don't forget the .0
 x_max: 100.0  # [m] don't forget the .0
 
-y_min: -100.0  # [m] don't forget the .0
-y_max: 100.0   # [m] don't forget the .0
+y_min: -4.0  # [m] don't forget the .0
+y_max: 4.0   # [m] don't forget the .0
 
 z_min: -100.0        #[m] points below this are considered ground
 z_max: 100.0         #[m] 
