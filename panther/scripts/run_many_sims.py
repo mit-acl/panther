@@ -37,7 +37,7 @@ if __name__ == '__main__':
     commands = []
 
     folder_bags="/home/jtorde/Desktop/ws/src/panther/panther/bags";
-    all_modes=["ysweep"] #  "panther", "noPA", "py", "hkust" "ysweep"
+    all_modes=["panther", "noPA", "py", "hkust", "ysweep"] #  "panther", "noPA", "py", "hkust", "ysweep"
     name_node_record="bag_recorder"
     kill_all="tmux kill-server & killall -9 gazebo & killall -9 gzserver  & killall -9 gzclient & killall -9 roscore & killall -9 rosmaster & pkill panther_node & pkill -f dynamic_obstacles & pkill -f rosout & pkill -f behavior_selector_node & pkill -f rviz & pkill -f rqt_gui & pkill -f perfect_tracker & pkill -f panther_commands"
 
@@ -61,9 +61,9 @@ if __name__ == '__main__':
                 time_sleep=max(0.2*num_of_obs[k], 2.0)
 
                 if(mode=="hkust"):
-                   commands.append("roslaunch ego_planner swarm.launch num_of_obs:="+str(num_of_obs[k]));
+                   commands.append("roslaunch ego_planner swarm.launch rviz:=false num_of_obs:="+str(num_of_obs[k]));
                 else:
-                   commands.append("roslaunch panther simulation.launch gazebo:=true perfect_tracker:=true perfect_prediction:=true quad:=SQ01s gui_mission:=false rviz:=true mode:="+mode+" num_of_obs:="+str(num_of_obs[k]));
+                   commands.append("roslaunch panther simulation.launch gazebo:=true perfect_tracker:=true perfect_prediction:=true quad:=SQ01s gui_mission:=false rviz:=false mode:="+mode+" num_of_obs:="+str(num_of_obs[k]));
 
                 commands.append("sleep "+str(time_sleep)+" && cd "+folder_bags+" && rosbag record -o "+mode+"_obs_"+str(num_of_obs[k])+"_sim_"+str(s)+" /SQ01s/goal /SQ01s/state /tf /SQ01s/panther/fov /obstacles_mesh __name:="+name_node_record);
                 #publishing the goal should be the last command
