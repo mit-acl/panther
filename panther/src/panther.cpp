@@ -708,9 +708,11 @@ void Panther::doStuffTermGoal()
     double diff = desired_yaw - last_state.yaw;
     angle_wrap(diff);
 
-    double dyaw = copysign(1, diff) * 2;  // par_.ydot_max; Changed to 0.5 (in HW the drone stops the motors when
-                                          // status==YAWING and ydot_max is too high, due to saturation + calibration of
-                                          // the ESCs) see https://gitlab.com/mit-acl/fsw/snap-stack/snap/-/issues/3
+    double dyaw =
+        copysign(1, diff) *
+        std::min(2.0, par_.ydot_max);  // par_.ydot_max; Changed to 0.5 (in HW the drone stops the motors when
+                                       // status==YAWING and ydot_max is too high, due to saturation + calibration of
+                                       // the ESCs) see https://gitlab.com/mit-acl/fsw/snap-stack/snap/-/issues/3
 
     int num_of_el = (int)fabs(diff / (par_.dc * dyaw));
 
@@ -1327,7 +1329,15 @@ bool Panther::getNextGoal(mt::state& next_goal)
     next_goal.dyaw = par_.ydot_max * cos(t * (par_.ydot_max / amplitude_rd));
   }
 
-  verify(fabs(next_goal.dyaw) <= par_.ydot_max, "par_.ydot_max not satisfied!!");
+  if (fabs(next_goal.dyaw) > par_.ydot_max)
+  {
+    std::cout << red << "par_.ydot_max not satisfied!!" << reset << std::endl;
+    std::cout << red << "next_goal.dyaw= " << next_goal.dyaw << reset << std::endl;
+    std::cout << red << "par_.ydot_max= " << par_.ydot_max << reset << std::endl;
+    abort();
+  }
+
+  // verify(fabs(next_goal.dyaw) <= par_.ydot_max, "par_.ydot_max not satisfied!!");
 
   mtx_goals.unlock();
   mtx_plan_.unlock();
