@@ -372,7 +372,11 @@ IEEEpeerreviewmaketitle
 \end_layout
 
 \begin_layout Section*
-Supplementary material
+Supplementary material 
+\begin_inset Formula $\xi$
+\end_inset
+
+
 \end_layout
 
 \begin_layout Standard
@@ -443,78 +447,45 @@ textwidth}{!}{
 
 \end_inset
 </cell>
-<cell multicolumn="1" alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+<cell multicolumn="1" alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
 
 \series bold
-s=1.5 (slower)
+faster
+\end_layout
+
+\end_inset
+</cell>
+<cell multicolumn="2" alignment="center" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell multicolumn="2" alignment="center" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell multicolumn="2" alignment="center" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
 \end_layout
 
 \end_inset
 </cell>
 <cell multicolumn="2" alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\end_inset
-</cell>
-<cell multicolumn="1" alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\series bold
-s=1.0 (faster)
-\end_layout
-
-\end_inset
-</cell>
-<cell multicolumn="2" alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\end_inset
-</cell>
-<cell multicolumn="1" alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\series bold
-150 obstacles
-\end_layout
-
-\end_inset
-</cell>
-<cell multicolumn="2" alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\end_inset
-</cell>
-<cell multicolumn="1" alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\series bold
-200 obstacles
-\end_layout
-
-\end_inset
-</cell>
-<cell multicolumn="2" alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
@@ -529,12 +500,39 @@ s=1.0 (faster)
 \begin_layout Plain Layout
 
 \series bold
-250 obstacles
+slower
 \end_layout
 
 \end_inset
 </cell>
-<cell multicolumn="2" alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+<cell multicolumn="2" alignment="center" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell multicolumn="2" alignment="center" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell multicolumn="2" alignment="center" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+</cell>
+<cell multicolumn="2" alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
@@ -545,13 +543,52 @@ s=1.0 (faster)
 </cell>
 </row>
 <row>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\series bold
+Method
+\end_layout
+
+\end_inset
+</cell>
 <cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
 
 \series bold
-Basis
+noPA
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\series bold
+PA, decoupled
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+
+\series bold
+Sweep 
+\series default
+
+\begin_inset Formula $\psi$
+\end_inset
+
+
 \end_layout
 
 \end_inset
@@ -567,7 +604,7 @@ Hkust
 
 \end_inset
 </cell>
-<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
@@ -584,7 +621,7 @@ PANTHER
 \begin_layout Plain Layout
 
 \series bold
-Hkust
+noPA
 \end_layout
 
 \end_inset
@@ -595,7 +632,7 @@ Hkust
 \begin_layout Plain Layout
 
 \series bold
-PANTHER
+PA, decoupled
 \end_layout
 
 \end_inset
@@ -606,40 +643,13 @@ PANTHER
 \begin_layout Plain Layout
 
 \series bold
-Hkust
-\end_layout
+Sweep 
+\series default
 
+\begin_inset Formula $\psi$
 \end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
-\begin_inset Text
 
-\begin_layout Plain Layout
 
-\series bold
-PANTHER
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\series bold
-Hkust
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\series bold
-PANTHER
 \end_layout
 
 \end_inset
@@ -668,13 +678,85 @@ PANTHER
 </cell>
 </row>
 <row>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
 
 \series bold
 Num of collisions
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $2\pm1.26$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $3.60\pm2.11$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $3.50\pm1.96$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $1.10\pm0.70$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.50\pm0.67$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.8\pm1.25$
+\end_inset
+
+
 \end_layout
 
 \end_inset
@@ -695,7 +777,7 @@ Num of collisions
 \begin_inset Text
 
 \begin_layout Plain Layout
-\begin_inset Formula $0.1\pm0.3$
+\begin_inset Formula $2.50\pm1.28$
 \end_inset
 
 
@@ -707,79 +789,7 @@ Num of collisions
 \begin_inset Text
 
 \begin_layout Plain Layout
-\begin_inset Formula $1.3\pm0.9$
-\end_inset
-
-
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-\begin_inset Formula $0.8\pm0.9$
-\end_inset
-
-
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-\begin_inset Formula $9.1\pm2.31$
-\end_inset
-
-
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-\begin_inset Formula $26.97\pm3.24$
-\end_inset
-
-
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-\begin_inset Formula $12.1\pm2.77$
-\end_inset
-
-
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-\begin_inset Formula $32.69\pm4.61$
-\end_inset
-
-
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-\begin_inset Formula $14.10\pm4.09$
+\begin_inset Formula $0.70\pm0.46$
 \end_inset
 
 
@@ -791,7 +801,7 @@ Num of collisions
 \begin_inset Text
 
 \begin_layout Plain Layout
-\begin_inset Formula $39.81\pm9.76$
+\begin_inset Formula $0.10\pm0.30$
 \end_inset
 
 
@@ -801,7 +811,7 @@ Num of collisions
 </cell>
 </row>
 <row>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
@@ -816,7 +826,16 @@ Success Rate
 \begin_inset Text
 
 \begin_layout Plain Layout
-\begin_inset Formula $50$
+10 %
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.00$
 \end_inset
 
  %
@@ -828,10 +847,7 @@ Success Rate
 \begin_inset Text
 
 \begin_layout Plain Layout
-\begin_inset Formula $90$
-\end_inset
-
- %
+10 %
 \end_layout
 
 \end_inset
@@ -840,67 +856,7 @@ Success Rate
 \begin_inset Text
 
 \begin_layout Plain Layout
-\begin_inset Formula $20$
-\end_inset
-
- %
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-\begin_inset Formula $50$
-\end_inset
-
- %
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
+20%
 \end_layout
 
 \end_inset
@@ -909,6 +865,54 @@ Success Rate
 \begin_inset Text
 
 \begin_layout Plain Layout
+60%
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+60%
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+50%
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+10%
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+30%
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $90\%$
+\end_inset
+
 
 \end_layout
 
@@ -916,7 +920,7 @@ Success Rate
 </cell>
 </row>
 <row>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
@@ -932,7 +936,7 @@ Success Rate
 \begin_inset Text
 
 \begin_layout Plain Layout
-\begin_inset Formula $97.99\pm4.11$
+\begin_inset Formula $85.80\pm2.24$
 \end_inset
 
 
@@ -944,7 +948,7 @@ Success Rate
 \begin_inset Text
 
 \begin_layout Plain Layout
-\begin_inset Formula $99.04\pm4.13$
+\begin_inset Formula $86.40\pm2.49$
 \end_inset
 
 
@@ -956,7 +960,7 @@ Success Rate
 \begin_inset Text
 
 \begin_layout Plain Layout
-\begin_inset Formula $96.05\pm4.92$
+\begin_inset Formula $84.72\pm1.52$
 \end_inset
 
 
@@ -968,67 +972,7 @@ Success Rate
 \begin_inset Text
 
 \begin_layout Plain Layout
-\begin_inset Formula $100.34\pm4.2$
-\end_inset
-
-
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-\begin_inset Formula $6.5\pm1.72$
-\end_inset
-
-
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-\begin_inset Formula $23.23\pm\boldsymbol{1.43}$
-\end_inset
-
-
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-\begin_inset Formula $7.2\pm2.49$
-\end_inset
-
-
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-\begin_inset Formula $24.65\pm2.54$
-\end_inset
-
-
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-\begin_inset Formula $8.4\pm\boldsymbol{2.80}$
+\begin_inset Formula $96.28\pm6.87$
 \end_inset
 
 
@@ -1040,7 +984,67 @@ Success Rate
 \begin_inset Text
 
 \begin_layout Plain Layout
-\begin_inset Formula $27.94\pm4.16$
+\begin_inset Formula $107.74\pm4.56$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $87.05\pm2.35$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $86.34\pm2.39$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $85.52\pm1.58$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $94.40\pm2.46$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $101.27\pm3.74$
 \end_inset
 
 
@@ -1050,7 +1054,7 @@ Success Rate
 </cell>
 </row>
 <row>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
@@ -1066,7 +1070,7 @@ Success Rate
 \begin_inset Text
 
 \begin_layout Plain Layout
-\begin_inset Formula $22.39\pm12.28$
+\begin_inset Formula $30.02\pm14.40$
 \end_inset
 
 
@@ -1078,7 +1082,7 @@ Success Rate
 \begin_inset Text
 
 \begin_layout Plain Layout
-\begin_inset Formula $91.32\pm22.51$
+\begin_inset Formula $33.58\pm14.00$
 \end_inset
 
 
@@ -1090,7 +1094,7 @@ Success Rate
 \begin_inset Text
 
 \begin_layout Plain Layout
-\begin_inset Formula $27.25\pm14.05$
+\begin_inset Formula $21.53\pm5.72$
 \end_inset
 
 
@@ -1102,54 +1106,9 @@ Success Rate
 \begin_inset Text
 
 \begin_layout Plain Layout
-\begin_inset Formula $95.48\pm18.15$
+\begin_inset Formula $26.22\pm17.31$
 \end_inset
 
-
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
 
 \end_layout
 
@@ -1159,6 +1118,69 @@ Success Rate
 \begin_inset Text
 
 \begin_layout Plain Layout
+\begin_inset Formula $131.76\pm34.54$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $31.16\pm9.75$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $29.25\pm14.73$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $21.62\pm7.82$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $17.96\pm10.91$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $77.29\pm3.74$
+\end_inset
+
 
 \end_layout
 
@@ -1166,7 +1188,7 @@ Success Rate
 </cell>
 </row>
 <row>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
@@ -1182,7 +1204,7 @@ Success Rate
 \begin_inset Text
 
 \begin_layout Plain Layout
-\begin_inset Formula $212.80\pm137.91$
+\begin_inset Formula $641.72\pm425.50$
 \end_inset
 
 
@@ -1194,7 +1216,7 @@ Success Rate
 \begin_inset Text
 
 \begin_layout Plain Layout
-\begin_inset Formula $1933.80\pm980.45$
+\begin_inset Formula $569.63\pm275.42$
 \end_inset
 
 
@@ -1206,7 +1228,7 @@ Success Rate
 \begin_inset Text
 
 \begin_layout Plain Layout
-\begin_inset Formula $302.5\pm170.17$
+\begin_inset Formula $355.80\pm141.24$
 \end_inset
 
 
@@ -1218,54 +1240,9 @@ Success Rate
 \begin_inset Text
 
 \begin_layout Plain Layout
-\begin_inset Formula $2039.08\pm1066.57$
+\begin_inset Formula $283.79\pm248.81$
 \end_inset
 
-
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
 
 \end_layout
 
@@ -1275,6 +1252,69 @@ Success Rate
 \begin_inset Text
 
 \begin_layout Plain Layout
+\begin_inset Formula $2156.07\pm904.41$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $486.69\pm116.13$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $500.03\pm298.11$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $343.50\pm129.60$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $227.99\pm208.83$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $1173.79\pm480.26$
+\end_inset
+
 
 \end_layout
 
@@ -1282,7 +1322,7 @@ Success Rate
 </cell>
 </row>
 <row>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
@@ -1297,7 +1337,7 @@ Flight time
 \begin_inset Text
 
 \begin_layout Plain Layout
-\begin_inset Formula $20.39\pm1.47$
+\begin_inset Formula $19.96\pm0.65$
 \end_inset
 
 
@@ -1309,7 +1349,7 @@ Flight time
 \begin_inset Text
 
 \begin_layout Plain Layout
-\begin_inset Formula $19.91\pm0.37$
+\begin_inset Formula $20.25\pm1.15$
 \end_inset
 
 
@@ -1321,7 +1361,7 @@ Flight time
 \begin_inset Text
 
 \begin_layout Plain Layout
-\begin_inset Formula $20.68\pm1.09$
+\begin_inset Formula $19.59\pm0.44$
 \end_inset
 
 
@@ -1333,54 +1373,9 @@ Flight time
 \begin_inset Text
 
 \begin_layout Plain Layout
-\begin_inset Formula $19.76\pm0.28$
+\begin_inset Formula $21.56\pm1.97$
 \end_inset
 
-
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
 
 \end_layout
 
@@ -1390,6 +1385,69 @@ Flight time
 \begin_inset Text
 
 \begin_layout Plain Layout
+\begin_inset Formula $20.04\pm0.67$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $19.93\pm0.67$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $19.84\pm0.63$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $19.64\pm0.45$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $19.77\pm0.73$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $19.62\pm0.62$
+\end_inset
+
 
 \end_layout
 
@@ -1397,7 +1455,7 @@ Flight time
 </cell>
 </row>
 <row>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
@@ -1412,7 +1470,7 @@ Total distance
 \begin_inset Text
 
 \begin_layout Plain Layout
-\begin_inset Formula $42.94\pm2.24$
+\begin_inset Formula $40.20\pm0.79$
 \end_inset
 
 
@@ -1424,7 +1482,7 @@ Total distance
 \begin_inset Text
 
 \begin_layout Plain Layout
-\begin_inset Formula $43.21\pm0.82$
+\begin_inset Formula $40.43\pm0.83$
 \end_inset
 
 
@@ -1436,7 +1494,7 @@ Total distance
 \begin_inset Text
 
 \begin_layout Plain Layout
-\begin_inset Formula $42.36\pm1.75$
+\begin_inset Formula $39.67\pm0.28$
 \end_inset
 
 
@@ -1448,54 +1506,9 @@ Total distance
 \begin_inset Text
 
 \begin_layout Plain Layout
-\begin_inset Formula $43.40\pm0.79$
+\begin_inset Formula $43.02\pm2.91$
 \end_inset
 
-
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
 
 \end_layout
 
@@ -1505,6 +1518,69 @@ Total distance
 \begin_inset Text
 
 \begin_layout Plain Layout
+\begin_inset Formula $44.87\pm1.0$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $40.49\pm0.70$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $40.09\pm0.57$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $39.86\pm0.44$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $41.51\pm1.09$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $43.22\pm0.79$
+\end_inset
+
 
 \end_layout
 
@@ -1512,7 +1588,7 @@ Total distance
 </cell>
 </row>
 <row>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
@@ -1528,7 +1604,7 @@ Num of inf.
 \begin_inset Text
 
 \begin_layout Plain Layout
-\begin_inset Formula $0.0\pm0.0$
+\begin_inset Formula $0.00\pm0.00$
 \end_inset
 
 
@@ -1540,7 +1616,7 @@ Num of inf.
 \begin_inset Text
 
 \begin_layout Plain Layout
-\begin_inset Formula $0.0\pm0.0$
+\begin_inset Formula $0.00\pm0.00$
 \end_inset
 
 
@@ -1552,7 +1628,7 @@ Num of inf.
 \begin_inset Text
 
 \begin_layout Plain Layout
-\begin_inset Formula $0.4\pm0.66$
+\begin_inset Formula $0.00\pm0.00$
 \end_inset
 
 
@@ -1564,54 +1640,9 @@ Num of inf.
 \begin_inset Text
 
 \begin_layout Plain Layout
-\begin_inset Formula $0.0\pm0.0$
+\begin_inset Formula $0.60\pm0.66$
 \end_inset
 
-
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\end_inset
-</cell>
-<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
-\begin_inset Text
-
-\begin_layout Plain Layout
 
 \end_layout
 
@@ -1621,6 +1652,69 @@ Num of inf.
 \begin_inset Text
 
 \begin_layout Plain Layout
+\begin_inset Formula $0.00\pm0.00$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.00\pm0.00$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.00\pm0.00$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.00\pm0.00$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.00\pm0.00$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" topline="true" leftline="true" rightline="true" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0.00\pm0.00$
+\end_inset
+
 
 \end_layout
 
@@ -1628,7 +1722,7 @@ Num of inf.
 </cell>
 </row>
 <row>
-<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
@@ -1675,7 +1769,7 @@ Presence obs in FOV
 
 \end_inset
 </cell>
-<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" usebox="none">
+<cell alignment="center" valignment="top" topline="true" bottomline="true" leftline="true" rightline="true" usebox="none">
 \begin_inset Text
 
 \begin_layout Plain Layout
@@ -1768,6 +1862,17 @@ literal "false"
 
 .
  
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\sum_{i}\left(\text{dist}_{dg}\left(\boldsymbol{T}_{i},\boldsymbol{T}_{i+1}\right)\Delta t\right)=\sum_{i}\left(\sqrt{\left\Vert \log\left(\boldsymbol{R}_{i}^{\top}\boldsymbol{R}_{i+1}\right)\right\Vert ^{2}+\left\Vert \boldsymbol{t}_{i+1}-\boldsymbol{t}_{i}\right\Vert ^{2}}\Delta t\right)
+\]
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Standard

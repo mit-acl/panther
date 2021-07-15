@@ -48,7 +48,8 @@ PantherRos::PantherRos(ros::NodeHandle nh1, ros::NodeHandle nh2, ros::NodeHandle
       transform_stamped = tf_buffer.lookupTransform(name_drone_, name_camera_depth_optical_frame_tf_, ros::Time(0),
                                                     ros::Duration(0.5));  // Note that ros::Time(0) will just get us the
                                                                           // latest available transform.
-      par_.b_T_c = tf2::transformToEigen(transform_stamped);
+      par_.b_T_c = tf2::transformToEigen(transform_stamped);              // Body to camera_depth_optical_frame
+      par_.c_T_b = (par_.b_T_c).inverse();
       break;
     }
     catch (tf2::TransformException& ex)
@@ -201,8 +202,10 @@ PantherRos::PantherRos(ros::NodeHandle nh1, ros::NodeHandle nh2, ros::NodeHandle
 
   verify((par_.fov_y_deg == par_.fov_x_deg), "par_.fov_y_deg == par_.fov_x_deg must hold");
 
-  if(par_.impose_FOV_in_trajCB){
-        verify((par_.fov_depth > (par_.Ra + par_.drone_radius)), "(par_.fov_depth > (par_.Ra + par_.drone_radius) must hold");
+  if (par_.impose_FOV_in_trajCB)
+  {
+    verify((par_.fov_depth > (par_.Ra + par_.drone_radius)), "(par_.fov_depth > (par_.Ra + par_.drone_radius) must "
+                                                             "hold");
   }
 
   std::cout << bold << "Parameters checked" << reset << std::endl;
@@ -320,8 +323,8 @@ void PantherRos::trajCB(const panther_msgs::DynTraj& msg)
     return;
   }
 
-  Eigen::Vector3d W_pos(msg.pos.x, msg.pos.y, msg.pos.z);  // position in world frame
-  double dist = (state_.pos - W_pos).norm();
+  Eigen::Vector3d w_pos(msg.pos.x, msg.pos.y, msg.pos.z);  // position in world frame
+  double dist = (state_.pos - w_pos).norm();
 
   bool can_use_its_info = (dist <= 4 * par_.Ra);  // See explanation of 4*Ra in Panther::updateTrajObstacles
 
@@ -329,19 +332,23 @@ void PantherRos::trajCB(const panther_msgs::DynTraj& msg)
 
   if (par_.impose_FOV_in_trajCB)
   {
-    Eigen::Vector3d B_pos = W_T_B_.inverse() * W_pos;  // position of the obstacle in body frame
-                                                       // check if it's inside the field of view.
-    bool inFOV = B_pos.x() < par_.fov_depth &&         //////////////////////
-                 fabs(atan2(B_pos.y(), B_pos.x())) <
-                     ((par_.fov_x_deg * M_PI / 180.0) / 2.0) &&  ///// Note that fov_x_deg means x camera frame
-                 fabs(atan2(B_pos.z(), B_pos.x())) <
-                     ((par_.fov_y_deg * M_PI / 180.0) / 2.0);  ///// Note that fov_y_deg means x camera frame
+    Eigen::Vector3d c_pos = (par_.c_T_b) * (w_T_b_.inverse()) * w_pos;  // position of the obstacle in the camera frame
+                                                                        // (i.e., depth optical frame)
+    bool inFOV =                                                        // check if it's inside the field of view.
+        c_pos.z() < par_.fov_depth &&                                   //////////////////////
+        fabs(atan2(c_pos.x(), c_pos.z())) <
+            ((par_.fov_x_deg * M_PI / 180.0) / 2.0) &&  ///// Note that fov_x_deg means x camera_depth_optical_frame
+        fabs(atan2(c_pos.y(), c_pos.z())) <
+            ((par_.fov_y_deg * M_PI / 180.0) / 2.0);  ///// Note that fov_y_deg means x camera_depth_optical_frame
+
+    // inFOV_old_ = inFOV;
+    // inFOV_time_old_ = ros::Time::now().toSec();
 
     if (inFOV == false)
     {
       // std::cout << "B_pos= " << B_pos.transpose() << " is NOT inFOV" << std::endl;
-      // std::cout << "W_pos= " << W_pos.transpose() << " is NOT inFOV" << std::endl;
-      // std::cout << "[inFOV] W_T_B_= " << W_T_B_.matrix() << std::endl;
+      // std::cout << "w_pos= " << w_pos.transpose() << " is NOT inFOV" << std::endl;
+      // std::cout << "[inFOV] w_T_b_= " << w_T_b_.matrix() << std::endl;
       return;
     }
     // else
@@ -521,7 +528,7 @@ void PantherRos::stateCB(const snapstack_msgs::State& msg)
   // state_tmp.print();
   panther_ptr_->updateState(state_tmp);
 
-  W_T_B_ = Eigen::Translation3d(msg.pos.x, msg.pos.y, msg.pos.z) *
+  w_T_b_ = Eigen::Translation3d(msg.pos.x, msg.pos.y, msg.pos.z) *
            Eigen::Quaterniond(msg.quat.w, msg.quat.x, msg.quat.y, msg.quat.z);
 
   if (published_initial_position_ == false)

@@ -16,8 +16,8 @@ x_max: 100.0  # [m] don't forget the .0
 y_min: -4.0  # [m] don't forget the .0
 y_max: 4.0   # [m] don't forget the .0
 
-z_min: -100.0        #[m] points below this are considered ground
-z_max: 100.0         #[m] 
+z_min: -4.0        #[m] points below this are considered ground
+z_max: 4.0         #[m] 
 
 # [IN THE LAUNCH FILE] mode: "py" #no_perception_aware (noPA), first_pos_then_yaw (py), panther (panther)
 

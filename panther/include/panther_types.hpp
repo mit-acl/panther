@@ -858,6 +858,7 @@ struct parameters
   bool print_graph_yaw_info = false;
 
   Eigen::Affine3d b_T_c;
+  Eigen::Affine3d c_T_b;
 };
 
 struct committedTrajectory

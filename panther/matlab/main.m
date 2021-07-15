@@ -29,7 +29,7 @@ opti = casadi.Opti();
 %%%%%%%%%%%%%%%%%%%%%%%%%%% CONSTANTS! %%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-pos_is_fixed=true; %you need to run this file twice to produce the necessary casadi files: both with pos_is_fixed=false and pos_is_fixed=true. 
+pos_is_fixed=false; %you need to run this file twice to produce the necessary casadi files: both with pos_is_fixed=false and pos_is_fixed=true. 
 
 deg_pos=3;
 deg_yaw=2;
@@ -198,8 +198,8 @@ for j=1:(sp.num_seg)
         const_p{end+1}= y_lim(1)<=tmp(2) ;
         const_p{end+1}= y_lim(2)>=tmp(2) ;
 
-%           const_p{end+1}= z_lim(1)<=tmp(3) ; 
-%         const_p{end+1}= z_lim(2)>=tmp(3) ;
+          const_p{end+1}= z_lim(1)<=tmp(3) ; 
+        const_p{end+1}= z_lim(2)>=tmp(3) ;
     end
 end
 
