@@ -1329,7 +1329,7 @@ bool Panther::getNextGoal(mt::state& next_goal)
     next_goal.dyaw = par_.ydot_max * cos(t * (par_.ydot_max / amplitude_rd));
   }
 
-  if (fabs(next_goal.dyaw) > par_.ydot_max)
+  if (fabs(next_goal.dyaw) > (par_.ydot_max + 1e-4))
   {
     std::cout << red << "par_.ydot_max not satisfied!!" << reset << std::endl;
     std::cout << red << "next_goal.dyaw= " << next_goal.dyaw << reset << std::endl;
