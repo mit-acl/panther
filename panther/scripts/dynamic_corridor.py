@@ -34,7 +34,7 @@ import glob
 import rospkg
 
 
-class FakeSim:
+class DynCorridor:
 
     def getTrajectoryPosMeshBBox(self, i):
         delta_beginning=2.0;
@@ -80,13 +80,14 @@ class FakeSim:
         self.z_max= 0.5
         # self.scale= [(self.x_max-self.x_min)/self.total_num_obs, 5.0, 1.0]
         self.scale= [2.0, 2.0, 2.0]
-        self.slower_min=1.2   #1.2 or 2.3
-        self.slower_max=1.2   #1.2 or 2.3
+        self.slower_min=2.3   #1.2 or 2.3
+        self.slower_max=2.3   #1.2 or 2.3
         self.bbox_dynamic=[0.8, 0.8, 0.8] 
         self.bbox_static_vert=[0.4, 0.4, 4]
         self.bbox_static_horiz=[0.4, 8, 0.4]
         self.percentage_vert=0.0;
         self.name_obs="obs_"
+        self.max_vel_obstacles=-10.0;
    
         #HACK
         # self.num_of_dyn_objects=1;
@@ -249,7 +250,7 @@ class FakeSim:
 
         #####################################################
         # START (This is for the benchmark with the code from HKUST)
-        # In their code, the function EGOReplanFSM::marker_callback, has access to pos/vel from the obstacles through the marker array. The code below publishes the marker array with that info
+        # In their code, the function EGOReplanFSM::marker_callback has access to pos/vel from the obstacles through the marker array. The code below publishes the marker array with that info
         ###################################################
         marker_array_hkust=MarkerArray();
         for i in range(len(self.marker_array.markers)): 
@@ -302,10 +303,11 @@ class FakeSim:
 
             self.pubTraj_hkust.publish(self.all_dyn_traj_hkust[i])
 
+            self.max_vel_obstacles=max(self.max_vel_obstacles, np.linalg.norm(np.array(vel)))
+            print("self.max_vel_obstacles= ", self.max_vel_obstacles)
 
-        self.pubShapes_dynamic_mesh_hkust.publish(marker_array_hkust)
 
-        
+        self.pubShapes_dynamic_mesh_hkust.publish(marker_array_hkust)       
         #####################################################
         # END
         ###################################################
@@ -428,7 +430,7 @@ class FakeSim:
              
 
 def startNode(total_num_obs, gazebo):
-    c = FakeSim(total_num_obs,gazebo)
+    c = DynCorridor(total_num_obs,gazebo)
     rospy.Timer(rospy.Duration(0.01), c.pubTF)
     rospy.spin()
 
