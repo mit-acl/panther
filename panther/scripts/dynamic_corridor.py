@@ -33,6 +33,39 @@ import sys
 import glob
 import rospkg
 
+def getColorJet(v, vmin, vmax): 
+
+  c=ColorRGBA()
+
+  c.r = 1;
+  c.g = 1;
+  c.b = 1;
+  c.a = 1;
+
+  if (v < vmin):
+    v = vmin;
+  if (v > vmax):
+    v = vmax;
+  dv = vmax - vmin;
+
+  if (v < (vmin + 0.25 * dv)):
+    c.r = 0;
+    c.g = 4 * (v - vmin) / dv;
+  
+  elif (v < (vmin + 0.5 * dv)):
+    c.r = 0;
+    c.b = 1 + 4 * (vmin + 0.25 * dv - v) / dv;
+  
+  elif (v < (vmin + 0.75 * dv)):
+    c.r = 4 * (v - vmin - 0.5 * dv) / dv;
+    c.b = 0;
+  
+  else:
+    c.g = 1 + 4 * (vmin + 0.75 * dv - v) / dv;
+    c.b = 0;
+
+  return c;
+
 
 class DynCorridor:
 
@@ -135,6 +168,7 @@ class DynCorridor:
         self.pubShapes_dynamic_mesh = rospy.Publisher('/obstacles_mesh', MarkerArray, queue_size=1, latch=True)
 
         self.pubShapes_dynamic_mesh_hkust = rospy.Publisher('/obstacles_mesh_hkust', MarkerArray, queue_size=1, latch=True)
+        self.pubShapes_dynamic_mesh_colored = rospy.Publisher('/obstacles_mesh_colored', MarkerArray, queue_size=1, latch=True)
         self.pubTraj_hkust = rospy.Publisher('/SQ01s/trajs_hkust', DynTraj, queue_size=1, latch=True)
 
         #self.pubGazeboState = rospy.Publisher('/gazebo/set_model_state', ModelState, queue_size=100)
@@ -304,13 +338,73 @@ class DynCorridor:
             self.pubTraj_hkust.publish(self.all_dyn_traj_hkust[i])
 
             self.max_vel_obstacles=max(self.max_vel_obstacles, np.linalg.norm(np.array(vel)))
-            print("self.max_vel_obstacles= ", self.max_vel_obstacles)
+            # print("self.max_vel_obstacles= ", self.max_vel_obstacles)
 
 
         self.pubShapes_dynamic_mesh_hkust.publish(marker_array_hkust)       
         #####################################################
         # END
         ###################################################
+
+
+        # #####################################################
+        # # Publish the colored markers
+        # ###################################################
+        # id_marker_tmp=0
+        # marker_array_colored=MarkerArray();
+        # for i in range(len(self.marker_array.markers)): 
+
+        #     tinit=rospy.get_time();
+        #     tfinal=rospy.get_time()+5;
+        #     for t in np.linspace(tinit,tfinal,21).tolist():
+        #          # print "t= ", t
+        #         x = eval(self.all_dyn_traj[i].s_mean[0])
+        #         y = eval(self.all_dyn_traj[i].s_mean[1])
+        #         z = eval(self.all_dyn_traj[i].s_mean[2])    
+                
+        #         marker=Marker();           
+
+        #         marker.pose.position.x=x;
+        #         marker.pose.position.y=y;
+        #         marker.pose.position.z=z;
+
+        #         marker.pose.orientation.x=0;
+        #         marker.pose.orientation.y=0;
+        #         marker.pose.orientation.z=0;
+        #         marker.pose.orientation.w=1.0;
+
+        #         marker.color=getColorJet(t,tinit,tfinal)
+
+        #         marker.scale=self.marker_array.markers[i].scale;
+
+        #         marker.header.frame_id = "/world"
+        #         marker.type = marker.CUBE
+        #         marker.action = marker.ADD
+        #         marker.id = id_marker_tmp
+        #         marker.ns = 'colored_dyn_corridor'
+
+        #         marker_array_colored.markers.append(marker)
+        #         id_marker_tmp=id_marker_tmp+1;
+
+
+        #         marker2=copy.deepcopy(marker);
+        #         marker2.color.r=0.0;
+        #         marker2.color.g=0.0;
+        #         marker2.color.b=0.0;
+        #         marker2.color.a=0.3;
+        #         marker2.id = id_marker_tmp
+        #         marker2.scale.x =  marker2.scale.x+0.05;
+        #         marker2.scale.y =  marker2.scale.y+0.05;
+        #         marker2.scale.z =  marker2.scale.z+0.05;
+
+
+        #         marker_array_colored.markers.append(marker2)
+        #         id_marker_tmp=id_marker_tmp+1;
+            
+        # self.pubShapes_dynamic_mesh_colored.publish(marker_array_colored)       
+        # #####################################################
+        # # END
+        # ###################################################
 
 
 

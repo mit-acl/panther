@@ -5,6 +5,8 @@ Panels:
     Property Tree Widget:
       Expanded:
         - /TF1/Frames1
+        - /MarkerArray2
+        - /MarkerArray2/Status1
       Splitter Ratio: 0.2574257552623749
     Tree Height: 784
   - Class: rviz/Selection
@@ -25,7 +27,7 @@ Panels:
     Experimental: false
     Name: Time
     SyncMode: 0
-    SyncSource: DepthImage
+    SyncSource: ""
   - Class: rviz/Displays
     Help Height: 0
     Name: Displays
@@ -66,12 +68,6 @@ Visualization Manager:
       Frame Timeout: 1000
       Frames:
         All Enabled: false
-        SQ01s:
-          Value: true
-        SQ01s/camera:
-          Value: true
-        SQ01s/camera_depth_optical_frame:
-          Value: false
         obs_4000:
           Value: true
         obs_4001:
@@ -92,8 +88,6 @@ Visualization Manager:
           Value: true
         obs_4009:
           Value: true
-        vicon:
-          Value: false
         world:
           Value: true
       Marker Scale: 2
@@ -123,11 +117,6 @@ Visualization Manager:
             {}
           obs_4009:
             {}
-          vicon:
-            SQ01s:
-              SQ01s/camera:
-                SQ01s/camera_depth_optical_frame:
-                  {}
       Update Interval: 0
       Value: true
     - Alpha: 1
@@ -201,7 +190,7 @@ Visualization Manager:
       Marker Topic: /SQ01s/panther/fov
       Name: FOV
       Namespaces:
-        marker_fov: true
+        {}
       Queue Size: 100
       Value: true
     - Class: rviz/MarkerArray
@@ -283,7 +272,7 @@ Visualization Manager:
       Marker Topic: /SQ01s/panther/obstacles
       Name: CvxPolyObstacles
       Namespaces:
-        markertacles: true
+        {}
       Queue Size: 100
       Value: true
     - Class: rviz/MarkerArray
@@ -299,7 +288,7 @@ Visualization Manager:
       Marker Topic: /SQ01s/panther/actual_traj
       Name: ActTraj
       Namespaces:
-        ActualTraj_SQ01s: true
+        {}
       Queue Size: 100
       Value: true
     - Class: rviz/MarkerArray
@@ -307,7 +296,7 @@ Visualization Manager:
       Marker Topic: /SQ01s/panther/traj_obtained
       Name: TrajObtained
       Namespaces:
-        SQ01s: true
+        {}
       Queue Size: 100
       Value: true
     - Class: rviz/Marker
@@ -332,6 +321,14 @@ Visualization Manager:
       Name: MarkerArray
       Namespaces:
         {}
+      Queue Size: 100
+      Value: true
+    - Class: rviz/MarkerArray
+      Enabled: true
+      Marker Topic: /obstacles_mesh_colored
+      Name: MarkerArray
+      Namespaces:
+        "": true
       Queue Size: 100
       Value: true
   Enabled: true

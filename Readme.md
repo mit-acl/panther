@@ -1,4 +1,7 @@
+TODOS:
 
+* Comment pubShapes_dynamic_mesh_hkust in dynamic_corridor.py
+* sub_traj_ (in panther_ros.cpp) should be subscribed to /trajs instead
 
 Instructions to install Casadi from source, with Gurobi and from Matlab [April 2021], funciona:
 
