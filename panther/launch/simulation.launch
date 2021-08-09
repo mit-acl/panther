@@ -112,7 +112,7 @@
 
     <!-- Publications -->
     <remap from="~traj" to="traj"/>
-    <remap from="~trajs_hkust" to="trajs_hkust"/>
+    <remap from="~trajs_zhejiang" to="trajs_zhejiang"/>
     <remap from="~goal" to="goal" />
     <remap from="~setpoint" to="setpoint" />
 
