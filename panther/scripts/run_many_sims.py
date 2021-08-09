@@ -11,14 +11,10 @@
 
 #####Before running a simulation, make sure these parameters match
 #===============
-# --> planning_horizon       (panther.yaml and run_in_sim.launch)
 # --> max_vel and max_accel  (panther.yaml and run_in_sim.launch and get_stats_from_bag.py)
 # --> fov size               (panther.yaml and run_in_sim.launch)
-#===============
 # --> drone radius           (panther.yaml and grid_map.cpp and get_stats_from_bag.py)
-
 # --> ydot_max               (panther.yaml and traj_server.cpp). Note that they use a different yaw convention though
-
 # --> obstacles size         (dynamic_corridor.py and get_stats_from_bag.py)
 
 import math
