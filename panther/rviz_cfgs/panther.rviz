@@ -4,10 +4,11 @@ Panels:
     Name: Displays
     Property Tree Widget:
       Expanded:
+        - /TF1
         - /TF1/Frames1
         - /MarkerArray2
         - /MarkerArray2/Status1
-      Splitter Ratio: 0.2574257552623749
+      Splitter Ratio: 0.5105105042457581
     Tree Height: 784
   - Class: rviz/Selection
     Name: Selection
@@ -27,7 +28,7 @@ Panels:
     Experimental: false
     Name: Time
     SyncMode: 0
-    SyncSource: ""
+    SyncSource: DepthImage
   - Class: rviz/Displays
     Help Height: 0
     Name: Displays
@@ -68,6 +69,12 @@ Visualization Manager:
       Frame Timeout: 1000
       Frames:
         All Enabled: false
+        SQ01s:
+          Value: true
+        SQ01s/camera_depth_optical_frame:
+          Value: false
+        SQ01s/camera_link:
+          Value: false
         obs_4000:
           Value: true
         obs_4001:
@@ -78,16 +85,8 @@ Visualization Manager:
           Value: true
         obs_4004:
           Value: true
-        obs_4005:
-          Value: true
-        obs_4006:
-          Value: true
-        obs_4007:
-          Value: true
-        obs_4008:
-          Value: true
-        obs_4009:
-          Value: true
+        vicon:
+          Value: false
         world:
           Value: true
       Marker Scale: 2
@@ -107,16 +106,11 @@ Visualization Manager:
             {}
           obs_4004:
             {}
-          obs_4005:
-            {}
-          obs_4006:
-            {}
-          obs_4007:
-            {}
-          obs_4008:
-            {}
-          obs_4009:
-            {}
+          vicon:
+            SQ01s:
+              SQ01s/camera_link:
+                SQ01s/camera_depth_optical_frame:
+                  {}
       Update Interval: 0
       Value: true
     - Alpha: 1
@@ -328,7 +322,7 @@ Visualization Manager:
       Marker Topic: /obstacles_mesh_colored
       Name: MarkerArray
       Namespaces:
-        "": true
+        {}
       Queue Size: 100
       Value: true
   Enabled: true
@@ -359,25 +353,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/ThirdPersonFollower
-      Distance: 43.71935272216797
+      Distance: 21.939403533935547
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 16.69393539428711
-        Y: -4.171898365020752
+        X: 4.583409309387207
+        Y: -3.724024772644043
         Z: -1.1625602382991929e-5
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.5697963237762451
+      Pitch: 0.5547970533370972
       Target Frame: <Fixed Frame>
       Value: ThirdPersonFollower (rviz)
-      Yaw: 4.719984531402588
+      Yaw: 3.6149847507476807
     Saved: ~
 Window Geometry:
   DepthImage:
