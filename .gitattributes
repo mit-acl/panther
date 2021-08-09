@@ -1,3 +1,4 @@
 ./**/*.casadi filter=lfs diff=lfs merge=lfs -text
+*.casadi filter=lfs diff=lfs merge=lfs -text
 panther/matlab/casadi_generated_files/ filter=lfs diff=lfs merge=lfs -text
 panther/matlab/casadi_generated_files/fit_yaw.casadi filter=lfs diff=lfs merge=lfs -text
