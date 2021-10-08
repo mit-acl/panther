@@ -29,7 +29,7 @@ opti = casadi.Opti();
 %%%%%%%%%%%%%%%%%%%%%%%%%%% CONSTANTS! %%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-pos_is_fixed=true; %you need to run this file twice to produce the necessary casadi files: both with pos_is_fixed=false and pos_is_fixed=true. 
+pos_is_fixed=false; %you need to run this file twice to produce the necessary casadi files: both with pos_is_fixed=false and pos_is_fixed=true. 
 
 deg_pos=3;
 deg_yaw=2;
@@ -40,25 +40,26 @@ num_of_yaw_per_layer=40; %This will be used in the graph yaw search of C++
                          %Note that the initial layer will have only one yaw (which is given) 
 basis="MINVO"; %MINVO OR B_SPLINE or BEZIER. This is the basis used for collision checking (in position, velocity, accel and jerk space), both in Matlab and in C++
 linear_solver_name='mumps'; %mumps [default, comes when installing casadi], ma27, ma57, ma77, ma86, ma97 
-print_level=0; %From 0 (no verbose) to 12 (very verbose), default is 5
-t0=0; 
-tf=10.5;
+print_level=5; %From 0 (no verbose) to 12 (very verbose), default is 5
+
+t0_n=0.0; 
+tf_n=1.0;
 
 dim_pos=3;
 dim_yaw=1;
 
 offset_vel=0.1;
 
-assert(tf>t0);
+assert(tf_n>t0_n);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%% PARAMETERS! %%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%% DEFINITION
 %%%%% factors for the cost
-c_pos_smooth=            opti.parameter(1,1);
-c_yaw_smooth=             opti.parameter(1,1);
-c_fov=  opti.parameter(1,1);
+c_pos_smooth= opti.parameter(1,1);
+c_yaw_smooth= opti.parameter(1,1);
+c_fov=        opti.parameter(1,1);
 c_final_pos = opti.parameter(1,1);
 c_final_yaw = opti.parameter(1,1);
 % c_costs.dist_im_cost=         opti.parameter(1,1);
@@ -114,47 +115,49 @@ total_time=opti.parameter(1,1); %This allows a different t0 and tf than the one 
 %%%%%%%%%%%%%%%%%%%%%%%%%%% CREATION OF THE SPLINES! %%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-sy=MyClampedUniformSpline(t0,tf,deg_yaw, dim_yaw, num_seg, opti); %spline yaw.
+sy=MyClampedUniformSpline(t0_n,tf_n,deg_yaw, dim_yaw, num_seg, opti); %spline yaw.
 
 if(pos_is_fixed==true)
-    sp=MyClampedUniformSpline(t0,tf,deg_pos, dim_pos, num_seg, opti, false); %spline position, cPoints are fixed
+    sp=MyClampedUniformSpline(t0_n,tf_n,deg_pos, dim_pos, num_seg, opti, false); %spline position, cPoints are fixed
 else
-    sp=MyClampedUniformSpline(t0,tf,deg_pos, dim_pos, num_seg, opti); %spline position.
+    sp=MyClampedUniformSpline(t0_n,tf_n,deg_pos, dim_pos, num_seg, opti); %spline position.
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%% CONSTRAINTS! %%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-scaling=(tf-t0)/total_time;
+total_time_n=(tf_n-t0_n);
 
-v0_scaled=v0/scaling;
-a0_scaled=a0/(scaling^2);
-ydot0_scaled=ydot0/scaling;
+alpha=total_time/total_time_n;  %Please read explanation_normalization.svg
+
+v0_n=v0*alpha;
+a0_n=a0*(alpha^2);
+ydot0_n=ydot0*alpha;
 
 
-vf_scaled=vf/scaling;
-af_scaled=af/(scaling^2);
-ydotf_scaled=ydotf/scaling;
+vf_n=vf*alpha;
+af_n=af*(alpha^2);
+ydotf_n=ydotf*alpha;
 
-v_max_scaled=v_max/scaling;
-a_max_scaled=a_max/(scaling^2); 
-j_max_scaled=j_max/(scaling^3);
+v_max_n=v_max*alpha;
+a_max_n=a_max*(alpha^2);
+j_max_n=j_max*(alpha^3);
 
-ydot_max_scaled=ydot_max/scaling; %v_max for yaw
+ydot_max_n=ydot_max*alpha;
 
 %Initial conditions
-const_p{end+1}= sp.getPosT(t0)== p0 ;
-const_p{end+1}= sp.getVelT(t0)== v0_scaled ;
-const_p{end+1}= sp.getAccelT(t0)== a0_scaled ;
-const_y{end+1}= sy.getPosT(t0)== y0 ;
-const_y{end+1}= sy.getVelT(t0)== ydot0_scaled ;
+const_p{end+1}= sp.getPosT(t0_n)== p0 ;
+const_p{end+1}= sp.getVelT(t0_n)== v0_n ;
+const_p{end+1}= sp.getAccelT(t0_n)== a0_n ;
+const_y{end+1}= sy.getPosT(t0_n)== y0 ;
+const_y{end+1}= sy.getVelT(t0_n)== ydot0_n ;
 
 %Final conditions
 % opti.subject_to( sp.getPosT(tf)== pf );
-const_p{end+1}= sp.getVelT(tf)== vf_scaled ;
-const_p{end+1}= sp.getAccelT(tf)== af_scaled ;
-const_y{end+1}= sy.getVelT(tf)==ydotf_scaled ; % Needed: if not (and if you are minimizing ddyaw), dyaw=cte --> yaw will explode
+const_p{end+1}= sp.getVelT(tf_n)== vf_n ;
+const_p{end+1}= sp.getAccelT(tf_n)== af_n ;
+const_y{end+1}= sy.getVelT(tf_n)==ydotf_n ; % Needed: if not (and if you are minimizing ddyaw), dyaw=cte --> yaw will explode
 
 
 % epsilon=1;
@@ -198,13 +201,13 @@ for j=1:(sp.num_seg)
         const_p{end+1}= y_lim(1)<=tmp(2) ;
         const_p{end+1}= y_lim(2)>=tmp(2) ;
 
-          const_p{end+1}= z_lim(1)<=tmp(3) ; 
+        const_p{end+1}= z_lim(1)<=tmp(3) ; 
         const_p{end+1}= z_lim(2)>=tmp(3) ;
     end
 end
 
 
-[const_p,const_y]=addDynLimConstraints(const_p,const_y, sp, sy, basis, v_max_scaled, a_max_scaled, j_max_scaled, ydot_max_scaled);
+[const_p,const_y]=addDynLimConstraints(const_p,const_y, sp, sy, basis, v_max_n, a_max_n, j_max_n, ydot_max_n);
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -213,16 +216,17 @@ end
 
 
 
-g=9.81;
+% g=9.81;
 %Compute perception cost
 dist_im_cost=0;
 vel_im_cost=0;
 fov_cost=0;
 
 clear i
-t_simpson=linspace(t0,tf,num_samples_simpson);
-delta_simpson=(t_simpson(2)-t_simpson(1));
+t_simpson_n=linspace(t0_n,tf_n,num_samples_simpson);
 
+delta_simpson_n=total_time_n/num_samples_simpson;
+delta_simpson =total_time/num_samples_simpson;
 
 
 u=MX.sym('u',1,1); %it must be defined outside the loop (so that then I can use substitute it regardless of the interval
@@ -239,7 +243,8 @@ s_logged={};
 for j=1:sp.num_seg
     
     w_t_b{j} = sp.getPosU(u,j);
-    accel = sp.getAccelU(u,j);
+    accel_n = sp.getAccelU(u,j);
+    accel=accel_n/(alpha^2);
 %     yaw= sy.getPosU(u,j);%%%%%%%%%%%%
 
     qpsi=[cos(yaw/2), 0, 0, sin(yaw/2)]; %Note that qpsi has norm=1
@@ -276,67 +281,14 @@ for j=1:sp.num_seg
     c_P=c_T_b*b_T_w*[w_fevar;1]; %Position of the feature in the camera frame
     s=c_P(1:2)/(c_P(3));  %Note that here we are not using f (the focal length in meters) because it will simply add a constant factor in ||s|| and in ||s_dot||
     
-
-    % See https://en.wikipedia.org/wiki/Cone#Equation_form:~:text=In%20implicit%20form%2C%20the%20same%20solid%20is%20defined%20by%20the%20inequalities
-
-    %%%%%%%%%%%%%%%%%%%
-%     %FOV version 1 (cone):
-%     % See https://en.wikipedia.org/wiki/Cone#Equation_form:~:text=In%20implicit%20form%2C%20the%20same%20solid%20is%20defined%20by%20the%20inequalities
-%       gamma1=100; gamma2=100;
-%     xx{j}=c_P(1); yy{j}=c_P(2); zz{j}=c_P(3);
-%     x=c_P(1);y=c_P(2); z=c_P(3);
-%     is_in_FOV1{j}=-((x^2+y^2)*(cos(theta_half_FOV_deg*pi/180.0))^2 -(z^2)*(sin(theta_half_FOV_deg*pi/180.0))^2); %(if this quantity is >=0)
-%     is_in_FOV2{j}=c_P(3); %(and this quantity is >=0)
-%     isInFOV_smooth=  (   1/(1+exp(-gamma1*is_in_FOV1{j}))  )*(   1/(1+exp(-gamma2*is_in_FOV2{j}))  );
-%     target_isInFOV{j}=isInFOV_smooth; %/(0.1+f_vel_im{n})
-%     
-%     %Costs (all of them following the convention of "minimize" )
-%     f_vel_im{j}=(s_dot'*s_dot);
-%     f_dist_im{j}=(s'*s); %I wanna minimize the integral of this funcion. Approx. using symp. Rule
-%     f_vel_isInFOV_im{j}=-(target_isInFOV{j}) /(offset_vel+f_vel_im{j});
-%       %End of one possible version
-      %%%%%%%%%%%%%%%%%%%
-      
-      %FOV version 2: (the four planes of the FOV (i.e. a pyramid) + sigmoid to smooth)
-      %See also Mathematica notebook
-%       gamma=30;
-%       tthx=tan(thetax_half_FOV_rad);
-%       tthy=tan(thetay_half_FOV_rad);
-%       v0h=[0.0, 0.0, 0.0, 1.0]';     %Vertex of the pyramid
-%       v1h=[-tthx, -tthy, 1.0, 1.0]'; %Point in the base of the pyramid
-%       v2h=[-tthx, tthy, 1.0, 1.0]';  %Point in the base of the pyramid
-%       v3h=[tthx, tthy, 1.0, 1.0]';   %Point in the base of the pyramid
-%       v4h=[tthx, -tthy, 1.0, 1.0]';  %Point in the base of the pyramid
-%       x=c_P(1);y=c_P(2); z=c_P(3);
-%       xyzh=[x, y, z, 1.0]';
-%       dA21=computeDet([xyzh'; v0h'; v2h'; v1h'] );%This has to be >=0
-%       dA32=computeDet([xyzh'; v0h'; v3h'; v2h'] );%This has to be >=0
-%       dA43=computeDet([xyzh'; v0h'; v4h'; v3h'] );%This has to be >=0
-%       dA14=computeDet([xyzh'; v0h'; v1h'; v4h'] );%This has to be >=0
-%       isInFOV_smooth=(mySig(gamma, dA21)*mySig(gamma, dA32)*mySig(gamma, dA43)*mySig(gamma, dA14));
-      
-      %%%%%%%%%%%%%%%%%%
-     %Simpler [but no simplification made!] version of version 1 (cone):
+    %FOV is a cone:  (See more possible versions of this constraint at the end of this file)
     gamma=100;
 %     w_beta=w_fevar(1:3)-w_T_c(1:3,4);
 %     w_beta=w_beta/norm(w_beta);
 %     is_in_FOV1=-cos(thetax_half_FOV_deg*pi/180.0)+w_beta'*w_T_c(1:3,3); %This has to be >=0
     is_in_FOV1=-cos(thetax_half_FOV_deg*pi/180.0) + (c_P(1:3)'/norm(c_P((1:3))))*[0;0;1];
     isInFOV_smooth=  (   1/(1+exp(-gamma*is_in_FOV1))  );
-    
-    %     %%%%%%%%%%%%%%%%%%%
-      %FOV version 3: [Squicular cone]
-%     gamma1=0.6; %If too big, the warning "solver:nlp_grad_f failed: NaN detected for output grad_f_x" will appear
-%     gamma2=1.0;
-%     tthx2=(tan(thetax_half_FOV_rad))^2;
-%     tthy2=(tan(thetay_half_FOV_rad))^2;
-%     
-%     x=c_P(1);y=c_P(2); z=c_P(3);  ss=0.95;
-% %%%     is_in_FOV1=-(    (x^2)*(z^2)/tthx2  +  (y^2)*(z^2)/tthy2   -(ss^2)*(x^2)*(y^2) -(z^4)     ); %(if this quantity is >=0). See https://en.wikipedia.org/wiki/Squircle, Note that  a^2=tan^2(theta_half_x)     b^2=tan^2(theta_half_y)   
-%     is_in_FOV1= -(    (x^4)/tthx2  +  (y^4)/tthy2   -(z^4)     ); %(if this quantity is >=0). See https://en.wikipedia.org/wiki/Squircle, , Note that  a^2=tan^2(theta_half_x)     b^2=tan^2(theta_half_y)   
-%     is_in_FOV2=z; %(and this quantity is >=0) 
-%     isInFOV_smooth=  (   1/(1+exp(-gamma1*is_in_FOV1))  )*(   1/(1+exp(-gamma2*is_in_FOV2))  );
-%     %%%%%%%%%%%%%%%%%%%
+   
     
 
     target_isInFOV{j}=isInFOV_smooth; %This one will be used for the graph search in yaw
@@ -344,14 +296,18 @@ for j=1:sp.num_seg
     %I need to substitute it here because s_dot should consider also the velocity caused by the fact that yaw=yaw(t)
     s=substitute(s, yaw, sy.getPosU(u,j));
     target_isInFOV_substituted_yawcps{j}=substitute(target_isInFOV{j}, yaw, sy.getPosU(u,j));
-     
-    %TODO: should we include the scaling variable here below?
-    partial_s_partial_t=jacobian(s,u)*(1/sp.delta_t);% partial_s_partial_u * partial_u_partial_t
     
-    %See Eq. 11.3 of https://www2.math.upenn.edu/~pemantle/110-public/notes11.pdf
+    %Note that s=f(t, posfeature(t))
+    %See, e.g.,  Eq. 11.3 of https://www2.math.upenn.edu/~pemantle/110-public/notes11.pdf
+    %Hence, s_dot = partial_s_partial_t + partial_s_partial_posfeature*partial_posfeature_partial_t
+    
+    partial_s_partial_t=jacobian(s,u)*(1/(alpha*sp.delta_t));% partial_s_partial_u * partial_u_partial_t  
+    
     partial_s_partial_posfeature=jacobian(s,w_fevar);
-    partial_posfeature_partial_t=w_velfewrtworldvar/scaling;
-    s_dot=partial_s_partial_t  + partial_s_partial_posfeature*partial_posfeature_partial_t; % partial_s_partial_u * partial_u_partial_t
+    partial_posfeature_partial_t=w_velfewrtworldvar*alpha;
+    s_dot=partial_s_partial_t  + partial_s_partial_posfeature*partial_posfeature_partial_t; 
+    
+    
     s_dot2=s_dot'*s_dot;
     s2=(s'*s);
     
@@ -360,7 +316,7 @@ for j=1:sp.num_seg
     fov_cost_j=-isInFOV /(offset_vel+4*s_dot2);
 %     fov_cost_j=-isInFOV + 1500000*(isInFOV)*s_dot2;
 %     fov_cost_j=100000*s_dot2/(isInFOV);
-%      fov_cost_j=-isInFOV+1e6*(1-isInFOV)*s_dot2;
+%     fov_cost_j=-isInFOV+1e6*(1-isInFOV)*s_dot2;
     
       %%%%%%%%%%%%%%%%%%
       
@@ -369,7 +325,7 @@ for j=1:sp.num_seg
     t_final_interval=max(span_interval);
     delta_interval=t_final_interval-t_init_interval;
     
-    tsf=t_simpson; %tsf is a filtered version of  t_simpson
+    tsf=t_simpson_n; %tsf is a filtered version of  t_simpson
     tsf=tsf(tsf>=min(t_init_interval));
     if(j==(sp.num_seg))
         tsf=tsf(tsf<=max(t_final_interval));
@@ -384,7 +340,7 @@ for j=1:sp.num_seg
         simpson_coeff=getSimpsonCoeff(simpson_index,num_samples_simpson);
         
        
-        fov_cost=fov_cost + (delta_simpson/3.0)*simpson_coeff*substitute( fov_cost_j,[u;w_fevar;w_velfewrtworldvar],[u_i;w_fe{simpson_index};w_velfewrtworld{simpson_index}]); 
+        fov_cost=fov_cost + (delta_simpson_n/3.0)*simpson_coeff*substitute( fov_cost_j,[u;w_fevar;w_velfewrtworldvar],[u_i;w_fe{simpson_index};w_velfewrtworld{simpson_index}]); 
 
         all_target_isInFOV=[all_target_isInFOV  substitute(target_isInFOV{j},[u;w_fevar],[u_i;w_fe{simpson_index}])];
         
@@ -399,11 +355,11 @@ for j=1:sp.num_seg
 end
 
 %Cost
-pos_smooth_cost=sp.getControlCost();
-yaw_smooth_cost=sy.getControlCost();
+pos_smooth_cost=sp.getControlCost()/(alpha^(sp.p-1));
+yaw_smooth_cost=sy.getControlCost()/(alpha^(sy.p-1));
 
-final_pos_cost=(sp.getPosT(tf)- pf)'*(sp.getPosT(tf)- pf);
-final_yaw_cost=(sy.getPosT(tf)- yf)^2;
+final_pos_cost=(sp.getPosT(tf_n)- pf)'*(sp.getPosT(tf_n)- pf);
+final_yaw_cost=(sy.getPosT(tf_n)- yf)^2;
 
 total_cost=c_pos_smooth*pos_smooth_cost+...
            c_yaw_smooth*yaw_smooth_cost+... 
@@ -443,10 +399,10 @@ for i=1:num_samples_simpson
     x0_feature=[1;1;1];
     v0_feature=0.2; %Set to 0 if you want constant poistion
     syms t real;
-    x_feature=x0_feature+v0_feature*(t-t0)*ones(3,1);
+    x_feature=x0_feature+v0_feature*(t-t0_n)*ones(3,1);
     v_feature=diff(x_feature,t);
-    all_w_fe_value{i}=double(subs(x_feature,t,t_simpson(i)));
-    all_w_velfewrtworld_value{i}=double(subs(v_feature,t,t_simpson(i)));
+    all_w_fe_value{i}=double(subs(x_feature,t,t_simpson_n(i)));
+    all_w_velfewrtworld_value{i}=double(subs(v_feature,t,t_simpson_n(i)));
 end
 all_w_fe_value=cell2mat(all_w_fe_value);
 all_w_velfewrtworld_value=cell2mat(all_w_velfewrtworld_value);
@@ -616,8 +572,8 @@ end
 all_target_isInFOV_for_different_yaw=all_target_isInFOV_for_different_yaw'; % Each row will be a layer. Each column will have yaw=constat
 
 pCPs=sp.getCPsAsMatrix();
-g = Function('g',{pCPs,        all_w_fe,    thetax_FOV_deg,  thetay_FOV_deg,  b_T_c,  yaw_samples},{all_target_isInFOV_for_different_yaw},...
-                 {'pCPs', 'all_w_fe', 'thetax_FOV_deg', 'thetay_FOV_deg','b_T_c', 'yaw_samples'},{'result'});
+g = Function('g',{pCPs,  total_time,    all_w_fe,    thetax_FOV_deg,  thetay_FOV_deg,  b_T_c,  yaw_samples},{all_target_isInFOV_for_different_yaw},...
+                 {'pCPs', 'total_time', 'all_w_fe', 'thetax_FOV_deg', 'thetay_FOV_deg','b_T_c', 'yaw_samples'},{'result'});
 g=g.expand();
 
 g.save('./casadi_generated_files/visibility.casadi') %The file generated is quite big
@@ -648,15 +604,22 @@ sy.plotPosVelAccelJerk(ydot_max_value)
 % sy.plotPosVelAccelJerkFiniteDifferences();
 
 sp.plotPos3D();
-plotSphere( sp.getPosT(t0),0.2,'b'); plotSphere( sp.getPosT(tf),0.2,'r'); 
+plotSphere( sp.getPosT(t0_n),0.2,'b'); plotSphere( sp.getPosT(tf_n),0.2,'r'); 
 
 view([280,15]); axis equal
 % 
 disp("Plotting")
-for t_i=t_simpson %t0:0.3:tf  
+
+alpha_value=convertMX2Matlab(substitute(alpha,total_time, total_time_value));
+
+for t_i=t_simpson_n %t0:0.3:tf  
     
     w_t_b = sp.getPosT(t_i);
-    accel = sp.getAccelT(t_i);% sol.value(A{n})*Tau_i;
+%     accel = sp.getAccelT(t_i);% sol.value(A{n})*Tau_i;
+    
+    accel_n = sp.getAccelT(t_i);
+    accel = accel_n/(alpha_value^2);
+    
     yaw = sy.getPosT(t_i);
 %         psiT=sol.value(Psi{n})*Tau_i;
 
@@ -723,12 +686,12 @@ xlim([-max(abs(x)),max(abs(x))]); ylim([-max(abs(y)),max(abs(y))]); yline(0.0,'-
 %%%%%%%    FUNCTION TO FIT A SPLINE TO SAMPLES     %%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-sy_tmp=MyClampedUniformSpline(t0,tf,deg_yaw, dim_yaw, num_seg, opti);  %creating another object to not mess up with sy
+sy_tmp=MyClampedUniformSpline(t0_n,tf_n,deg_yaw, dim_yaw, num_seg, opti);  %creating another object to not mess up with sy
 
-all_yaw=MX.sym('all_yaw',1,numel(t_simpson));
+all_yaw=MX.sym('all_yaw',1,numel(t_simpson_n));
 cost_function=0;
-for i=1:numel(t_simpson)
-    cost_function = cost_function + (sy_tmp.getPosT(t_simpson(i))-all_yaw(i))^2; 
+for i=1:numel(t_simpson_n)
+    cost_function = cost_function + (sy_tmp.getPosT(t_simpson_n(i))-all_yaw(i))^2; 
 end
 
 lambda1=MX.sym('lambda1',1,1);
@@ -736,9 +699,9 @@ lambda2=MX.sym('lambda2',1,1);
 lambda3=MX.sym('lambda3',1,1);
 
 %Note that y0 \equiv all_yaw(1)
-c1= sy_tmp.getPosT(t0) - all_yaw(1); %==0
-c2= sy_tmp.getVelT(t0) - ydot0; %==0
-c3= sy_tmp.getVelT(tf) - ydotf; %==0
+c1= sy_tmp.getPosT(t0_n) - all_yaw(1); %==0
+c2= sy_tmp.getVelT(t0_n) - ydot0; %==0
+c3= sy_tmp.getVelT(tf_n) - ydotf; %==0
 
 lagrangian = cost_function  +  lambda1*c1 + lambda2*c2 + lambda3*c3;
 
@@ -755,15 +718,15 @@ solution=A\b;  %Solve the system of equations
 f= Function('f', {all_yaw, ydot0, ydotf }, {solution(1:end-3)}, ...
                  {'all_yaw', 'ydot0', 'ydotf'}, {'result'} );
 % f=f.expand();
-all_yaw_value=linspace(0,pi,numel(t_simpson));
+all_yaw_value=linspace(0,pi,numel(t_simpson_n));
 
 
 solution=f(all_yaw_value, ydot0_value, ydotf_value);
-sy_tmp=MyClampedUniformSpline(t0,tf,deg_yaw, dim_yaw, num_seg, opti);  %creating another object to not mess up with sy
+sy_tmp=MyClampedUniformSpline(t0_n,tf_n,deg_yaw, dim_yaw, num_seg, opti);  %creating another object to not mess up with sy
 sy_tmp.updateCPsWithSolution(full(solution)');
 sy_tmp.plotPosVelAccelJerk();
 subplot(4,1,1); hold on;
-plot(t_simpson, all_yaw_value, 'o')
+plot(t_simpson_n, all_yaw_value, 'o')
 
 
 f.save('./casadi_generated_files/fit_yaw.casadi') %The file generated is quite big
@@ -774,12 +737,12 @@ f.save('./casadi_generated_files/fit_yaw.casadi') %The file generated is quite b
 %% Functions
 
 
-function [const_p,const_y]=addDynLimConstraints(const_p,const_y, sp, sy, basis, v_max_scaled, a_max_scaled, j_max_scaled, ydot_max_scaled)
+function [const_p,const_y]=addDynLimConstraints(const_p,const_y, sp, sy, basis, v_max_n, a_max_n, j_max_n, ydot_max_n)
 
-    const_p=[const_p sp.getMaxVelConstraints(basis, v_max_scaled)];      %Max vel constraints (position)
-    const_p=[const_p sp.getMaxAccelConstraints(basis, a_max_scaled)];    %Max accel constraints (position)
-    const_p=[const_p sp.getMaxJerkConstraints(basis, j_max_scaled)];     %Max jerk constraints (position)
-    const_y=[const_y sy.getMaxVelConstraints(basis, ydot_max_scaled)];   %Max vel constraints (yaw)
+    const_p=[const_p sp.getMaxVelConstraints(basis, v_max_n)];      %Max vel constraints (position)
+    const_p=[const_p sp.getMaxAccelConstraints(basis, a_max_n)];    %Max accel constraints (position)
+    const_p=[const_p sp.getMaxJerkConstraints(basis, j_max_n)];     %Max jerk constraints (position)
+    const_y=[const_y sy.getMaxVelConstraints(basis, ydot_max_n)];   %Max vel constraints (yaw)
 
 end
 
@@ -817,7 +780,66 @@ end
 function result=mySig(gamma,x)
     result=(1/(1+exp(-gamma*x)));
 end
-%% 
+%%
+
+        % See https://en.wikipedia.org/wiki/Cone#Equation_form:~:text=In%20implicit%20form%2C%20the%20same%20solid%20is%20defined%20by%20the%20inequalities
+    %%%%%%%%%%%%%%%%%%%
+%     %FOV version 1 (cone):
+%     % See https://en.wikipedia.org/wiki/Cone#Equation_form:~:text=In%20implicit%20form%2C%20the%20same%20solid%20is%20defined%20by%20the%20inequalities
+%       gamma1=100; gamma2=100;
+%     xx{j}=c_P(1); yy{j}=c_P(2); zz{j}=c_P(3);
+%     x=c_P(1);y=c_P(2); z=c_P(3);
+%     is_in_FOV1{j}=-((x^2+y^2)*(cos(theta_half_FOV_deg*pi/180.0))^2 -(z^2)*(sin(theta_half_FOV_deg*pi/180.0))^2); %(if this quantity is >=0)
+%     is_in_FOV2{j}=c_P(3); %(and this quantity is >=0)
+%     isInFOV_smooth=  (   1/(1+exp(-gamma1*is_in_FOV1{j}))  )*(   1/(1+exp(-gamma2*is_in_FOV2{j}))  );
+%     target_isInFOV{j}=isInFOV_smooth; %/(0.1+f_vel_im{n})
+%     
+%     %Costs (all of them following the convention of "minimize" )
+%     f_vel_im{j}=(s_dot'*s_dot);
+%     f_dist_im{j}=(s'*s); %I wanna minimize the integral of this funcion. Approx. using symp. Rule
+%     f_vel_isInFOV_im{j}=-(target_isInFOV{j}) /(offset_vel+f_vel_im{j});
+%       %End of one possible version
+      %%%%%%%%%%%%%%%%%%%
+      
+      %FOV version 2: (the four planes of the FOV (i.e. a pyramid) + sigmoid to smooth)
+      %See also Mathematica notebook
+%       gamma=30;
+%       tthx=tan(thetax_half_FOV_rad);
+%       tthy=tan(thetay_half_FOV_rad);
+%       v0h=[0.0, 0.0, 0.0, 1.0]';     %Vertex of the pyramid
+%       v1h=[-tthx, -tthy, 1.0, 1.0]'; %Point in the base of the pyramid
+%       v2h=[-tthx, tthy, 1.0, 1.0]';  %Point in the base of the pyramid
+%       v3h=[tthx, tthy, 1.0, 1.0]';   %Point in the base of the pyramid
+%       v4h=[tthx, -tthy, 1.0, 1.0]';  %Point in the base of the pyramid
+%       x=c_P(1);y=c_P(2); z=c_P(3);
+%       xyzh=[x, y, z, 1.0]';
+%       dA21=computeDet([xyzh'; v0h'; v2h'; v1h'] );%This has to be >=0
+%       dA32=computeDet([xyzh'; v0h'; v3h'; v2h'] );%This has to be >=0
+%       dA43=computeDet([xyzh'; v0h'; v4h'; v3h'] );%This has to be >=0
+%       dA14=computeDet([xyzh'; v0h'; v1h'; v4h'] );%This has to be >=0
+%       isInFOV_smooth=(mySig(gamma, dA21)*mySig(gamma, dA32)*mySig(gamma, dA43)*mySig(gamma, dA14));
+      
+      
+%%%%%%%%%%%%%%%%%%
+
+
+    %     %%%%%%%%%%%%%%%%%%%
+      %FOV version 3: [Squicular cone]
+%     gamma1=0.6; %If too big, the warning "solver:nlp_grad_f failed: NaN detected for output grad_f_x" will appear
+%     gamma2=1.0;
+%     tthx2=(tan(thetax_half_FOV_rad))^2;
+%     tthy2=(tan(thetay_half_FOV_rad))^2;
+%     
+%     x=c_P(1);y=c_P(2); z=c_P(3);  ss=0.95;
+% %%%     is_in_FOV1=-(    (x^2)*(z^2)/tthx2  +  (y^2)*(z^2)/tthy2   -(ss^2)*(x^2)*(y^2) -(z^4)     ); %(if this quantity is >=0). See https://en.wikipedia.org/wiki/Squircle, Note that  a^2=tan^2(theta_half_x)     b^2=tan^2(theta_half_y)   
+%     is_in_FOV1= -(    (x^4)/tthx2  +  (y^4)/tthy2   -(z^4)     ); %(if this quantity is >=0). See https://en.wikipedia.org/wiki/Squircle, , Note that  a^2=tan^2(theta_half_x)     b^2=tan^2(theta_half_y)   
+%     is_in_FOV2=z; %(and this quantity is >=0) 
+%     isInFOV_smooth=  (   1/(1+exp(-gamma1*is_in_FOV1))  )*(   1/(1+exp(-gamma2*is_in_FOV2))  );
+%     %%%%%%%%%%%%%%%%%%%
+
+
+
+%%
 % %% EXAMPLE OF CALLING THE PROBLEM DIRECTLY (WITHOUT FUNCTION)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % %%%%%%%%%%%%%%%%%%%%%%%%%%% INITIAL GUESSES  %%%%%%%%%%%%%%%%%%%
