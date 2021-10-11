@@ -105,7 +105,7 @@ And then
 Additionally, if you have Ubuntu 20.04, you'll need `sudo apt-get install python-is-python3 -y`
 
 <details>
-  <summary> <b>Optional (only if you want to modify the optimization problem, MATLAB needed)</b></summary>
+  <summary> <b>Optional (only if you want to modify the optimization problem, or use a different solver than `MA27`. MATLAB needed)</b></summary>
 
 The easiest way to do this is to install casadi from binaries by simply following these commands:
 
@@ -127,7 +127,7 @@ disp(jacobian(sin(x),x))
 
 ```
 
-Then, to use a specific linear solver, you simply need to change the name of `linear_solver_name` in the file `main.m`, and then run that file.
+Then, to use a specific linear solver, you simply need to change the name of `linear_solver_name` in the file `main.m`. You can also introduce more changes in the optimization problem in that file. After these changes, you need to run `main.m` twice: first with `pos_is_fixed=false` and then with `pos_is_fixed=true`. This will generate all the necessary files in the `panther/matlab/casadi_generated_files` folder. These files will be read by C++.
 
 > Note: When using a linear solver different from `mumps`, you need to start Matlab from the terminal (typing `matlab`).More info [in this issue](https://github.com/casadi/casadi/issues/2032).
 
