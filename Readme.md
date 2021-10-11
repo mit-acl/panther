@@ -105,7 +105,7 @@ And then
 Additionally, if you have Ubuntu 20.04, you'll need `sudo apt-get install python-is-python3 -y`
 
 <details>
-  <summary> <b>Optional (only if you want to modify the optimization problem, or use a different solver than `MA27`. MATLAB needed)</b></summary>
+  <summary> <b>Optional (only if you want to modify the optimization problem, or use a different solver than MA27. MATLAB needed)</b></summary>
 
 The easiest way to do this is to install casadi from binaries by simply following these commands:
 
