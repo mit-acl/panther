@@ -62,6 +62,35 @@ cmake . -DCMAKE_BUILD_TYPE=Release -DWITH_PYTHON=ON -DWITH_IPOPT=ON ..
 sudo make install
 ``` 
 
+#### Linear Solvers
+
+Go to [http://www.hsl.rl.ac.uk/ipopt/](http://www.hsl.rl.ac.uk/ipopt/), and then click on `Personal Licence, Source` to install the solver `MA27` (free for everyone).
+
+<details>
+  <summary> <b>Note</b></summary>
+
+We recommend to use `MA27`. Alternatively, you can install both `MA27` and `MA57` by clicking on `Coin-HSL Full (Stable) Source` (free for academia). Other alternative is to use the default `mumps` solver, but its much slower than `MA27` or `MA57`.
+
+</details>
+
+
+Then fill and submit the form. Once you receive the corresponding email, download the compressed file, uncompress it, and place it in the folder `~/installations` (for example). Then execute the following commands:
+
+> Note: the instructions below follow [this](https://github.com/casadi/casadi/wiki/Obtaining-HSL) closely
+
+```bash
+cd ~/installations/coinhsl-2015.06.23
+wget http://glaros.dtc.umn.edu/gkhome/fetch/sw/metis/OLD/metis-4.0.3.tar.gz #This is the metis version used in the configure file of coinhsl
+tar xvzf metis-4.0.3.tar.gz
+#sudo make uninstall && sudo make clean #Only needed if you have installed it before
+./configure LIBS="-llapack" --with-blas="-L/usr/lib -lblas" CXXFLAGS="-g -O3 -fopenmp" FCFLAGS="-g -O3 -fopenmp" CFLAGS="-g -O3 -fopenmp" #the output should say `checking for metis to compile... yes`
+sudo make install #(the files will go to /usr/local/lib)
+cd /usr/local/lib
+sudo ln -s libcoinhsl.so libhsl.so #(This creates a symbolic link `libhsl.so` pointing to `libcoinhsl.so`). See https://github.com/casadi/casadi/issues/1437
+echo "export LD_LIBRARY_PATH='\${LD_LIBRARY_PATH}:/usr/local/lib'" >> ~/.bashrc
+```
+
+
 #### Other dependencies
 ```bash
 sudo apt-get install ros-"${ROS_DISTRO}"-rviz-visual-tools  ros-"${ROS_DISTRO}"-tf2-sensor-msgs
@@ -77,34 +106,6 @@ And then
 * If you have Ubuntu 20.04 run `sudo apt-get install python3-osrf-pycommon python3-catkin-tools -y`
 
 Additionally, if you have Ubuntu 20.04, you'll need `sudo apt-get install python-is-python3 -y`
-
-<details>
-  <summary> <b>Optional (recommended for better performance)</b></summary>
-
-To achieve better performance, you can use other linear solvers for Ipopt (instead of the default `mumps` solver). Specifically, we found that `MA27` and `MA57` are usually faster than the default `mumps` solver.
-
-Go to [http://www.hsl.rl.ac.uk/ipopt/](http://www.hsl.rl.ac.uk/ipopt/), and then 
-
-* If you want the solver `MA57` (or `MA27`, or both), click on `Coin-HSL Full (Stable) Source`. This is free for academia. 
-* If you only want the solver `MA27`, click on `Personal Licence, Source`. This is free for everyone
-
-And fill and submit the form. Then download the compressed file from the link of the email you receive. Uncompress that file, and place it in a folder `~/installations` (for example). Then execute the following commands:
-
-> Note: the instructions below follow [this](https://github.com/casadi/casadi/wiki/Obtaining-HSL) closely
-
-```bash
-cd ~/installations/coinhsl-2015.06.23
-wget http://glaros.dtc.umn.edu/gkhome/fetch/sw/metis/OLD/metis-4.0.3.tar.gz #This is the metis version used in the configure file of coinhsl
-tar xvzf metis-4.0.3.tar.gz
-#sudo make uninstall && sudo make clean #Only needed if you have installed it before
-./configure LIBS="-llapack" --with-blas="-L/usr/lib -lblas" CXXFLAGS="-g -O3 -fopenmp" FCFLAGS="-g -O3 -fopenmp" CFLAGS="-g -O3 -fopenmp" #the output should say `checking for metis to compile... yes`
-sudo make install #(the files will go to /usr/local/lib)
-cd /usr/local/lib
-sudo ln -s libcoinhsl.so libhsl.so #(This creates a symbolic link `libhsl.so` pointing to `libcoinhsl.so`). See https://github.com/casadi/casadi/issues/1437
-echo "export LD_LIBRARY_PATH='\${LD_LIBRARY_PATH}:/usr/local/lib'" >> ~/.bashrc
-```
-</details>
-
 
 <details>
   <summary> <b>Optional (only if you want to modify the optimization problem, MATLAB needed)</b></summary>

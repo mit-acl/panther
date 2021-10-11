@@ -46,9 +46,9 @@ fov_depth: 5.0 #[m]
 #============================================
 
 #parameters for Casadi
-c_pos_smooth: 1.0
-c_yaw_smooth: 0.05
-c_fov: 1.0
+c_pos_smooth: 0.00002
+c_yaw_smooth: 0.0001
+c_fov: 10.0
 c_final_pos: 2000.0
 c_final_yaw: 0.0
 

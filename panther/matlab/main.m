@@ -29,7 +29,7 @@ opti = casadi.Opti();
 %%%%%%%%%%%%%%%%%%%%%%%%%%% CONSTANTS! %%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-pos_is_fixed=false; %you need to run this file twice to produce the necessary casadi files: both with pos_is_fixed=false and pos_is_fixed=true. 
+pos_is_fixed=true; %you need to run this file twice to produce the necessary casadi files: both with pos_is_fixed=false and pos_is_fixed=true. 
 
 deg_pos=3;
 deg_yaw=2;
@@ -39,7 +39,7 @@ num_samples_simpson=14;  %This will also be the num_of_layers in the graph yaw s
 num_of_yaw_per_layer=40; %This will be used in the graph yaw search of C++
                          %Note that the initial layer will have only one yaw (which is given) 
 basis="MINVO"; %MINVO OR B_SPLINE or BEZIER. This is the basis used for collision checking (in position, velocity, accel and jerk space), both in Matlab and in C++
-linear_solver_name='mumps'; %mumps [default, comes when installing casadi], ma27, ma57, ma77, ma86, ma97 
+linear_solver_name='ma27'; %mumps [default, comes when installing casadi], ma27, ma57, ma77, ma86, ma97 
 print_level=5; %From 0 (no verbose) to 12 (very verbose), default is 5
 
 t0_n=0.0; 
@@ -458,7 +458,7 @@ all_params= [ {createStruct('thetax_FOV_deg', thetax_FOV_deg, thetax_FOV_deg_val
               {createStruct('all_nd', all_nd, zeros(4,num_max_of_obst*num_seg))},...
               {createStruct('all_w_fe', all_w_fe, all_w_fe_value)},...
               {createStruct('all_w_velfewrtworld', all_w_velfewrtworld, all_w_velfewrtworld_value)},...
-              {createStruct('c_pos_smooth', c_pos_smooth, 0.0)},...
+              {createStruct('c_pos_smooth', c_pos_smooth, 0.001)},...
               {createStruct('c_yaw_smooth', c_yaw_smooth, 0.0)},...
               {createStruct('c_fov', c_fov, 1.0)},...
               {createStruct('c_final_pos', c_final_pos, 100)},...
@@ -597,10 +597,18 @@ sy.updateCPsWithSolution(full(sol.yCPs))
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%% PLOTTING! %%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+import casadi.*
+alpha_value=convertMX2Matlab(substitute(alpha,total_time, total_time_value));
 
-sp.plotPosVelAccelJerk(v_max_value, a_max_value, j_max_value)
+v_max_n_value= v_max_value*alpha_value;
+a_max_n_value= a_max_value*(alpha_value^2);
+j_max_n_value= j_max_value*(alpha_value^3);
+
+ydot_max_n_value= ydot_max_value*alpha_value;
+
+sp.plotPosVelAccelJerk(v_max_n_value, a_max_n_value, j_max_n_value)
 % sp.plotPosVelAccelJerkFiniteDifferences();
-sy.plotPosVelAccelJerk(ydot_max_value)
+sy.plotPosVelAccelJerk(ydot_max_n_value)
 % sy.plotPosVelAccelJerkFiniteDifferences();
 
 sp.plotPos3D();
@@ -610,7 +618,7 @@ view([280,15]); axis equal
 % 
 disp("Plotting")
 
-alpha_value=convertMX2Matlab(substitute(alpha,total_time, total_time_value));
+
 
 for t_i=t_simpson_n %t0:0.3:tf  
     
@@ -700,8 +708,8 @@ lambda3=MX.sym('lambda3',1,1);
 
 %Note that y0 \equiv all_yaw(1)
 c1= sy_tmp.getPosT(t0_n) - all_yaw(1); %==0
-c2= sy_tmp.getVelT(t0_n) - ydot0; %==0
-c3= sy_tmp.getVelT(tf_n) - ydotf; %==0
+c2= sy_tmp.getVelT(t0_n) - ydot0_n; %==0
+c3= sy_tmp.getVelT(tf_n) - ydotf_n; %==0
 
 lagrangian = cost_function  +  lambda1*c1 + lambda2*c2 + lambda3*c3;
 
@@ -715,13 +723,13 @@ A=jacobian(kkt_eqs, variables);
 
 solution=A\b;  %Solve the system of equations
 
-f= Function('f', {all_yaw, ydot0, ydotf }, {solution(1:end-3)}, ...
-                 {'all_yaw', 'ydot0', 'ydotf'}, {'result'} );
+f= Function('f', {all_yaw, total_time, ydot0, ydotf }, {solution(1:end-3)}, ...
+                 {'all_yaw', 'total_time', 'ydot0', 'ydotf'}, {'result'} );
 % f=f.expand();
 all_yaw_value=linspace(0,pi,numel(t_simpson_n));
 
 
-solution=f(all_yaw_value, ydot0_value, ydotf_value);
+solution=f(all_yaw_value, total_time_value, ydot0_value, ydotf_value);
 sy_tmp=MyClampedUniformSpline(t0_n,tf_n,deg_yaw, dim_yaw, num_seg, opti);  %creating another object to not mess up with sy
 sy_tmp.updateCPsWithSolution(full(solution)');
 sy_tmp.plotPosVelAccelJerk();
