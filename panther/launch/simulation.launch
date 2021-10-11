@@ -8,7 +8,7 @@
   <arg name="gazebo" default="true"/>
   <arg name="gzclient" default="false"/>
   <arg name="mode" default="panther" /> <!--  noPA (no_perception_aware), py (first_pos_then_yaw), panther (panther) ysweep (noPA but with sweep in yaw) -->
-  <arg name="num_of_obs" default="5" /> <!--  noPA (no_perception_aware), py (first_pos_then_yaw), panther (panther) -->
+  <arg name="num_of_obs" default="5" /> 
 
 
   <!-- ///////////////////////////////////////////////// -->
