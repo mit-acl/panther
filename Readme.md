@@ -64,17 +64,7 @@ sudo make install
 
 #### Linear Solvers
 
-Go to [http://www.hsl.rl.ac.uk/ipopt/](http://www.hsl.rl.ac.uk/ipopt/), and then click on `Personal Licence, Source` to install the solver `MA27` (free for everyone).
-
-<details>
-  <summary> <b>Note</b></summary>
-
-We recommend to use `MA27`. Alternatively, you can install both `MA27` and `MA57` by clicking on `Coin-HSL Full (Stable) Source` (free for academia). Other alternative is to use the default `mumps` solver, but its much slower than `MA27` or `MA57`.
-
-</details>
-
-
-Then fill and submit the form. Once you receive the corresponding email, download the compressed file, uncompress it, and place it in the folder `~/installations` (for example). Then execute the following commands:
+Go to [http://www.hsl.rl.ac.uk/ipopt/](http://www.hsl.rl.ac.uk/ipopt/), click on `Personal Licence, Source` to install the solver `MA27` (free for everyone), and fill and submit the form. Once you receive the corresponding email, download the compressed file, uncompress it, and place it in the folder `~/installations` (for example). Then execute the following commands:
 
 > Note: the instructions below follow [this](https://github.com/casadi/casadi/wiki/Obtaining-HSL) closely
 
@@ -89,6 +79,13 @@ cd /usr/local/lib
 sudo ln -s libcoinhsl.so libhsl.so #(This creates a symbolic link `libhsl.so` pointing to `libcoinhsl.so`). See https://github.com/casadi/casadi/issues/1437
 echo "export LD_LIBRARY_PATH='\${LD_LIBRARY_PATH}:/usr/local/lib'" >> ~/.bashrc
 ```
+
+<details>
+  <summary> <b>Note</b></summary>
+
+We recommend to use `MA27`. Alternatively, you can install both `MA27` and `MA57` by clicking on `Coin-HSL Full (Stable) Source` (free for academia) in [http://www.hsl.rl.ac.uk/ipopt/](http://www.hsl.rl.ac.uk/ipopt/) and then following the instructions above. Other alternative is to use the default `mumps` solver (no additional installation required), but its much slower than `MA27` or `MA57`.
+
+</details>
 
 
 #### Other dependencies
