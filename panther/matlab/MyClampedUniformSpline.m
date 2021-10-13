@@ -544,17 +544,20 @@ classdef MyClampedUniformSpline < handle
        
             degree_derivative=obj.p-which_derivative;
             
+           
+%            This commented part doesn't work if, for example, the num of seg is 3
             % ultimo segmento es num_seg
             % antepenultimo es num_seg-1
-            
-            %Note that this 
-            if(j<(obj.num_seg-1))
-                A=computeMatrixForClampedUniformBSpline(degree_derivative,j-1,[0,1]); 
-            elseif(j==(obj.num_seg-1))
-                A=computeMatrixForClampedUniformBSpline(degree_derivative,-2,[0,1]);
-            elseif(j==obj.num_seg)
-                A=computeMatrixForClampedUniformBSpline(degree_derivative,-1,[0,1]); %last segment
-            end
+%             if(j<(obj.num_seg-1))
+%                 disp("here")
+%                 A=computeMatrixForClampedUniformBSpline(degree_derivative,j-1,[0,1])
+%             elseif(j==(obj.num_seg-1))
+%                 A=computeMatrixForClampedUniformBSpline(degree_derivative,-2,[0,1]);
+%             elseif(j==obj.num_seg)
+%                 A=computeMatrixForClampedUniformBSpline(degree_derivative,-1,[0,1]); %last segment
+%             end
+
+            A=computeMatrixForAnyBSpline(degree_derivative,obj.p+j, obj.knots, [0,1] );
             
             A=double(A);
         end
