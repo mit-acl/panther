@@ -603,6 +603,7 @@ classdef MyClampedUniformSpline < handle
         
         function updateCPsWithSolution(obj, Qsolution_matrix)
             assert(size(Qsolution_matrix,1)==obj.dim);
+            assert(size(Qsolution_matrix,2)==obj.num_cpoints);
             Q={};
             for i=1:obj.num_cpoints
                 Q{i}=Qsolution_matrix(:,i);%sol_casadi.value(obj.CPoints{i}); %Control points
