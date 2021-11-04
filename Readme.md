@@ -163,17 +163,15 @@ You can also change the following arguments when executing `roslaunch`
 | ----------- | ----------- |
 | `quad`      | Name of the drone        |
 | `perfect_controller`      | If true, the drone will track perfectly the trajectories, and the controller and physics engine of the drone will not be launched. If false, you will need to clone and compile [snap_sim](https://gitlab.com/mit-acl/fsw/snap-stack/snap_sim), [snap](https://gitlab.com/mit-acl/fsw/snap-stack/snap) and [outer_loop](https://gitlab.com/mit-acl/fsw/snap-stack/outer_loop)       |
-| `perfect_prediction`      | If true, the drone will have access to the ground truth of the trajectories of the obstacles. If false, the drone will estimate their trajectories (it needs `gazebo=true` in this case).       |
+| `perfect_prediction`      | If true, the drone will have access to the ground truth of the trajectories of the obstacles. If false, the drone will estimate their trajectories (it needs `gazebo:=true` in this case).       |
 | `gui_mission`      | If true, a gui will be launched to start the experiment       |
 | `rviz`      | If true, Rviz will be launched for visualization       |
 | `gazebo`      | If true, Gazebo will be launched  |
-| `gzclient`      | If true, the gui of Gazebo will be launched. If false, (and if `gazebo=true`) only gzserver will be launched. Note: right now there is some delay in the visualization of the drone the gui of Gazebo. But this doesn't affect the point clouds generated. |
+| `gzclient`      | If true, the gui of Gazebo will be launched. If false, (and if `gazebo:=true`) only gzserver will be launched. Note: right now there is some delay in the visualization of the drone the gui of Gazebo. But this doesn't affect the point clouds generated. |
 
 You can see the default values of these arguments in `simulation.launch`.
 
 > **_NOTE:_**  (TODO) Right now the radius of the drone plotted in Gazebo (which comes from the `scale` field of `quadrotor_base_urdf.xacro`) does not correspond with the radius specified in `mader.yaml`. 
-
-> **_NOTE:_**  (TODO)  The case `gazebo=true` has not been fully tested in Ubuntu 20.04.
 
 ## Credits:
 This package uses some the [hungarian-algorithm-cpp](https://github.com/mcximing/hungarian-algorithm-cpp) and some C++ classes from the [DecompROS](https://github.com/sikang/DecompROS) and  repos (both included in the `thirdparty` folder), so credit to them as well. 
