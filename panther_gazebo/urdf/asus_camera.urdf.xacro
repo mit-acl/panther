@@ -129,7 +129,7 @@
             <pointCloudTopicName>${name}/depth/color/points</pointCloudTopicName>
             <frameName>${name}_depth_optical_frame</frameName>
             <pointCloudCutoff>0.06</pointCloudCutoff>
-            <pointCloudCutoffMax>5.0</pointCloudCutoffMax> <!--this is the clipping distance for the Depth image and Point Cloud-->
+            <pointCloudCutoffMax>70.0</pointCloudCutoffMax> <!--this is the clipping distance for the Depth image and Point Cloud-->
           </plugin>
         </sensor>
       </gazebo>

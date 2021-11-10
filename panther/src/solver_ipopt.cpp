@@ -526,10 +526,9 @@ bool SolverIpopt::optimize()
 
   map_arguments["yCPs"] = matrix_qy_guess;
 
-  // for(std::map<std::string, casadi::DM>::const_iterator it = map_arguments.begin();
-  //     it != map_arguments.end(); ++it)
+  // for (std::map<std::string, casadi::DM>::const_iterator it = map_arguments.begin(); it != map_arguments.end(); ++it)
   // {
-  //     std::cout << it->first << " " << it->second<< "\n";
+  //   std::cout << it->first << " " << it->second << "\n";
   // }
   ////////////////////////// CALL THE SOLVER
   std::map<std::string, casadi::DM> result;
@@ -550,6 +549,11 @@ bool SolverIpopt::optimize()
     map_arguments["c_yaw_smooth"] = par_.c_yaw_smooth;
     map_arguments["c_fov"] = par_.c_fov;
     std::cout << bold << green << "Optimizing for YAW and POSITION!" << reset << std::endl;
+    std::cout << "c_yaw_smooth= " << map_arguments["c_yaw_smooth"] << std::endl;
+    std::cout << "c_fov= " << map_arguments["c_fov"] << std::endl;
+    std::cout << "c_pos_smooth= " << map_arguments["c_pos_smooth"] << std::endl;
+    std::cout << "c_final_pos= " << map_arguments["c_final_pos"] << std::endl;
+    std::cout << "c_final_yaw= " << map_arguments["c_final_yaw"] << std::endl;
     result = cf_op_(map_arguments);
   }
   else if (par_.mode == "py" && focus_on_obstacle_ == true)
@@ -649,9 +653,9 @@ bool SolverIpopt::optimize()
       qp.push_back(Eigen::Vector3d(double(qp_casadi(0, i)), double(qp_casadi(1, i)), double(qp_casadi(2, i))));
     }
 
-    // std::cout<<"SOLUTION OPTIMIZATION: "<<result["yCps"]<<std::endl;
-    // std::cout<<"all_w_fe="<<map_arguments["all_w_fe"]<<std::endl;
-    // std::cout<<"all_w_velfewrtworld="<<map_arguments["all_w_velfewrtworld"]<<std::endl;
+    std::cout << "SOLUTION OPTIMIZATION: " << result["yCPs"] << std::endl;
+    std::cout << "all_w_fe=" << map_arguments["all_w_fe"] << std::endl;
+    std::cout << "all_w_velfewrtworld=" << map_arguments["all_w_velfewrtworld"] << std::endl;
 
     ///////////////////////////////////
     if (par_.mode == "panther" || par_.mode == "py")
@@ -659,6 +663,7 @@ bool SolverIpopt::optimize()
       if (focus_on_obstacle_ == true)
       {
         qy = static_cast<std::vector<double>>(result["yCPs"]);
+        std::cout << "qy.size()= " << qy.size() << std::endl;
       }
       else
       {  // find the yaw spline that goes to final_state_.yaw as fast as possible

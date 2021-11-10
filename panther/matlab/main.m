@@ -6,6 +6,8 @@
 %  * See LICENSE file for the license information
 %  * -------------------------------------------------------------------------- */
 
+
+
 close all; clc;clear;
 
 set(0,'DefaultFigureWindowStyle','docked') %'normal' 'docked'
@@ -20,7 +22,9 @@ addpath(genpath('./../../submodules/minvo/src/solutions'));
 addpath(genpath('./more_utils'));
 
 
+for pos_is_fixed=[true, false] %you need to run this file twice to produce the necessary casadi files: both with pos_is_fixed=false and pos_is_fixed=true. 
 
+clearvars -except pos_is_fixed
 const_p={};
 const_y={};
 opti = casadi.Opti();
@@ -29,14 +33,14 @@ opti = casadi.Opti();
 %%%%%%%%%%%%%%%%%%%%%%%%%%% CONSTANTS! %%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-pos_is_fixed=false; %you need to run this file twice to produce the necessary casadi files: both with pos_is_fixed=false and pos_is_fixed=true. 
-
+% pos_is_fixed=true;
+do_plots=false;
 deg_pos=3;
 deg_yaw=2;
 num_seg =4; %number of segments
-num_max_of_obst=10; %This is the maximum num of the obstacles 
-num_samples_simpson=14;  %This will also be the num_of_layers in the graph yaw search of C++
-num_of_yaw_per_layer=40; %This will be used in the graph yaw search of C++
+num_max_of_obst=5; %This is the maximum num of the obstacles 
+num_samples_simpson=20;  %This will also be the num_of_layers in the graph yaw search of C++
+num_of_yaw_per_layer=60; %This will be used in the graph yaw search of C++
                          %Note that the initial layer will have only one yaw (which is given) 
 basis="MINVO"; %MINVO OR B_SPLINE or BEZIER. This is the basis used for collision checking (in position, velocity, accel and jerk space), both in Matlab and in C++
 linear_solver_name='ma27'; %mumps [default, comes when installing casadi], ma27, ma57, ma77, ma86, ma97 
@@ -282,12 +286,12 @@ for j=1:sp.num_seg
     s=c_P(1:2)/(c_P(3));  %Note that here we are not using f (the focal length in meters) because it will simply add a constant factor in ||s|| and in ||s_dot||
     
     %FOV is a cone:  (See more possible versions of this constraint at the end of this file)
-    gamma=100;
+    gamma=150;
 %     w_beta=w_fevar(1:3)-w_T_c(1:3,4);
 %     w_beta=w_beta/norm(w_beta);
 %     is_in_FOV1=-cos(thetax_half_FOV_deg*pi/180.0)+w_beta'*w_T_c(1:3,3); %This has to be >=0
     is_in_FOV1=-cos(thetax_half_FOV_deg*pi/180.0) + (c_P(1:3)'/norm(c_P((1:3))))*[0;0;1];
-    isInFOV_smooth=  (   1/(1+exp(-gamma*is_in_FOV1))  );
+    isInFOV_smooth=  (   1/(1+exp(-gamma*(is_in_FOV1)))  );
    
     
 
@@ -313,26 +317,26 @@ for j=1:sp.num_seg
     
     %Costs (following the convention of "minimize" )
     isInFOV=(target_isInFOV_substituted_yawcps{j});
-    fov_cost_j=-isInFOV /(offset_vel+4*s_dot2);
+    fov_cost_j=-isInFOV/(offset_vel+0.0*s_dot2);
 %     fov_cost_j=-isInFOV + 1500000*(isInFOV)*s_dot2;
 %     fov_cost_j=100000*s_dot2/(isInFOV);
 %     fov_cost_j=-isInFOV+1e6*(1-isInFOV)*s_dot2;
     
       %%%%%%%%%%%%%%%%%%
       
-    span_interval=sp.timeSpanOfInterval(j);
-    t_init_interval=min(span_interval);   
-    t_final_interval=max(span_interval);
-    delta_interval=t_final_interval-t_init_interval;
+    span_interval_n=sp.timeSpanOfInterval(j);
+    t_init_interval_n=min(span_interval_n);   
+    t_final_interval_n=max(span_interval_n);
+    delta_interval_n=t_final_interval_n-t_init_interval_n;
     
-    tsf=t_simpson_n; %tsf is a filtered version of  t_simpson
-    tsf=tsf(tsf>=min(t_init_interval));
+    tsf_n=t_simpson_n; %tsf is a filtered version of  t_simpson_n
+    tsf_n=tsf_n(tsf_n>=min(t_init_interval_n));
     if(j==(sp.num_seg))
-        tsf=tsf(tsf<=max(t_final_interval));
+        tsf_n=tsf_n(tsf_n<=max(t_final_interval_n));
     else
-        tsf=tsf(tsf<max(t_final_interval));
+        tsf_n=tsf_n(tsf_n<max(t_final_interval_n));
     end
-    u_simpson{j}=(tsf-t_init_interval)/delta_interval;
+    u_simpson{j}=(tsf_n-t_init_interval_n)/delta_interval_n;
 
     
     for u_i=u_simpson{j}
@@ -340,7 +344,7 @@ for j=1:sp.num_seg
         simpson_coeff=getSimpsonCoeff(simpson_index,num_samples_simpson);
         
        
-        fov_cost=fov_cost + (delta_simpson_n/3.0)*simpson_coeff*substitute( fov_cost_j,[u;w_fevar;w_velfewrtworldvar],[u_i;w_fe{simpson_index};w_velfewrtworld{simpson_index}]); 
+        fov_cost=fov_cost + (delta_simpson/3.0)*simpson_coeff*substitute( fov_cost_j,[u;w_fevar;w_velfewrtworldvar],[u_i;w_fe{simpson_index};w_velfewrtworld{simpson_index}]); 
 
         all_target_isInFOV=[all_target_isInFOV  substitute(target_isInFOV{j},[u;w_fevar],[u_i;w_fe{simpson_index}])];
         
@@ -597,6 +601,7 @@ sy.updateCPsWithSolution(full(sol.yCPs))
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%% PLOTTING! %%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+if(do_plots)
 import casadi.*
 alpha_value=convertMX2Matlab(substitute(alpha,total_time, total_time_value));
 
@@ -658,7 +663,6 @@ camlight
 lightangle(gca,45,0)
 
 
-%%
 
 figure; hold on; import casadi.*
 
@@ -687,7 +691,7 @@ scatter(x,y,60,1:numel(x),'Filled')
 title('Image projection of the feature');
 xlim([-max(abs(x)),max(abs(x))]); ylim([-max(abs(y)),max(abs(y))]); yline(0.0,'--');xline(0.0,'--')
 %  set(gca, 'XAxisLocation', 'origin', 'YAxisLocation', 'origin')
-
+end
 
 %% 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -741,6 +745,8 @@ f.save('./casadi_generated_files/fit_yaw.casadi') %The file generated is quite b
 
 % solution=convertMX2Matlab(A)\convertMX2Matlab(b);  %Solve the system of equations
 % sy.updateCPsWithSolution(solution(1:end-3)');
+
+end
 
 %% Functions
 

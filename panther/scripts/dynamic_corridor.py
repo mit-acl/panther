@@ -23,7 +23,7 @@ from std_msgs.msg import ColorRGBA
 import numpy as np
 from numpy import linalg as LA
 import random
-from tf.transformations import quaternion_from_euler, euler_from_quaternion
+# from tf.transformations import quaternion_from_euler, euler_from_quaternion
 import tf
 from math import sin, cos, tan, floor
 from numpy import sign as sgn #Because https://github.com/ArashPartow/exprtk  uses sgn, not sign
@@ -123,16 +123,18 @@ class DynCorridor:
         self.max_vel_obstacles=-10.0;
    
         #HACK
-        # self.num_of_dyn_objects=1;
-        # self.num_of_stat_objects=0;
-        # self.x_min= 4.0
-        # self.x_max= 4.0
-        # self.y_min= 4.0 
-        # self.y_max= 4.0
-        # self.z_min= 1.0 
-        # self.z_max= 1.0
-        # self.scale= [1.0, 1.0, 2.5]
-        # self.bbox_dynamic=[0.2, 0.2, 0.2] 
+        self.num_of_dyn_objects=1;
+        self.num_of_stat_objects=0;
+        self.x_min= 4.0
+        self.x_max= 4.0
+        self.y_min= 4.0 
+        self.y_max= 4.0
+        self.z_min= 1.0 
+        self.z_max= 1.0
+        self.slower_min=2.0   #1.2 or 2.3
+        self.slower_max=2.0   #1.2 or 2.3
+        self.scale= [1.0, 1.0, 2.5]
+        self.bbox_dynamic=[0.2, 0.2, 0.2] 
         #END OF HACK
 
         self.available_meshes_static=["package://panther/meshes/ConcreteDamage01b/model3.dae", "package://panther/meshes/ConcreteDamage01b/model2.dae"]

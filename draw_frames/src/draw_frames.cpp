@@ -43,7 +43,7 @@ public:
     }
 
     // home/jtorde/Desktop/ws/src/panther
-    std::string folder = "/home/jtorde/Dropbox (MIT)/Research/Planning_project/PANTHER/bags_simulation/data/";
+    std::string folder = "/home/jtorde/Dropbox (MIT)/Research/Planning_project/PANTHER/simulation_one_obstacle/data/";
     // std::string folder = "/home/jtorde/Downloads/";
     name_file_pos_ = folder + mode_ + "_projection_positions.txt";  //
     name_file_vel_ = folder + mode_ + "_projection_velocities.txt";
@@ -101,8 +101,16 @@ public:
     {
       ros::Time acquisition_time = info_msg->header.stamp;
       ros::Duration timeout(1.0 / 30);
-      tf_listener_.waitForTransform(cam_model_.tfFrame(), frame_id, acquisition_time, timeout);
-      tf_listener_.lookupTransform(cam_model_.tfFrame(), frame_id, acquisition_time, transform);
+      std::string name_tf_camera;
+
+#if USE_NOETIC_FLAG
+      name_tf_camera = "SQ01s/" + cam_model_.tfFrame();
+#else
+      name_tf_camera = cam_model_.tfFrame();  // This works in Melodic
+#endif
+
+      tf_listener_.waitForTransform(name_tf_camera, frame_id, acquisition_time, timeout);
+      tf_listener_.lookupTransform(name_tf_camera, frame_id, acquisition_time, transform);
     }
     catch (tf::TransformException& ex)
     {

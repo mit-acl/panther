@@ -1030,6 +1030,7 @@ bool Panther::replan(mt::Edges& edges_obstacles_out, std::vector<mt::state>& X_s
   std::vector<double> all_probs;
 
   mtx_trajs_.lock();
+  std::cout << green << bold << "trajs_.size()= " << trajs_.size() << reset << std::endl;
   for (int i = 0; i < trajs_.size(); i++)
   {
     double prob_i = 0.0;
