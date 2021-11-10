@@ -2,7 +2,15 @@
 
 #include <ros/ros.h>
 #include <image_transport/image_transport.h>
+
+// See https://stackoverflow.com/a/11132690
+#if USE_NOETIC_FLAG
+#include <opencv2/opencv.hpp>
+#include <opencv2/imgproc/imgproc_c.h>
+#else
 #include <opencv/cv.h>
+#endif
+
 #include <cv_bridge/cv_bridge.h>
 #include <image_geometry/pinhole_camera_model.h>
 #include <tf/transform_listener.h>

@@ -126,7 +126,21 @@ include_directories(
 # ${catkin_INCLUDE_DIRS}
 )
 
+
 add_executable(draw_frames src/draw_frames.cpp)
+
+
+if("$ENV{ROS_DISTRO}" STREQUAL "melodic")
+  target_compile_definitions(draw_frames PUBLIC USE_NOETIC_FLAG=0) 
+elseif("$ENV{ROS_DISTRO}" STREQUAL "noetic")
+  target_compile_definitions(draw_frames PUBLIC USE_NOETIC_FLAG=1) 
+else()
+  message(WARNING "Using same settings as NOETIC")
+  target_compile_definitions(draw_frames PUBLIC USE_NOETIC_FLAG=1) 
+endif()
+
+
+
 target_include_directories (draw_frames PUBLIC ${Boost_INCLUDE_DIR})
 target_link_libraries(draw_frames PUBLIC ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${OpenCV_LIBRARIES})  
 
