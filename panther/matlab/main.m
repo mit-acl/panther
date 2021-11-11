@@ -317,7 +317,7 @@ for j=1:sp.num_seg
     
     %Costs (following the convention of "minimize" )
     isInFOV=(target_isInFOV_substituted_yawcps{j});
-    fov_cost_j=-isInFOV/(offset_vel+0.0*s_dot2);
+    fov_cost_j=-isInFOV/(offset_vel+0.25*s_dot2);
 %     fov_cost_j=-isInFOV + 1500000*(isInFOV)*s_dot2;
 %     fov_cost_j=100000*s_dot2/(isInFOV);
 %     fov_cost_j=-isInFOV+1e6*(1-isInFOV)*s_dot2;
