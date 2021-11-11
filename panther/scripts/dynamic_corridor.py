@@ -131,9 +131,9 @@ class DynCorridor:
         self.y_max= 4.0
         self.z_min= 1.0 
         self.z_max= 1.0
-        self.slower_min=2.0   #1.2 or 2.3
-        self.slower_max=2.0   #1.2 or 2.3
-        self.scale= [1.5, 1.5, 2.5]
+        self.slower_min=1.5   #1.2 or 2.3
+        self.slower_max=1.5   #1.2 or 2.3
+        self.scale= [2.5, 2.5, 3.0]
         self.bbox_dynamic=[0.2, 0.2, 0.2] 
         #END OF HACK
 
