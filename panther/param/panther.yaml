@@ -49,7 +49,7 @@ fov_depth: 4.5 #[m]
 c_pos_smooth: 0.000001
 c_yaw_smooth: 0.0
 c_fov: 20.0
-c_final_pos: 80.0
+c_final_pos: 70.0
 c_final_yaw: 0.0
 
 factor_alpha: 1.5 #[-] DeltaT = factor_alpha*States_took_previous_replan
