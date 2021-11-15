@@ -25,7 +25,8 @@ if __name__ == '__main__':
     num_of_obs=[5]#[1000]#[50,400,500,600,700]#[150, 200, 250, 300, 350] #[340,380,420,460,500]; #140,180,220,260,300
     commands = []
 
-    folder_bags="/home/jtorde/Desktop/ws/src/panther/panther/bags";
+    # folder_bags="/home/jtorde/Desktop/ws/src/panther/panther/bags";
+    folder_bags="/home/jtorde/Dropbox\ \(MIT\)/Research/Planning_project/PANTHER/simulation_corridor/bags";
     all_modes=["zhejiang", "panther", "noPA", "py", "ysweep"] #   "zhejiang", "panther", "noPA", "py", "ysweep"
     name_node_record="bag_recorder"
     kill_all="tmux kill-server & killall -9 gazebo & killall -9 gzserver  & killall -9 gzclient & killall -9 roscore & killall -9 rosmaster & pkill panther_node & pkill -f dynamic_obstacles & pkill -f rosout & pkill -f behavior_selector_node & pkill -f rviz & pkill -f rqt_gui & pkill -f perfect_tracker & pkill -f panther_commands"

@@ -38,9 +38,9 @@ do_plots=false;
 deg_pos=3;
 deg_yaw=2;
 num_seg =4; %number of segments
-num_max_of_obst=5; %This is the maximum num of the obstacles 
-num_samples_simpson=20;  %This will also be the num_of_layers in the graph yaw search of C++
-num_of_yaw_per_layer=60; %This will be used in the graph yaw search of C++
+num_max_of_obst=10; %This is the maximum num of the obstacles 
+num_samples_simpson=14;  %This will also be the num_of_layers in the graph yaw search of C++
+num_of_yaw_per_layer=40; %This will be used in the graph yaw search of C++
                          %Note that the initial layer will have only one yaw (which is given) 
 basis="MINVO"; %MINVO OR B_SPLINE or BEZIER. This is the basis used for collision checking (in position, velocity, accel and jerk space), both in Matlab and in C++
 linear_solver_name='ma27'; %mumps [default, comes when installing casadi], ma27, ma57, ma77, ma86, ma97 
@@ -286,7 +286,7 @@ for j=1:sp.num_seg
     s=c_P(1:2)/(c_P(3));  %Note that here we are not using f (the focal length in meters) because it will simply add a constant factor in ||s|| and in ||s_dot||
     
     %FOV is a cone:  (See more possible versions of this constraint at the end of this file)
-    gamma=150;
+    gamma=5;
 %     w_beta=w_fevar(1:3)-w_T_c(1:3,4);
 %     w_beta=w_beta/norm(w_beta);
 %     is_in_FOV1=-cos(thetax_half_FOV_deg*pi/180.0)+w_beta'*w_T_c(1:3,3); %This has to be >=0
@@ -317,7 +317,7 @@ for j=1:sp.num_seg
     
     %Costs (following the convention of "minimize" )
     isInFOV=(target_isInFOV_substituted_yawcps{j});
-    fov_cost_j=-isInFOV/(offset_vel+0.45*s_dot2);
+    fov_cost_j=-isInFOV/(offset_vel+0.00001*s_dot2);
 %     fov_cost_j=-isInFOV + 1500000*(isInFOV)*s_dot2;
 %     fov_cost_j=100000*s_dot2/(isInFOV);
 %     fov_cost_j=-isInFOV+1e6*(1-isInFOV)*s_dot2;

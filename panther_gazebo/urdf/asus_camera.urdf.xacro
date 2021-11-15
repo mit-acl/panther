@@ -91,7 +91,7 @@
         <sensor type="depth" name="${name}">
           <update_rate>60</update_rate>
           <camera>
-            <horizontal_fov>${60 * M_PI/180.0}</horizontal_fov>
+            <horizontal_fov>${70 * M_PI/180.0}</horizontal_fov>
             <image>
               <format>R8G8B8</format>
               <width>120</width> <!-- 120, 90 //320, 240 // 480, 480 -->
@@ -129,7 +129,7 @@
             <pointCloudTopicName>${name}/depth/color/points</pointCloudTopicName>
             <frameName>${name}_depth_optical_frame</frameName>
             <pointCloudCutoff>0.06</pointCloudCutoff>
-            <pointCloudCutoffMax>70.0</pointCloudCutoffMax> <!--this is the clipping distance for the Depth image and Point Cloud-->
+            <pointCloudCutoffMax>5.0</pointCloudCutoffMax> <!--this is the clipping distance for the Depth image and Point Cloud-->
           </plugin>
         </sensor>
       </gazebo>

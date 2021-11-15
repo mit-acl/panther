@@ -204,6 +204,9 @@ PantherRos::PantherRos(ros::NodeHandle nh1, ros::NodeHandle nh2, ros::NodeHandle
 
   if (par_.impose_FOV_in_trajCB)
   {
+    std::cout<<"par_.fov_depth= "<<par_.fov_depth<<std::endl;
+    std::cout<<"par_.Ra= "<<par_.Ra<<std::endl;
+    std::cout<<"par_.drone_radius= "<<par_.drone_radius<<std::endl;
     verify((par_.fov_depth > (par_.Ra + par_.drone_radius)), "(par_.fov_depth > (par_.Ra + par_.drone_radius) must "
                                                              "hold");
   }
@@ -244,9 +247,9 @@ PantherRos::PantherRos(ros::NodeHandle nh1, ros::NodeHandle nh2, ros::NodeHandle
   {
     ROS_INFO("Using ground truth trajectories (subscribed to /trajs)");
 
-    sub_traj_ = nh1_.subscribe("/trajs", 20, &PantherRos::trajCB, this);
-    // sub_traj_ = nh1_.subscribe("trajs_zhejiang", 20, &PantherRos::trajCB,
-    //                            this);  // Uncomment ONLY FOR THE BENCHMARK WITH zhejiang CODE
+    // sub_traj_ = nh1_.subscribe("/trajs", 20, &PantherRos::trajCB, this);
+    sub_traj_ = nh1_.subscribe("trajs_zhejiang", 20, &PantherRos::trajCB,
+                               this);  // Uncomment ONLY FOR THE BENCHMARK WITH zhejiang CODE
     // obstacles --> topic /trajs
     // agents --> topic /trajs
     // Everything in the same world frame
@@ -744,7 +747,7 @@ void PantherRos::terminalGoalCB(const geometry_msgs::PoseStamped& msg)
   double z;
   if (fabs(msg.pose.position.z) < 1e-5)  // This happens when you click in RVIZ (msg.z is 0.0)
   {
-    z = 2.0;
+    z = 1.0;
   }
   else  // This happens when you publish by yourself the goal (should always be above the ground)
   {
