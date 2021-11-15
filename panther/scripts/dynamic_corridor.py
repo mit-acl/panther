@@ -113,8 +113,8 @@ class DynCorridor:
         self.z_max= 1.0
         # self.scale= [(self.x_max-self.x_min)/self.total_num_obs, 5.0, 1.0]
         self.scale= [2.0, 2.0, 3.0]
-        self.slower_min=1.2   #1.2 or 2.3
-        self.slower_max=1.2   #1.2 or 2.3
+        self.slower_min=2.3   #1.2 or 2.3
+        self.slower_max=2.3   #1.2 or 2.3
         self.bbox_dynamic=[0.8, 0.8, 0.8] 
         self.bbox_static_vert=[0.4, 0.4, 4]
         self.bbox_static_horiz=[0.4, 8, 0.4]
@@ -288,62 +288,62 @@ class DynCorridor:
         # # START (This is for the benchmark with the code from zhejiang)
         # # In their code, the function EGOReplanFSM::marker_callback has access to pos/vel from the obstacles through the marker array. The code below publishes the marker array with that info
         # ###################################################
-        marker_array_zhejiang=MarkerArray();
-        for i in range(len(self.marker_array.markers)): 
+        # marker_array_zhejiang=MarkerArray();
+        # for i in range(len(self.marker_array.markers)): 
 
-            marker=Marker();
-            delta=1e-6; #Don't make it smaller than this
-            t0=rospy.get_time();
-            t=t0
-            # print "t= ", t
-            x = eval(self.all_dyn_traj[i].s_mean[0])
-            y = eval(self.all_dyn_traj[i].s_mean[1])
-            z = eval(self.all_dyn_traj[i].s_mean[2])
-            t=t+delta;
-            xd = eval(self.all_dyn_traj[i].s_mean[0])
-            yd = eval(self.all_dyn_traj[i].s_mean[1])
-            zd = eval(self.all_dyn_traj[i].s_mean[2])
-            vel=[(xd-x)/delta, (yd-y)/delta, (zd-z)/delta];
+        #     marker=Marker();
+        #     delta=1e-6; #Don't make it smaller than this
+        #     t0=rospy.get_time();
+        #     t=t0
+        #     # print "t= ", t
+        #     x = eval(self.all_dyn_traj[i].s_mean[0])
+        #     y = eval(self.all_dyn_traj[i].s_mean[1])
+        #     z = eval(self.all_dyn_traj[i].s_mean[2])
+        #     t=t+delta;
+        #     xd = eval(self.all_dyn_traj[i].s_mean[0])
+        #     yd = eval(self.all_dyn_traj[i].s_mean[1])
+        #     zd = eval(self.all_dyn_traj[i].s_mean[2])
+        #     vel=[(xd-x)/delta, (yd-y)/delta, (zd-z)/delta];
 
 
-            # print "vel= ", vel
-            # print self.all_dyn_traj[i].s_mean
+        #     # print "vel= ", vel
+        #     # print self.all_dyn_traj[i].s_mean
 
-            marker.pose.position.x=x;
-            marker.pose.position.y=y;
-            marker.pose.position.z=z;
+        #     marker.pose.position.x=x;
+        #     marker.pose.position.y=y;
+        #     marker.pose.position.z=z;
 
-            marker.pose.orientation.x=vel[0];
-            marker.pose.orientation.y=vel[1];
-            marker.pose.orientation.z=vel[2];
-            marker.pose.orientation.w=1.0;
+        #     marker.pose.orientation.x=vel[0];
+        #     marker.pose.orientation.y=vel[1];
+        #     marker.pose.orientation.z=vel[2];
+        #     marker.pose.orientation.w=1.0;
 
-            marker.color.r=vel[0];
-            marker.color.g=vel[1];
-            marker.color.b=vel[2];
-            marker.color.a=0.2;
+        #     marker.color.r=vel[0];
+        #     marker.color.g=vel[1];
+        #     marker.color.b=vel[2];
+        #     marker.color.a=0.2;
 
-            marker.scale=self.marker_array.markers[i].scale;
+        #     marker.scale=self.marker_array.markers[i].scale;
 
-            marker_array_zhejiang.markers.append(marker)
+        #     marker_array_zhejiang.markers.append(marker)
 
 
    
-            self.all_dyn_traj_zhejiang[i].s_mean[0]=str(x)+'+'+str(vel[0])+'*(t-'+str(t0)+')';
-            self.all_dyn_traj_zhejiang[i].s_mean[1]=str(y)+'+'+str(vel[1])+'*(t-'+str(t0)+')';
-            self.all_dyn_traj_zhejiang[i].s_mean[2]=str(z)+'+'+str(vel[2])+'*(t-'+str(t0)+')';
+        #     self.all_dyn_traj_zhejiang[i].s_mean[0]=str(x)+'+'+str(vel[0])+'*(t-'+str(t0)+')';
+        #     self.all_dyn_traj_zhejiang[i].s_mean[1]=str(y)+'+'+str(vel[1])+'*(t-'+str(t0)+')';
+        #     self.all_dyn_traj_zhejiang[i].s_mean[2]=str(z)+'+'+str(vel[2])+'*(t-'+str(t0)+')';
 
-            self.all_dyn_traj_zhejiang[i].pos.x=x;
-            self.all_dyn_traj_zhejiang[i].pos.y=y;
-            self.all_dyn_traj_zhejiang[i].pos.z=z;
+        #     self.all_dyn_traj_zhejiang[i].pos.x=x;
+        #     self.all_dyn_traj_zhejiang[i].pos.y=y;
+        #     self.all_dyn_traj_zhejiang[i].pos.z=z;
 
-            self.pubTraj_zhejiang.publish(self.all_dyn_traj_zhejiang[i])
+        #     self.pubTraj_zhejiang.publish(self.all_dyn_traj_zhejiang[i])
 
-            self.max_vel_obstacles=max(self.max_vel_obstacles, np.linalg.norm(np.array(vel)))
-            # print("self.max_vel_obstacles= ", self.max_vel_obstacles)
+        #     self.max_vel_obstacles=max(self.max_vel_obstacles, np.linalg.norm(np.array(vel)))
+        #     # print("self.max_vel_obstacles= ", self.max_vel_obstacles)
 
 
-        self.pubShapes_dynamic_mesh_zhejiang.publish(marker_array_zhejiang)       
+        # self.pubShapes_dynamic_mesh_zhejiang.publish(marker_array_zhejiang)       
         # #####################################################
         # # END
         # ###################################################
@@ -379,7 +379,7 @@ class DynCorridor:
 
         #         marker.scale=self.marker_array.markers[i].scale;
 
-        #         marker.header.frame_id = "/world"
+        #         marker.header.frame_id = "world"
         #         marker.type = marker.CUBE
         #         marker.action = marker.ADD
         #         marker.id = id_marker_tmp

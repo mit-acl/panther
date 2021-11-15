@@ -325,11 +325,10 @@ casadi::DM SolverIpopt::generateYawGuess(casadi::DM matrix_qp_guess, casadi::DM 
   log_ptr_->tim_guess_yaw_search_graph.toc();
   log_ptr_->success_guess_yaw = false;
 
-  std::cout << red << bold << "Boost A* Didn't find a path!! " << std::endl;
-  // This should never happen
+  std::cout << red << bold << "Boost A* Didn't find a path!! " << std::endl;  // [Can happen if there are nans I think]
 
   //////// Debugging
-  abort();
+  // abort();
   ///////////////////
 
   casadi::DM constant_yaw_matrix_casadi = y0 * casadi::DM::ones(1, Ny_ + 1);

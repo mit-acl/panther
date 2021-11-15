@@ -154,7 +154,7 @@ Simply execute
 roslaunch panther simulation.launch quad:=SQ01s
 ```
 
-Now you can click `Start` on the GUI, and then press `G` (or click the option `2D Nav Goal` on the top bar of RVIZ) and click any goal for the drone. 
+Now you can press `G` (or click the option `2D Nav Goal` on the top bar of RVIZ) and click any goal for the drone. 
 
 
 You can also change the following arguments when executing `roslaunch`

@@ -247,9 +247,9 @@ PantherRos::PantherRos(ros::NodeHandle nh1, ros::NodeHandle nh2, ros::NodeHandle
   {
     ROS_INFO("Using ground truth trajectories (subscribed to /trajs)");
 
-    // sub_traj_ = nh1_.subscribe("/trajs", 20, &PantherRos::trajCB, this);
-    sub_traj_ = nh1_.subscribe("trajs_zhejiang", 20, &PantherRos::trajCB,
-                               this);  // Uncomment ONLY FOR THE BENCHMARK WITH zhejiang CODE
+    sub_traj_ = nh1_.subscribe("/trajs", 20, &PantherRos::trajCB, this);
+    // sub_traj_ = nh1_.subscribe("trajs_zhejiang", 20, &PantherRos::trajCB,
+    //                            this);  // Uncomment ONLY FOR THE BENCHMARK WITH zhejiang CODE
     // obstacles --> topic /trajs
     // agents --> topic /trajs
     // Everything in the same world frame
