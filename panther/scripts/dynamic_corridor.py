@@ -113,8 +113,8 @@ class DynCorridor:
         self.z_max= 1.0
         # self.scale= [(self.x_max-self.x_min)/self.total_num_obs, 5.0, 1.0]
         self.scale= [2.0, 2.0, 3.0]
-        self.slower_min=2.3   #1.2 or 2.3
-        self.slower_max=2.3   #1.2 or 2.3
+        self.slower_min=1.2   #1.2 or 2.3
+        self.slower_max=1.2   #1.2 or 2.3
         self.bbox_dynamic=[0.8, 0.8, 0.8] 
         self.bbox_static_vert=[0.4, 0.4, 4]
         self.bbox_static_horiz=[0.4, 8, 0.4]
