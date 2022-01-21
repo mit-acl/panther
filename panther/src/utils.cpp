@@ -72,6 +72,10 @@ panther_msgs::Log log2LogMsg(mt::log log)
       break;
   }
 
+  log_msg.num_of_obstacles = log.num_of_obstacles;
+  log_msg.num_LPs_run = log.num_LPs_run;
+  log_msg.mean_time_per_LP_ms = log.mean_time_per_LP_ms;
+
   return log_msg;
 }
 

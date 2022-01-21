@@ -117,6 +117,16 @@ int OctopusSearch::getNumOfLPsRun()
   return separator_solver_->getNumOfLPsRun();
 }
 
+double OctopusSearch::getMeanTimeSolveLPMs()
+{
+  return separator_solver_->getMeanTimeSolveLPMs();
+}
+
+void OctopusSearch::resetNumLPsAndTime()
+{
+  separator_solver_->resetNumLPsAndTime();
+}
+
 void OctopusSearch::setVisual(bool visual)
 {
   visual_ = visual;
@@ -338,35 +348,36 @@ void OctopusSearch::computeLimitsVoxelSize(double& min_voxel_size, double& max_v
   }
 }
 
-// compute constraints so that it satisfies interval i-1
-// axis=0 (x), 1(y) or 2(z)
-bool OctopusSearch::computeAxisForNextInterval(const int i, const Eigen::Vector3d& viM1, int axis, double& constraint_L,
-                                               double& constraint_U)
-{
-  Eigen::Matrix<double, 3, 3> M_interv_next = M_vel_bs2basis_[i - 1];
-  constraint_L = -std::numeric_limits<double>::max();
-  constraint_U = std::numeric_limits<double>::max();
+// // compute constraints so that it satisfies interval i-1
+// // axis=0 (x), 1(y) or 2(z)
+// void OctopusSearch::computeAxisForNextInterval(const int i, const Eigen::Vector3d& viM1, int axis, double&
+// constraint_L,
+//                                                double& constraint_U)
+// {
+//   Eigen::Matrix<double, 3, 3> M_interv_next = M_vel_bs2basis_[i - 1];
+//   constraint_L = -std::numeric_limits<double>::max();
+//   constraint_U = std::numeric_limits<double>::max();
 
-  for (int i = 0; i < 3; i++)
-  {
-    for (int j = 0; j < 3; j++)
-    {
-      double g1 = viM1(axis);
-      double tmp = -(M_interv_next(1, j) / M_interv_next(2, j)) + (M_interv_next(1, i) / M_interv_next(2, i));
-      double qli = (-sgn(M_interv_next(2, i)) * v_max_.x() - g1 * M_interv_next(0, i)) / M_interv_next(2, i);
-      double quj = (sgn(M_interv_next(2, j)) * v_max_.x() - g1 * M_interv_next(0, j)) / M_interv_next(2, j);
-      double bound = (qli - quj) / tmp;
-      if (tmp >= 0)
-      {
-        constraint_L = std::max(constraint_L, bound);
-      }
-      else
-      {
-        constraint_U = std::min(constraint_U, bound);
-      }
-    }
-  }
-}
+//   for (int i = 0; i < 3; i++)
+//   {
+//     for (int j = 0; j < 3; j++)
+//     {
+//       double g1 = viM1(axis);
+//       double tmp = -(M_interv_next(1, j) / M_interv_next(2, j)) + (M_interv_next(1, i) / M_interv_next(2, i));
+//       double qli = (-sgn(M_interv_next(2, i)) * v_max_.x() - g1 * M_interv_next(0, i)) / M_interv_next(2, i);
+//       double quj = (sgn(M_interv_next(2, j)) * v_max_.x() - g1 * M_interv_next(0, j)) / M_interv_next(2, j);
+//       double bound = (qli - quj) / tmp;
+//       if (tmp >= 0)
+//       {
+//         constraint_L = std::max(constraint_L, bound);
+//       }
+//       else
+//       {
+//         constraint_U = std::min(constraint_U, bound);
+//       }
+//     }
+//   }
+// }
 
 // Compute the lower and upper bounds on the velocity based on the velocity and acceleration constraints
 // return false if any of the intervals, the lower bound is > the upper bound
@@ -964,11 +975,11 @@ void OctopusSearch::expandAndAddToQueue(Node& current, double constraint_xL, dou
 
     neighbor.qi = (knots_(i + p_ + 1) - knots_(i + 1)) * vi / (1.0 * p_) + current.qi;
 
-    if (vi.norm() < 1e-5  ||  // Not wanna use v=[0,0,0]
-        neighbor.qi.x() > x_max_ || neighbor.qi.x() < x_min_ ||                 /// Outside the limits
-        neighbor.qi.y() > y_max_ || neighbor.qi.y() < y_min_ ||                 /// Outside the limits
-        neighbor.qi.z() > z_max_ || neighbor.qi.z() < z_min_ ||                 /// Outside the limits
-        (neighbor.qi - q0_).norm() >= Ra_                                       // ||  /// Outside the limits
+    if (vi.norm() < 1e-5 ||                                      // Not wanna use v=[0,0,0]
+        neighbor.qi.x() > x_max_ || neighbor.qi.x() < x_min_ ||  /// Outside the limits
+        neighbor.qi.y() > y_max_ || neighbor.qi.y() < y_min_ ||  /// Outside the limits
+        neighbor.qi.z() > z_max_ || neighbor.qi.z() < z_min_ ||  /// Outside the limits
+        (neighbor.qi - q0_).norm() >= Ra_                        // ||  /// Outside the limits
         // (ix >= bbox_x_ / voxel_size_ ||                            // Out. the search box
         //  iy >= bbox_y_ / voxel_size_ ||                            // Out. the search box
         //  iz >= bbox_z_ / voxel_size_)                              // Out. the search box

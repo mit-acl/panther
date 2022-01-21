@@ -70,6 +70,10 @@ struct log
   bool success_replanning = false;  //
   std::string info_replan = "";     //
   int drone_status;                 //
+
+  int num_of_obstacles = 0;
+  int num_LPs_run = 0;
+  double mean_time_per_LP_ms = 0;
 };
 
 struct state

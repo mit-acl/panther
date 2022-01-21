@@ -55,6 +55,8 @@ public:
   // getters
   void getPlanes(std::vector<Hyperplane3D> &planes);
   int getNumOfLPsRun();
+  double getMeanTimeSolveLPMs();
+  void resetNumLPsAndTime();
   int getNumOfQCQPsRun();
   void getSolution(mt::PieceWisePol &solution);
   double getTimeNeeded();

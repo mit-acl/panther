@@ -91,6 +91,8 @@ public:
   void setXYZMinMaxAndRa(double x_min, double x_max, double y_min, double y_max, double z_min, double z_max, double Ra);
 
   int getNumOfLPsRun();
+  double getMeanTimeSolveLPMs();
+  void resetNumLPsAndTime();
 
   void getBestTrajFound(mt::trajectory& best_traj_found, mt::PieceWisePol& pwp, double dc);
   void getEdgesConvexHulls(mt::Edges& edges_convex_hulls);
@@ -123,8 +125,8 @@ public:
 
 protected:
 private:
-  bool computeAxisForNextInterval(const int i, const Eigen::Vector3d& viM1, int axis, double& constraint_L,
-                                  double& constraint_U);
+  // void computeAxisForNextInterval(const int i, const Eigen::Vector3d& viM1, int axis, double& constraint_L,
+  //                                 double& constraint_U);
 
   Eigen::Matrix<double, 3, 4> transformBSpline2otherBasis(const Eigen::Matrix<double, 3, 4>& Qbs, int interval);
   Eigen::Matrix<double, 3, 4> transformOtherBasis2BSpline(const Eigen::Matrix<double, 3, 4>& Qmv, int interval);

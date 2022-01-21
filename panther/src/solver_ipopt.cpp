@@ -188,6 +188,16 @@ int SolverIpopt::getNumOfLPsRun()
   return octopusSolver_ptr_->getNumOfLPsRun();
 }
 
+double SolverIpopt::getMeanTimeSolveLPMs()
+{
+  return octopusSolver_ptr_->getMeanTimeSolveLPMs();
+}
+
+void SolverIpopt::resetNumLPsAndTime()
+{
+  octopusSolver_ptr_->resetNumLPsAndTime();
+}
+
 int SolverIpopt::getNumOfQCQPsRun()
 {
   return num_of_QCQPs_run_;

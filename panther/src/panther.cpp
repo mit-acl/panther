@@ -924,7 +924,7 @@ bool Panther::replan(mt::Edges& edges_obstacles_out, std::vector<mt::state>& X_s
   log_ptr_->tim_initial_setup.tic();
 
   removeOldTrajectories();
-
+  solver_->resetNumLPsAndTime();
   //////////////////////////////////////////////////////////////////////////
   ///////////////////////// Select mt::state A /////////////////////////////
   //////////////////////////////////////////////////////////////////////////
@@ -1159,8 +1159,12 @@ bool Panther::replan(mt::Edges& edges_obstacles_out, std::vector<mt::state>& X_s
   log_ptr_->tim_initial_setup.toc();
   bool result = solver_->optimize();
 
-  num_of_LPs_run = solver_->getNumOfLPsRun();
-  num_of_QCQPs_run = solver_->getNumOfQCQPsRun();
+  // num_of_LPs_run = solver_->getNumOfLPsRun();
+  // num_of_QCQPs_run = solver_->getNumOfQCQPsRun();
+
+  log_ptr_->num_LPs_run = solver_->getNumOfLPsRun();
+  log_ptr_->mean_time_per_LP_ms = solver_->getMeanTimeSolveLPMs();
+  log_ptr_->num_of_obstacles = hulls_std.size();
 
   total_replannings_++;
   if (result == false)
