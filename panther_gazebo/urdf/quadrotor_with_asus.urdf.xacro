@@ -12,7 +12,7 @@
     
     <!-- Asus Xiton Live Pro -->
     <xacro:include filename="$(find panther_gazebo)/urdf/asus_camera.urdf.xacro" />
-    <xacro:asus_camera name="camera" parent="base_link">
+    <xacro:asus_camera name="/SQ01s/camera" parent="base_link"> <!-- TODO: move the handcoded "SQ01s" to a parameter -->
      <!-- <origin xyz="0.1 0.0 -0.03" rpy="0 0 0"/>-->
          <origin xyz="0.1 0.0 0" rpy="0 0.0 0"/>  <!-- 0 -0.78 0 -->
     </xacro:asus_camera>

@@ -26,12 +26,7 @@ When using PANTHER, please cite [PANTHER: Perception-Aware Trajectory Planner in
 
 ## General Setup
 
-PANTHER has been tested with 
-
-* Ubuntu 18.04/ROS Melodic
-* Ubuntu 20.04/ROS Noetic
-
-Other Ubuntu/ROS version may need some minor modifications, feel free to [create an issue](https://github.com/mit-acl/panther/issues) if you have any problems.
+PANTHER has been tested with Ubuntu 20.04/ROS Noetic. Other Ubuntu/ROS version may need some minor modifications, feel free to [create an issue](https://github.com/mit-acl/panther/issues) if you have any problems.
 
 **You can use PANTHER with only open-source packages**. 
 Matlab is only needed if you want to introduce modifications to the optimization problem.
