@@ -22,7 +22,7 @@ from geometry_msgs.msg import Point
 from std_msgs.msg import ColorRGBA
 import numpy as np
 from numpy import linalg as LA
-import random
+from datetime import datetime
 # from tf.transformations import quaternion_from_euler, euler_from_quaternion
 import tf
 from math import sin, cos, tan, floor
@@ -75,6 +75,22 @@ class DynCorridor:
         x=delta_beginning + self.x_min + i*delta #random.uniform(self.x_min, self.x_max);
         y=random.uniform(self.y_min, self.y_max);
         z=random.uniform(self.z_min, self.z_max);
+
+        ############################### This section below generates the obstacles between two spheres R1 and R2
+        ## Rejection sampling: Sample between the two spheres (of radius R1 and R2)
+        R1=2.0
+        R2=5.0
+        accepted=False
+        while accepted==False:
+            x=random.uniform(-R2, R2);
+            y=random.uniform(-R2, R2);
+            z=random.uniform(-R2, R2);
+
+            tmp_norm=np.linalg.norm(np.array([x,y,z]));
+            if(tmp_norm<R2 and tmp_norm>R1):
+                accepted=True
+        ###############################
+
         offset=random.uniform(-2*math.pi, 2*math.pi);
         slower=random.uniform(self.slower_min, self.slower_max);
         s=self.scale
@@ -96,6 +112,8 @@ class DynCorridor:
             return "static"
 
     def __init__(self, total_num_obs,gazebo):
+
+        random.seed(datetime.now())
         self.state=State()
 
         name = rospy.get_namespace()

@@ -38,7 +38,7 @@ do_plots=false;
 deg_pos=3;
 deg_yaw=2;
 num_seg =4; %number of segments
-num_max_of_obst=10; %This is the maximum num of the obstacles 
+num_max_of_obst=20; %This is the maximum num of the obstacles 
 num_samples_simpson=14;  %This will also be the num_of_layers in the graph yaw search of C++
 num_of_yaw_per_layer=40; %This will be used in the graph yaw search of C++
                          %Note that the initial layer will have only one yaw (which is given) 

@@ -863,6 +863,8 @@ struct parameters
 
   Eigen::Affine3d b_T_c;
   Eigen::Affine3d c_T_b;
+
+  bool static_planning;
 };
 
 struct committedTrajectory

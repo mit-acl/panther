@@ -701,7 +701,15 @@ void Panther::doStuffTermGoal()
     /////////////////////////////////
     mtx_plan_.lock();  // must be before changeDroneStatus
 
-    changeDroneStatus(DroneStatus::YAWING);
+    if (par_.static_planning)  // plan from the same position all the time
+    {
+      changeDroneStatus(DroneStatus::TRAVELING);
+    }
+    else
+    {
+      changeDroneStatus(DroneStatus::YAWING);
+    }
+
     mt::state last_state = plan_.back();
 
     double desired_yaw = atan2(G_term_.pos[1] - last_state.pos[1], G_term_.pos[0] - last_state.pos[0]);
@@ -943,6 +951,11 @@ bool Panther::replan(mt::Edges& edges_obstacles_out, std::vector<mt::state>& X_s
   if (plan_.size() < 5)
   {
     k_index_end = 0;
+  }
+
+  if (par_.static_planning)  // plan from the same position all the time
+  {
+    k_index_end = plan_.size() - 1;
   }
 
   k_index = plan_.size() - 1 - k_index_end;
@@ -1316,7 +1329,10 @@ bool Panther::getNextGoal(mt::state& next_goal)
 
   if (plan_.size() > 1)
   {
-    plan_.pop_front();
+    if (par_.static_planning == false)
+    {
+      plan_.pop_front();
+    }
   }
 
   if (plan_.size() == 1 && drone_status_ == DroneStatus::YAWING)

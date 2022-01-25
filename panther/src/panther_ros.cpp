@@ -156,6 +156,7 @@ PantherRos::PantherRos(ros::NodeHandle nh1, ros::NodeHandle nh2, ros::NodeHandle
   bool perfect_prediction;  // use_ground_truth_prediction
   safeGetParam(nh1_, "perfect_prediction", perfect_prediction);
 
+  safeGetParam(nh1_, "static_planning", par_.static_planning);
   // safeGetParam(nh1_, "distance_to_force_final_pos", par_.distance_to_force_final_pos);
   // safeGetParam(nh1_, "factor_alloc_when_forcing_final_pos", par_.factor_alloc_when_forcing_final_pos);
   // par_.force_final_pos = false;
@@ -204,9 +205,9 @@ PantherRos::PantherRos(ros::NodeHandle nh1, ros::NodeHandle nh2, ros::NodeHandle
 
   if (par_.impose_FOV_in_trajCB)
   {
-    std::cout<<"par_.fov_depth= "<<par_.fov_depth<<std::endl;
-    std::cout<<"par_.Ra= "<<par_.Ra<<std::endl;
-    std::cout<<"par_.drone_radius= "<<par_.drone_radius<<std::endl;
+    std::cout << "par_.fov_depth= " << par_.fov_depth << std::endl;
+    std::cout << "par_.Ra= " << par_.Ra << std::endl;
+    std::cout << "par_.drone_radius= " << par_.drone_radius << std::endl;
     verify((par_.fov_depth > (par_.Ra + par_.drone_radius)), "(par_.fov_depth > (par_.Ra + par_.drone_radius) must "
                                                              "hold");
   }
