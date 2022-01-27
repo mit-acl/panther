@@ -1,5 +1,5 @@
 use_ff: true # use feedforward #Needs to be true if you are using perfect_tracker (because the perfect_tracker needs accel)
-visual: false #publish visualization stuff
+visual: true #publish visualization stuff
 color_type: "vel" #"vel" or "plain"
 n_agents: 16 #only used for the color in the trajectory
 
@@ -13,11 +13,11 @@ drone_radius_extra_safety: 0.1  #(m) Used for collision checking
 x_min: -100.0  # [m] don't forget the .0
 x_max: 100.0  # [m] don't forget the .0
 
-y_min: -4.0  # [m] don't forget the .0
-y_max: 4.0   # [m] don't forget the .0
+y_min: -40.0  # [m] don't forget the .0
+y_max: 40.0   # [m] don't forget the .0
 
-z_min: -4.0        #[m] points below this are considered ground
-z_max: 4.0         #[m] 
+z_min: -40.0        #[m] points below this are considered ground
+z_max: 40.0         #[m] 
 
 # [IN THE LAUNCH FILE] mode: "py" #no_perception_aware (noPA), first_pos_then_yaw (py), panther (panther)
 
@@ -25,11 +25,11 @@ z_max: 4.0         #[m]
 angle_deg_focus_front: 90 #Set to very big if you wanna focus always on obstacle
 
 
-impose_FOV_in_trajCB: false
+impose_FOV_in_trajCB: true
 #============================================
 #============================================
 #============================================
-Ra: 6.5          # [m] Radius of my planning sphere (planning horizon)
+Ra: 4.5          # [m] Radius of my planning sphere (planning horizon)
 
 #max limits
 v_max: [2.6, 2.6, 2.6]   #[m/s]  7.0
@@ -60,7 +60,7 @@ c_visibility_yaw_search: 1.0
 # num_of_layers --> this one comes from Matlab, it's = num_samples_simpson 
 # num_of_yaw_per_layer --> this one comes from Matlab
 
-max_seconds_keeping_traj: 1000000000   #% If a trajectory has been kept for this long (since its last update was received), it is deleted
+max_seconds_keeping_traj: 1.0   #% If a trajectory has been kept for this long (since its last update was received), it is deleted
 
 # Samples in velocity for the A* guess used in the nlopt optimization problem
 a_star_samp_x: 5
@@ -97,4 +97,4 @@ lower_bound_runtime_snlopt: 0.005 #[seconds]
 kappa: 1.0 #% of time spent to find initial guess
 mu: 0.0    #% of time spent to solve the optimization. CURRENTLY NOT USED
 
-static_planning: true #If true, it will always plan from the same initial condition
+static_planning: false #If true, it will always plan from the same initial condition

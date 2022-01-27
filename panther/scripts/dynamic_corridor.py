@@ -77,18 +77,18 @@ class DynCorridor:
         z=random.uniform(self.z_min, self.z_max);
 
         ############################### This section below generates the obstacles between two spheres R1 and R2
-        ## Rejection sampling: Sample between the two spheres (of radius R1 and R2)
-        R1=2.0
-        R2=5.0
-        accepted=False
-        while accepted==False:
-            x=random.uniform(-R2, R2);
-            y=random.uniform(-R2, R2);
-            z=random.uniform(-R2, R2);
+        # ## Rejection sampling: Sample between the two spheres (of radius R1 and R2) (i.e., spherical shell)
+        # R1=2.0
+        # R2=5.0
+        # accepted=False
+        # while accepted==False:
+        #     x=random.uniform(-R2, R2);
+        #     y=random.uniform(-R2, R2);
+        #     z=random.uniform(-R2, R2);
 
-            tmp_norm=np.linalg.norm(np.array([x,y,z]));
-            if(tmp_norm<R2 and tmp_norm>R1):
-                accepted=True
+        #     tmp_norm=np.linalg.norm(np.array([x,y,z]));
+        #     if(tmp_norm<R2 and tmp_norm>R1):
+        #         accepted=True
         ###############################
 
         offset=random.uniform(-2*math.pi, 2*math.pi);
