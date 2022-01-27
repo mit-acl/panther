@@ -1,9 +1,10 @@
 clc; clear;close all;
 addpath(genpath('./../../../submodules/minvo/src/utils'));
+set(0,'DefaultFigureWindowStyle','normal') %'normal' 'docked'
 
 hopf([0 0 0 1])
 
-all_psi=0:0.001:2*pi;
+all_psi=0:0.001:4*pi;%Note that we need 4pi here because stereogProj(q) != stereogProj(-q). and q_abc * q_psi = - q_abc * q_{psi+2pi}. Using 4pi covers all the cases
 xi=rand(3,1);
 abc=xi/norm(xi);
 
@@ -31,6 +32,8 @@ q_all=[];
 my_colormap1=autumn;
 my_colormap2=winter;
 
+%%
+
 for i=1:1:2
     if(i==1)
       abc=abc1;
@@ -48,17 +51,19 @@ for i=1:1:2
     end
     figure(1); hold on
 
-    h=colormapline(all_projs(1,:),all_projs(2,:),all_projs(3,:),my_colormap); axis equal;
+    color_tmp=my_colormap(ceil(end/2), :);
+    my_colormap_plain=color_tmp.*ones(size(my_colormap));
+    h=colormapline(all_projs(1,:),all_projs(2,:),all_projs(3,:),my_colormap_plain); axis equal;
     
     set(h,'linewidth',5)
-    colormap(my_colormap)
-    cbh=colorbar;
-    caxis([min(all_psi) max(all_psi)+0.001]);
-    set(cbh,'XTick',[0, pi/2, pi, 3*pi/2, 2*pi])
-    set(cbh,'XTickLabel',{'0','\pi/2','\pi','3\pi/2','2\pi'})
+    %colormap(my_colormap)
+    %cbh=colorbar;
+    %caxis([min(all_psi) max(all_psi)+0.001]);
+    %set(cbh,'XTick',[0, pi, 2*pi, 3*pi, 4*pi])
+    %set(cbh,'XTickLabel',{'0', '\pi', '2\pi', '3\pi', '4\pi'})
 
     figure(2); hold on
-    color_tmp=my_colormap(ceil(end/2), :);
+    
     plotSphere(abc, 0.05, color_tmp)
     arrow3dWithColor([0 0 0],xi',20,'cylinder',[0.15,0.1],color_tmp);
 
@@ -98,8 +103,8 @@ for i=1:1:2
     for j=1:numel(all_psi)
         psi=all_psi(j);
     %     subplot(1,numel(all_psi),i);
-        qabc=invhopf(abc(1), abc(2), abc(3), psi);
-        q=quatmultiply(qabc', [cos(psi/2.0) 0.0 0.0 sin(psi/2.0)]);
+        q=invhopf(abc(1), abc(2), abc(3), psi);
+
         trans=[-j/1.0;0;0];
         w_T_b=[toRotMat(q) trans; 0 0 0 1];
         tmp=[eye(3) trans; 0 0 0 1];
@@ -108,11 +113,14 @@ for i=1:1:2
         text(trans(1),trans(2),trans(3)+0.3,['$\psi$=' num2str(psi)])
         view(my_view(1),my_view(2));
         percent=ceil(j/numel(all_psi)*size(my_colormap,1));
-        plot3dcircleXY(w_T_b,0.2,my_colormap(percent,:),0.5)
+
+        color_tmp=my_colormap(ceil(end/2), :); %my_colormap(percent,:)
+        plot3dcircleXY(w_T_b,0.2,color_tmp,0.5)
     end
     print('-dpng','-r500',['diff_yaws_',num2str(i)])
 end
 
+%%
 
 %q must be in the form [w x y z]';
 function result=hopf(q)
@@ -121,15 +129,10 @@ function result=hopf(q)
      result=result';
 end
 
-
-
 function result=invhopf(a,b,c,psi)
-  %See https://en.wikipedia.org/wiki/Hopf_fibration#Explicit_formulae:~:text=will%20send%20(0%2C%200%2C%201)%20to,c)q%CE%B8%2C%20which%20are%20the%20S3%20points
-  result=(1/sqrt(2*(1+c)))*[(1+c)*cos(psi);
-                           a*sin(psi)-b*cos(psi);
-                           a*cos(psi)+b*sin(psi);
-                           (1+c)*sin(psi)];
-    
+  %See table 3 of https://arxiv.org/abs/2103.06372
+  qabc=(1/sqrt(2*(1+c)))*[1+c -b a 0.0];
+  result=quatmultiply(qabc, [cos(psi/2.0) 0.0 0.0 sin(psi/2.0)]);    
 end
 
 %See eq. 4 of https://nilesjohnson.net/hopf-articles/Lyons_Elem-intro-Hopf-fibration.pdf
