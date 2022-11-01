@@ -139,6 +139,7 @@ git lfs install
 git submodule init && git submodule update
 cd ../../ && catkin build
 echo "source ~/Desktop/ws/devel/setup.bash" >> ~/.bashrc 
+source ~/.bashrc
 ```
 
 ### Running Simulations
